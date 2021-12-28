@@ -23,8 +23,9 @@ class PageElements
      */
     public function setOverlay(string $str, $mdCompile = false): void
     {
-        $pelem = new Overlay($this->pfy, $this);
-        $this->bodyEndInjections .= $pelem->render( $str, $mdCompile);
+        $pe = new Overlay($this->pfy);
+        $str = $pe->render( $str, $mdCompile);
+        $this->pfy->pg->addBodyEndInjections($str);
     } // setOverlay
 
 
@@ -35,8 +36,8 @@ class PageElements
      */
     public function setMessage(string $str, $mdCompile = false): void
     {
-        $pelem = new Message($this->pfy, $this);
-        $str = $pelem->render($str, $mdCompile);
+        $pe = new Message($this->pfy);
+        $str = $pe->render($str, $mdCompile);
         $this->pfy->pg->addBodyEndInjections($str);
     } // setMessage
 
@@ -48,8 +49,9 @@ class PageElements
      */
     public function setPopup(string $str, $mdCompile = false): void
     {
-        $pelem = new Popup($this->pfy, $this);
-        $this->bodyEndInjections .= $pelem->render($str, $mdCompile);
+        $pe = new Popup($this->pfy);
+        $str = $pe->render($str, $mdCompile);
+        $this->pfy->pg->addBodyEndInjections($str);
     } // setPopup
 
 

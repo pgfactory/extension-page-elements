@@ -15,13 +15,13 @@ class Overlay extends PageElements
 $str
     </div>
 EOT;
-    $this->pfy->pg->addAssets(
-        [
-            $this->extensionPath.'scss/overlay.scss',
-            $this->extensionPath.'js/overlay.js'
-        ]
-    );
-    return $str;
+        $this->pfy->pg->addAssets(
+            [
+                $this->extensionPath.'scss/overlay.scss',
+                $this->extensionPath.'js/overlay.js'
+            ]
+        );
+        return $str;
     } // render
 
 } // Overlay
