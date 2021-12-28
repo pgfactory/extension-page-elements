@@ -1,0 +1,136 @@
+/*  JS-Popup  */
+body {
+	width: 100%;
+	min-height: initial;
+	max-width: initial;
+	overflow-x: hidden;
+}
+.lzy-popup-bg {
+	background:rgba(0,0,0,.4);
+	cursor:pointer;
+	position:fixed;
+	top:0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 1;
+}
+.lzy-popup-bg > div {
+	position: relative;
+}
+.lzy-popup-wrapper {
+	position: relative;
+	max-width: 98%;
+	vertical-align: middle;
+	border-radius: 8px;
+	padding: 1.6rem;
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+}
+.lzy-large-screen .lzy-popup-wrapper-ref .lzy-popup-close-button {
+	top: -30px;
+	right: -30px;
+}
+.lzy-popup-with-header .lzy-popup-close-button.lzy-popup-close-button {
+	border: none;
+	background: transparent;
+	color: #ddd;
+}
+.lzy-popup-with-header .lzy-popup-wrapper {
+	padding: 0;
+}
+.lzy-popup-with-header .lzy-popup-container {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+#lzy .lzy-popup-header {
+	position: relative;
+	padding: 5px;
+	background: #666;
+	line-height: 2rem;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+	padding-left: 1rem;
+}
+#lzy .lzy-popup-header > div {
+	color: #eee;
+	font-size: 16pt;
+}
+#lzy .lzy-popup-wrapper label {
+	color: black;
+}
+.lzy-popup-wrapper {
+	cursor: default;
+}
+.lzy-popup-header.lzy-draggable > div {
+	cursor: move;
+}
+.lzy-popup-with-header .lzy-popup-header .lzy-popup-close-button {
+	top: 0;
+	right: 0;
+}
+.lzy-popup-header > div {
+	width: calc(100% - 1.4em);
+}
+.lzy-popup-container {
+	background-color: #fff;
+	box-shadow: 10px 10px 60px #555;
+	border-radius: 8px;
+	max-height: 90vh;
+	max-width: 100%;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	padding: 1rem;
+}
+.touch .lzy-popup-container {
+	max-height: calc(100vh - 150px);
+	padding: 15px 5% 60px 5%;
+}
+
+.lzy-no-scroll {
+	overflow: hidden;
+}
+.lzy-small-screen .lzy-popup-bg {
+	/*display: block;*/
+}
+
+.lzy-small-screen .lzy-popup-wrapper {
+	width: 100vw;
+	max-width: 100vw;
+	min-width: 100vw;
+	padding: 5px;
+	margin-top: 8px;
+}
+.lzy-small-screen .lzy-popup-close-button,
+.lzy-popup-close-button {
+	background-color: #fff;
+	color: #666;
+	border: 1px solid #bbb;
+	border-radius: 50px;
+	cursor: pointer;
+	display: inline-block;
+	font-family: arial, sans-serif;
+	position: absolute;
+	top: -6px;
+	right: -6px;
+	font-size: 30px;
+	line-height: 40px;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	text-align: center;
+}
+.lzy-popup-buttons {
+	margin: 1.5rem 0 0 0;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.lzy-popup-confirm button {
+	width: 50%;
+}
