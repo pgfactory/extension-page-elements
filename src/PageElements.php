@@ -3,8 +3,14 @@
 namespace Usility\PageFactory\PageElements;
 
 use Usility\PageFactory\PageFactory;
+use function Usility\PageFactory\preparePath;
 
-define('PAGE_ELEMENTS_PATH', __DIR__.'../');
+define('PAGE_ELEMENTS_PATH', dirname(__DIR__).'/');
+define('SYSTEM_PATH',       PAGE_ELEMENTS_PATH);
+define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
+define('PATH_TO_APP_ROOT',  '');
+define('REC_KEY_ID', 	        '_key');
+define('TIMESTAMP_KEY_ID', 	    '_timestamp');
 
 class PageElements
 {
