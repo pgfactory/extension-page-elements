@@ -15,12 +15,7 @@ class Overlay extends PageElements
 $str
     </div>
 EOT;
-        $this->pfy->pg->addAssets(
-            [
-                $this->extensionPath.'scss/overlay.scss',
-                $this->extensionPath.'js/overlay.js'
-            ]
-        );
+        $this->addAssets('OVERLAY');
         return $str;
     } // render
 
@@ -29,7 +24,7 @@ EOT;
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);
-        $this->pfy->pg->addBodyEndInjections($str);
+        $this->pg->addBodyEndInjections($str);
     } // set
 
 } // Overlay

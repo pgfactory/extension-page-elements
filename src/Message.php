@@ -20,12 +20,7 @@ class Message extends PageElements
 
             $html = "\t\t<div class='lzy-msgbox'>$msg</div>\n";
             $this->pg->requireJQuery();
-            $this->pg->addAssets(
-                [
-                    $this->extensionPath.'scss/message.scss',
-                    $this->extensionPath.'js/message.js'
-                ]
-            );
+            $this->addAssets('MESSAGE');
         }
         return $html;
     } // render
