@@ -30,4 +30,11 @@ class Message extends PageElements
         return $html;
     } // render
 
+
+
+    public function set(string $str, $mdCompile = false): void
+    {
+        $str = $this->render($str, $mdCompile);
+        $this->pfy->pg->addBodyEndInjections($str);
+    } // set
 } // Message
