@@ -15,7 +15,7 @@ class Overlay extends PageElements
 $str
     </div>
 EOT;
-        $this->addAssets('OVERLAY');
+        $this->addAssets('OVERLAYS');
         return $str;
     } // render
 

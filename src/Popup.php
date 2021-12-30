@@ -21,7 +21,7 @@ class Popup extends PageElements
             $html = "\t\t<div id='lzy-popup-$inx' class='lzy-popup'>$msg</div>\n";
             $jq = "lzyPopup({contentFrom: '#lzy-popup-$inx', header:'&nbsp;', draggable: true})";
             $this->pg->addJq($jq);
-            $this->addAssets('POPUP');
+            $this->addAssets('POPUPS');
         }
         return $html;
     } // render
