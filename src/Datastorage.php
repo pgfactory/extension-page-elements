@@ -69,6 +69,8 @@ class DataStorage
             $this->lzy = new PageFactory();
         }
 
+        $this->sessionId = session_id();
+
         $this->parseArguments($args);
         if (!$this->dataFile) {
             die("Error: DataStorage2 invoked without dataFile being specified.");
@@ -104,7 +106,8 @@ class DataStorage
 
         if (kirby()->session()->get('pfy.debug')) {
             $str = $this->dumpDb(true, false);
-            file_put_contents(PFY_LOGS_PATH . "dBdump_$this->tableName.txt", $str);
+            $filename = PFY_LOGS_PATH . "dBdump_{$this->tableName}.txt";
+            file_put_contents($filename, $str);
         }
 
         if ($this->lzyDb) {
@@ -588,7 +591,7 @@ class DataStorage
 
         // access nested element ('d3,d31,d312'):
         $rec = $this->data;
-        foreach (explodeTrim(',', $key) as $k) {
+        foreach (\Usility\PageFactory\explodeTrim(',', $key) as $k) {
             $k = trim($k, '\'"');
             if (is_array($rec)) {
                 if (isset($rec[$k])) { // direct hit
@@ -596,7 +599,7 @@ class DataStorage
                 } elseif (isset(array_keys($rec)[$k])) { // hit via index
                     $rec = $rec[ array_keys($rec)[$k] ];
                 } else { // not found
-                    $k1 = findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
+                    $k1 = $this->findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
                     if ($k1) {
                         $k1 = array_keys($k1)[0];
                         $rec = &$rec[$k1];
@@ -663,7 +666,7 @@ class DataStorage
         }
         $rec = &$this->data;
 
-        foreach (explodeTrim(',', $key) as $k) {
+        foreach (\Usility\PageFactory\explodeTrim(',', $key) as $k) {
             $k = trim($k, '\'"');
             if (is_array($rec)) {
                 if (isset($rec[$k])) { // direct hit
@@ -671,7 +674,7 @@ class DataStorage
                 } elseif (isset(array_keys($rec)[$k])) { // hit via index
                     $rec = &$rec[ array_keys($rec)[$k] ];
                 } else { // not found, create element
-                    $k1 = findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
+                    $k1 = $this->findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
                     if ($k1) {
                         $k1 = array_keys($k1)[0];
                         if (isset($rec[$k1])) {
@@ -697,7 +700,7 @@ class DataStorage
                 }
 
             } else {
-                list($r,$c) = explodeTrim(',', $key);
+                list($r,$c) = \Usility\PageFactory\explodeTrim(',', $key);
                 if (!isset($this->data[$r][$c]) || is_array($this->data[$r])) {
                     $this->data[$r][$c] = $value;
                     $rec = &$this->data[$r][$c];
@@ -747,7 +750,7 @@ class DataStorage
             $this->data = [];
         }
         $rec = &$this->data;
-        foreach (explodeTrim(',', $key) as $k) {
+        foreach (\Usility\PageFactory\explodeTrim(',', $key) as $k) {
             $k = trim($k, '\'"');
             if (is_array($rec)) {
                 if (isset($rec[$k])) { // direct hit
@@ -755,7 +758,7 @@ class DataStorage
                 } elseif (isset(array_keys($rec)[$k])) { // hit via index
                     $rec = &$rec[ array_keys($rec)[$k] ];
                 } else { // not found, look for elem with matching _key
-                    $k1 = findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
+                    $k1 = $this->findArrayElementByAttribute($rec, REC_KEY_ID, $k, true);
                     if ($k1 !== false) {
                         $k1 = array_keys($k1)[0];
                         if (isset($rec[$k1])) {
@@ -769,7 +772,7 @@ class DataStorage
                 }
 
             } else {
-                list($r,$c) = explodeTrim(',', $key);
+                list($r,$c) = \Usility\PageFactory\explodeTrim(',', $key);
                 if (!isset($this->data[$r][$c]) || is_array($this->data[$r])) {
                     unset( $this->data[$r][$c] );
                 } else {
@@ -881,10 +884,11 @@ class DataStorage
         $out .= convertToYaml( $outArray, 2 );
 
         if (!$exportFile && ($exportFile !== 'false')) {
-            $exportFile = '~/' . dir_name($srcfile) .'#' .base_name($srcfile, false) . '_structure.yaml';
+            $exportFile = '~/' . \Usility\PageFactory\dir_name($srcfile) .'#'
+                .\Usility\PageFactory\base_name($srcfile, false) . '_structure.yaml';
         }
         if ($exportFile) {
-            $exportFile = resolvePath($exportFile, true);
+            $exportFile = \Usility\PageFactory\resolvePath($exportFile, true);
             file_put_contents($exportFile, $out);
         }
 
@@ -917,7 +921,7 @@ class DataStorage
             $data = $this->getData(true);
             if ($returnJson) {
                 $data['__lastUpdate'] = $rawData['lastUpdate'];
-                $data = json_encode($data);
+                $data = \json_encode($data);
             }
             return $data;
         } else {
@@ -1153,7 +1157,7 @@ class DataStorage
         }
 
         $rec = $this->data;
-        $keys = explodeTrim(',', $key);
+        $keys = \Usility\PageFactory\explodeTrim(',', $key);
         foreach ($keys as $k) {
             array_shift($keys);
             $k = trim($k, '\'"');
@@ -1199,7 +1203,7 @@ class DataStorage
         }
 
         $rec = $this->data;
-        $keys = explodeTrim(',', $key);
+        $keys = \Usility\PageFactory\explodeTrim(',', $key);
         foreach ($keys as $k) {
             array_shift($keys);
             $k = trim($k, '\'"');
@@ -1324,7 +1328,7 @@ class DataStorage
             $lockDuration = microtime(true) - $lockRec['lockTime'];
             if ($lockDuration > LZY_LOCK_ALL_DURATION_DEFAULT) {
                 $this->_unlockRec($recId, true);
-                writeLog("DataStorage: recLoc on $this->dataFile => $recId timed out -> forced open");
+                \Usility\PageFactory\mylog("DataStorage: recLoc on $this->dataFile => $recId timed out -> forced open");
                 return false;
             }
             // it's locked by somebody else:
@@ -1573,9 +1577,9 @@ EOT;
             if (is_array( $rec )) {
                 foreach ($rec as $k) {
                     if ((@$k[0] === '~') && ($data[ $key ][ $k ] !== '##BLOB_IN_FILE##')) {
-                        $file = resolvePath( $k );
+                        $file = \Usility\PageFactory\resolvePath( $k );
                         if (!file_exists( $file )) {
-                            preparePath( $file );
+                            \Usility\PageFactory\preparePath( $file );
                         }
                         file_put_contents( $file, $data[ $key ][ $k ] );
                         $data[ $key ][ $k ] = '##BLOB_IN_FILE##';
@@ -1583,9 +1587,9 @@ EOT;
                 }
             }
             if ((@$key[0] === '~') && ($data[ $key ] !== '##BLOB_IN_FILE##')) {
-                $file = resolvePath( $key );
+                $file = \Usility\PageFactory\resolvePath( $key );
                 if (!file_exists( $file )) {
-                    preparePath( $file );
+                    \Usility\PageFactory\preparePath( $file );
                 }
                 file_put_contents( $file, $data[ $key ] );
                 $data[ $key ] = '##BLOB_IN_FILE##';
@@ -1603,7 +1607,7 @@ EOT;
                 if (is_array($rec)) {
                     foreach ($rec as $k) {
                         if (@$k[0] === '~') {
-                            $file = resolvePath($k);
+                            $file = \Usility\PageFactory\resolvePath($k);
                             if (file_exists($file)) {
                                 $data[$key][$k] = file_get_contents($file);
                             }
@@ -1611,7 +1615,7 @@ EOT;
                     }
                 }
                 if (@$key[0] === '~') {
-                    $file = resolvePath($key);
+                    $file = \Usility\PageFactory\resolvePath($key);
                     if (file_exists($file)) {
                         $data[$key] = file_get_contents($file);
                     }
@@ -1906,6 +1910,7 @@ EOT;
         $this->rawData = $this->lowlevelReadRawData();
 
         $this->checkExternalStructureDef();
+        return true;
     } // importFromFile
 
 
@@ -2150,7 +2155,8 @@ EOT;
         }
 
         if (file_exists( $structureFile )) {
-            $structure = \Usility\PageFactory\getYamlFile( $structureFile );
+            $structure = \Usility\PageFactory\loadFile( $structureFile );
+//            $structure = \Usility\PageFactory\getYamlFile( $structureFile );
 
     //        } elseif (isset($this->data['_structure'])) {
     //            // structure may be submitted within data in a special record '_structure':
@@ -2188,7 +2194,7 @@ EOT;
         if (!isset($rec0['name']) || !$rec0['name']) {
             foreach ($structure['elements'] as $elemKey => $rec) {
                 $structure['elements'][$elemKey]['type'] = @$rec['type']? $rec['type']: 'string';
-                $structure['elements'][$elemKey]['name'] = translateToIdentifier($elemKey, false, true, false);
+                $structure['elements'][$elemKey]['name'] = \Usility\PageFactory\translateToIdentifier($elemKey, false, true, false);
                 $structure['elements'][$elemKey]['formLabel'] = @$rec['formLabel']? $rec['formLabel']: $elemKey;
             }
         }
@@ -2408,7 +2414,7 @@ EOT;
     private function loadFile()
     {
         if (!file_exists($this->dataFile)) {
-            if (isLocalhost()) {
+            if (\Usility\PageFactory\isLocalhost()) {
                 die("Error in datastorage loadFile(): file '$this->dataFile' not found.");
             } else {
                 return false;
@@ -2454,5 +2460,19 @@ EOT;
     {
         \Usility\PageFactory\mylog($str);
     }
+
+
+    private function findArrayElementByAttribute( $array, $key, $value) {
+        $res = array_filter($array, function ($rec) use($key, $value) {
+            if (isset($rec[$key])) {
+                if (($value === null) || ($rec[$key] === $value)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        return $res;
+    } // findArrayElementByAttribute
+
 } // DataStorage
 
