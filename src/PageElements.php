@@ -20,7 +20,7 @@ class PageElements
     public function __construct($pfy)
     {
         $this->pfy = $pfy;
-        $this->pg = $pfy->pg;
+        $this->pg = PageFactory::$pg;
         $this->trans = PageFactory::$trans;
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->assetDefs = [
