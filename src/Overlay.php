@@ -5,7 +5,7 @@ namespace Usility\PageFactory\PageElements;
 
 class Overlay extends PageElements
 {
-    public function render($str, $mdCompile)
+    public function render($str, $mdCompile = true)
     {
         if ($mdCompile) {
             $str = \Usility\PageFactory\compileMarkdown($str);
