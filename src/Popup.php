@@ -18,8 +18,8 @@ class Popup extends PageElements
             }
 
             $inx = self::$inx++;
-            $html = "\t\t<div id='lzy-popup-$inx' class='lzy-popup'>$msg</div>\n";
-            $jq = "lzyPopup({contentFrom: '#lzy-popup-$inx', header:'&nbsp;', draggable: true})";
+            $html = "\t\t<div id='pfy-popup-$inx' class='pfy-popup'>$msg</div>\n";
+            $jq = "pfyPopup({contentFrom: '#pfy-popup-$inx', header:'&nbsp;', draggable: true})";
             $this->pg->addJq($jq);
             $this->addAssets('POPUPS');
         }
@@ -31,7 +31,7 @@ class Popup extends PageElements
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);
-        $this->pfy->pg->addBodyEndInjections($str);
+        PageFactory::$pg->addBodyEndInjections($str);
     } // set
 
 } // Popup

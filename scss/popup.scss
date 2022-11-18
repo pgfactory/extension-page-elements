@@ -5,7 +5,7 @@ body {
 	max-width: initial;
 	overflow-x: hidden;
 }
-.lzy-popup-bg {
+.pfy-popup-bg {
 	background:rgba(0,0,0,.4);
 	cursor:pointer;
 	position:fixed;
@@ -19,10 +19,10 @@ body {
 	justify-content: center;
 	opacity: 1;
 }
-.lzy-popup-bg > div {
+.pfy-popup-bg > div {
 	position: relative;
 }
-.lzy-popup-wrapper {
+.pfy-popup-wrapper {
 	position: relative;
 	max-width: 98%;
 	vertical-align: middle;
@@ -32,23 +32,23 @@ body {
 	visibility: visible;
 	pointer-events: auto;
 }
-.lzy-large-screen .lzy-popup-wrapper-ref .lzy-popup-close-button {
+.pfy-large-screen .pfy-popup-wrapper-ref .pfy-popup-close-button {
 	top: -30px;
 	right: -30px;
 }
-.lzy-popup-with-header .lzy-popup-close-button.lzy-popup-close-button {
+.pfy-popup-with-header .pfy-popup-close-button.pfy-popup-close-button {
 	border: none;
 	background: transparent;
 	color: #ddd;
 }
-.lzy-popup-with-header .lzy-popup-wrapper {
+.pfy-popup-with-header .pfy-popup-wrapper {
 	padding: 0;
 }
-.lzy-popup-with-header .lzy-popup-container {
+.pfy-popup-with-header .pfy-popup-container {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
-#lzy .lzy-popup-header {
+#pfy .pfy-popup-header {
 	position: relative;
 	padding: 5px;
 	background: #666;
@@ -57,27 +57,27 @@ body {
 	border-top-right-radius: 8px;
 	padding-left: 1rem;
 }
-#lzy .lzy-popup-header > div {
+#pfy .pfy-popup-header > div {
 	color: #eee;
 	font-size: 16pt;
 }
-#lzy .lzy-popup-wrapper label {
+#pfy .pfy-popup-wrapper label {
 	color: black;
 }
-.lzy-popup-wrapper {
+.pfy-popup-wrapper {
 	cursor: default;
 }
-.lzy-popup-header.lzy-draggable > div {
+.pfy-popup-header.pfy-draggable > div {
 	cursor: move;
 }
-.lzy-popup-with-header .lzy-popup-header .lzy-popup-close-button {
+.pfy-popup-with-header .pfy-popup-header .pfy-popup-close-button {
 	top: 0;
 	right: 0;
 }
-.lzy-popup-header > div {
+.pfy-popup-header > div {
 	width: calc(100% - 1.4em);
 }
-.lzy-popup-container {
+.pfy-popup-container {
 	background-color: #fff;
 	box-shadow: 10px 10px 60px #555;
 	border-radius: 8px;
@@ -87,27 +87,27 @@ body {
 	overflow-y: scroll;
 	padding: 1rem;
 }
-.touch .lzy-popup-container {
+.touch .pfy-popup-container {
 	max-height: calc(100vh - 150px);
 	padding: 15px 5% 60px 5%;
 }
 
-.lzy-no-scroll {
+.pfy-no-scroll {
 	overflow: hidden;
 }
-.lzy-small-screen .lzy-popup-bg {
+.pfy-small-screen .pfy-popup-bg {
 	/*display: block;*/
 }
 
-.lzy-small-screen .lzy-popup-wrapper {
+.pfy-small-screen .pfy-popup-wrapper {
 	width: 100vw;
 	max-width: 100vw;
 	min-width: 100vw;
 	padding: 5px;
 	margin-top: 8px;
 }
-.lzy-small-screen .lzy-popup-close-button,
-.lzy-popup-close-button {
+.pfy-small-screen .pfy-popup-close-button,
+.pfy-popup-close-button {
 	background-color: #fff;
 	color: #666;
 	border: 1px solid #bbb;
@@ -125,12 +125,12 @@ body {
 	padding: 0;
 	text-align: center;
 }
-.lzy-popup-buttons {
+.pfy-popup-buttons {
 	margin: 1.5rem 0 0 0;
 	display: flex;
 	justify-content: flex-end;
 }
 
-.lzy-popup-confirm button {
+.pfy-popup-confirm button {
 	width: 50%;
 }

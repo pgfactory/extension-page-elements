@@ -14,7 +14,7 @@ define('SCALAR_TYPES',
     ',url,date,time,datetime,month,number,range,tel,');
 
 define('DEFAULT_EDIT_FORM_TEMPLATE_FILE', '~page/-table_edit_form_template.md');
-define('LZY_TABLE_SHOW_REC_ICON', "<span class='lzy-icon lzy-icon-show2'></span>");
+define('PFY_TABLE_SHOW_REC_ICON', "<span class='pfy-icon pfy-icon-show2'></span>");
 define('DOWNLOAD_PATH_LINK_CODE', '.#download.code');
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -52,10 +52,10 @@ class Tables
             $options['dataSource'] = $dataSource;
         }
         $this->options = $options;
-        $this->lzy = $pfy;
+        $this->pfy = $pfy;
         $this->page = $pfy->pg;
-//        $this->lzy = $lzy;
-//        $this->page = $lzy->page;
+//        $this->pfy = $pfy;
+//        $this->page = $pfy->page;
 //        $this->tableCounter = &$GLOBALS['lizzy']['tableCounter'][$GLOBALS['lizzy']['pagePath']];
         $this->tableCounter = self::$tableCounter0++;
         $this->helpText = false;
@@ -82,12 +82,12 @@ class Tables
 //        $this->preselectData            = $this->getOption('preselectData', 'If set, pre-selects data from dataSource before rendering (only makes sense for higher dimensional data).');
 //        $this->inMemoryData             = $this->getOption('data', 'Alternative to "dataSource": provide data directly as array. E.g. data: $array,');
 //        $this->id                       = $this->getOption('id', '(optional) Id applied to the table tag (resp. wrapping div tag if renderAsDiv is set)');
-//        $this->wrapperClass             = $this->getOption('wrapperClass', '(optional) Class applied to the DIV around the table tag (resp. wrapping div tag if renderAsDiv is set). (Default: "lzy-table-default" which applies default styling).', 'lzy-table-default');
-//        $this->tableClass               = $this->getOption('tableClass', '(optional) Class applied to the table tag (resp. wrapping div tag if renderAsDiv is set). Use "lzy-table-default" to apply default styling.');
+//        $this->wrapperClass             = $this->getOption('wrapperClass', '(optional) Class applied to the DIV around the table tag (resp. wrapping div tag if renderAsDiv is set). (Default: "pfy-table-default" which applies default styling).', 'pfy-table-default');
+//        $this->tableClass               = $this->getOption('tableClass', '(optional) Class applied to the table tag (resp. wrapping div tag if renderAsDiv is set). Use "pfy-table-default" to apply default styling.');
 //        $this->tableClass               = $this->getOption('class', 'Synonyme for tableClass', $this->tableClass);
 //        $this->cellClass                = $this->getOption('cellClass', '(optional) Class applied to each table cell');
 //        $this->cellWrapper              = $this->getOption('cellWrapper', '(optional) If true, each cell is wrapped in a DIV element; if it\'s a string, the cell is wrapped in a tag of given name.');
-//        $this->rowClass                 = $this->getOption('rowClass', '(optional) Class applied to each table row', 'lzy-row-*');
+//        $this->rowClass                 = $this->getOption('rowClass', '(optional) Class applied to each table row', 'pfy-row-*');
 //        $this->cellIds                  = $this->getOption('cellIds', '(optional) If true, each cell gets an ID which is derived from the cellClass');
 //        $this->nRowsReq                 = $this->getOption('nRows', '(optional) Number of rows: if set the table is forced to this number of rows');
 //        $this->minRows                  = $this->getOption('minRows', '(optional) Minimum Number of rows: if set the table contains at least that many rows.');
@@ -110,7 +110,7 @@ class Tables
 //        }
 //        $this->tableButtons = str_replace('new-rec', 'add-rec', $this->tableButtons); // synonyme
 //
-//        $this->multiline                = $this->getOption('multiline', 'If true (and inline-editing is true), table cells get class "lzy-editable-multiline" thus supporting multiline editing.', false);
+//        $this->multiline                = $this->getOption('multiline', 'If true (and inline-editing is true), table cells get class "pfy-editable-multiline" thus supporting multiline editing.', false);
 //        $this->labelColons              = $this->getOption('labelColons', 'If false, trailing colon of labels in editing-forms are omitted.', true);
 //        $this->rowButtons               = $this->getOption('rowButtons', '(optional comma-separated-list) Prepends a column to each row containing custom buttons. Buttons can be defined as names of icons or HTML code. E.g. "send,trash"', null);
 //        $this->recViewButtonsActive     = $this->getOption('showRecViewButton', '[true|false] If true, a button to open a popup is added to each row. The popup presents the data record in form view.', false);
@@ -179,26 +179,26 @@ class Tables
         // first check explicit permission 'editableBy':
         if ($this->editableBy !== null) {
             $this->editingActive = true; //???
-//            $this->editingActive = checkPermission($this->editableBy, $this->lzy) ||
+//            $this->editingActive = checkPermission($this->editableBy, $this->pfy) ||
 //                (@$GLOBALS['_SESSION']['lizzy']['debug'] && @$_SESSION['lizzy']['isLocalhost']);
 
         // second implicit permission for edit, delete, add:
         } else {
             if ($this->editable) {
                 $this->editingActive = $this->editable = true; //???
-//                $this->editingActive = $this->editable = checkPermission($this->editable, $this->lzy);
+//                $this->editingActive = $this->editable = checkPermission($this->editable, $this->pfy);
 
             } elseif ((strpos($this->tableButtons, 'edit') !== false) ||
                     (strpos($this->tableButtons, 'add-rec') !== false) ||
                     (strpos($this->tableButtons, 'delete-rec') !== false) ||
                     (strpos($this->rowButtons, 'edit') === false)) {
                 $this->editingActive = true; //???
-//                $this->editingActive = checkPermission('loggedin', $this->lzy) || isLocalhost();
+//                $this->editingActive = checkPermission('loggedin', $this->pfy) || isLocalhost();
             }
         }
 
         if ($this->showRowNumbers) {
-            $this->wrapperClass = trim("$this->wrapperClass lzy-table-row-numbers");
+            $this->wrapperClass = trim("$this->wrapperClass pfy-table-row-numbers");
         }
 
         // short-hand 'editable: permission':
@@ -211,7 +211,7 @@ class Tables
             $this->editMode = 'form';
         } elseif (strpos($this->editMode, 'permanent') !== false) {
             $this->editMode = "form,$this->editMode";
-            $this->wrapperClass .= ' lzy-table-permanent-form';
+            $this->wrapperClass .= ' pfy-table-permanent-form';
         }
 
         if ($this->editingActive) {
@@ -265,7 +265,7 @@ class Tables
         }
 
         if ($this->multiline && $this->inlineEditing) {
-            $this->cellClass = trim("$this->cellClass lzy-editable-multiline");
+            $this->cellClass = trim("$this->cellClass pfy-editable-multiline");
         }
     } // __construct
 
@@ -281,7 +281,7 @@ class Tables
         if ($this->editingActive || $this->tableButtons || $this->recViewButtonsActive) {
             $this->page->addAssets('POPUPS, TABLES, TOOLTIPSTER');
             $this->includeCellRefs = true;
-            $this->tableClass .= ' lzy-active-table';
+            $this->tableClass .= ' pfy-active-table';
         }
         if ($this->formEditing || $this->recViewButtonsActive) {
             $this->form = $this->renderEditingForm();
@@ -324,7 +324,7 @@ class Tables
         }
 
         $out = <<<EOT
-  <div class='lzy-table-wrapper $this->wrapperClass'{$this->srcRef}>
+  <div class='pfy-table-wrapper $this->wrapperClass'{$this->srcRef}>
 $out
   </div>
 EOT;
@@ -341,13 +341,13 @@ EOT;
             return '';
         }
         if ($this->nRows < 1) {
-            return '{{ lzy-table-no-data-available }}';
+            return '{{ pfy-table-no-data-available }}';
         }
 
         $header = ($this->headers !== false);
 
-        $tableClass = $this->tableClass ? $this->tableClass : "lzy-table-{$this->tableCounter} ";
-        $tableClass = trim( "lzy-table $tableClass" );
+        $tableClass = $this->tableClass ? $this->tableClass : "pfy-table-{$this->tableCounter} ";
+        $tableClass = trim( "pfy-table $tableClass" );
         $thead = '';
         $tbody = '';
         $tfoot = '';
@@ -374,17 +374,17 @@ EOT;
                 die("Error in renderHtmlTable(): empty data record");
             }
             if ($header && ($r === 0)) {
-                $rowClass = 'lzy-hdr-row';
+                $rowClass = 'pfy-hdr-row';
                 if (isset($this->specificRowClasses[$r])) {
                     $rowClass .= " {$this->specificRowClasses[$r]}";
                 }
                 $thead = "\t<thead>\n\t\t<tr class='$rowClass'>\n";
                 if ($this->showRowNumbers) {
-                    $thead .= "\t\t\t<th class='lzy-table-row-nr'>{{^ lzy-table-row-nr-header }}</th>\n";
+                    $thead .= "\t\t\t<th class='pfy-table-row-nr'>{{^ pfy-table-row-nr-header }}</th>\n";
                 }
                 if ($this->injectSelectionCol) {
-                    $thead .= "\t\t\t<th class='lzy-table-row-selector'>{{^ lzy-table-row-selector }}" .
-                        "<input class='lzy-table-row-all-selector' type='checkbox' title='{{ lzy-table-select-all-rows }}'></th>\n";
+                    $thead .= "\t\t\t<th class='pfy-table-row-selector'>{{^ pfy-table-row-selector }}" .
+                        "<input class='pfy-table-row-all-selector' type='checkbox' title='{{ pfy-table-select-all-rows }}'></th>\n";
                 }
                 for ($c = 0; $c < $nCols; $c++) {
                     $cell = $this->getDataElem($recId, $c, 'th', true);
@@ -428,25 +428,25 @@ EOT;
                 $tbody .= "\t\t<tr class='$rowClass'$recKey>\n";
                 $n = '';
                 if ($showRowNr) {
-                    if (strpos($rowClass, 'lzy-added-row') === false) {
+                    if (strpos($rowClass, 'pfy-added-row') === false) {
                         if ($this->headers) {
                             $n = $r;
                         } else {
                             $n = $r + 1;
                         }
                         if ($n < 10) {
-                            $n = "<span class='lzy-spacer'>0</span>$n";
+                            $n = "<span class='pfy-spacer'>0</span>$n";
                         }
                     }
-                    $tbody .= "\t\t\t<td class='lzy-table-row-nr'>$n</td>\n";
+                    $tbody .= "\t\t\t<td class='pfy-table-row-nr'>$n</td>\n";
 
                 }
                 if ($this->injectSelectionCol) {
                     $empty = !sizeof( array_filter($rec, function ($v) { return boolval($v); }) );
                     if ($empty) {
-                        $tbody .= "\t\t\t<td class='lzy-table-row-selector'></td>\n";
+                        $tbody .= "\t\t\t<td class='pfy-table-row-selector'></td>\n";
                     } else {
-                        $tbody .= "\t\t\t<td class='lzy-table-row-selector'><input class='lzy-table-row-selector' type='checkbox'></td>\n";
+                        $tbody .= "\t\t\t<td class='pfy-table-row-selector'><input class='pfy-table-row-selector' type='checkbox'></td>\n";
                     }
                 }
                 for ($c = 0; $c < $nCols; $c++) {
@@ -475,9 +475,9 @@ EOT;
         if ($this->injectSelectionCol) {
             $jq = <<<EOT
 
-$('#{$this->id} .lzy-table-row-all-selector').change(function() {
+$('#{$this->id} .pfy-table-row-all-selector').change(function() {
     const state = $( this ).prop('checked');
-    $('#{$this->id} .lzy-table-row-selector').prop('checked', state);
+    $('#{$this->id} .pfy-table-row-selector').prop('checked', state);
 });
 
 EOT;
@@ -671,7 +671,7 @@ EOT;
         $page = $this->page;
         require_once SYSTEM_PATH.'extensions/editable/code/editable.class.php';
 
-        $this->lzy->trans->readTransvarsFromFile( SYSTEM_PATH.'extensions/editable/locales/vars.yaml', false, true);
+        $this->pfy->trans->readTransvarsFromFile( SYSTEM_PATH.'extensions/editable/locales/vars.yaml', false, true);
 
         $GLOBALS['lizzy']['editableLiveDataInitialized'] = false;
         $page->addModules('EDITABLE');
@@ -682,24 +682,24 @@ EOT;
         }
         if (isset( $this->options['showButton'] )) {
             if (($this->options['showButton'] === 'auto')) {
-                $this->tableClass .= " lzy-editable-show-buttons";
+                $this->tableClass .= " pfy-editable-show-buttons";
 
             } elseif ($this->options['showButton'] !== false) {
-                $this->tableClass .= " lzy-editable-show-buttons";
+                $this->tableClass .= " pfy-editable-show-buttons";
             }
         } else {
-            $this->tableClass .= " lzy-editable-auto-show-button";
+            $this->tableClass .= " pfy-editable-auto-show-button";
         }
 
         if ( $this->inlineEditingActive ) {
-            $this->cellClass .= " lzy-editable";
-            $this->wrapperClass .= ' lzy-table-editable';
+            $this->cellClass .= " pfy-editable";
+            $this->wrapperClass .= ' pfy-table-editable';
         } else {
-            $this->cellClass .= " lzy-editable-inactive";
-            $this->wrapperClass .= ' lzy-table-editable-inactive';
+            $this->cellClass .= " pfy-editable-inactive";
+            $this->wrapperClass .= ' pfy-table-editable-inactive';
         }
 
-        $this->edbl = new Editable( $this->lzy, [
+        $this->edbl = new Editable( $this->pfy, [
             'dataSource' => '~/'. $this->dataSource,
             'dataSelector' => '*,*',
             'targetSelector' => $this->targetSelector,
@@ -710,11 +710,11 @@ EOT;
             'execInitialDataUpload' => false,
         ] );
 
-        $jq = "$('.lzy-table-editable').closest('.dataTables_wrapper').addClass('lzy-datatable-editable');\n";
+        $jq = "$('.pfy-table-editable').closest('.dataTables_wrapper').addClass('pfy-datatable-editable');\n";
         $this->page->addJq($jq);
 
         if ($this->liveData) {
-            $this->wrapperClass .= ' lzy-table-livedata';
+            $this->wrapperClass .= ' pfy-table-livedata';
         }
 
         $out = $this->edbl->render();
@@ -763,7 +763,7 @@ EOT;
         if ($this->interactive) {
             $args['postUpdateCallback'] = 'redrawTables';
         }
-        $this->edbl = new LiveData($this->lzy, $args);
+        $this->edbl = new LiveData($this->pfy, $args);
         $this->srcRef = $this->edbl->render();
     } // activateLiveData
 
@@ -783,7 +783,7 @@ EOT;
                 if (@$hdr[0] === '-') {
                     $hdr = substr($hdr, 1);
                 }
-                $this->headerElems[$i] = $this->lzy->trans->translateVariable($hdr, true);
+                $this->headerElems[$i] = $this->pfy->trans->translateVariable($hdr, true);
             }
         }
 
@@ -926,7 +926,7 @@ EOT;
         $content = $this->getArg('content');
         $class = $this->getArg('class');
 
-        $rowClass = trim($this->getArg('rowClass').' lzy-added-row');
+        $rowClass = trim($this->getArg('rowClass').' pfy-added-row');
         if ($rowClass) {
             $n = sizeof($data);
             $this->specificRowClasses[$n] = $rowClass;
@@ -1276,12 +1276,12 @@ EOT;
         $class = $this->cellClass;
 
         if ($this->inlineEditing && strpos($cell, '<br>') !== false) {
-            $class = trim("$class lzy-editable-multiline");
+            $class = trim("$class pfy-editable-multiline");
         }
 
         $col1 = $col + 1;
         if ($hdrElem) {
-            $tdClass = $class ? $class . '-hdr' : 'lzy-div-table-hdr';
+            $tdClass = $class ? $class . '-hdr' : 'pfy-div-table-hdr';
         } else {
             $tdClass = $class;
         }
@@ -1310,7 +1310,7 @@ EOT;
             $title = strip_tags($title);
             $title = " title='$title'";
         }
-        $tdClass = trim(str_replace('  ', ' ', "$tdClass lzy-col-$col1"));
+        $tdClass = trim(str_replace('  ', ' ', "$tdClass pfy-col-$col1"));
         $tdClass = " class='$tdClass'";
 
         // handle option 'hide:true' from structure file:
@@ -1368,7 +1368,7 @@ EOT;
             return;
         }
         $page->addModules('DATATABLES');
-        $this->tableClass = trim($this->tableClass.' lzy-datatable');
+        $this->tableClass = trim($this->tableClass.' pfy-datatable');
         $order = '';
         if ($this->sort) {
             $sortCols = csv_to_array($this->sort);
@@ -1401,19 +1401,19 @@ EOT;
             $orderable = "columnDefs: [$orderable],";
         }
 
-        $dataTableObj = $this->dataTableObj[$this->tableCounter] = "lzyTable[{$this->tableCounter}]";
+        $dataTableObj = $this->dataTableObj[$this->tableCounter] = "pfyTable[{$this->tableCounter}]";
 
         // launch init code:
         $jq = <<<EOT
 
 $dataTableObj = $('#{$this->id}').DataTable({
-'language':{'search':'{{ lzy-datatables-search-button }}:', 'info': '_TOTAL_ {{ lzy-datatables-records }}'},
+'language':{'search':'{{ pfy-datatables-search-button }}:', 'info': '_TOTAL_ {{ pfy-datatables-records }}'},
 $order$paging$pageLength$orderable
 });
 
 EOT;
         $page->addJq($jq);
-        $page->addJs("\nvar lzyTable = [];");
+        $page->addJs("\nvar pfyTable = [];");
 
         if (!$this->headers) {
             $this->headers = true;
@@ -1490,15 +1490,15 @@ EOT;
     private function renderForm()
     {
         $recStructure = $this->ds->getStructure();
-        $form = new Forms($this->lzy);
+        $form = new Forms($this->pfy);
 
         $splitChoiceElemsInDb = isset($this->options['splitChoiceElemsInDb'])? $this->options['splitChoiceElemsInDb']: false;
 
         // Form Head:
         $args = [
             'type' => 'form-head',
-            'id' => 'lzy-edit-data-form-' . $this->tableCounter,
-            'class' => 'lzy-form lzy-edit-data-form',
+            'id' => 'pfy-edit-data-form-' . $this->tableCounter,
+            'class' => 'pfy-form pfy-edit-data-form',
             'file' => '~/'.$this->dataSource,
             'ticketHash' => $this->ticketHash,
             'cancelButtonCallback' => false,
@@ -1547,18 +1547,18 @@ EOT;
         // Delete:
         $out .= $form->render( [
             'type' => 'checkbox',
-            'wrapperId' => "lzy-edit-rec-delete-checkbox-$this->tableCounter",
-            'wrapperClass' => "lzy-edit-rec-delete-checkbox",
-            'class' => "lzy-edit-rec-delete-checkbox",
+            'wrapperId' => "pfy-edit-rec-delete-checkbox-$this->tableCounter",
+            'wrapperClass' => "pfy-edit-rec-delete-checkbox",
+            'class' => "pfy-edit-rec-delete-checkbox",
             'label' => 'Delete',
-            'name' => '_lzy-delete-rec',
-            'options' => '{{ lzy-edit-rec-delete-option }}',
+            'name' => '_pfy-delete-rec',
+            'options' => '{{ pfy-edit-rec-delete-option }}',
         ] );
 
         // Form Buttons:
         $out .= $form->render( [
             'type' => 'button',
-            'label' => '-lzy-edit-form-cancel | -lzy-edit-form-submit',
+            'label' => '-pfy-edit-form-cancel | -pfy-edit-form-submit',
             'value' => 'cancel|submit',
         ] );
 
@@ -1567,20 +1567,20 @@ EOT;
         $out = rtrim($out);
         $out = <<<EOT
 
-  <div id='lzy-edit-rec-form-{$this->tableCounter}' class='lzy-edit-rec-form-wrapper' style='display:none'>
-    <div class="lzy-edit-rec-form lzy-edit-rec-form-{$this->tableCounter}">
+  <div id='pfy-edit-rec-form-{$this->tableCounter}' class='pfy-edit-rec-form-wrapper' style='display:none'>
+    <div class="pfy-edit-rec-form pfy-edit-rec-form-{$this->tableCounter}">
 $out
     </div>
-  </div><!-- /lzy-edit-rec-form -->
+  </div><!-- /pfy-edit-rec-form -->
 
 EOT;
         if ($this->prefill) {
             $prefill = json_encode($this->prefill);
-            $this->page->addJs("var lzyTableFormPrefill = JSON.parse('$prefill');");
+            $this->page->addJs("var pfyTableFormPrefill = JSON.parse('$prefill');");
         }
         $js = <<<EOT
-var lzyEditRecDeleteBtn = '{{ lzy-edit-rec-delete-btn }}';
-var lzyEditFormSubmit = '{{ lzy-edit-form-submit }}';
+var pfyEditRecDeleteBtn = '{{ pfy-edit-rec-delete-btn }}';
+var pfyEditFormSubmit = '{{ pfy-edit-form-submit }}';
 EOT;
         $this->page->addJs( $js );
 
@@ -1613,8 +1613,8 @@ EOT;
 
 {{ formelem(
 	type: "form-head", 
-	id: 'lzy-edit-data-form-#tableCounter#',
-	class: 'lzy-form lzy-edit-data-form',
+	id: 'pfy-edit-data-form-#tableCounter#',
+	class: 'pfy-form pfy-edit-data-form',
 	file: '\~/$this->dataSource',
 	cancelButtonCallback: false,
 	validate: true,
@@ -1667,12 +1667,12 @@ EOT;
 
 {{ formelem(
 	'type': 'checkbox',
-	'wrapperId': "lzy-edit-rec-delete-checkbox-$this->tableCounter",
-	'wrapperClass': "lzy-edit-rec-delete-checkbox",
-	'class': "lzy-edit-rec-delete-checkbox",
+	'wrapperId': "pfy-edit-rec-delete-checkbox-$this->tableCounter",
+	'wrapperClass': "pfy-edit-rec-delete-checkbox",
+	'class': "pfy-edit-rec-delete-checkbox",
 	'label': 'Delete',
-	'name': '_lzy-delete-rec',
-	'options': '{{ lzy-edit-rec-delete-option }}',
+	'name': '_pfy-delete-rec',
+	'options': '{{ pfy-edit-rec-delete-option }}',
 	)
 }}
 
@@ -1685,7 +1685,7 @@ EOT;
 
 {{ formelem(
 	'type': 'button',
-	'label': '-lzy-edit-form-cancel | -lzy-edit-form-submit',
+	'label': '-pfy-edit-form-cancel | -pfy-edit-form-submit',
 	'value': 'cancel|submit',
 	)
 }}
@@ -1709,8 +1709,8 @@ EOT;
         }
 
         $out = str_replace(['{{','<'], ['&#123;{','&lt;'], $out);
-        $this->page->addOverlay("<pre id='lzy-form-export'>$out</pre>$writtenTo");
-        $this->page->addJq("$('#lzy-form-export').selText();");
+        $this->page->addOverlay("<pre id='pfy-form-export'>$out</pre>$writtenTo");
+        $this->page->addJq("$('#pfy-form-export').selText();");
     } // exportForm
 
 
@@ -1727,16 +1727,16 @@ EOT;
         if ($out) {
             $out = removeCStyleComments( $out );
             $out = str_replace(['#file#','#tableCounter#'], ['~/'.$this->dataSource, $this->tableCounter], $out);
-            $md = new LizzyMarkdown( $this->lzy );
+            $md = new LizzyMarkdown( $this->pfy );
             $out = $md->compileStr($out);
-            $out = $this->lzy->trans->translate( $out );
+            $out = $this->pfy->trans->translate( $out );
             $out = <<<EOT
 
-<div class='lzy-edit-rec-form-wrapper' style='display:none'>
-    <div class='lzy-edit-rec-form lzy-edit-rec-form-{$this->tableCounter}'>
+<div class='pfy-edit-rec-form-wrapper' style='display:none'>
+    <div class='pfy-edit-rec-form pfy-edit-rec-form-{$this->tableCounter}'>
 $out
     </div>
-</div><!-- /lzy-edit-rec-form -->
+</div><!-- /pfy-edit-rec-form -->
 
 
 EOT;
@@ -1757,7 +1757,7 @@ EOT;
         $rowButtons = ",$this->rowButtons,";
 
         if (strpos(",$rowButtons,", ',view,') !== false) {
-            $this->tableClass .= ' lzy-rec-preview';
+            $this->tableClass .= ' pfy-rec-preview';
         }
 
         $cellContent = '';
@@ -1765,23 +1765,23 @@ EOT;
         foreach ($customButtons as $name) {
             if (!$name) { continue; }
             if ($name === 'view') {
-                $icon = LZY_TABLE_SHOW_REC_ICON;
+                $icon = PFY_TABLE_SHOW_REC_ICON;
             } else {
-                $icon = "<span class='lzy-icon lzy-icon-$name'></span>";
+                $icon = "<span class='pfy-icon pfy-icon-$name'></span>";
             }
             if (strpos($name, '<') !== false) {
                 $cellContent .= $name;
             } else {
-                $cellContent .= "\n\t\t\t\t<button class='lzy-table-control-btn lzy-table-$name-btn' title='{{ lzy-table-$name-btn-title }}'>$icon</span></button>";
+                $cellContent .= "\n\t\t\t\t<button class='pfy-table-control-btn pfy-table-$name-btn' title='{{ pfy-table-$name-btn-title }}'>$icon</span></button>";
             }
         }
 
         $cellInstructions = [
             'column' => 1,
-            'header' => '{{^ lzy-table-custom-row-header }}&nbsp;',
+            'header' => '{{^ pfy-table-custom-row-header }}&nbsp;',
             'content' => $cellContent,
             'condition' => 'not-empty-except-first',
-            'class' => 'lzy-table-btn-col',
+            'class' => 'pfy-table-btn-col',
         ];
         $this->addCol($cellInstructions);
     } // injectRowButtons
@@ -1805,7 +1805,7 @@ EOT;
     private function checkArguments()
     {
         if (!$this->id) {
-            $this->id = 'lzy-table-' . $this->tableCounter;
+            $this->id = 'pfy-table-' . $this->tableCounter;
         }
         if ($this->tableDataAttr) {
             list($name, $value) = \Usility\PageFactory\explodeTrim('=', $this->tableDataAttr);
@@ -2074,14 +2074,14 @@ EOT;
                     // email address:
                     if (preg_match_all('/ ([\w\-.]*?) @ ([\w\-.]*?\.\w{2,6}) /x', $d, $m)) {
                         foreach ($m[0] as $addr) {
-                            $d = str_replace($addr, "<a href='mailto:$addr'>$addr</a>@@lzy-td-email@@", $d);
+                            $d = str_replace($addr, "<a href='mailto:$addr'>$addr</a>@@pfy-td-email@@", $d);
                         }
 
                     // phone number:
                     } elseif (preg_match('/^( \+? [\d\-\s()]* )$/x', $d, $m)) {
                         $tel = preg_replace('/[^\d+]/', '', $d);
                         if (strlen($tel) > 7) {
-                            $d = "<a href='tel:$tel'>$d</a>@@lzy-td-tel@@";
+                            $d = "<a href='tel:$tel'>$d</a>@@pfy-td-tel@@";
                         }
 
                     // url:
@@ -2092,14 +2092,14 @@ EOT;
                             $url = $m[1];
                         }
                         if (strlen($url) > 7) {
-                            $d = "<a href='$url'>$d</a>@@lzy-td-url@@";
+                            $d = "<a href='$url'>$d</a>@@pfy-td-url@@";
                         }
 
                     // image:
                     } elseif (preg_match('/ img: (([\w\-~\/]+) \. (jpg|jpeg|png|gif)) /ix', $d, $m)) {
                         if (strlen($m[1]) > 7) {
                             $img = "{$m[2]}[x48].{$m[3]}";
-                            $d = "{{ img( src:'$img') }}@@lzy-td-img@@";
+                            $d = "{{ img( src:'$img') }}@@pfy-td-img@@";
                         }
                     }
                     $data[$r][$c] = $d;
@@ -2176,7 +2176,7 @@ EOT;
             $this->options['includeKeys'] = true;
         }
         $this->options['includeTimestamp'] = $this->options['includeKeys'];
-        $ds = new DataStorage($this->options, $this->lzy);
+        $ds = new DataStorage($this->options, $this->pfy);
         $this->ds = $ds;
 
         if ($this->preselectData) {
@@ -2343,13 +2343,13 @@ EOT;
                         if (isset($item[0])) {
                             $item = $item[0];
                         } else {
-                            $item = '<span class="lzy-array-elem">' . implode('</span><span class="lzy-array-elem">', $item) . '</span>';
+                            $item = '<span class="pfy-array-elem">' . implode('</span><span class="pfy-array-elem">', $item) . '</span>';
                         }
                     }
                 }
                 if (@$desc['type'] === 'bool') {
-                    $item = $item ? 'lzy-value-true' : 'lzy-value-false';
-                    $item = $this->lzy->trans->translateVariable($item, true);
+                    $item = $item ? 'pfy-value-true' : 'pfy-value-false';
+                    $item = $this->pfy->trans->translateVariable($item, true);
                 } elseif (@$desc['type'] === 'password') {
                     $item = $item ? PASSWORD_PLACEHOLDER : '';
                 } else {
@@ -2411,7 +2411,7 @@ EOT;
 
                 if ($button) {
                     $buttons .= <<<EOT
-    <button id='$class-{$this->id}' class='lzy-button lzy-button-lean $class' $attributes type="button"><span class="lzy-table-activity-btn">{{ $button }}</span></button>
+    <button id='$class-{$this->id}' class='pfy-button pfy-button-lean $class' $attributes type="button"><span class="pfy-table-activity-btn">{{ $button }}</span></button>
 
 EOT;
                 }
@@ -2420,7 +2420,7 @@ EOT;
 
         $out .= <<<EOT
     
-  <div class="lzy-table-action-btns">
+  <div class="pfy-table-action-btns">
 $buttons  </div>
 
 EOT;
@@ -2436,11 +2436,11 @@ EOT;
             $this->strToAppend = <<<EOT
 
     <div style='display:none;'> <!-- text resources: -->
-        <div id="lzy-edit-form-rec">{{ lzy-edit-user-form-header }}</div>
-        <div id="lzy-edit-form-new-rec">{{ lzy-edit-new-user-form-header }}</div>
-        <div id="lzy-edit-form-submit">{{ lzy-edit-form-submit }}</div>
-        <div id="lzy-edit-form-close">{{ lzy-edit-form-close }}</div>
-        <div id="lzy-recview-header">{{ lzy-recview-header }}</div>
+        <div id="pfy-edit-form-rec">{{ pfy-edit-user-form-header }}</div>
+        <div id="pfy-edit-form-new-rec">{{ pfy-edit-new-user-form-header }}</div>
+        <div id="pfy-edit-form-submit">{{ pfy-edit-form-submit }}</div>
+        <div id="pfy-edit-form-close">{{ pfy-edit-form-close }}</div>
+        <div id="pfy-recview-header">{{ pfy-recview-header }}</div>
     </div>
 
 EOT;
@@ -2452,20 +2452,20 @@ EOT;
 
     private function appendNewRecButton($attributes)
     {
-        $button = 'lzy-table-new-rec-btn';
+        $button = 'pfy-table-new-rec-btn';
         $this->jq .= <<<EOT
 
-$('.lzy-table-new-rec-btn').click(function() {
+$('.pfy-table-new-rec-btn').click(function() {
     mylog('add rec');
-    const \$tableWrapper = $(this).closest('.lzy-table-wrapper');
-    const \$table = $('.lzy-table', \$tableWrapper);
+    const \$tableWrapper = $(this).closest('.pfy-table-wrapper');
+    const \$table = $('.pfy-table', \$tableWrapper);
     const tableInx = \$table.data('inx');
-    lzyActiveTables[tableInx].openFormPopup( \$table );
+    pfyActiveTables[tableInx].openFormPopup( \$table );
     return;
 });
 EOT;
-        $class = 'lzy-table-new-rec-btn';
-        $attributes = "$attributes title='{{ lzy-table-new-rec-title }}'";
+        $class = 'pfy-table-new-rec-btn';
+        $attributes = "$attributes title='{{ pfy-table-new-rec-title }}'";
         return [$button, $class, $attributes];
     } // appendNewRecButton
 
@@ -2474,33 +2474,33 @@ EOT;
     private function appendDeleteButton($attributes)
     {
         $this->injectSelectionCol = true;
-        $button = 'lzy-table-delete-rec-btn';
+        $button = 'pfy-table-delete-rec-btn';
         $this->jq .= <<<'EOT'
-$('.lzy-table-trash-btn, .lzy-table-delete-rec-btn').click(function() {
-    const $table = $('.lzy-table', $(this).closest('.lzy-table-wrapper'));
+$('.pfy-table-trash-btn, .pfy-table-delete-rec-btn').click(function() {
+    const $table = $('.pfy-table', $(this).closest('.pfy-table-wrapper'));
     const ds = $table.closest('[data-datasrc-ref]').attr('data-datasrc-ref');
     if (typeof ds === 'undefined') {
-        lzyPopup('Error: "data-datasrc-ref" is not defined');
+        pfyPopup('Error: "data-datasrc-ref" is not defined');
         return;
     }
     var recs = '';
-    $('.lzy-table-row-selector:checked', $table).each(function() {
+    $('.pfy-table-row-selector:checked', $table).each(function() {
         const recKey = $(this).closest('tr').attr('data-reckey');
         mylog('Delete: ' + recKey, false);
         recs += recKey + ',';
     });
     recs = recs.slice(0, -1);
-    lzyConfirm('{{ lzy-table-delete-recs-popup }}'). then(function() {
+    pfyConfirm('{{ pfy-table-delete-recs-popup }}'). then(function() {
         execAjaxPromise('del-rec', {ds: ds, recKeys: recs})
         .then(function() {
-            lzyReload();
+            pfyReload();
         });
     });
 });
 
 EOT;
-        $class = 'lzy-table-delete-rec-btn';
-        $attributes = "$attributes title='{{ lzy-table-delete-rec-title }}'";
+        $class = 'pfy-table-delete-rec-btn';
+        $attributes = "$attributes title='{{ pfy-table-delete-rec-title }}'";
         return [$button, $class, $attributes];
     } // appendDeleteButton
 
@@ -2510,24 +2510,24 @@ EOT;
     {
         $this->jq .= <<<EOT
 
-$('.lzy-table-edit-btn').click(function() {
+$('.pfy-table-edit-btn').click(function() {
     mylog('activating inline editing table');
-    const \$tableWrapper = $(this).closest('.lzy-table-wrapper');
-    const \$table = $('.lzy-table', \$tableWrapper);
+    const \$tableWrapper = $(this).closest('.pfy-table-wrapper');
+    const \$table = $('.pfy-table', \$tableWrapper);
     const tableInx = \$table.data('inx');
     let \$this = $(this);
-    if (\$this.hasClass('lzy-button-active')) {
-        \$this.removeClass('lzy-button-active').attr('aria-pressed', 'false');
-        lzyActiveTables[ tableInx ].activateInlineEditing( this );
+    if (\$this.hasClass('pfy-button-active')) {
+        \$this.removeClass('pfy-button-active').attr('aria-pressed', 'false');
+        pfyActiveTables[ tableInx ].activateInlineEditing( this );
     } else {
-        \$this.addClass('lzy-button-active').attr('aria-pressed', 'true');
-        lzyActiveTables[ tableInx ].activateInlineEditing( this );
+        \$this.addClass('pfy-button-active').attr('aria-pressed', 'true');
+        pfyActiveTables[ tableInx ].activateInlineEditing( this );
     }  
 });
 EOT;
-        $button = 'lzy-table-edit-btn';
-        $class = 'lzy-table-edit-btn';
-        $attributes = "$attributes title='{{ lzy-table-edit-title }}'";
+        $button = 'pfy-table-edit-btn';
+        $class = 'pfy-table-edit-btn';
+        $attributes = "$attributes title='{{ pfy-table-edit-title }}'";
         return [$button, $class, $attributes];
     } // appendEditButton
 
@@ -2536,30 +2536,30 @@ EOT;
     private function appendDownloadButton( $attributes )
     {
         $file = $this->getDownloadFilename();
-        $button = 'lzy-table-download-btn';
+        $button = 'pfy-table-download-btn';
         $appRoot = $GLOBALS['lizzy']['appRoot'];
         $jq = <<<EOT
 
-$('.lzy-table-download-btn').click(function() {
+$('.pfy-table-download-btn').click(function() {
     mylog('open table download popup', false);
-    const \$tableWrapper = $(this).closest('.lzy-table-wrapper');
-    const \$table = $('.lzy-table', \$tableWrapper);
+    const \$tableWrapper = $(this).closest('.pfy-table-wrapper');
+    const \$table = $('.pfy-table', \$tableWrapper);
     const tableInx = \$table.data('inx');
-    const popup = '<p>{{ lzy-table-download-text }}</p><ul><li>{{^ lzy-table-download-prefix }}'
-        +'<a href="$appRoot{$file}xlsx" download target="_blank">{{ lzy-table-download-excel }}</a>'
-        +'{{^ lzy-table-download-postfix }}</li><li>{{^ lzy-table-download-prefix }}'
-        +'<a href="$appRoot{$file}ods" download target="_blank">{{ lzy-table-download-ods }}</a>'
-        +'{{^ lzy-table-download-postfix }}</li></ul>';
-    lzyPopup({
+    const popup = '<p>{{ pfy-table-download-text }}</p><ul><li>{{^ pfy-table-download-prefix }}'
+        +'<a href="$appRoot{$file}xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
+        +'{{^ pfy-table-download-postfix }}</li><li>{{^ pfy-table-download-prefix }}'
+        +'<a href="$appRoot{$file}ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
+        +'{{^ pfy-table-download-postfix }}</li></ul>';
+    pfyPopup({
         text: popup,
-        header: '{{ lzy-table-download-header }}',
-        wrapperClass: 'lzy-table-download',
+        header: '{{ pfy-table-download-header }}',
+        wrapperClass: 'pfy-table-download',
     });
 });
 EOT;
-        $this->jq .= $this->lzy->trans->translate($jq);
-        $class = 'lzy-table-download-btn';
-        $attributes = "$attributes title='{{ lzy-table-download-title }}'";
+        $this->jq .= $this->pfy->trans->translate($jq);
+        $class = 'pfy-table-download-btn';
+        $attributes = "$attributes title='{{ pfy-table-download-title }}'";
         return [$button, $class, $attributes];
     } // appendDownloadButton
 
@@ -2591,10 +2591,10 @@ EOT;
         // for "active tables": create ticket and set data-field:
         if ($this->formEditing || $this->inlineEditing || $this->tableButtons || $this->recViewButtonsActive) {
             $this->page->addModules('MD5');
-            $this->tableDataAttr .= " data-form-id='#lzy-edit-data-form-{$this->tableCounter}'";
+            $this->tableDataAttr .= " data-form-id='#pfy-edit-data-form-{$this->tableCounter}'";
 
             // utility feature to export form template based on data structure:
-            if ($this->lzy->localHost && (getUrlArg('exportForm'))) {
+            if ($this->pfy->localHost && (getUrlArg('exportForm'))) {
                 $this->exportForm();
             }
         }

@@ -28,7 +28,7 @@ $macroConfig =  [
                                 true],
         'buttons'           => ['(Comma-separated-list of button labels) Example: "Cancel,Ok". ', false],
         'callbacks'         => ['(Comma-separated-list of function names) Example: "onCancel,onOk". ', false],
-        'id'                => ['ID to be applied to the popup element. (Default: lzy-popup-N)', false],
+        'id'                => ['ID to be applied to the popup element. (Default: pfy-popup-N)', false],
         'buttonClass'       => ['(Comma-separated-list of classes). Will be applied to buttons defined by '.
                                 '"buttons" argument.', ''],
         'wrapperClass'      => ['Class(es) applied to wrapper around Popup element. ', ''],
@@ -73,8 +73,8 @@ class Popup extends Macros
         // option 'triggerButton' -> render button to open popup:
         if (isset($args['triggerButton'])) {
             $label = $args['triggerButton'];
-            $buttonId = "lzy-popup-trigger-$inx";
-            $out = "\t<button id='$buttonId' class='lzy-button lzy-show-source-btn'>$label</button>\n";
+            $buttonId = "pfy-popup-trigger-$inx";
+            $out = "\t<button id='$buttonId' class='pfy-button pfy-show-source-btn'>$label</button>\n";
             unset($args['triggerButton']);
             $args['trigger'] = "#$buttonId";
             $args['closeButton'] = true;
@@ -96,11 +96,11 @@ class Popup extends Macros
 
         $jq = <<<EOT
 
-lzyPopup({
+pfyPopup({
 $jsArgs});
 
 EOT;
-        $this->pfy->pg->addJq($jq);
+        PageFactory::$pg->addJq($jq);
 //        $this->addModules('POPUPS');
 
         return $out;

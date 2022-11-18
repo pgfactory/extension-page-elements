@@ -1,13 +1,13 @@
 /* === Tables ================= */
-#lzy .lzy-encapsulated,
+#pfy .pfy-encapsulated,
 & {
 
-    .lzy-div-table-row {
+    .pfy-div-table-row {
         display: flex;
     }
 
-    /* === lzy-tables  */
-    .lzy-table {
+    /* === pfy-tables  */
+    .pfy-table {
         border-collapse: collapse;
 
         tr {
@@ -15,13 +15,13 @@
         }
     }
 
-    .lzy-table-wrapping tr {
+    .pfy-table-wrapping tr {
         display: flex;
         flex-wrap: wrap;
     }
 
     .dataTable,
-    .lzy-dataTable {
+    .pfy-dataTable {
         .sorting {
             cursor: pointer;
             background-repeat: no-repeat;
@@ -39,7 +39,7 @@
     }
 
 
-    .lzy-table-default {
+    .pfy-table-default {
         border-collapse: collapse;
 
         tr {
@@ -52,25 +52,25 @@
             font-size: 90%;
         }
 
-        .lzy-cell-no-overflow {
+        .pfy-cell-no-overflow {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .lzy-table-add-rec-btns {
+        .pfy-table-add-rec-btns {
             margin-bottom: 0.5em;
         }
 
-        &.lzy-table-editable .lzy-table {
+        &.pfy-table-editable .pfy-table {
             outline: 1px solid orange;
 
-            td.lzy-editable {
+            td.pfy-editable {
                 background: #fffff1;
             }
         }
 
-        .lzy-table-control-btn {
+        .pfy-table-control-btn {
             border: 1px solid #d1d1d1;
             border-radius: 50%;
             width: 1.5rem;
@@ -84,43 +84,43 @@
                 border-bottom: none;
             }
 
-            .lzy-icon::before {
+            .pfy-icon::before {
                 top: 48%;
             }
         }
 
-        .lzy-table-btn-col {
+        .pfy-table-btn-col {
             padding-top: 2px;
             padding-bottom: 2px;
         }
 
         &.dataTable {
-            th.lzy-table-btn-col,
-            th.lzy-table-row-selector {
+            th.pfy-table-btn-col,
+            th.pfy-table-row-selector {
                 padding: 8px 10px;
                 width: 1rem !important;
             }
         }
 
-        .lzy-edit-rec-form .lzy-popup-wrapper {
-            --lzy-form-width: 44.5em;
+        .pfy-edit-rec-form .pfy-popup-wrapper {
+            --pfy-form-width: 44.5em;
             max-width: unset;
         }
 
-        #lzy-edit-rec-delete-checkbox legend {
+        #pfy-edit-rec-delete-checkbox legend {
             display: none !important;
         }
     }
-    .lzy-edit-data-form .lzy-edit-rec-delete-checkbox legend.lzy-legend {
+    .pfy-edit-data-form .pfy-edit-rec-delete-checkbox legend.pfy-legend {
         display: none;
     }
-    .lzy-table-default {
+    .pfy-table-default {
         table.dataTable tbody button,
         table.dataTable tbody tr {
             color: #444;
         }
-        .lzy-table-btn-col,
-        .lzy-table-row-selector {
+        .pfy-table-btn-col,
+        .pfy-table-row-selector {
             &.sorting,
             &.sorting_asc,
             &.sorting_desc {
@@ -128,25 +128,25 @@
                 padding: 9px 0 0 11px;
             }
         }
-        &.lzy-table-row-numbers .lzy-table-delete-rec-btn {
+        &.pfy-table-row-numbers .pfy-table-delete-rec-btn {
             margin-left: 2.3em;
         }
-        .lzy-spacer {
+        .pfy-spacer {
             opacity: 0;
         }
     }
-} // lzy-encapsulated
+} // pfy-encapsulated
 
-//#lzy .lzy-encapsulated.lzy-edit-data-form .lzy-edit-rec-delete-checkbox legend.lzy-legend {
+//#pfy .pfy-encapsulated.pfy-edit-data-form .pfy-edit-rec-delete-checkbox legend.pfy-legend {
 //  display: none;
 //}
-//#lzy .lzy-table-default {
+//#pfy .pfy-table-default {
 //  table.dataTable tbody button,
 //  table.dataTable tbody tr {
 //    color: #444;
 //  }
-//  .lzy-table-btn-col,
-//  .lzy-table-row-selector {
+//  .pfy-table-btn-col,
+//  .pfy-table-row-selector {
 //    &.sorting,
 //    &.sorting_asc,
 //    &.sorting_desc {
@@ -154,10 +154,10 @@
 //      padding: 9px 0 0 11px;
 //    }
 //  }
-//  &.lzy-table-row-numbers .lzy-table-delete-rec-btn {
+//  &.pfy-table-row-numbers .pfy-table-delete-rec-btn {
 //    margin-left: 2.3em;
 //  }
-//  .lzy-spacer {
+//  .pfy-spacer {
 //    opacity: 0;
 //  }
 //}

@@ -11,7 +11,7 @@ class Overlay extends PageElements
             $str = \Usility\PageFactory\compileMarkdown($str);
         }
         $str = <<<EOT
-    <div id='lzy-overlay' class='lzy-overlay'><button class='lzy-close-overlay'>✕</button>
+    <div id='pfy-overlay' class='pfy-overlay'><button class='pfy-close-overlay'>✕</button>
 $str
     </div>
 EOT;

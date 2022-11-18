@@ -1,14 +1,14 @@
 
 
-#lzy .lzy-encapsulated,
+#pfy .pfy-encapsulated,
 & {
-    .lzy-warning:empty,
-    .lzy-warning-box:empty {
+    .pfy-warning:empty,
+    .pfy-warning-box:empty {
         display: none;
     }
 
-    .lzy-msgbox,
-    .lzy-warning-box {
+    .pfy-msgbox,
+    .pfy-warning-box {
         position: fixed !important;
         top: 5px;
         left: calc(100vw - 5px);
@@ -22,15 +22,15 @@
         box-shadow: 0 0 5px grey;
         z-index: 102;
         transform: translateX(0);
-        transition: transform var(--lzy-msg-transition-time, 0.6s);
+        transition: transform var(--pfy-msg-transition-time, 0.6s);
     }
 
-    .lzy-msgbox.lzy-msg-show::before {
+    .pfy-msgbox.pfy-msg-show::before {
         transform: rotate(180deg);
         border-radius: 0 3px 3px 0;
     }
 
-    .lzy-msgbox::before {
+    .pfy-msgbox::before {
         position: absolute;
         content: '\25C3';
         font-family: sans-serif;
@@ -43,7 +43,7 @@
         padding-top: 2px;
     }
 
-    .lzy-msgbox::after {
+    .pfy-msgbox::after {
         position: absolute;
         content: ' ';
         background: transparent;
@@ -53,21 +53,21 @@
         bottom: 0;
     }
 
-    .lzy-msgbox.lzy-msg-show {
+    .pfy-msgbox.pfy-msg-show {
         transform: translateX(-100%);
-        transition: transform var(--lzy-msg-transition-time, 0.6s);
+        transition: transform var(--pfy-msg-transition-time, 0.6s);
     }
 
-    .lzy-admin {
-        .lzy-msgbox,
-        .lzy-warning-box {
+    .pfy-admin {
+        .pfy-msgbox,
+        .pfy-warning-box {
             border: 1px solid red;
         }
     }
 
-    &.lzy-large-screen {
-        .lzy-msgbox,
-        .lzy-warning-box {
+    &.pfy-large-screen {
+        .pfy-msgbox,
+        .pfy-warning-box {
             &, p, a, div, span {
                 font-size: 12pt;
             }

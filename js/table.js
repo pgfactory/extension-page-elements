@@ -2,22 +2,22 @@
 
 "use strict";
 
-var lzyActiveTables = [];
+var pfyActiveTables = [];
 $( document ).ready(function() {
-	$('.lzy-active-table').each(function () {
+	$('.pfy-active-table').each(function () {
 		var tableInx = $(this).data('inx');
-		lzyActiveTables[tableInx] = new HTMLtable(this);
+		pfyActiveTables[tableInx] = new HTMLtable(this);
 	});
 
-	$('.lzy-active-table').on('click', '.lzy-table-view-btn', function () {
-		var tableInx = $(this).closest('.lzy-active-table').data('inx');
-		lzyActiveTables[tableInx].openViewRecPopup(this);
+	$('.pfy-active-table').on('click', '.pfy-table-view-btn', function () {
+		var tableInx = $(this).closest('.pfy-active-table').data('inx');
+		pfyActiveTables[tableInx].openViewRecPopup(this);
 	});
 
-	$('.lzy-active-table').on('click', '.lzy-table-edit-btn', function () {
-		var tableInx = $(this).closest('.lzy-active-table').data('inx');
-		lzyActiveTables[tableInx].openForm(this);
-		// lzyActiveTables[tableInx].openFormPopup(this);
+	$('.pfy-active-table').on('click', '.pfy-table-edit-btn', function () {
+		var tableInx = $(this).closest('.pfy-active-table').data('inx');
+		pfyActiveTables[tableInx].openForm(this);
+		// pfyActiveTables[tableInx].openFormPopup(this);
 	});
 });
 
@@ -27,11 +27,11 @@ function HTMLtable( tableObj ) {
 	if (typeof this.$table[0] === 'undefined') {
 		this.$table = $( tableObj );
 	}
-	this.$tableWrapper = this.$table.closest('.lzy-table-wrapper');
+	this.$tableWrapper = this.$table.closest('.pfy-table-wrapper');
 	this.tableInx = this.$table.data('inx');
 	this.dataRef = this.$table.closest('[data-datasrc-ref]').data('datasrc-ref');
 	this.formHtml = null;
-	this.lzyTableNewRec = false;
+	this.pfyTableNewRec = false;
 	this.formInx = false;
 	this.$form = null;
 	this.recKey = false;
@@ -53,15 +53,15 @@ function HTMLtable( tableObj ) {
 			return;
 		}
 		this.formInx = formId.replace(/\D/g, '');
-		this.$form = $( formId ).closest('.lzy-edit-rec-form-wrapper');
-		this.recViewPopupId = 'lzy-recview-popup-' + this.formInx;
-		this.recEditPopupId = 'lzy-recedit-popup-' + this.formInx;
+		this.$form = $( formId ).closest('.pfy-edit-rec-form-wrapper');
+		this.recViewPopupId = 'pfy-recview-popup-' + this.formInx;
+		this.recEditPopupId = 'pfy-recedit-popup-' + this.formInx;
 
 		if (this.$form.length) {
-			this.permanentForm = this.$tableWrapper.hasClass('lzy-table-permanent-form');
+			this.permanentForm = this.$tableWrapper.hasClass('pfy-table-permanent-form');
 			if (this.permanentForm) {
-				$('.lzy-edit-rec-form-wrapper', this.$tableWrapper).show();
-				$('.lzy-edit-rec-delete-checkbox', this.$tableWrapper).hide();
+				$('.pfy-edit-rec-form-wrapper', this.$tableWrapper).show();
+				$('.pfy-edit-rec-delete-checkbox', this.$tableWrapper).hide();
 			} else {
 				this.formHtml = this.$form.html();
 				this.$form.remove();
@@ -78,11 +78,11 @@ function HTMLtable( tableObj ) {
 	this.initDataTables = function () {
 		// Check for each table, whether DataTable is active and TableButtons are present.
 		// If so, move them into DataTable's own toolbar for aesthetic reasons.
-		$('.lzy-table').each(function () {
-			const $table = $( this ).closest('.lzy-table');
+		$('.pfy-table').each(function () {
+			const $table = $( this ).closest('.pfy-table');
 			$table.on('init.dt', function () {
-				const $tableWrapper = $table.closest('.lzy-table-wrapper');
-				const $tableButtons = $('.lzy-table-action-btns', $tableWrapper);
+				const $tableWrapper = $table.closest('.pfy-table-wrapper');
+				const $tableButtons = $('.pfy-table-action-btns', $tableWrapper);
 				if ($tableButtons.length) {
 					const html = $tableButtons.html();
 					$tableButtons.remove();
@@ -95,7 +95,7 @@ function HTMLtable( tableObj ) {
 
 
 	this.initViewRecPopup = function () {
-		if (!this.$table.hasClass('lzy-rec-preview')) {
+		if (!this.$table.hasClass('pfy-rec-preview')) {
 			return;
 		}
 
@@ -104,17 +104,17 @@ function HTMLtable( tableObj ) {
 
 		// remove all ids from form (which serves no longer as a form, but rather as container):
 		formHtml = formHtml.replace(/(id=['"].*?['"])/g, '');
-		const cls = 'lzy-popup-bg lzy-popup-' + this.formInx + ' lzy-close-on-bg-click lzy-popup-with-header lzy-recview-popup';
+		const cls = 'pfy-popup-bg pfy-popup-' + this.formInx + ' pfy-close-on-bg-click pfy-popup-with-header pfy-recview-popup';
 
 		// inject popup code at end of body:
 		const popupHtml = '<div id="' + this.recViewPopupId + '" class="' + cls + '" style="display: none;">\n' +
-			'<div class="lzy-popup-wrapper lzy-popup-wrapper-ref" data-popup-inx="' + this.recViewHash + '">\n' +
-			'<div class="lzy-popup-header lzy-draggable">' +
+			'<div class="pfy-popup-wrapper pfy-popup-wrapper-ref" data-popup-inx="' + this.recViewHash + '">\n' +
+			'<div class="pfy-popup-header pfy-draggable">' +
 				'<div></div>' +
-				'<button class="lzy-popup-close-button">×</button>' +
+				'<button class="pfy-popup-close-button">×</button>' +
 			'</div>' +
-			'<div class="lzy-popup-container lzy-scroll-hints">\n' +
-			'<div class="lzy-recview-container">\n' +
+			'<div class="pfy-popup-container pfy-scroll-hints">\n' +
+			'<div class="pfy-recview-container">\n' +
 				formHtml +
 			'</div></div></div></div>\n';
 		$( 'body' ).append( popupHtml );
@@ -128,15 +128,15 @@ function HTMLtable( tableObj ) {
 
 
 	this.initEditFormPopup = function () {
-		const cls = 'lzy-popup-bg lzy-popup-' + this.formInx + ' lzy-popup-with-header';
+		const cls = 'pfy-popup-bg pfy-popup-' + this.formInx + ' pfy-popup-with-header';
 		const formHtml = this.formHtml;
 		const popupHtml = '<div id="' + this.recEditPopupId + '" class="' + cls + '" style="display: none;">\n' +
-			'<div class="lzy-popup-wrapper lzy-popup-wrapper-ref" data-popup-inx="' + this.recEditHash + '">\n' +
-			'<div class="lzy-popup-header lzy-draggable">' +
+			'<div class="pfy-popup-wrapper pfy-popup-wrapper-ref" data-popup-inx="' + this.recEditHash + '">\n' +
+			'<div class="pfy-popup-header pfy-draggable">' +
 			'<div></div>' +
 			'</div>' +
-			'<div class="lzy-popup-container lzy-scroll-hints">\n' +
-			'<div id="lzy-edit-rec-form-container">\n' +
+			'<div class="pfy-popup-container pfy-scroll-hints">\n' +
+			'<div id="pfy-edit-rec-form-container">\n' +
 			formHtml +
 			'</div></div></div></div>\n';
 		$( 'body' ).append( popupHtml );
@@ -149,8 +149,8 @@ function HTMLtable( tableObj ) {
 		if (typeof $triggerSrc[0] === 'undefined') {
 			$triggerSrc = $( $triggerSrc );
 		}
-		lzyPopup({
-			id: 'lzy-recview-popup-' + this.formInx,
+		pfyPopup({
+			id: 'pfy-recview-popup-' + this.formInx,
 			contentRef: this.$recviewPopup,
 			header: true,
 			draggable: true,
@@ -169,15 +169,15 @@ function HTMLtable( tableObj ) {
 			const elemInx = parseInt( dataRef.replace(/^.*,/, '') ) + 1;
 			const $formEl = $('[data-elem-inx=' + elemInx + ']', this.$recViewPopup);
 			if ( $formEl.length ) {
-				$('.lzy-form-field-placeholder', $formEl ).text( val );
+				$('.pfy-form-field-placeholder', $formEl ).text( val );
 			}
 		});
 
-		var header = $('#lzy-recview-header').text();
+		var header = $('#pfy-recview-header').text();
 		if (!header) {
 			header = '&nbsp;';
 		}
-		$('.lzy-popup-header > div').html( header );
+		$('.pfy-popup-header > div').html( header );
 
 	}; // openViewRecPopup
 
@@ -212,24 +212,24 @@ function HTMLtable( tableObj ) {
 		if (!$form.length) {
 			return; // error case, should not occure
 		}
-		$('.lzy-edit-rec-delete-checkbox', $form).show();
+		$('.pfy-edit-rec-delete-checkbox', $form).show();
 		$form.data('reckey', this.recKey);
 		$('input[name=_rec-key]',$form).val( this.recKey );
 
 		if (this.recKey === 'new-rec') {
-			$form.addClass('lzy-new-data');
-			$('.lzy-edit-rec-delete-checkbox').hide();
+			$form.addClass('pfy-new-data');
+			$('.pfy-edit-rec-delete-checkbox').hide();
 
 		} else  {
-			$form.removeClass('lzy-new-data');
-			$('.lzy-form-wrapper [name=_rec-key]').val( this.recKey );
-			$('.lzy-edit-rec-delete-checkbox').show();
+			$form.removeClass('pfy-new-data');
+			$('.pfy-form-wrapper [name=_rec-key]').val( this.recKey );
+			$('.pfy-edit-rec-delete-checkbox').show();
 		}
 
-		$('[type=submit]', $form).val( $('#lzy-edit-form-submit').text() );
-		$('#lzy-edit-rec-delete-checkbox input[type=checkbox]').prop('checked', false);
+		$('[type=submit]', $form).val( $('#pfy-edit-form-submit').text() );
+		$('#pfy-edit-rec-delete-checkbox input[type=checkbox]').prop('checked', false);
 
-		lzyForms.onOpen( this.recKey, $form, true );
+		pfyForms.onOpen( this.recKey, $form, true );
 	}; // populateForm
 
 
@@ -250,20 +250,20 @@ function HTMLtable( tableObj ) {
 		}
 
 		var formTitle = '';
-		const popupId = '#lzy-recedit-popup-' + this.formInx;
+		const popupId = '#pfy-recedit-popup-' + this.formInx;
 		const $popup = $( popupId );
 
 		if (this.recKey === 'new-rec') {
-			formTitle = $('#lzy-edit-form-new-rec').html();
+			formTitle = $('#pfy-edit-form-new-rec').html();
 			fldPreset = '';
-			this.lzyTableNewRec = true;
+			this.pfyTableNewRec = true;
 
 		} else { // existing rec:
-			formTitle = $('#lzy-edit-form-rec').html();
-			this.lzyTableNewRec = false;
+			formTitle = $('#pfy-edit-form-rec').html();
+			this.pfyTableNewRec = false;
 		}
 
-		lzyPopup({
+		pfyPopup({
 			contentRef: $popup,
 			closeButton: false,
 			closeOnBgClick: false,
@@ -279,19 +279,19 @@ function HTMLtable( tableObj ) {
 		$('input[name=_rec-key]',$form).val( this.recKey );
 
 		if (this.recKey === 'new-rec') {
-			$form.addClass('lzy-new-data');
-			$('.lzy-edit-rec-delete-checkbox').hide();
+			$form.addClass('pfy-new-data');
+			$('.pfy-edit-rec-delete-checkbox').hide();
 
 		} else  {
-			$form.removeClass('lzy-new-data');
-			$('.lzy-form-wrapper [name=_rec-key]').val( this.recKey );
-			$('.lzy-edit-rec-delete-checkbox').show();
+			$form.removeClass('pfy-new-data');
+			$('.pfy-form-wrapper [name=_rec-key]').val( this.recKey );
+			$('.pfy-edit-rec-delete-checkbox').show();
 		}
 
-		$('[type=submit]', $form).val( $('#lzy-edit-form-submit').text() );
-		$('#lzy-edit-rec-delete-checkbox input[type=checkbox]').prop('checked', false);
+		$('[type=submit]', $form).val( $('#pfy-edit-form-submit').text() );
+		$('#pfy-edit-rec-delete-checkbox input[type=checkbox]').prop('checked', false);
 
-		lzyForms.onOpen( this.recKey, $form, true );
+		pfyForms.onOpen( this.recKey, $form, true );
 	}; // openFormPopup
 
 
@@ -302,9 +302,9 @@ function HTMLtable( tableObj ) {
 			let defaultValue = $this.data('default-value');
 			$this.val( defaultValue );
 		});
-		if (typeof lzyTableFormPrefill !== 'undefined') {
-			for (let elem in lzyTableFormPrefill) {
-				let value = lzyTableFormPrefill[elem];
+		if (typeof pfyTableFormPrefill !== 'undefined') {
+			for (let elem in pfyTableFormPrefill) {
+				let value = pfyTableFormPrefill[elem];
 				mylog(elem + ' => ' + value, false);
 				let $field = $('[name=' + elem + ']');
 				$field.val(value);
@@ -318,47 +318,47 @@ function HTMLtable( tableObj ) {
 		const parent = this;
 		$('body')
 			// cancel button in form:
-			.on('click', '.lzy-edit-data-form input[type=reset]', function(e) {
+			.on('click', '.pfy-edit-data-form input[type=reset]', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
 				e.stopImmediatePropagation();
 
-				const $form = $(this).closest('.lzy-form');
+				const $form = $(this).closest('.pfy-form');
 
 				// only in case of existing rec we need to unlock the record:
-				if (!$(this).closest('.lzy-new-data').length) {
+				if (!$(this).closest('.pfy-new-data').length) {
 					parent.unlockRecord();
 				}
-				lzyForms.clearForm( $form );
-				$('.lzy-edit-rec-delete-checkbox', $form).hide();
+				pfyForms.clearForm( $form );
+				$('.pfy-edit-rec-delete-checkbox', $form).hide();
 				$('[name=_rec-key]', $form).val('');
-				lzyPopupClose();
+				pfyPopupClose();
 			})
 
 			// submit button in form:
-			.on('click', '.lzy-edit-data-form input[type=submit]', function() {
-				if ( parent.lzyTableNewRec ) {
-					$('#lzy-chckb__delete_1').prop('checked', false);
+			.on('click', '.pfy-edit-data-form input[type=submit]', function() {
+				if ( parent.pfyTableNewRec ) {
+					$('#pfy-chckb__delete_1').prop('checked', false);
 				}
 			})
 
 			// delete checkbox in form:
-			.on('change', 'input.lzy-edit-rec-delete-checkbox', function(e) {
+			.on('change', 'input.pfy-edit-rec-delete-checkbox', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				const $form = $(this).closest('.lzy-edit-data-form');
+				const $form = $(this).closest('.pfy-edit-data-form');
 				var text;
 				var val;
 				if ($(this).prop('checked')) {
-					text = lzyEditRecDeleteBtn;
+					text = pfyEditRecDeleteBtn;
 					val = true;
 					mylog('delete');
 				} else {
-					text = lzyEditFormSubmit;
+					text = pfyEditFormSubmit;
 					val = false;
 					mylog('don\'t delete');
 				}
-				$('.lzy-form-button-submit', $form).val(text);
+				$('.pfy-form-button-submit', $form).val(text);
 				$form.data('delete', val);
 			});
 	}; // setupEventHandlers
@@ -366,10 +366,10 @@ function HTMLtable( tableObj ) {
 
 
 	this.makeReadonly = function ( $form ) {
-		if (typeof lzyForms !== 'undefined') {
-			lzyForms.makeReadonly( $form );
+		if (typeof pfyForms !== 'undefined') {
+			pfyForms.makeReadonly( $form );
 		} else {
-			lzyPopup('Error: forms.js not loaded.');
+			pfyPopup('Error: forms.js not loaded.');
 		}
 	}; // makeReadonly
 
@@ -386,15 +386,15 @@ function HTMLtable( tableObj ) {
 
 	this.activateInlineEditing = function ( elem ) {
 		const $btn = $( elem );
-		const $wrapper = this.$table.closest('.lzy-table-wrapper');
-		if (!$btn.hasClass('lzy-button-active')) {	// turn off
-			lzyReload();
-// $wrapper.removeClass('lzy-table-editable').addClass('lzy-table-editable-inactive');
-// $('.lzy-editable', $wrapper).removeClass('lzy-editable').addClass('lzy-editable-inactive');
+		const $wrapper = this.$table.closest('.pfy-table-wrapper');
+		if (!$btn.hasClass('pfy-button-active')) {	// turn off
+			pfyReload();
+// $wrapper.removeClass('pfy-table-editable').addClass('pfy-table-editable-inactive');
+// $('.pfy-editable', $wrapper).removeClass('pfy-editable').addClass('pfy-editable-inactive');
 
 		} else {	// turn on
-			$wrapper.addClass('lzy-table-editable').removeClass('lzy-table-editable-inactive');
-			$('.lzy-editable-inactive', $wrapper).addClass('lzy-editable').removeClass('lzy-editable-inactive');
+			$wrapper.addClass('pfy-table-editable').removeClass('pfy-table-editable-inactive');
+			$('.pfy-editable-inactive', $wrapper).addClass('pfy-editable').removeClass('pfy-editable-inactive');
 			editables.init();
 		}
 

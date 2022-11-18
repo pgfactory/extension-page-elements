@@ -1,6 +1,6 @@
 <?php
 /*
- * Lizzy maintains *one* SQlite DB (located in 'CACHE_PATH/.lzy_db.sqlite')
+ * Lizzy maintains *one* SQlite DB (located in 'CACHE_PATH/.pfy_db.sqlite')
  * So, all data managed by DataStorage2 is stored in there.
  * However, shadow data files in yaml, json or cvs format may be maintained:
  *      they are imported at construction and exported at deconstruction time
@@ -25,25 +25,25 @@ use \Kirby\Data\Json as Json;
 
  // PATH_TO_APP_ROOT must to be defined by the invoking module
  // *_PATH constants must only define path starting from app-root
-define('LIZZY_DB',  PFY_CACHE_PATH . '_lzy_db.sqlite');
+define('LIZZY_DB',  PFY_CACHE_PATH . '_pfy_db.sqlite');
 
-if (!defined('LZY_LOCK_ALL_DURATION_DEFAULT')) {
-    define('LZY_LOCK_ALL_DURATION_DEFAULT', 900.0); // 15 minutes
+if (!defined('PFY_LOCK_ALL_DURATION_DEFAULT')) {
+    define('PFY_LOCK_ALL_DURATION_DEFAULT', 900.0); // 15 minutes
 }
-if (!defined('LZY_DEFAULT_DB_TIMEOUT')) {
-    define('LZY_DEFAULT_DB_TIMEOUT', 0.333); // 1/3 sec
+if (!defined('PFY_DEFAULT_DB_TIMEOUT')) {
+    define('PFY_DEFAULT_DB_TIMEOUT', 0.333); // 1/3 sec
 }
-if (!defined('LZY_DB_POLLING_CYCLE_TIME')) {
-    define('LZY_DB_POLLING_CYCLE_TIME', 50000); // 50ms [us]
+if (!defined('PFY_DB_POLLING_CYCLE_TIME')) {
+    define('PFY_DB_POLLING_CYCLE_TIME', 50000); // 50ms [us]
 }
-if (!defined('LZY_DEFAULT_FILE_TYPE')) {
-    define('LZY_DEFAULT_FILE_TYPE', 'json');
+if (!defined('PFY_DEFAULT_FILE_TYPE')) {
+    define('PFY_DEFAULT_FILE_TYPE', 'json');
 }
 
 
 class DataStorage
 {
-    private $lzyDb = null;
+    private $pfyDb = null;
     private $dbModeRW = null;
     private $dataFile;
     private $tableName;
@@ -54,19 +54,19 @@ class DataStorage
     private $format;
     private $lockDB = false;
     private $defaultTimeout = 30; // [s]
-    private $defaultPollingSleepTime = LZY_DB_POLLING_CYCLE_TIME; // [us]
+    private $defaultPollingSleepTime = PFY_DB_POLLING_CYCLE_TIME; // [us]
     private $structure = null;
     private $structureFile = null;
     private $includeKeys;
     private $includeTimestamp;
 
 
-    public function __construct($args, $lzy = null)
+    public function __construct($args, $pfy = null)
     {
-        if ($lzy !== null) {
-            $this->lzy = $lzy;
+        if ($pfy !== null) {
+            $this->pfy = $pfy;
         } else {
-            $this->lzy = new PageFactory();
+            $this->pfy = new PageFactory();
         }
 
         $this->sessionId = session_id();
@@ -110,9 +110,9 @@ class DataStorage
             file_put_contents($filename, $str);
         }
 
-        if ($this->lzyDb) {
-            $this->lzyDb->close();
-            unset($this->lzyDb);
+        if ($this->pfyDb) {
+            $this->pfyDb->close();
+            unset($this->pfyDb);
         }
     } // __destruct
 
@@ -292,7 +292,7 @@ class DataStorage
 
     public function awaitChangedData($lastUpdate, $timeout = false, $pollingSleepTime = false /*us*/)
     {
-        $timeout = $timeout ? $timeout : LZY_DEFAULT_DB_TIMEOUT;
+        $timeout = $timeout ? $timeout : PFY_DEFAULT_DB_TIMEOUT;
         $pollingSleepTime = $pollingSleepTime ? $pollingSleepTime : $this->defaultPollingSleepTime;
         $json = $this->checkNewData($lastUpdate, true);
         if ($json !== null) {
@@ -517,7 +517,7 @@ class DataStorage
         if (isset($recLocks[$recId])) {
             $locRec = $recLocks[$recId];
             $lockDuration = microtime(true) - $locRec['lockTime'];
-            if ($lockDuration > LZY_LOCK_ALL_DURATION_DEFAULT) {
+            if ($lockDuration > PFY_LOCK_ALL_DURATION_DEFAULT) {
                 $this->unlockRec($recId, true);
                 return false;
             }
@@ -1131,11 +1131,11 @@ class DataStorage
 
         // wait for DB to be unlocked:
         if ($timeout === true) {
-            $timeout = LZY_DEFAULT_DB_TIMEOUT;
+            $timeout = PFY_DEFAULT_DB_TIMEOUT;
         } else {
-            $timeout = min(LZY_LOCK_ALL_DURATION_DEFAULT, $timeout);
+            $timeout = min(PFY_LOCK_ALL_DURATION_DEFAULT, $timeout);
         }
-        if (@$this->lzy->config->debug_debugLogging && $this->_isDbLocked( $checkOnLockedRecords )) {
+        if (@$this->pfy->config->debug_debugLogging && $this->_isDbLocked( $checkOnLockedRecords )) {
             $this->mylog('datastorage:_awaitDbLockEnd()');
         }
         $till = microtime(true) + $timeout;
@@ -1238,7 +1238,7 @@ class DataStorage
     {
         $rawData = $this->lowlevelReadRawData();
         $lockTime = $rawData['lockTime'];
-        if ($lockTime && ($lockTime < (microtime(true) - LZY_LOCK_ALL_DURATION_DEFAULT))) {
+        if ($lockTime && ($lockTime < (microtime(true) - PFY_LOCK_ALL_DURATION_DEFAULT))) {
             // lock too old - force it open:
             $this->_unlockDB();
 
@@ -1297,7 +1297,7 @@ class DataStorage
         if (!$this->_awaitDbLockEnd($timeout, false)) {
             return false;
         }
-        if (@$this->lzy->config->debug_debugLogging && $this->_isDbLocked( $checkOnLockedRecords )) {
+        if (@$this->pfy->config->debug_debugLogging && $this->_isDbLocked( $checkOnLockedRecords )) {
             $this->mylog('datastorage:_awaitRecLockEnd()');
         }
         $till = microtime(true) + $timeout;
@@ -1326,7 +1326,7 @@ class DataStorage
 
             // check whether lock timed out:
             $lockDuration = microtime(true) - $lockRec['lockTime'];
-            if ($lockDuration > LZY_LOCK_ALL_DURATION_DEFAULT) {
+            if ($lockDuration > PFY_LOCK_ALL_DURATION_DEFAULT) {
                 $this->_unlockRec($recId, true);
                 \Usility\PageFactory\mylog("DataStorage: recLoc on $this->dataFile => $recId timed out -> forced open");
                 return false;
@@ -1349,7 +1349,7 @@ class DataStorage
         $locked = false;
         foreach ($recLocks as $recId => $lockRec) {
             $lockDuration = microtime(true) - $lockRec['lockTime'];
-            if ($lockDuration > LZY_LOCK_ALL_DURATION_DEFAULT) {
+            if ($lockDuration > PFY_LOCK_ALL_DURATION_DEFAULT) {
                 // rec-lock too old, force it open:
                 $this->_unlockRec($recId);
                 continue;
@@ -1496,7 +1496,7 @@ class DataStorage
     private function lowlevelReadRecLocks()
     {
         $query = "SELECT \"recLocks\" FROM \"{$this->tableName}\"";
-        $rawData = $this->lzyDb->querySingle($query, true);
+        $rawData = $this->pfyDb->querySingle($query, true);
         return isset($rawData['recLocks']) ? $this->jsonDecode($rawData['recLocks']) : false;
     } // lowlevelReadMetaData
 
@@ -1506,7 +1506,7 @@ class DataStorage
     private function lowlevelReadRecLastUpdates()
     {
         $query = "SELECT \"recLastUpdates\" FROM \"{$this->tableName}\"";
-        $rawData = $this->lzyDb->querySingle($query, true);
+        $rawData = $this->pfyDb->querySingle($query, true);
         return isset($rawData['recLastUpdates']) ? $this->jsonDecode($rawData['recLastUpdates']): false;
     } // lowlevelReadRecLastUpdates
 
@@ -1519,7 +1519,7 @@ class DataStorage
             return null;
         }
         $query = "SELECT * FROM \"{$this->tableName}\"";
-        $rawData = $this->lzyDb->querySingle($query, true);
+        $rawData = $this->pfyDb->querySingle($query, true);
         if ($rawElem) {
             if (isset($rawData[$rawElem])) {
                 return $rawData[$rawElem];
@@ -1552,7 +1552,7 @@ UPDATE "{$this->tableName}" SET
 
 EOT;
 
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         $this->rawData = $this->lowlevelReadRawData();
 
         if ($this->structure === null) {
@@ -1639,7 +1639,7 @@ UPDATE "{$this->tableName}" SET
 
 EOT;
 
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         return $res;
     } // lowLevelWriteMeta
 
@@ -1657,7 +1657,7 @@ UPDATE "{$this->tableName}" SET
 
 EOT;
 
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         return $res;
     } // lowLevelWriteStructure
 
@@ -1677,7 +1677,7 @@ UPDATE "{$this->tableName}" SET
     "lastUpdate" = $modifTime;
 
 EOT;
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         $this->rawData = $this->lowlevelReadRawData();
     } // updateRawDbMetaData
 
@@ -1696,7 +1696,7 @@ UPDATE "{$this->tableName}" SET
     "lastUpdate" = $modifTime;
 
 EOT;
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         $this->rawData = $this->lowlevelReadRawData();
     } // updateDbModifTime
 
@@ -1709,7 +1709,7 @@ EOT;
         $recId = preg_replace('/(,.*)/', '', $recId);
 
         $query = "SELECT \"recLastUpdates\" FROM \"{$this->tableName}\"";
-        $rawData = $this->lzyDb->querySingle($query, true);
+        $rawData = $this->pfyDb->querySingle($query, true);
         $recLastUpdates = $this->jsonDecode($rawData['recLastUpdates']);
 
         $recLastUpdates[ $recId ] = microtime(true);
@@ -1731,7 +1731,7 @@ UPDATE "{$this->tableName}" SET
     "recLastUpdates" = "$json";
 
 EOT;
-        $this->lzyDb->query($sql);
+        $this->pfyDb->query($sql);
     } // lowlevelWriteRecLastUpdates
 
 
@@ -1758,12 +1758,12 @@ EOT;
 
     private function _openDbReadWrite()
     {
-        if ($this->lzyDb) {
-            $this->lzyDb->close();
+        if ($this->pfyDb) {
+            $this->pfyDb->close();
         }
-        $this->lzyDb = new \SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
-        $this->lzyDb->busyTimeout(5000);
-        $this->lzyDb->exec('PRAGMA journal_mode = wal;'); // https://www.php.net/manual/de/sqlite3.exec.php
+        $this->pfyDb = new \SQLite3(LIZZY_DB, SQLITE3_OPEN_READWRITE);
+        $this->pfyDb->busyTimeout(5000);
+        $this->pfyDb->exec('PRAGMA journal_mode = wal;'); // https://www.php.net/manual/de/sqlite3.exec.php
     } // _openDbReadWrite
 
 
@@ -1771,12 +1771,12 @@ EOT;
 
     private function openDbReadOnly()
     {
-        if ($this->lzyDb) {
+        if ($this->pfyDb) {
             // if it's already open, leave it open, even it's in read-write mode:
             return;
         }
-        $this->lzyDb = new \SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
-        $this->lzyDb->busyTimeout(5000);
+        $this->pfyDb = new \SQLite3(LIZZY_DB, SQLITE3_OPEN_READONLY);
+        $this->pfyDb->busyTimeout(5000);
         $this->dbModeRW = false;
     } // openDbReadWrite
 
@@ -1794,8 +1794,8 @@ EOT;
             $permission = @$_SESSION['lizzy']['configDbPermission'];
             if (!$permission && @$_SESSION['lizzy']['isLocalhost']) {
                 $permission = true;
-                if ($this->lzy) {
-                    $this->lzy->page->addMessage('{{ lzy-config-db-permission-localhost-warning }}');
+                if ($this->pfy) {
+                    $this->pfy->page->addMessage('{{ pfy-config-db-permission-localhost-warning }}');
                 }
             }
             if (!$permission) {
@@ -1844,7 +1844,7 @@ EOT;
         if (is_bool($sql)) {
             return;
         }
-        $stmt = $this->lzyDb->prepare($sql);
+        $stmt = $this->pfyDb->prepare($sql);
         if (is_bool($stmt)) {
             return;
         }
@@ -1860,7 +1860,7 @@ EOT;
             if ($ftime > $rawData['lastUpdate']) {
                 $res = $this->importFromFile();
                 if ($res === false) {
-                    die("Error: unable to update table in lzyDB: '$tableName'");
+                    die("Error: unable to update table in pfyDB: '$tableName'");
                 }
             } else {
                 $this->getData();
@@ -1905,7 +1905,7 @@ UPDATE "{$this->tableName}" SET
     "data" = "$json";
 
 EOT;
-        $this->lzyDb->query($sql);
+        $this->pfyDb->query($sql);
         $this->updateDbModifTime();
         $this->rawData = $this->lowlevelReadRawData();
 
@@ -2378,9 +2378,9 @@ EOT;
         $sql = "CREATE TABLE IF NOT EXISTS \"$tableName\" (";
         $sql .= '"id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,';
         $sql .= '"data" VARCHAR, "structure" VARCHAR, "origFile" VARCHAR, "recLastUpdates" VARCHAR, "recLocks" VARCHAR, "lockedBy" VARCHAR, "lockTime" REAL, "lastUpdate" REAL)';
-        $res = $this->lzyDb->query($sql);
+        $res = $this->pfyDb->query($sql);
         if ($res === false) {
-            die("Error: unable to create table in lzyDB: '$tableName'");
+            die("Error: unable to create table in pfyDB: '$tableName'");
         }
 
         $origFileName = $this->dataFile;
@@ -2393,18 +2393,18 @@ EOT;
 INSERT INTO "$tableName" ("data", "structure", "origFile", "recLastUpdates", "recLocks", "lockedBy", "lockTime", "lastUpdate")
 VALUES ("", "", "$origFileName", "[]", "[]", "", 0.0, $modifTime);
 EOT;
-        $stmt = $this->lzyDb->prepare($sql);
+        $stmt = $this->pfyDb->prepare($sql);
         if (!$stmt) {
-            die("Error: unable to initialize table in lzyDB: '$tableName'");
+            die("Error: unable to initialize table in pfyDB: '$tableName'");
         }
         $res = $stmt->execute();
         if ($res === false) {
-            die("Error: unable to initialize table in lzyDB: '$tableName'");
+            die("Error: unable to initialize table in pfyDB: '$tableName'");
         }
 
         $res = $this->importFromFile(true);
         if ($res === false) {
-            die("Error: unable to populate table in lzyDB: '$tableName'");
+            die("Error: unable to populate table in pfyDB: '$tableName'");
         }
         $this->lowLevelWriteStructure();
     } // createNewTable
