@@ -41,6 +41,6 @@ const PE_URL_DEFINITIONS = [
 $extensionClassName = 'PageElements';
 require_once __DIR__."/$extensionClassName.php";
 
-//require_once 'site/plugins/pagefactory/src/helper.php';
+require_once dirname(__DIR__) . '/third_party/vendor/autoload.php';
 
 return $extensionClassName;
