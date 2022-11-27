@@ -31,7 +31,7 @@ class Popup extends PageElements
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);
-        PageFactory::$pg->addBodyEndInjections($str);
+        $this->pg->addBodyEndInjections($str);
     } // set
 
 } // Popup

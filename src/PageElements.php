@@ -3,68 +3,72 @@
 namespace Usility\PageFactory\PageElements;
 
 use Usility\PageFactory\PageFactory;
-use function Usility\PageFactory\preparePath;
+// use function Usility\PageFactory\preparePath;
 
-define('PAGE_ELEMENTS_PATH', dirname(__DIR__).'/');
-define('SYSTEM_PATH',       PAGE_ELEMENTS_PATH);
-define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
-define('PATH_TO_APP_ROOT',  '');
-define('REC_KEY_ID', 	        '_key');
-define('TIMESTAMP_KEY_ID', 	    '_timestamp');
-
-require_once 'site/plugins/pagefactory/src/helper.php';
+//define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
+//define('PAGE_ELEMENTS_PATH', 'site/plugins/'.PE_FOLDER_NAME);
+//define('PAGE_ELEMENTS_URL', 'media/plugins/usility/'.PE_FOLDER_NAME);
+//define('SYSTEM_PATH',       dirname(__DIR__).'/'); //???
+//define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
+//define('PATH_TO_APP_ROOT',  '');
+//
+//const PE_ASSET_GROUPS = [
+//    PAGE_ELEMENTS_PATH.'assets/css/' => [       // $dest
+//        PAGE_ELEMENTS_PATH.'scss/*',            // $sources
+//    ],
+//];
+//
+//
+//const PE_URL_DEFINITIONS = [
+//    'POPUPS' => [
+//        PAGE_ELEMENTS_URL.'css/-popup.css',
+//        PAGE_ELEMENTS_URL.'third-party/tooltipster/css/tooltipster.bundle.min.css',
+//        PAGE_ELEMENTS_URL.'third-party/tooltipster/js/tooltipster.bundle.min.js',
+//        PAGE_ELEMENTS_URL.'third-party/jquery.event.ue/jquery.event.ue.min.js',
+//        PAGE_ELEMENTS_URL.'third-party/javascript-md5/md5.min.js',
+//        PAGE_ELEMENTS_URL.'js/popup.js',
+//    ],
+//    'MESSAGES' => [
+//        PAGE_ELEMENTS_URL.'css/-message.css',
+//        PAGE_ELEMENTS_URL.'js/message.js',
+//    ],
+//    'OVERLAYS' => [
+//        PAGE_ELEMENTS_URL.'css/-overlay.css',
+//        PAGE_ELEMENTS_URL.'js/overlay.js',
+//    ],
+//    'TOOLTIPSTER' => [
+//        PAGE_ELEMENTS_URL.'third-party/tooltipster/css/tooltipster.bundle.min.css',
+//        PAGE_ELEMENTS_URL.'third-party/tooltipster/js/tooltipster.bundle.min.js',
+//    ],
+//];
+//
+//
+//require_once 'site/plugins/pagefactory/src/helper.php';
 
 class PageElements
 {
-    private $assetDefs;
     public function __construct($pfy)
     {
         $this->pfy = $pfy;
         $this->pg = PageFactory::$pg;
+        $this->assets = PageFactory::$assets;
         $this->trans = PageFactory::$trans;
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
-        $this->assetDefs = [
-            'POPUPS' =>
-                PAGE_ELEMENTS_PATH.'scss/popup.scss,'.
-                PAGE_ELEMENTS_PATH.'third-party/tooltipster/css/tooltipster.bundle.min.css,'.
-                PAGE_ELEMENTS_PATH.'third-party/tooltipster/js/tooltipster.bundle.min.js,'.
-                PAGE_ELEMENTS_PATH.'third-party/jquery.event.ue/jquery.event.ue.min.js,'.
-                PAGE_ELEMENTS_PATH.'third-party/javascript-md5/md5.min.js,'.
-                PAGE_ELEMENTS_PATH.'js/popup.js',
-            'MESSAGES' =>
-                PAGE_ELEMENTS_PATH.'scss/message.scss,'.
-                PAGE_ELEMENTS_PATH.'js/message.js',
-            'OVERLAYS' =>
-                PAGE_ELEMENTS_PATH.'scss/overlay.scss,'.
-                PAGE_ELEMENTS_PATH.'js/overlay.js',
-            'TABLES' =>
-                PAGE_ELEMENTS_PATH.'scss/tables.scss,'.
-                PAGE_ELEMENTS_PATH.'js/tables.js',
-            'TOOLTIPSTER' =>
-                PAGE_ELEMENTS_PATH.'third-party/tooltipster/css/tooltipster.bundle.min.css,'.
-                PAGE_ELEMENTS_PATH.'third-party/tooltipster/js/tooltipster.bundle.min.js',
-            ];
     } // __construct
-//        $this->loadModules['HTMLTABLE']             = array('module' => 'js/htmltable.js,css/_htmltables.css', 'weight' => 123);
 
     public function getAssetDefs()
     {
-        return $this->assetDefs;
+        return PE_URL_DEFINITIONS;
     } // getAssetDefs
 
 
-    protected function addAssets($assets) {
-        if (!is_array($assets)) {
-            $assets = \Usility\PageFactory\explodeTrim(',', $assets, true);
-        }
-        $assetDefKeys = array_keys($this->assetDefs);
-        foreach ($assets as $key => $asset) {
-            if (in_array($asset, $assetDefKeys)) {
-                $assetsToAdd = \Usility\PageFactory\explodeTrim(',', $this->assetDefs[$asset], true);
-                array_splice($assets, $key, 1, $assetsToAdd);
-            }
-        }
+    public function getAssetGroups()
+    {
+        return PE_ASSET_GROUPS;
+    } // getAssetGroups
 
-        $this->pg->addAssets($assets);
+
+    protected function addAssets($assets) {
+        $this->assets->addAssets($assets);
     } // addAssets
 } // PageElements

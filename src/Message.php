@@ -19,7 +19,8 @@ class Message extends PageElements
             }
 
             $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";
-            $this->pg->requireJQuery();
+            $this->assets->requireFramework();
+//            $this->pg->requireJQuery();
             $this->addAssets('MESSAGES');
         }
         return $html;
@@ -30,6 +31,6 @@ class Message extends PageElements
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);
-        PageFactory::$pg->addBodyEndInjections($str);
+        $this->pg->addBodyEndInjections($str);
     } // set
 } // Message
