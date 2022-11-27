@@ -41,6 +41,12 @@ const PE_URL_DEFINITIONS = [
 $extensionClassName = 'PageElements';
 require_once __DIR__."/$extensionClassName.php";
 
-require_once dirname(__DIR__) . '/third_party/vendor/autoload.php';
+$extenstionRootPath = dirname(__DIR__).'/';
+
+// load this composer repo's autoloader:
+require_once $extenstionRootPath . 'third_party/vendor/autoload.php';
+
+// load extension's variables:
+\Usility\PageFactory\TransVars::loadTransVarsFromFiles($extenstionRootPath.'variables/');
 
 return $extensionClassName;
