@@ -1,0 +1,31 @@
+/* === Tables ================= */
+#pfy .pfy-encapsulated.pfy-default-styling,
+.pfy-default-styling {
+
+    .pfy-table-wrapper {
+        .pfy-button {
+            margin-bottom: 3px;
+        }
+    }
+    /* === pfy-tables  */
+    .pfy-table {
+        border-collapse: collapse;
+
+        tr {
+            vertical-align: top;
+        }
+        td, th {
+            padding: 0.5em 0.6em 0.2em 0.6em;
+            border: 1px solid #ddd;
+            font-size: 90%;
+        }
+        thead th {
+            background: #eee;
+        }
+        tfoot td {
+            background: #eee;
+        }
+    }
+
+} // pfy-encapsulated
+

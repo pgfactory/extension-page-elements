@@ -32,6 +32,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/-overlay.css',
         PAGE_ELEMENTS_URL.'js/overlay.js',
     ],
+    'TABLES' => [
+        PAGE_ELEMENTS_URL.'css/-table.css',
+        PAGE_ELEMENTS_URL.'js/table.js',
+    ],
     'TOOLTIPSTER' => [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
@@ -39,14 +43,19 @@ const PE_URL_DEFINITIONS = [
 ];
 
 $extensionClassName = 'PageElements';
-require_once __DIR__."/$extensionClassName.php";
-
-$extenstionRootPath = dirname(__DIR__).'/';
+require_once PAGE_ELEMENTS_PATH."src/$extensionClassName.php";
 
 // load this composer repo's autoloader:
-require_once $extenstionRootPath . 'third_party/vendor/autoload.php';
+require_once PAGE_ELEMENTS_PATH . 'third_party/vendor/autoload.php';
 
 // load extension's variables:
-\Usility\PageFactory\TransVars::loadTransVarsFromFiles($extenstionRootPath.'variables/');
+\Usility\PageFactory\TransVars::loadTransVarsFromFiles(PAGE_ELEMENTS_PATH.'variables/');
+
+//ToDo: replace with autoloader:
+// load all further class files within 'src/':
+$dir = \Usility\PageFactory\getDir(PAGE_ELEMENTS_PATH . 'src/*.php');
+foreach ($dir as $file) {
+    require_once $file;
+}
 
 return $extensionClassName;
