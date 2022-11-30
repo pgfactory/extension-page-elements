@@ -334,7 +334,7 @@ class DataTable extends DataSet
                     if (isset($footer[$key])) {
                         if ($footer[$key] === TABLE_SUM_SYMBOL && is_numeric($value)) {
                             $sums[$key] += $value;
-                        } elseif ($footer[$key] === TABLE_COUNT_SYMBOL) {
+                        } elseif (($footer[$key] === TABLE_COUNT_SYMBOL) && $value) {
                             $counts[$key]++;
                         }
                     }
