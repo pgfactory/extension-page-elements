@@ -22,7 +22,7 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
         PAGE_ELEMENTS_URL.'css/-popup.css',
-        PAGE_ELEMENTS_URL.'js/popup.js',
+        PAGE_ELEMENTS_URL.'js/-popup.js',
     ],
     'MESSAGES' => [
         PAGE_ELEMENTS_URL.'css/-message.css',
@@ -34,11 +34,15 @@ const PE_URL_DEFINITIONS = [
     ],
     'TABLES' => [
         PAGE_ELEMENTS_URL.'css/-table.css',
-        PAGE_ELEMENTS_URL.'js/table.js',
+        PAGE_ELEMENTS_URL.'js/-table.js',
     ],
     'TOOLTIPSTER' => [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
+    ],
+    'DATATABLES' => [
+        PAGE_ELEMENTS_URL.'css/datatables.min.css',
+        PAGE_ELEMENTS_URL.'js/datatables.min.js',
     ],
 ];
 
@@ -55,6 +59,10 @@ require_once PAGE_ELEMENTS_PATH . 'third_party/vendor/autoload.php';
 // load all further class files within 'src/':
 $dir = \Usility\PageFactory\getDir(PAGE_ELEMENTS_PATH . 'src/*.php');
 foreach ($dir as $file) {
+    $filename = basename($file);
+    if ($filename === 'index.php' || $filename[0] === '_') {
+        continue;
+    }
     require_once $file;
 }
 

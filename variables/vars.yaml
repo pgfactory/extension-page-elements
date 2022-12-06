@@ -1,1 +1,271 @@
-PageElements: loaded
+# transvars for PageElements
+
+
+# === Popups ===============
+pfy-popup-download:
+  de: Download
+  _:  Download
+
+pfy-cancel:
+  de: 'Abbrechen'
+  _:  'Cancel'
+
+pfy-ok:
+  _:  'Ok'
+
+pfy-continue:
+  de: 'Weiter...'
+  _:  'Continue...'
+
+pfy-confirm:
+  de: 'Bestätigen'
+  _:  'Confirm'
+
+pfy-close:
+  de: 'Schliessen'
+  _:  'Close'
+
+pfy-alert-header:
+  de: 'Bitte beachten'
+  _:  'Please Note'
+
+pfy-confirm-header:
+  de: 'Bestästigung'
+  _:  'Confirmation'
+
+pfy-popup-close-button: '✕'
+
+
+#--- Tables ----------------------
+pfy-datatables-search-button:
+  de: Suchen
+  _:  Find
+
+pfy-datatables-records:
+  de: Datensätze
+  _:  Records
+
+pfy-data-delete-records:
+  de: Ausgewählte Datensätze löschen?
+  _:  Delete selected data records?
+
+pfy-edit-rec-delete-btn:
+  de: Jetzt löschen
+  _:  Delete now
+
+pfy-table-select-all-rows:
+  de: 'Alle Zeilen auswählen'
+  _:  'Select/deselect all rows'
+
+pfy-table-delete-nothing-selected:
+  de: 'Um Datensätze zu löschen, müssen Sie diese zuerst auswählen.'
+  de2: 'Um Datensätze zu löschen, musst du diese zuerst auswählen.'
+  _:  'To delete data records, you need to select them first.'
+
+pfy-table-delete-recs-popup:
+  de: 'Alle ausgewählten Zeilen löschen?'
+  _:  'Delete selected records?'
+
+pfy-table-delete-recs-title:
+  de: 'Ausgewählten Datensätze löschen'
+  _:  'Delete selected records'
+
+pfy-table-delete-recs-header:
+  de: 'Löschen'
+  _:  'Delete'
+
+pfy-form-rec-deleted:
+  de: 'Datensatz gelöscht'
+  _:  'Data record deleted'
+
+pfy-forms-delete-rec-failed:
+  de: 'Fehlgeschlagen: interner Fehler beim löschen.'
+  _: 'Failed: internal error while deleting record.'
+
+
+pfy-table-download-title:
+  de: 'Diese Tabelle herunter laden'
+  _:  'Download this table'
+
+
+pfy-table-download-text:
+  de: 'Tabelle herunter laden'
+  _:  'Click to download'
+
+
+pfy-table-download-header:
+  de: 'Download'
+  _:  'Download'
+
+pfy-table-download-csv:
+  _: 'CSV-File (.csv)'
+
+pfy-table-download-excel:
+  _: 'Excel (.xlsx)'
+
+pfy-table-download-ods:
+  _: 'OpenOffice (.ods)'
+
+pfy-table-download-prefix:
+  de: 'als '
+  _:  'as '
+
+
+
+
+# === Forms ================
+
+pfy-yes:
+  de: 'Ja'
+  _:  'Yes'
+
+pfy-no:
+  de: 'Nein'
+  _:  'No'
+
+pfy-on:
+  de: 'Ein'
+  _:  'On'
+
+pfy-off:
+  de: 'Aus'
+  _:  'Off'
+
+pfy-value-true:
+  de: 'Ein'
+  _:  'On'
+
+pfy-value-false:
+  de: 'Aus'
+  _:  'Off'
+
+pfy-combined-required-value-missing:
+  de: 'Bitte mindestens eines dieser Felder ausfüllen:'
+  _:  'Please fill in at least one of these fields:'
+
+pfy-form-email-notification-subject:
+  de: 'Neue Daten empfangen'
+  _:  'New data received'
+
+pfy-required-value-missing:
+  de: 'Bitte füllen Sie dieses Feld aus:'
+  de2: 'Bitte fülle dieses Feld aus:'
+  _:  'Please fill in this entry field:'
+
+pfy-form-required-comment:
+  de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben.'
+  _:  'Fields marked by <span class="pfy-form-required-marker">*</span> are mandatory.'
+
+
+pfy-form-data-preview-title:
+  de: 'Bisher empfangene Daten:'
+  _:  'Data received until now:'
+
+pfy-form-expired:
+  de: 'Dieses Formular war zu lange offen,<br>Ihre Eingaben konnten nicht mehr akzeptiert werden.<br>Bitte versuchen Sie es erneut.'
+  de2: 'Dieses Formular war zu lange offen,<br>Deine Eingaben konnten nicht mehr akzeptiert werden.<br>Bitte versuche es erneut.'
+  _:  'Sorry, this form expired.<br>Please try again.'
+
+
+pfy-formelem-info-title:
+  de: 'Erläuterungen: '
+  _:  'Explanations: '
+
+pfy-form-data-received-ok:
+  de: "<p>Ihre Eingaben wurden übermittelt. Besten Dank.</p>"
+  de2: "<p>Deine Eingaben wurden übermittelt. Besten Dank.</p>"
+  _: "<p>Your entries have been successfully transmitted. Thank you.</p>"
+
+pfy-form-feedback-local: "<strong>Feedback on localhost only:</strong>"
+
+pfy-form-continue:
+  de: Weiter...
+  _:  Continue...
+
+pfy-form-empty-form-warning:
+  de: Sie haben noch keine Eingaben gemacht.
+  de2: Du hast noch keine Eingaben gemacht.
+  _:  You have not entered any data yet.
+
+pfy-form-empty-rec-received:
+  de: '<h2>Hinweis</h2><p>Es wurden keine Daten empfangen.<br>Entsprechend wurde nichts abgespeichert.</p>'
+  _:  '<h2>Note</h2><p>No input has be received on the server.</p><p>Therefore, nothing has been stored.</p>'
+
+pfy-form-override-honeypot:
+  de: '<h3>Vorsichtsmassnahme gegen Spam</h3><p>Bitte geben Sie Ihren Familienname erneut ein, diesmal in GROSSBUCHSTABEN:</p>'
+  de2: '<h3>Vorsichtsmassnahme gegen Spam</h3><p>Bitte gib deinen Familienname erneut ein, diesmal in GROSSBUCHSTABEN:</p>'
+  _:  '<h3>As a measure of precaution against spam</h3><p>Please enter your last name again, this time in CAPITAL LETTERS:</p>'
+
+pfy-form-override-honeypot-label:
+  de: 'Nachname in <strong>Grossbuchstaben</strong>:'
+  _:  'Last name in <strong>capital letters</strong>:'
+
+pfy-form-duplicate-data:
+  de: '<h2>Hinweis</h2><p>Ihre Eingaben haben wir bereits früher empfangen.<br>Entsprechend wurde jetzt nichts abgespeichert.</p>'
+  de2: '<h2>Hinweis</h2><p>Deine Eingaben haben wir bereits früher empfangen.<br>Entsprechend wurde jetzt nichts abgespeichert.</p>'
+  _:  '<h2>Note</h2><p>Your input has been received before.</p><p>Therefore, nothing has been stored this time.</p>'
+
+pfy-form-email-confirmation-info:
+  de: 'Wenn Sie Ihre E-Mail Adresse hier eingeben, erhalten Sie eine Bestästigung per E-Mail.'
+  de2: 'Wenn du deine E-Mail Adresse hier eingibst, erhältst du eine Bestästigung per E-Mail.'
+  _:  'If you fill in your e-mail address, we will send you confirmation message.'
+
+pfy-form-confirmation-email-sent:
+  de: 'Wir haben Ihnen eine Bestätigung per E-Mail geschickt.'
+  de2: 'Wir haben dir eine Bestätigung per E-Mail geschickt.'
+  _:  'We have sent a confirmation to your e-mail address.'
+
+pfy-form-response-email-template-not-found:
+  de: 'Keine Template-Datei für das Versenden der E-Mail gefunden.'
+  _:  'Template file for e-mail response not found.'
+
+pfy-form-data-key: _datakey
+#pfy-form-data-key: DataKey
+
+pfy-table-record-locked:
+    de: 'Der gewünschte Datensatz ist derzeit gesperrt durch den Zugriff eines anderen Benutzers.'
+    _:  'The requestes data record is currently locked by another user.'
+
+pfy-reveal-action-explanation:
+  de: 'Öffnet einen verdeckten Inhaltsbereich'
+  _:  'Opens a slide down region'
+
+pfy-form-submit-failure-warning:
+  de: "Achtung:<br>Es ist ein Fehler aufgetreten während des Abspeichern Ihrer Eingaben.<br>Bitte versuchen Sie es noch einmal.<br>Falls es auch dann nicht klappt, kontaktieren uns bitte: {{ webmaster_email }}"
+  de2: "Achtung:<br>Es ist ein Fehler aufgetreten während des Abspeichern Ihrer Eingaben.<br>Bitte versuche es noch einmal.<br>Falls es auch dann nicht klappt, kontaktiere uns bitte: {{ webmaster_email }}"
+  _:  "Warning:<br>an error occured while submitting your data.<br>Please try again.<br>If that doesn't help, contact {{ webmaster_email }}."
+
+
+
+#--- File Upload --------------------------
+pfy-fileadmin-button-tooltip:
+  de: 'Dateinverwaltung anzeigen'
+  _:  'Show file manager'
+
+pfy-fileadmin-button-text:  # just in case the button should carry icon and text:
+  de: ''
+  _:  ''
+
+pfy-file-upload-label:
+  de: Eine Datei hochladen
+  en: Upload a file
+
+pfy-files-upload-label:
+  de: Datei(en) hochladen
+  en: Upload file(s)
+
+pfy-uploaded-files-title:
+  de: "Hochgeladene Dateien:"
+  en: "Uploaded files:"
+
+
+Loading: '<img class="pfy-loading-spinner" src="~/media/pagefactory/icons/loader.gif" alt="">'
+
+pfy-error-in-email-addr:
+  de: "Diese E-Mail Adresse ist unvollständig oder enthält einen Tippfehler"
+  _:  "This e-mail address is incomplete or contains a typo"
+
+pfy-please-correct:
+  de: "Bitte korrigieren."
+  _:  "Please correct."
+

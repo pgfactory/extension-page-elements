@@ -6,46 +6,64 @@
 
 namespace Usility\PageFactory;
 
-$extensionPath = dirname(dirname(__FILE__)).'/';
 
 $macroConfig =  [
     'name' => strtolower( $macroName ),
     'parameters' => [
-        'text'              => ['Text to be displayed in the popup (for small messages, otherwise use contentFrom). '.
-                                '"content" works as synonym for "text". ', false],
-        'contentFrom'       => ['Selector that identifies content which will be imported and displayed in the popup '.
-                                '(example: "#box"). ', false],
-        'contentRef'        => ['Selector that identifies content which will be wrapped and popped up. '.
-                                '(rather for internal use - event handlers are preserved, but usage is a bit tricky). ',
-                                false],
-        'triggerSource'     => ['If set, the popup opens upon activation of the trigger source element (example: "#btn"). ',
-                                false],
-        'triggerEvent'      => ['[click, right-click, dblclick, blur] Specifies the type of event that shall open '.
-                                'the popup (default: click). ', 'click'],
-        'closeButton'       => ['Specifies whether a close button shall be displayed in the upper right corner '.
-                                '(default: true). ', true],
-        'closeOnBgClick'    => ['Specifies whether clicks on the background will close the popup (default: true). ',
-                                true],
-        'buttons'           => ['(Comma-separated-list of button labels) Example: "Cancel,Ok". ', false],
-        'callbacks'         => ['(Comma-separated-list of function names) Example: "onCancel,onOk". ', false],
-        'id'                => ['ID to be applied to the popup element. (Default: pfy-popup-N)', false],
-        'buttonClass'       => ['(Comma-separated-list of classes). Will be applied to buttons defined by '.
-                                '"buttons" argument.', ''],
-        'wrapperClass'      => ['Class(es) applied to wrapper around Popup element. ', ''],
-        'anker'             => ['(selector) If defined, popup will be placed inside elemented selected by "anker". '.
-                                '(Not available for "contentRef"). Default: "body". ', ''],
+        'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
+            'contentFrom). "content" functions as synonym for "text".', false],
+
+        'contentFrom'		=> ['[string] Selector that identifies content which will be imported and displayed '.
+            'in the popup (example: "#box").', false],
+
+        'header'		=> ['[string] Defines the text in the popup header. If false, no header is displayed.', false],
+
+        'triggerSource'		=> ['[true, string, false] If set, the popup opens upon activation of the trigger '.
+            'source element (example: "#btn").', false],
+
+        'triggerEvent'		=> ['[click, right-click, dblclick, blur] Specifies the type of event that shall '.
+            'open the popup.', false],
+
+        'closeButton'		=> ['[true,false] Specifies whether a close button shall be displayed in the upper '.
+            'right corner (default: true).', false],
+
+        'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
+            '(default: true).', false],
+
+        'buttons'		=> ['[Comma-separated-list of button labels] Example: "Cancel,Ok". Predefined: "Cancel", '.
+            '"Close", "Ok", "Continue", "Confirm".', false],
+
+        'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
+            'matter which way closing was initiated (including click on background).', false],
+
+        'onOk, onConfirm, onContinue, onContinue, onCancel, onClose'		=> ['[function or string] Callback '.
+            'function invoked when a corresponding key is activated', false],
+
+        'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
+            false],
+
+        'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
+
+        'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
+
+        'popupClass'		=> ['[string] Class(es) applied to popup element.', false],
+
+        'containerClass'		=> ['[string] Class(es) applied to container element.', false],
+
+        'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
+
+        'buttonClasses'		=> ['[Comma-separated-list of classes] Will be applied to corresponding '.
+            'buttons defined by "buttons" argument.', false],
+
+        'anker'		=> ['[string] If defined, popup will be placed inside elemented selected by "anker" '.
+            '(e.g. ".box"). Default: "body".', false],
+
     ],
     'summary' => <<<EOT
-[Short description of macro.]
+Displays a popup window.
 EOT,
     'mdCompile' => false,
-    'assetsToLoad' => [
-        $extensionPath.'scss/popup.scss',
-        $extensionPath.'js/popup.js',
-        $extensionPath.'third-party/javascript-md5/md5.min.js',
-        $extensionPath.'third-party/tooltipster/js/tooltipster.bundle.min.js',
-        $extensionPath.'third-party/tooltipster/css/tooltipster.bundle.min.css',
-    ],
+    'assetsToLoad' => 'POPUPS'
 ];
 
 
@@ -96,12 +114,11 @@ class Popup extends Macros
 
         $jq = <<<EOT
 
-pfyPopup({
+var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
         PageFactory::$pg->addJq($jq);
-//        $this->addModules('POPUPS');
 
         return $out;
     } // render

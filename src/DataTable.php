@@ -48,10 +48,14 @@ class DataTable extends DataSet
         $this->tableClass = isset($options['tableClass']) && $options['tableClass'] ? $options['tableClass'] : 'pfy-table';
         $this->tableWrapperClass = isset($options['tableWrapperClass']) && $options['tableWrapperClass'] ? $options['tableWrapperClass'] : 'pfy-table-wrapper';
         $this->dataReference = isset($options['dataReference']) && $options['dataReference'] ? $options['dataReference'] : '';
-        $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] : false;
+        $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] :
+            (isset($options['footer']) && $options['footer'] ? $options['footer'] : false);
+        $this->options['footers'] = $this->footers;
+//        $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] : false;
         $this->caption = isset($options['caption']) && $options['caption'] ? $options['caption'] : false;
         $captionPosition = isset($options['captionPosition']) && $options['captionPosition'] ? $options['captionPosition'] : 'b';
         $this->captionAbove = $captionPosition[0] === 'a';
+        $this->interactive = isset($options['interactive']) ? $options['interactive'] : false;
         $this->tableButtons = isset($options['tableButtons']) ? $options['tableButtons'] : false;
         $this->downloadFilename = isset($options['downloadFilename']) && $options['downloadFilename'] ? $options['downloadFilename'] : base_name($file, false);
         $this->showRowNumbers = isset($options['showRowNumbers']) ? $options['showRowNumbers'] : false;
@@ -72,6 +76,7 @@ class DataTable extends DataSet
             $this->tableButtonDelete = true;
             $this->tableButtonDownload = true;
             $this->dataReference = true;
+
         } elseif ($this->tableButtons) {
             $this->tableButtonDelete = (strpos('delete', $this->tableButtons) !== false);
             $this->tableButtonDownload = (strpos('download', $this->tableButtonDownload) !== false);
@@ -83,6 +88,10 @@ class DataTable extends DataSet
             $this->dataReference = '';
         }
 
+        if ($this->tableButtonDelete) {
+            $this->showRowSelectors = true;
+        }
+
 
         if ($this->sort) {
             $this->sort($this->sort);
@@ -90,6 +99,7 @@ class DataTable extends DataSet
             // DataSet may consist of inconsistently structured records. Thus, we need to narmalize first:
             $this->tableData = $this->get2DNormalizedData();
         }
+        PageFactory::$pg->addAssets('TABLES');
     } // __construct
 
 
@@ -111,6 +121,10 @@ class DataTable extends DataSet
         // Option row selectors:
         if ($this->showRowSelectors) {
             $this->injectColumn('%row-selectors');
+        }
+
+        if ($this->interactive) {
+            $this->activateInteractiveTable();
         }
 
         // render table header tags:
@@ -332,9 +346,11 @@ class DataTable extends DataSet
                 $i = 0;
                 foreach ($rec as $key => $value) {
                     if (isset($footer[$key])) {
-                        if ($footer[$key] === TABLE_SUM_SYMBOL && is_numeric($value)) {
+                        if (str_contains($footer[$key],TABLE_SUM_SYMBOL) && is_numeric($value)) {
+//                        if ($footer[$key] === TABLE_SUM_SYMBOL && is_numeric($value)) {
                             $sums[$key] += $value;
-                        } elseif (($footer[$key] === TABLE_COUNT_SYMBOL) && $value) {
+                        } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL) && $value) {
+//                        } elseif (($footer[$key] === TABLE_COUNT_SYMBOL) && $value) {
                             $counts[$key]++;
                         }
                     }
@@ -346,10 +362,15 @@ class DataTable extends DataSet
             $c = 1;
             foreach (array_keys($this->elementLabels) as $key) {
                 if (isset($footer[$key])) {
-                    if ($footer[$key] === TABLE_SUM_SYMBOL) {
-                        $val = $sums[$key];
-                    } elseif ($footer[$key] === TABLE_COUNT_SYMBOL) {
-                        $val = $counts[$key];
+//                    if (str_contains($footer[$key], TABLE_SUM_SYMBOL)) {
+////                    if ($footer[$key] === TABLE_SUM_SYMBOL) {
+////                        $val = $sums[$key];
+//                        $val = $sums[$key];
+//                    } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
+////                    } elseif ($footer[$key] === TABLE_COUNT_SYMBOL) {
+//                        $val = $counts[$key];
+                    if (str_contains($footer[$key], TABLE_SUM_SYMBOL) || str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
+                        $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $footer[$key]);
                     } else {
                         $val = $footer[$key];
                     }
@@ -391,26 +412,16 @@ class DataTable extends DataSet
 
         if ($this->tableButtonDelete) {
             $icon = renderIcon('trash');
-            $out .= "<button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
-//            $out .= "<button id='pfy-table-delete-recs-open-dialog' class='pfy-button pfy-button-lean' type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
-            $js = <<<EOT
-    const pfyDeleteRecDialog = '<p>{{ pfy-table-delete-recs-popup }}</p>';
-    const pfyNothingSelected = '<p>{{ pfy-table-delete-nothing-selected }}</p>';
-EOT;
-//            $js = <<<EOT
-//    const pfyDeleteRecDialog = '<p>{{ pfy-table-delete-recs-popup }}</p>' +
-//    '<button class="pfy-button" value="cancel">{{ pfy-edit-form-cancel }}</button>' +
-//    '<button class="pfy-button" value="submit">{{ pfy-edit-rec-delete-btn }}</button>';
-//EOT;
-
-            $this->pfy::$pg->addJs($js);
-//            $this->pfy::$pg->addJs('const pfyTableDeletePopup = "{{ pfy-table-delete-recs-popup }}";');
+            $out .= "<button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
+                "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
+            PageFactory::$pg->addAssets('POPUPS');
         }
 
         if ($this->tableButtonDownload) {
             $file = $this->exportDownloadDocs();
             $icon = renderIcon('cloud_download_alt');
-            $out .= "<button class='pfy-button pfy-button-lean pfy-table-download-start' type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
+            $out .= "<button class='pfy-button pfy-button-lean pfy-table-download-start' ".
+                "type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
 
             $appUrl = PageFactory::$appUrl;
             if ($this->officeFormatAvailable) {
@@ -420,21 +431,44 @@ EOT;
         +'<a href="$appUrl{$file}.xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
         +'{{^ pfy-table-download-postfix }}:</li><li>{{^ pfy-table-download-prefix }}'
         +'<a href="$appUrl{$file}.ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
-        +'{{^ pfy-table-download-postfix }}</li></ul><button class="pfy-button" value="cancel">{{ pfy-close }}</button>';
+        +'{{^ pfy-table-download-postfix }}</li></ul>';
 EOT;
 
             } else {
                 $js = <<<EOT
     const pfyDownloadDialog = '<p>{{ pfy-table-download-text }}<br>{{^ pfy-table-download-prefix }}'
         +'<a href="$appUrl{$file}" download target="_blank">{{ pfy-table-download-csv }}</a>'
-        +'{{^ pfy-table-download-postfix }}</p><button class="pfy-button" value="cancel">{{ pfy-close }}</button>';
+        +'{{^ pfy-table-download-postfix }}</p>';
 EOT;
             }
 
             PageFactory::$pg->addJs($js);
+            PageFactory::$assets->addAssets('POPUPS, TABLES');
         }
         return $out;
     } // renderTableButtons
+
+
+    private function activateInteractiveTable()
+    {
+        PageFactory::$pg->addAssets('DATATABLES');
+        $this->tableClass .= ' pfy-interactive';
+
+        $order = '';
+        $paging = 'paging: false,';
+        $pageLength = '';
+        $orderable = '';
+
+        $jq = <<<EOT
+
+var pfyDatatable = $('#{$this->tableId}').DataTable({
+'language':{'search':'{{ pfy-datatables-search-button }}:', 'info': '_TOTAL_ {{ pfy-datatables-records }}'},
+$order$paging$pageLength$orderable
+});
+
+EOT;
+        PageFactory::$pg->addJq($jq);
+    } // activateInteractiveTable
 
 
     /**
@@ -459,8 +493,6 @@ EOT;
 
     private function exportDownloadDocs(): string
     {
-//        $file = $this->getDownloadFilename();
-//        $file = $this->export($file, fileType: true);
         $file = $this->export(fileType: true);
         return $file;
     } // exportDownloadDocs

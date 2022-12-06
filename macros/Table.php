@@ -23,8 +23,9 @@ $macroConfig =  [
         'caption' => ['(optional) If set, a caption tag is added to the table. The caption text may contain the '.
             'pattern "%#" which will be replaced by an index number.', false],
         'captionPosition' => ['(above,below) Specifies whether caption will be place above or below the table.', 'below'],
-        'dataReference' => ["If true, rec-keys (as 'data-reckey') and element-names (as 'data-elemkey') are included in table.".
+        'dataReference' => ["If true, rec-keys (as 'data-reckey') and element-names (as 'data-elemkey') are included in table. ".
             "If dataReference is a string, it is added to the table-wrapper div as 'data-ref'.", false],
+        'interactive' => ['If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.', false],
         'tableButtons' => ['(true|list of buttons) If set, includes a row of buttons above the table to perform '.
             'various actions. Available buttons: \'delete\', \'download\'.', false],
 //            'various actions. Available buttons: \'delete\', \'download\', \'add\'.', false],
@@ -46,10 +47,7 @@ Only for special use:
 
 EOT,
     'mdCompile' => false,
-    'assetsToLoad' => [
-        'site/plugins/pagefactory-pageelements/assets/css/-table.css',
-        'site/plugins/pagefactory-pageelements/assets/js/table.js',
-    ],
+    'assetsToLoad' => '', // assets loaded by DataTable
 ];
 
 

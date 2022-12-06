@@ -1,7 +1,7 @@
 
 
-#pfy .pfy-encapsulated,
-& {
+#pfy .pfy-encapsulated.pfy-default-styling,
+.pfy-default-styling {
     .pfy-warning:empty,
     .pfy-warning-box:empty {
         display: none;
