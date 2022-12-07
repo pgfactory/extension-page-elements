@@ -20,7 +20,6 @@ class Message extends PageElements
 
             $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";
             $this->assets->requireFramework();
-//            $this->pg->requireJQuery();
             $this->addAssets('MESSAGES');
         }
         return $html;
