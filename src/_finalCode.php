@@ -41,8 +41,8 @@ foreach ($files as $file) {
                 $val = json_encode($rec);
                 $varName = translateToIdentifier($key, true);
                 $out .= "var _$varName = translateVar($val);\n";
+                $jsStr = str_replace($m[0][$i], '${_'.$varName.'}', $jsStr);
             }
-            $jsStr = str_replace($m[0][$i], '${_'.$varName.'}', $jsStr);
         }
         $jsStr = $out.$jsStr;
         writeFile($target, $jsStr);
