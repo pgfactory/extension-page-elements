@@ -14,6 +14,7 @@ class SitemapManager
 
     private static array $supportedLanguages;
     private static bool $modified;
+    private static bool $allowNonPfyPages;
 
     /**
      * There is a control file 'site/config/sitemap.txt'. And there is the actual site structure.
@@ -27,6 +28,8 @@ class SitemapManager
         if (!PageFactory::$debug || !self::updateNecessary()) {
             return;
         }
+        self::$allowNonPfyPages = \Usility\PageFactory\PageFactory::$config['allowNonPfyPages']??false;
+
         // determine what needs to be updated:
         $tSitemapFile = \Usility\PageFactory\fileTime(SITEMAP_FILE);
         $tSitemapControlFile = \Usility\PageFactory\fileTime(SITEMAP_CONTROL_FILE);
@@ -267,6 +270,10 @@ class SitemapManager
      */
     private static function updateMetaFiles(string $folder, string $name, string $baseName): bool
     {
+        if (!self::$allowNonPfyPages) { // means 'don't check metafiles'
+            return false;
+        }
+
         $modified = false;
         $defaultLang = PageFactory::$defaultLanguage;
         // initialize/update meta-files:
