@@ -3,28 +3,55 @@
 namespace Usility\PageFactory\PageElements;
 
 
+use Usility\PageFactory\PageFactory;
+
 class Overlay extends PageElements
 {
-    public function render($str, $mdCompile = true)
+    public static $inx = 1;
+    public function render(mixed $options, $mdCompile = true)
     {
-        if ($mdCompile) {
-            $str = \Usility\PageFactory\compileMarkdown($str);
-        }
-        $str = <<<EOT
-    <div id='pfy-overlay' class='pfy-overlay'><button class='pfy-close-overlay'>✕</button>
-$str
+        $inx = self::$inx++;
+        $jsOptions = '';
+
+        if (is_string($options)) {
+            if ($mdCompile) {
+                $options = \Usility\PageFactory\compileMarkdown($options);
+            }
+            $options = <<<EOT
+    <div id='pfy-overlay-$inx' class='pfy-overlay' style="display: none;">
+$options
     </div>
 EOT;
-        $this->addAssets('OVERLAYS');
-        return $str;
+            $this->pg->addBodyEndInjections($options);
+            $jsOptions = <<<EOT
+    contentFrom: 'pfy-overlay-$inx',
+    popupClass: 'pfy-overlay',
+EOT;
+
+        } elseif (is_array($options)) {
+            foreach ($options as $key => $option) {
+                if (is_bool($option)) {
+                    $option = $option?'true':'false';
+                } else {
+                    $option = "\"$option\"";
+                }
+                $jsOptions .= "\t$key: $option,\n";
+            }
+            $jsOptions .= "\tpopupClass: 'pfy-overlay',\n";
+        }
+        $jsOptions = "{\n$jsOptions }";
+        PageFactory::$pg->addJq("pfyPopup($jsOptions);");
+
+        $this->addAssets('POPUPS');
+        PageFactory::$pg->setBodyTagClass('pfy-overlay-open');
+        return '';
     } // render
 
 
 
-    public function set(string $str, $mdCompile = false): void
+    public function set(mixed $options, $mdCompile = false): void
     {
-        $str = $this->render($str, $mdCompile);
-        $this->pg->addBodyEndInjections($str);
+        $this->render($options, $mdCompile);
     } // set
 
 } // Overlay

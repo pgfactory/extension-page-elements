@@ -6,7 +6,6 @@
 
 namespace Usility\PageFactory;
 
-
 $macroConfig =  [
     'name' => strtolower( $macroName ),
     'parameters' => [
@@ -30,17 +29,8 @@ $macroConfig =  [
         'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
             '(default: true).', false],
 
-        'buttons'		=> ['[Comma-separated-list of button labels] Example: "Cancel,Ok". Predefined: "Cancel", '.
-            '"Close", "Ok", "Continue", "Confirm".', false],
-
         'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
             'matter which way closing was initiated (including click on background).', false],
-
-        'onOk'		=> ['[function or string] Callback function invoked when "ok" key is activated', false],
-        'onConfirm'		=> ['[function or string] Callback function invoked when "Confirm" key is activated', false],
-        'onContinue'		=> ['[function or string] Callback function invoked when "Continue" key is activated', false],
-        'onCancel'		=> ['[function or string] Callback function invoked when "Cancel" key is activated', false],
-        'onClose'		=> ['[function or string] Callback function invoked when "Close" key is activated', false],
 
         'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
             false],
@@ -54,16 +44,9 @@ $macroConfig =  [
         'containerClass'		=> ['[string] Class(es) applied to container element.', false],
 
         'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
-
-        'buttonClasses'		=> ['[Comma-separated-list of classes] Will be applied to corresponding '.
-            'buttons defined by "buttons" argument.', false],
-
-        'anker'		=> ['[string] If defined, popup will be placed inside elemented selected by "anker" '.
-            '(e.g. ".box"). Default: "body".', false],
-
     ],
     'summary' => <<<EOT
-Displays a popup window.
+Displays some content in a large popup hovering over the page.
 EOT,
     'mdCompile' => false,
     'assetsToLoad' => 'POPUPS'
@@ -71,7 +54,7 @@ EOT,
 
 
 
-class Popup extends Macros
+class Overlay extends Macros
 {
     public static $inx = 1;
     public function __construct($pfy = null)
@@ -101,6 +84,8 @@ class Popup extends Macros
             $args['closeButton'] = true;
         }
 
+        $args['popupClass'] = 'pfy-overlay';
+        $args['anker'] = 'body';
         $jsArgs = '';
         foreach ($args as $key => $value) {
             if (is_string(($key))) {
@@ -114,7 +99,6 @@ class Popup extends Macros
                 }
             }
         }
-
         $jq = <<<EOT
 
 var pfyPopup$inx = pfyPopup({
@@ -122,8 +106,7 @@ $jsArgs});
 
 EOT;
         PageFactory::$pg->addJq($jq);
-
-        return '';
+    return '';
     } // render
 }
 

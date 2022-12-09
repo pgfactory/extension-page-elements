@@ -2,8 +2,6 @@
 
 namespace Usility\PageFactory\PageElements;
 
-use Usility\PageFactory\PageFactory as PageFactory;
-
 
 class Message extends PageElements
 {

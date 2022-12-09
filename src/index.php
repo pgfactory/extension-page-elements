@@ -30,10 +30,6 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/-message.css',
         PAGE_ELEMENTS_URL.'js/message.js',
     ],
-    'OVERLAYS' => [
-        PAGE_ELEMENTS_URL.'css/-overlay.css',
-        PAGE_ELEMENTS_URL.'js/overlay.js',
-    ],
     'TABLES' => [
         PAGE_ELEMENTS_URL.'css/-table.css',
         PAGE_ELEMENTS_URL.'js/-table.js',

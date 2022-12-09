@@ -23,49 +23,52 @@ function pfyPopup( options, index ) {
             options = { text: str };
         }
         this.options = options;
-        this.text  = (typeof options.text !== 'undefined')? options.text : ''; // text synonym for content
-        this.content  = (typeof options.content !== 'undefined')? options.content : this.text;
+        this.text  = (typeof options.text !== 'undefined' && options.text)? options.text : ''; // text synonym for content
+        this.content  = (typeof options.content !== 'undefined' && options.content)? options.content : this.text;
 
-        this.id  = (typeof options.id !== 'undefined')? options.id : 'pfy-popup';
+        this.id  = (typeof options.id !== 'undefined' && options.id)? options.id : 'pfy-popup';
 
-        this.contentFrom = (typeof options.contentFrom !== 'undefined') ? options.contentFrom : ''; // contentFrom synonyme for contentRef
+        this.contentFrom = (typeof options.contentFrom !== 'undefined' && options.contentFrom) ? options.contentFrom : ''; // contentFrom synonyme for contentRef
 
-        this.header  = (typeof options.header !== 'undefined')? options.header : false;
+        this.header  = (typeof options.header !== 'undefined' && options.header)? options.header : false;
         if ((this.header === '') || (this.header === true)) {
             this.header = '';
         }
-        this.draggable  = (typeof options.draggable !== 'undefined')? options.draggable : (this.header !== false);
+        this.draggable  = (typeof options.draggable !== 'undefined' && options.draggable)? options.draggable : (this.header !== false);
         if (this.draggable && (this.header === false)) {
             this.header = '';
         }
 
-        this.trigger = (typeof options.trigger !== 'undefined') ? options.trigger : true; // default=autoopen
-        this.trigger = (typeof options.triggerSource !== 'undefined') ? options.triggerSource : this.trigger;
-        this.triggerEvent = (typeof options.triggerEvent !== 'undefined') ? options.triggerEvent : 'click';
+        this.trigger = (typeof options.trigger !== 'undefined' && options.trigger) ? options.trigger : true; // default=autoopen
+        this.trigger = (typeof options.triggerSource !== 'undefined' && options.triggerSource) ? options.triggerSource : this.trigger;
+        this.triggerEvent = (typeof options.triggerEvent !== 'undefined' && options.triggerEvent) ? options.triggerEvent : 'click';
         this.anker = (typeof options.anker !== 'undefined' && options.anker) ? options.anker : 'body';
-        this.closeOnBgClick = (typeof options.closeOnBgClick !== 'undefined') ? options.closeOnBgClick : true;
-        this.closeButton = (typeof options.closeButton !== 'undefined') ? options.closeButton : true;
-        this.buttons = (typeof options.buttons === 'string') ? options.buttons.split(/\s*,\s*/) : [];
+        this.closeOnBgClick = (typeof options.closeOnBgClick !== 'undefined' && options.closeOnBgClick) ? options.closeOnBgClick : true;
+        this.closeButton = (typeof options.closeButton !== 'undefined' && options.closeButton) ? options.closeButton : true;
+        this.buttons = (typeof options.buttons === 'string' && options.buttons) ? options.buttons.split(/\s*,\s*/) : [];
 
         // omit closeButton if buttons are defined (unless header is active):
         if ((typeof options.closeButton === 'undefined') && (this.buttons.length) && !this.header) {
             this.closeButton = false;
         }
-        this.callbackArg = (typeof options.callbackArg !== 'undefined') ? options.callbackArg : '';
-        this.onConfirm = (typeof options.onConfirm !== 'undefined') ? options.onConfirm : '';
-        this.onCancel = (typeof options.onCancel !== 'undefined') ? options.onCancel : '';
-        this.onOk = (typeof options.onOk !== 'undefined') ? options.onOk : '';
-        this.onContinue = (typeof options.onContinue !== 'undefined') ? options.onContinue : '';
-        this.onClose = (typeof options.onClose !== 'undefined') ? options.onClose : '';
-        this.closeCallback = (typeof options.closeCallback !== 'undefined') ? options.closeCallback : '';
+        this.callbackArg = (typeof options.callbackArg !== 'undefined' && options.callbackArg) ? options.callbackArg : '';
+        this.onConfirm = (typeof options.onConfirm !== 'undefined' && options.onConfirm) ? options.onConfirm : '';
+        this.onCancel = (typeof options.onCancel !== 'undefined' && options.onCancel) ? options.onCancel : '';
+        this.onOk = (typeof options.onOk !== 'undefined' && options.onOk) ? options.onOk : '';
+        this.onContinue = (typeof options.onContinue !== 'undefined' && options.onContinue) ? options.onContinue : '';
+        this.onClose = (typeof options.onClose !== 'undefined' && options.onClose) ? options.onClose : '';
+        this.closeCallback = (typeof options.closeCallback !== 'undefined' && options.closeCallback) ? options.closeCallback : '';
 
-        this.containerClass = (typeof options.containerClass !== 'undefined') ? ' ' + options.containerClass : '';
-        this.popupClass = (typeof options.class !== 'undefined') ? ' ' + options.class : '';
-        this.popupClass = (typeof options.popupClass !== 'undefined') ? ' ' + options.popupClass : this.popupClass;
+        this.containerClass = (typeof options.containerClass !== 'undefined' && options.containerClass) ? ' ' + options.containerClass : '';
+        if ((typeof options.class !== 'undefined' && options.class) && options.class) {
+          this.popupClass = options.class;
+        } else if ((typeof options.popupClass !== 'undefined') && options.popupClass) {
+          this.popupClass = options.popupClass;
+        }
         if (this.closeButton) {
             this.popupClass += ' pfy-popup-closebtn';
         }
-        this.buttonsClass = (typeof options.buttonsClass !== 'undefined') ? ' ' + options.buttonsClass : 'pfy-button';
+        this.buttonsClass = (typeof options.buttonsClass !== 'undefined' && options.buttonsClass) ? ' ' + options.buttonsClass : 'pfy-button';
         this.buttonClasses = null;
         if ((typeof options.buttonClasses === 'object')) {
           this.buttonClasses = options.buttonClasses;
@@ -76,7 +79,7 @@ function pfyPopup( options, index ) {
             this.buttonsClass = options.buttonClasses;
           }
         }
-        this.wrapperClass  = (typeof options.wrapperClass !== 'undefined')? options.wrapperClass : '';
+        this.wrapperClass  = (typeof options.wrapperClass !== 'undefined' && options.wrapperClass)? options.wrapperClass : '';
 
       if (this.content === 'help') {
         this.content = this.renderHelp();
@@ -178,7 +181,8 @@ function pfyPopup( options, index ) {
 
     // render close button in upper right corner:
     if (this.closeButton) {
-      this.closeButton = '<button class="pfy-close-button pfy-popup-close-button" type="button">&#x0D7;</button>';
+      this.closeButton = '<button class="pfy-close-button pfy-popup-close-button" type="button">✕</button>';
+      // this.closeButton = '<button class="pfy-close-button `pfy-popup-close-button`" type="button">&#x0D7;</button>';
     } else {
       this.closeButton = '';
     }

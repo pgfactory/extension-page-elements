@@ -20,13 +20,13 @@ function setupMessageHandler( delay) {
 function showMessage( txt ) {
     $('.pfy-msgbox').remove();
     $('body').prepend( '<div class="pfy-msgbox"><p>' + txt + '</p></div>' );
-    setupMessageHandler(0);
+    setupMessageHandler(500);
 } // showMessage
 
 
 
 $( document ).ready(function() {
     if ($('.pfy-msgbox').length) {
-        setupMessageHandler(800);
+        setupMessageHandler(500);
     }
 });
