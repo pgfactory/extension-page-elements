@@ -1,8 +1,8 @@
 <?php
 
-namespace Usility\PageFactory\PageElements;
+namespace Usility\PageFactoryElements;
+use Usility\PageFactory\PageFactory as PageFactory;
 
-use Usility\PageFactory\PageFactory;
 
 
 class PageElements

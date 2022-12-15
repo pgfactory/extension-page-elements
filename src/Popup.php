@@ -1,6 +1,7 @@
 <?php
 
-namespace Usility\PageFactory\PageElements;
+namespace Usility\PageFactoryElements;
+
 
 class Popup extends PageElements
 {

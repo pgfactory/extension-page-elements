@@ -78,7 +78,6 @@ class Overlay extends Macros
         if (isset($args['triggerButton'])) {
             $label = $args['triggerButton'];
             $buttonId = "pfy-popup-trigger-$inx";
-            $out = "\t<button id='$buttonId' class='pfy-button pfy-show-source-btn'>$label</button>\n";
             unset($args['triggerButton']);
             $args['trigger'] = "#$buttonId";
             $args['closeButton'] = true;

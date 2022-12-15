@@ -2,10 +2,4 @@
     "require": {
         "phpoffice/phpspreadsheet": "^1.20"
     },
-    "autoload": {
-        "psr-4": {
-            "Usility\\PageFactory\\": "../src/",
-            "Usility\\PageFactory\\Macros\\": "../../pagefactory-macros/"
-        }
-    }
 }

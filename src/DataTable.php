@@ -1,8 +1,15 @@
 <?php
 
-namespace Usility\PageFactory;
-
-use Usility\PageFactory\OfficeFormat;
+namespace Usility\PageFactoryElements;
+use Usility\PageFactory\PageFactory as PageFactory;
+use Usility\PageFactory\DataSet as DataSet;
+use function \Usility\PageFactory\base_name;
+use function \Usility\PageFactory\explodeTrim;
+use function \Usility\PageFactory\translateToIdentifier;
+use function \Usility\PageFactory\array_splice_assoc;
+use function \Usility\PageFactory\renderIcon;
+use function \Usility\PageFactory\fileExt;
+use function \Usility\PageFactory\reloadAgent;
 
 const TABLE_SUM_SYMBOL = '%sum';
 const TABLE_COUNT_SYMBOL = '%count';
@@ -51,7 +58,6 @@ class DataTable extends DataSet
         $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] :
             (isset($options['footer']) && $options['footer'] ? $options['footer'] : false);
         $this->options['footers'] = $this->footers;
-//        $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] : false;
         $this->caption = isset($options['caption']) && $options['caption'] ? $options['caption'] : false;
         $captionPosition = isset($options['captionPosition']) && $options['captionPosition'] ? $options['captionPosition'] : 'b';
         $this->captionAbove = $captionPosition[0] === 'a';

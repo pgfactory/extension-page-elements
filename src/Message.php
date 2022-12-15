@@ -1,6 +1,6 @@
 <?php
 
-namespace Usility\PageFactory\PageElements;
+namespace Usility\PageFactoryElements;
 
 
 class Message extends PageElements

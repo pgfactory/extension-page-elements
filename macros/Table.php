@@ -5,6 +5,8 @@
  */
 
 namespace Usility\PageFactory;
+use Usility\PageFactoryElements\DataTable as DataTable;
+
 
 $macroConfig =  [
     'name' => strtolower( $macroName ),

@@ -3,8 +3,8 @@
 /*
  * 
  */
-
 namespace Usility\PageFactory;
+
 
 $macroConfig =  [
     'name' => strtolower( $macroName ),

@@ -1,13 +1,20 @@
 <?php
-namespace Usility\PageFactory\PageElements;
+
+namespace Usility\PageFactoryElements;
+use Usility\PageFactory\PageFactory as PageFactory;
+use function \Usility\PageFactory\fileTime;
+use function \Usility\PageFactory\getFile;
+use function \Usility\PageFactory\getDirDeep;
+use function \Usility\PageFactory\mylog;
+use function \Usility\PageFactory\decodeStr;
+use function \Usility\PageFactory\translateToFilename;
+use function \Usility\PageFactory\preparePath;
+use function \Usility\PageFactory\reloadAgent;
+use function \Usility\PageFactory\rrmdir;
+
 
 const SITEMAP_FILE          = 'site/config/sitemap.txt';
 const SITEMAP_CONTROL_FILE  = 'content/site.txt';
-
-
-use Usility\PageFactory\PageFactory;
-use function Usility\PageFactory\getDirDeep;
-use function Usility\PageFactory\getFile;
 
 class SitemapManager
 {
@@ -28,11 +35,11 @@ class SitemapManager
         if (!PageFactory::$debug || !self::updateNecessary()) {
             return;
         }
-        self::$allowNonPfyPages = \Usility\PageFactory\PageFactory::$config['allowNonPfyPages']??false;
+        self::$allowNonPfyPages = PageFactory::$config['allowNonPfyPages']??false;
 
         // determine what needs to be updated:
-        $tSitemapFile = \Usility\PageFactory\fileTime(SITEMAP_FILE);
-        $tSitemapControlFile = \Usility\PageFactory\fileTime(SITEMAP_CONTROL_FILE);
+        $tSitemapFile = fileTime(SITEMAP_FILE);
+        $tSitemapControlFile = fileTime(SITEMAP_CONTROL_FILE);
         if ($tSitemapFile > $tSitemapControlFile) {
             // sitemap is newer, so we need to update the content folder's directory structure:
             self::updateContentFolder();
@@ -50,13 +57,13 @@ class SitemapManager
     public static function updateNecessary()
     {
         // check whether sitemap file differs from actual content folder:
-        $tSitemapFile = \Usility\PageFactory\fileTime(SITEMAP_FILE);
-        $tSitemapControlFile = \Usility\PageFactory\fileTime(SITEMAP_CONTROL_FILE);
+        $tSitemapFile = fileTime(SITEMAP_FILE);
+        $tSitemapControlFile = fileTime(SITEMAP_CONTROL_FILE);
         $firstLine = '';
         if (file_exists(SITEMAP_FILE)) {
             $firstLine = fgets(fopen(SITEMAP_FILE, 'r'));
         }
-        $contentHash = md5(implode('', \Usility\PageFactory\getDirDeep('content/*', true)));
+        $contentHash = md5(implode('', getDirDeep('content/*', true)));
         $contentHash = "// hash: $contentHash\n";
         return (($firstLine !== $contentHash) || ($tSitemapFile !== $tSitemapControlFile));
     } // updateNecessary
@@ -69,16 +76,16 @@ class SitemapManager
      */
     public static function writeSitemapFile(): void
     {
-        $zap = \Usility\PageFactory\getFile(SITEMAP_FILE, 'z');
+        $zap = getFile(SITEMAP_FILE, 'z');
         if ($zap) {
             $zap = "\n\n$zap";
         }
-        $contentHash = md5(implode('', \Usility\PageFactory\getDirDeep('content/*', true)));
+        $contentHash = md5(implode('', getDirDeep('content/*', true)));
         $contentHash = "// hash: $contentHash\n";
         $siteStructure = self::readSiteStructure();
         file_put_contents(SITEMAP_FILE, "$contentHash$siteStructure$zap");
         touch(SITEMAP_CONTROL_FILE);
-        \Usility\PageFactory\mylog("Sitemap file updated according current site-structure");
+        mylog("Sitemap file updated according current site-structure");
     } // writeSitemapFile
 
 
@@ -89,7 +96,7 @@ class SitemapManager
      */
     private static function updateContentFolder(): void
     {
-        $sitemap = \Usility\PageFactory\getFile(SITEMAP_FILE, removeComments: 'c');
+        $sitemap = getFile(SITEMAP_FILE, removeComments: 'c');
         self::$supportedLanguages = kirby()->languages()->codes();
         $paths = [];
         $paths[-1] = 'content/';
@@ -115,7 +122,7 @@ class SitemapManager
 
             // read page arguments:
             if (preg_match('/: \s* \{ .* }/x', $item)) {
-                $rec = \Usility\PageFactory\decodeStr($item, 'yaml');
+                $rec = decodeStr($item, 'yaml');
                 $name = trim(array_keys($rec)[0]);
                 $rec = reset($rec);
 
@@ -144,7 +151,7 @@ class SitemapManager
             $folder0 = $rec['folder']??false;
 
             // $baseName is Page name converted to lower case with blanks and special characters changed to '_':
-            $baseName = \Usility\PageFactory\translateToFilename($name, '');
+            $baseName = translateToFilename($name, '');
 
             // assemble propre path:
             if ($draft) {
@@ -163,7 +170,7 @@ class SitemapManager
                     $draft0 = basename(dirname($folder0)) === '_drafts';
                     if ($draft || $draft0) {
                         if (!$draft0 && $draft) {
-                            \Usility\PageFactory\preparePath(dirname($folder));
+                            preparePath(dirname($folder));
                             rename($folder0, $folder);
 
                         } elseif ($draft0 && !$draft) {
@@ -180,7 +187,7 @@ class SitemapManager
             } else {
                 // make folder if it doesn't exist:
                 if (!file_exists($folder)) {
-                    \Usility\PageFactory\preparePath($folder);
+                    preparePath($folder);
                     self::$modified = true;
                 }
             }
@@ -201,8 +208,8 @@ class SitemapManager
         // if content structure was modified, we need to reload agent:
         if (self::$modified || $deletedFolders) {
             touch(SITEMAP_CONTROL_FILE);
-            \Usility\PageFactory\mylog("Site-structure updated according to sitemap file");
-            \Usility\PageFactory\reloadAgent('',$deletedFolders);
+            mylog("Site-structure updated according to sitemap file");
+            reloadAgent('',$deletedFolders);
         }
     } // updateContentFolder
 
@@ -297,7 +304,7 @@ class SitemapManager
         }
 
         // initialize/update md-file:
-        $mdFiles = \Usility\PageFactory\getDir($folder.'*.md');
+        $mdFiles = getDir($folder.'*.md');
         if (!$mdFiles) {
             $mdFile = $folder . "1_$baseName.md";
             if ($modified && !file_exists($mdFile)) {
@@ -319,7 +326,7 @@ class SitemapManager
     {
         $doDelete = isset($_GET['delete-folders']);
         $requiredFolders = array_keys($requiredFolders);
-        $actualFolders = \Usility\PageFactory\getDirDeep('content/', onlyDir: true);
+        $actualFolders = getDirDeep('content/', onlyDir: true);
         $deletedFolders = '';
         foreach ($actualFolders as $folder) {
             if (($folder === 'content/') ||
@@ -331,7 +338,7 @@ class SitemapManager
             if (!in_array($folder, $requiredFolders)) {
                 $deletedFolders .= "$folder\n";
                 if ($doDelete) {
-                    \Usility\PageFactory\rrmdir($folder);
+                    rrmdir($folder);
                 }
             }
         }

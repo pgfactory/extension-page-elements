@@ -1,5 +1,6 @@
 <?php
-namespace Usility\PageFactory\PageElements;
+
+namespace Usility\PageFactoryElements;
 
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
@@ -44,27 +45,7 @@ const PE_URL_DEFINITIONS = [
     ],
 ];
 
-$extensionClassName = 'PageElements';
-require_once PAGE_ELEMENTS_PATH."src/$extensionClassName.php";
-
-// load this composer repo's autoloader:
-require_once PAGE_ELEMENTS_PATH . 'third_party/vendor/autoload.php';
-
-// load extension's variables:
-\Usility\PageFactory\TransVars::loadTransVarsFromFiles(PAGE_ELEMENTS_PATH.'variables/');
-
-//ToDo: replace with autoloader:
-// load all further class files within 'src/':
-$dir = \Usility\PageFactory\getDir(PAGE_ELEMENTS_PATH . 'src/*.php');
-foreach ($dir as $file) {
-    $filename = basename($file);
-    if ($filename === 'index.php' || $filename[0] === '_') {
-        continue;
-    }
-    require_once $file;
-}
-
+require_once 'site/plugins/pagefactory-pageelements/src/SitemapManager.php';
 SitemapManager::updateSitemap();
-
-return $extensionClassName;
+return 'PageElements';
 
