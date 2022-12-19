@@ -9,7 +9,6 @@ use Usility\PageFactoryElements\DataTable as DataTable;
 
 
 $macroConfig =  [
-    'name' => strtolower( $macroName ),
     'parameters' => [
         'file' => ['File to be used as data-source.', false],
         'tableId' => ['(optional) Applies an ID to the table tag.', false],
@@ -57,11 +56,6 @@ EOT,
 class Table extends Macros
 {
     public static $inx = 1;
-    public function __construct($pfy = null)
-    {
-        $this->name = strtolower(__CLASS__);
-        parent::__construct($pfy);
-    }
 
 
     /**

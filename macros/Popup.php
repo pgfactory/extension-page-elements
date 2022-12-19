@@ -7,7 +7,6 @@
 namespace Usility\PageFactory;
 
 $macroConfig =  [
-    'name' => strtolower( $macroName ),
     'parameters' => [
         'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
             'contentFrom). "content" functions as synonym for "text".', false],
@@ -73,11 +72,6 @@ EOT,
 class Popup extends Macros
 {
     public static $inx = 1;
-    public function __construct($pfy = null)
-    {
-        $this->name = strtolower(__CLASS__);
-        parent::__construct($pfy);
-    }
 
 
     /**

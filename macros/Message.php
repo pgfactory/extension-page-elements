@@ -7,7 +7,6 @@ namespace Usility\PageFactory;
 
 
 $macroConfig =  [
-    'name' => strtolower( $macroName ),
     'parameters' => [
         'text' => ['Text to be displayed.', false],
         'msg' => ['Synonyme for "text".', false],
@@ -25,12 +24,6 @@ EOT,
 class Message extends Macros
 {
     public static $inx = 1;
-    public function __construct($pfy = null)
-    {
-        $this->name = strtolower(__CLASS__);
-        parent::__construct($pfy);
-    }
-
 
     /**
      * Macro rendering method
