@@ -43,6 +43,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/datatables.min.css',
         PAGE_ELEMENTS_URL.'js/datatables.min.js',
     ],
+    'REVEAL' => [
+        PAGE_ELEMENTS_URL.'js/reveal.js',
+        PAGE_ELEMENTS_URL.'css/-reveal.css',
+    ],
 ];
 
 require_once 'site/plugins/pagefactory-pageelements/src/SitemapManager.php';
