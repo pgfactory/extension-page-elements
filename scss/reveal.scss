@@ -25,8 +25,10 @@
       transition: transform 0.3s;
       transform-origin: 50% 50%;
     }
+    transform: rotate( 0 );
     &:checked::before {
       content: attr(data-icon-open);
+      transform: rotate( 180deg );
     }
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -45,9 +47,10 @@
     input:focus-visible {
       outline: unset !important;
     }
-  }
+  } // .pfy-reveal-controller
 
   .pfy-reveal-controller-wrapper {
+    margin-top: 0.5em;
     label {
       width: calc(100% - 2em - 6px);
       margin-left: -0.1em;
@@ -69,12 +72,15 @@
     &.pfy-target-revealed {
       border-bottom: none;
     }
-  }
+  } // .pfy-reveal-controller-wrapper
+
+
 
   // === reveal-container =============================
   .pfy-reveal-container {
     overflow: hidden;
     position: relative;
+    margin-bottom: 0.7em;
 
     .pfy-reveal-container-inner {
       margin-top: -10000px;

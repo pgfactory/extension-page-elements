@@ -12,7 +12,7 @@ $macroConfig =  [
         'target' => ['[css selector] CSS selector of the DIV that shall be revealed, e.g. "#box"', false],
         'class' => ['(optional) A class that will be applied to the controlling element.', false],
         'symbol' => ['[\'triangle\'|character(s)] If defined, the symbol on the left hand side of the label will be modified. (currently just "triangle" implemented.)', false],
-        'symbol-rotation' => ['[deg].', '0,90'],
+        'symbol-rotation' => ['[deg2|deg1,deg2] Defines rotation angle of icon for end state (resp. start and end state).', false],
         'frame' => ['(true, class) If true, class "pfy-reveal-frame" is added, painting a frame around the element by default.', false],
     ],
     'summary' => <<<EOT
@@ -35,7 +35,7 @@ class Reveal extends Macros
      * @param string $argStr
      * @return string
      */
-    public function render(array $args, string $argStr): string
+    public function render(array $args): string
     {
         $inx = self::$inx++;
 
@@ -49,9 +49,13 @@ class Reveal extends Macros
         $icon = $args['symbol'];
         $iconClosed = '+';
         $iconOpen = '–';
+
+        // 'triangle' is second standard symbol:
         if (stripos($args['symbol'], 'tri') !== false) {
             $iconClosed = '▷';
             $iconOpen = '▷';
+
+        // icon defined:
         } elseif ($icon) {
             if (str_contains($icon, ',')) {
                 list($iconClosed, $iconOpen) = explodeTrim(',', $icon);
@@ -60,22 +64,24 @@ class Reveal extends Macros
                 $iconOpen = $icon;
             }
         }
-        if ($icon) {
+
+        $deg1 = $deg2 = false;
+        if ($args['symbol-rotation']) {
             $deg1 = $deg2 = $args['symbol-rotation'];
             if (str_contains($deg1, ',')) {
                 list($deg1, $deg2) = explodeTrim(',', $deg1);
             }
-        } else {
+        } elseif ($icon) {
             $deg1 = 0;
-            $deg2 = 180;
+            $deg2 = 90;
         }
 
-        if ($inx === 1) {
+        if ($deg1 !== false) {
             $css = <<<EOT
-#pfy input.pfy-reveal-controller::before {
+#pfy-reveal-controller-$inx::before {
   transform: rotate( {$deg1}deg );
 }
-#pfy input.pfy-reveal-controller:checked::before {
+#pfy-reveal-controller-$inx:checked::before {
   transform: rotate( {$deg2}deg );
 }
 EOT;
