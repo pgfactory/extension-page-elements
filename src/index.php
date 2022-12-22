@@ -44,6 +44,7 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'js/datatables.min.js',
     ],
     'REVEAL' => [
+        PAGE_ELEMENTS_URL.'js/jq-focusable.js',
         PAGE_ELEMENTS_URL.'js/reveal.js',
         PAGE_ELEMENTS_URL.'css/-reveal.css',
     ],

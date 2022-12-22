@@ -11,7 +11,8 @@ $macroConfig =  [
         'label' => ['Text that prepresents the controlling element.', false],
         'target' => ['[css selector] CSS selector of the DIV that shall be revealed, e.g. "#box"', false],
         'class' => ['(optional) A class that will be applied to the controlling element.', false],
-        'symbol' => ['(triangle) If defined, the symbol on the left hand side of the label will be modified. (currently just "triangle" implemented.)', false],
+        'symbol' => ['[\'triangle\'|character(s)] If defined, the symbol on the left hand side of the label will be modified. (currently just "triangle" implemented.)', false],
+        'symbol-rotation' => ['[deg].', '0,90'],
         'frame' => ['(true, class) If true, class "pfy-reveal-frame" is added, painting a frame around the element by default.', false],
     ],
     'summary' => <<<EOT
@@ -44,16 +45,49 @@ class Reveal extends Macros
         if ($args['frame']) {
             $class = $class? "$class pfy-reveal-frame": 'pfy-reveal-frame';
         }
+
+        $icon = $args['symbol'];
+        $iconClosed = '+';
+        $iconOpen = '–';
         if (stripos($args['symbol'], 'tri') !== false) {
-            $class .= ' pfy-reveal-triangle';
+            $iconClosed = '▷';
+            $iconOpen = '▷';
+        } elseif ($icon) {
+            if (str_contains($icon, ',')) {
+                list($iconClosed, $iconOpen) = explodeTrim(',', $icon);
+            } else {
+                $iconClosed = $icon;
+                $iconOpen = $icon;
+            }
+        }
+        if ($icon) {
+            $deg1 = $deg2 = $args['symbol-rotation'];
+            if (str_contains($deg1, ',')) {
+                list($deg1, $deg2) = explodeTrim(',', $deg1);
+            }
+        } else {
+            $deg1 = 0;
+            $deg2 = 180;
+        }
+
+        if ($inx === 1) {
+            $css = <<<EOT
+#pfy input.pfy-reveal-controller::before {
+  transform: rotate( {$deg1}deg );
+}
+#pfy input.pfy-reveal-controller:checked::before {
+  transform: rotate( {$deg2}deg );
+}
+EOT;
+            PageFactory::$pg->addCss($css);
         }
 
         $class = $class? " $class": '';
         $out = '';
-        $out .= "\n\t\t\t\t<input id='$id' class='pfy-reveal-controller pfy-reveal-icon' type='checkbox' data-reveal-target='{$args['target']}'>".
-            "\n\t\t\t\t<label for='$id'>{$args['label']}</label>\n";
+        $out .= "\n\t<input id='$id' class='pfy-reveal-controller' type='checkbox' data-reveal-target='{$args['target']}' data-icon-closed='$iconClosed' data-icon-open='$iconOpen'>".
+            "\n\t\t<label for='$id'>{$args['label']}</label>\n";
 
-        $out = "\t\t\t<div class='pfy-reveal-controller-wrapper$class'>$out\t\t\t</div>\n";
+        $out = "\t<div class='pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
 
         return $out;
     } // render
