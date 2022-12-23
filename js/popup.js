@@ -30,6 +30,8 @@ function pfyPopup( options, index ) {
 
         this.contentFrom = (typeof options.contentFrom !== 'undefined' && options.contentFrom) ? options.contentFrom : ''; // contentFrom synonyme for contentRef
 
+        this.modal  = (typeof options.modal !== 'undefined' && options.modal)? options.modal : true;
+
         this.header  = (typeof options.header !== 'undefined' && options.header)? options.header : false;
         if ((this.header === '') || (this.header === true)) {
             this.header = '';
@@ -60,11 +62,14 @@ function pfyPopup( options, index ) {
         this.closeCallback = (typeof options.closeCallback !== 'undefined' && options.closeCallback) ? options.closeCallback : '';
 
         this.containerClass = (typeof options.containerClass !== 'undefined' && options.containerClass) ? ' ' + options.containerClass : '';
+
+        this.popupClass = '';
         if ((typeof options.class !== 'undefined' && options.class) && options.class) {
           this.popupClass = options.class;
         } else if ((typeof options.popupClass !== 'undefined') && options.popupClass) {
           this.popupClass = options.popupClass;
         }
+
         if (this.closeButton) {
             this.popupClass += ' pfy-popup-closebtn';
         }
@@ -241,8 +246,21 @@ function pfyPopup( options, index ) {
         this.open();
     }
     if (!this.triggerInitialized && this.trigger && (this.trigger !== true)) {
+      if (this.triggerEvent === 'right-click') {
+        this.triggerEvent = 'contextmenu';
+      // } else if (this.triggerEvent === 'mouseover') {
+      //   $(this.trigger).on('mouseout', function( e ){
+      //     parent.modal = false;
+      //     e.stopPropagation();
+      //     e.stopImmediatePropagation();
+      //     e.preventDefault();
+      //     parent.close();
+      //   });
+      }
       $(this.trigger).on(this.triggerEvent, function( e ){
-            parent.open();
+          e.stopPropagation();
+          e.preventDefault();
+          parent.open();
       });
       this.triggerInitialized = true;
     }
@@ -391,7 +409,7 @@ function pfyPopup( options, index ) {
       currentlyOpenPopup.close();
       currentlyOpenPopup = false;
     }
-
+// mylog('modal: ' + this.modal);
     this.renderButtons();
     this.$popup = this.renderContent();
     this.initDraggable();
@@ -402,7 +420,11 @@ function pfyPopup( options, index ) {
     this.$popup.show();
 
     // freeze background:
-    $('body').addClass('pfy-no-scroll').attr('aria-hidden', 'true');
+    if (this.modal) {
+      $('body').addClass('pfy-no-scroll pfy-modal').attr('aria-hidden', 'true');
+    } else {
+      $('body').addClass('pfy-no-scroll').attr('aria-hidden', 'true');
+    }
     $('.pfy-page').attr('inert','');
 
     // for accessibility: make sure focus can't go outside of popup. (workaround while 'inert' is not reliable)
@@ -425,7 +447,8 @@ function pfyPopup( options, index ) {
     if (typeof parent.$popup !== 'undefined') {
       parent.$popup.parent().remove();
     }
-    $('body').removeClass('pfy-no-scroll').removeAttr('aria-hidden');
+    $('body').removeClass('pfy-no-scroll pfy-modal').removeAttr('aria-hidden');
+    // $('body').removeClass('pfy-no-scroll').removeAttr('aria-hidden');
     $('.pfy-page').removeAttr('inert');
     if (currentlyOpenPopup) {
       currentlyOpenPopup = false;
