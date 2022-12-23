@@ -1,7 +1,7 @@
 <?php
 
 /*
- * 
+ * Macro Reveal()
  */
 
 namespace Usility\PageFactory;
@@ -11,12 +11,25 @@ $macroConfig =  [
         'label' => ['Text that prepresents the controlling element.', false],
         'target' => ['[css selector] CSS selector of the DIV that shall be revealed, e.g. "#box"', false],
         'class' => ['(optional) A class that will be applied to the controlling element.', false],
-        'symbol' => ['[\'triangle\'|character(s)] If defined, the symbol on the left hand side of the label will be modified. (currently just "triangle" implemented.)', false],
+        'symbol' => ['[\'plus-minus\'|character(s)] If defined, the symbol on the left hand side of the label '.
+            'will be modified. (currently just "triangle" implemented.)', false],
         'symbol-rotation' => ['[deg2|deg1,deg2] Defines rotation angle of icon for end state (resp. start and end state).', false],
         'frame' => ['(true, class) If true, class "pfy-reveal-frame" is added, painting a frame around the element by default.', false],
+        'shadow' => ['If true, adds a shadow to make it look like opening a drawer.', null],
     ],
     'summary' => <<<EOT
 Displays a clickable label. When clicked, opens and closes the target element specified in argument ``target``.
+
+### Styling Variables:
+#### Controller:
+- ``\--pfy-reveal-bg``
+- ``\--pfy-reveal-border``
+- ``\--pfy-reveal-controller-height``
+
+#### Target-Container:
+- ``\--pfy-reveal-container-border``
+- ``\--pfy-reveal-container-padding``
+
 EOT,
     'mdCompile' => false,
     'assetsToLoad' => ['REVEAL'],
@@ -44,18 +57,24 @@ class Reveal extends Macros
 
         if ($args['frame']) {
             $class = $class? "$class pfy-reveal-frame": 'pfy-reveal-frame';
+            if ($args['shadow'] !== false) {
+                $args['shadow'] = true;
+            }
         }
 
+        $deg1 = $deg2 = false;
         $icon = $args['symbol'];
-        $iconClosed = '+';
-        $iconOpen = '–';
+        // standard symbol: triangle
+        $iconClosed = '▷';
+        $iconOpen = '▷';
 
-        // 'triangle' is second standard symbol:
-        if (stripos($args['symbol'], 'tri') !== false) {
-            $iconClosed = '▷';
-            $iconOpen = '▷';
+        // 'plus-minus' is second standard symbol:
+        if (str_starts_with($args['symbol'], 'plu')) {
+            $iconClosed = '+';
+            $iconOpen = '–';
+            $deg1 = 0;
+            $deg2 = 180;
 
-        // icon defined:
         } elseif ($icon) {
             if (str_contains($icon, ',')) {
                 list($iconClosed, $iconOpen) = explodeTrim(',', $icon);
@@ -65,15 +84,11 @@ class Reveal extends Macros
             }
         }
 
-        $deg1 = $deg2 = false;
         if ($args['symbol-rotation']) {
             $deg1 = $deg2 = $args['symbol-rotation'];
             if (str_contains($deg1, ',')) {
                 list($deg1, $deg2) = explodeTrim(',', $deg1);
             }
-        } elseif ($icon) {
-            $deg1 = 0;
-            $deg2 = 90;
         }
 
         if ($deg1 !== false) {
@@ -87,13 +102,16 @@ class Reveal extends Macros
 EOT;
             PageFactory::$pg->addCss($css);
         }
-
+        if ($args['shadow']) {
+            $class .= ' pfy-target-shadow';
+        }
         $class = $class? " $class": '';
         $out = '';
-        $out .= "\n\t<input id='$id' class='pfy-reveal-controller' type='checkbox' data-reveal-target='{$args['target']}' data-icon-closed='$iconClosed' data-icon-open='$iconOpen'>".
+        $out .= "\n\t<input id='$id' class='pfy-reveal-controller' type='checkbox' ".
+            "data-reveal-target='{$args['target']}' data-icon-closed='$iconClosed' data-icon-open='$iconOpen'>".
             "\n\t\t<label for='$id'>{$args['label']}</label>\n";
 
-        $out = "\t<div class='pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
+        $out = "\t<div class='pfy-reveal-controller-wrapper-$inx pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
 
         return $out;
     } // render

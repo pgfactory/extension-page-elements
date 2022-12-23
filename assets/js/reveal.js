@@ -8,6 +8,8 @@ var pfyRevealTransitionTime = 300;
 
 $('.pfy-reveal-controller').each(function() {
   let $revealController = $(this);
+  let inx = $revealController.parent().attr('class');
+  inx = inx.replace(/pfy-reveal-controller-wrapper-(\d+).*/, '$1');
   $revealController.attr('aria-expanded','false');
   let target = $(this).attr('data-reveal-target');
   let $revealContainer = null;
@@ -16,7 +18,7 @@ $('.pfy-reveal-controller').each(function() {
   } else {
     $revealContainer = $('> .pfy-reveal-container', $(this).parent());
   }
-  $revealContainer.addClass('pfy-reveal-container');
+  $revealContainer.addClass('pfy-reveal-container pfy-reveal-container-'+inx);
   let $revealContent = $revealContainer.html();
   $revealContainer.html('<div class="pfy-reveal-container-inner" style="display: none;"></div>');
   $('.pfy-reveal-container-inner', $revealContainer).html($revealContent);
@@ -37,37 +39,29 @@ $('.pfy-reveal-controller').each(function() {
 $('body').on('click', '.pfy-reveal-controller', function(e) {
 	e.stopImmediatePropagation();
 	e.stopPropagation();
-  let $controllerSelector = $(this);
-  let targetSelector = $controllerSelector.data('reveal-target');
-  if (typeof targetSelector !== 'undefined') {
-    pfyToggleReveal(targetSelector, $controllerSelector);
+  let $controller = $(this);
+  let $target = $($controller.data('reveal-target'));
+  if ($target.length) {
+    pfyToggleReveal($target, $controller);
   }
 });
 
 
-function pfyToggleReveal(targetSelector, $revealController)
+function pfyToggleReveal($target, $revealController)
 {
-  let state = ($revealController.attr('aria-expanded') !== 'false');
+  let state = !$revealController.prop('checked');
   if (state) {
-    pfyUnReveal(targetSelector, $revealController);
+    pfyUnReveal($target, $revealController);
   } else {
-    pfyReveal(targetSelector, $revealController);
+    pfyReveal($target, $revealController);
   }
 } // pfyToggleReveal
 
 
 
-function pfyReveal(targetSelector, controllerSelector)
+function pfyReveal($revealContainer, $revealController)
 {
-  let $revealContainer = targetSelector;
-  if (typeof targetSelector === 'string') {
-    $revealContainer = $(targetSelector);
-  }
   let $target = $('.pfy-reveal-container-inner', $revealContainer);
-  let $revealController = controllerSelector;
-  if (typeof controllerSelector === 'string') {
-    $revealController = $(controllerSelector);
-  }
 
   $target.show();
 
@@ -90,17 +84,9 @@ function pfyReveal(targetSelector, controllerSelector)
 
 
 
-function pfyUnReveal(targetSelector, controllerSelector)
+function pfyUnReveal($revealContainer, $revealController)
 {
-  let $revealContainer = targetSelector;
-  if (typeof targetSelector === 'string') {
-    $revealContainer = $(targetSelector);
-  }
   let $target = $('.pfy-reveal-container-inner', $revealContainer);
-  let $revealController = controllerSelector;
-  if (typeof controllerSelector === 'string') {
-    $revealController = $(controllerSelector);
-  }
 
   const boundingBox = $target[0].getBoundingClientRect();
   const marginTop = -(Math.round(boundingBox.height));

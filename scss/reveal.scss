@@ -1,4 +1,7 @@
 /* === Reveal block ================== */
+
+$revealControllerHeight: 2em;
+
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
@@ -14,7 +17,7 @@
     }
     &::before {
       position: absolute;
-      top: 0;
+      top: calc(var(--pfy-reveal-controller-height, #{$revealControllerHeight}) / 2 - 1.05em);
       left: 0;
       width: 2em;
       height: 2em;
@@ -28,16 +31,15 @@
     transform: rotate( 0 );
     &:checked::before {
       content: attr(data-icon-open);
-      transform: rotate( 180deg );
+      transform: rotate( 90deg );
     }
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     display: inline-block;
     background-color: transparent;
-    position: relative;
+    position: absolute;
     font-size: inherit;
-    width: 2em;
     border: 0;
     cursor: pointer;
     outline: none;
@@ -50,13 +52,20 @@
   } // .pfy-reveal-controller
 
   .pfy-reveal-controller-wrapper {
+    position: relative;
     margin-top: 0.5em;
+    background: var(--pfy-reveal-bg);
+    border: 1px solid var(--pfy-reveal-border);
+    &.pfy-target-revealed.pfy-target-shadow {
+      box-shadow: 0 5px 5px -5px rgb(0 0 0 / 75%);
+    }
+
     label {
-      width: calc(100% - 2em - 6px);
-      margin-left: -0.1em;
-      transform: translateY(0.1em);
+      width: 100%;
       cursor: pointer;
       display: inline-block;
+      padding: calc(var(--pfy-reveal-controller-height, #{$revealControllerHeight}) / 2 - 0.575em) 0;
+      padding-left: 2em;
     }
     &:focus-within {
       outline: 1px solid var( --pfy-form-focus-color, magenta);
@@ -81,8 +90,14 @@
     overflow: hidden;
     position: relative;
     margin-bottom: 0.7em;
+    background: var(--pfy-reveal-container-bg);
+    z-index: 0;
+
 
     .pfy-reveal-container-inner {
+      border: var(--pfy-reveal-container-border);
+      padding: var(--pfy-reveal-container-padding);
+      border-top: none;
       margin-top: -10000px;
       opacity: 0;
     }
