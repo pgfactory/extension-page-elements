@@ -3,6 +3,7 @@
 namespace Usility\PageFactoryElements;
 use Usility\PageFactory\PageFactory as PageFactory;
 use Usility\PageFactory\DataSet as DataSet;
+use Usility\PageFactory\TransVars;
 use function \Usility\PageFactory\base_name;
 use function \Usility\PageFactory\explodeTrim;
 use function \Usility\PageFactory\translateToIdentifier;
@@ -24,7 +25,6 @@ if (!function_exists('array_is_list')) {
 
 class DataTable extends DataSet
 {
-    private $pfy;
     private $tableData;
     private $tableHeaders;
     private $tableClass;
@@ -39,9 +39,8 @@ class DataTable extends DataSet
      * @param array $options
      * @throws \Exception
      */
-    public function __construct(string $file, array $options = [], $pfy = null)
+    public function __construct(string $file, array $options = [])
     {
-        $this->pfy = $pfy;
         parent::__construct($file, $options);
 
         if (isset($_GET['delete'])) {
@@ -353,10 +352,8 @@ class DataTable extends DataSet
                 foreach ($rec as $key => $value) {
                     if (isset($footer[$key])) {
                         if (str_contains($footer[$key],TABLE_SUM_SYMBOL) && is_numeric($value)) {
-//                        if ($footer[$key] === TABLE_SUM_SYMBOL && is_numeric($value)) {
                             $sums[$key] += $value;
                         } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL) && $value) {
-//                        } elseif (($footer[$key] === TABLE_COUNT_SYMBOL) && $value) {
                             $counts[$key]++;
                         }
                     }
@@ -368,13 +365,6 @@ class DataTable extends DataSet
             $c = 1;
             foreach (array_keys($this->elementLabels) as $key) {
                 if (isset($footer[$key])) {
-//                    if (str_contains($footer[$key], TABLE_SUM_SYMBOL)) {
-////                    if ($footer[$key] === TABLE_SUM_SYMBOL) {
-////                        $val = $sums[$key];
-//                        $val = $sums[$key];
-//                    } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
-////                    } elseif ($footer[$key] === TABLE_COUNT_SYMBOL) {
-//                        $val = $counts[$key];
                     if (str_contains($footer[$key], TABLE_SUM_SYMBOL) || str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
                         $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $footer[$key]);
                     } else {
@@ -492,7 +482,7 @@ EOT;
             $this->flush();
         }
         unset($_POST['pfy-reckey']);
-        $msg = $this->pfy::$trans->getVariable('pfy-form-rec-deleted');
+        $msg = TransVars::getVariable('pfy-form-rec-deleted');
         reloadAgent(message: $msg);
     } // handleTableRequests
 
