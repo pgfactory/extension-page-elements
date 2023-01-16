@@ -1,111 +1,97 @@
 <?php
-
-/*
- * 
- */
-
 namespace Usility\PageFactory;
 
-$macroConfig =  [
-    'parameters' => [
-        'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
-            'contentFrom). "content" functions as synonym for "text".', false],
+/*
+ * Twig function
+ */
 
-        'contentFrom'		=> ['[string] Selector that identifies content which will be imported and displayed '.
-            'in the popup (example: "#box").', false],
+function overlay($argStr = '')
+{
+    // Definition of arguments and help-text:
+    $config =  [
+        'options' => [
+            'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
+                'contentFrom). "content" functions as synonym for "text".', false],
 
-        'header'		=> ['[string] Defines the text in the popup header. If false, no header is displayed.', false],
+            'contentFrom'		=> ['[string] Selector that identifies content which will be imported and displayed '.
+                'in the popup (example: "#box").', false],
 
-        'triggerSource'		=> ['[true, string, false] If set, the popup opens upon activation of the trigger '.
-            'source element (example: "#btn").', true],
+            'header'		=> ['[string] Defines the text in the popup header. If false, no header is displayed.', false],
 
-        'triggerEvent'		=> ['[click, right-click, dblclick, blur] Specifies the type of event that shall '.
-            'open the popup.', false],
+            'triggerSource'		=> ['[true, string, false] If set, the popup opens upon activation of the trigger '.
+                'source element (example: "#btn").', true],
 
-        'closeButton'		=> ['[true,false] Specifies whether a close button shall be displayed in the upper '.
-            'right corner (default: true).', false],
+            'triggerEvent'		=> ['[click, right-click, dblclick, blur] Specifies the type of event that shall '.
+                'open the popup.', false],
 
-        'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
-            '(default: true).', false],
+            'closeButton'		=> ['[true,false] Specifies whether a close button shall be displayed in the upper '.
+                'right corner (default: true).', false],
 
-        'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
-            'matter which way closing was initiated (including click on background).', false],
+            'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
+                '(default: true).', false],
 
-        'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
-            false],
+            'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
+                'matter which way closing was initiated (including click on background).', false],
 
-        'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
+            'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
+                false],
 
-        'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
+            'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
 
-        'popupClass'		=> ['[string] Class(es) applied to popup element.', false],
+            'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
 
-        'containerClass'		=> ['[string] Class(es) applied to container element.', false],
+            'popupClass'		=> ['[string] Class(es) applied to popup element.', false],
 
-        'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
-    ],
-    'summary' => <<<EOT
+            'containerClass'		=> ['[string] Class(es) applied to container element.', false],
+
+            'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],        ],
+        'summary' => <<<EOT
+# overlay()
+
 Displays some content in a large popup hovering over the page.
 EOT,
-    'mdCompile' => false,
-    'assetsToLoad' => 'POPUPS'
-];
+    ];
 
+    // parse arguments, handle help and showSource:
+    if (is_string($str = TransVars::initMacro(__FILE__, $config, $argStr))) {
+        return $str;
+    } else {
+        list($args, $sourceCode, $inx, $funcName) = $str;
+    }
 
+    // assemble output:
+    // option 'triggerButton' -> render button to open popup:
+    if (isset($args['triggerButton'])) {
+        $label = $args['triggerButton'];
+        $buttonId = "pfy-popup-trigger-$inx";
+        unset($args['triggerButton']);
+        $args['trigger'] = "#$buttonId";
+        $args['closeButton'] = true;
+    }
 
-class Overlay extends Macros
-{
-    public static $inx = 1;
-
-
-    /**
-     * Macro rendering method
-     * @param array $args
-     * @param string $argStr
-     * @return string
-     */
-    public function render(array $args, string $argStr): string
-    {
-        $inx = self::$inx++;
-
-        // option 'triggerButton' -> render button to open popup:
-        if (isset($args['triggerButton'])) {
-            $label = $args['triggerButton'];
-            $buttonId = "pfy-popup-trigger-$inx";
-            unset($args['triggerButton']);
-            $args['trigger'] = "#$buttonId";
-            $args['closeButton'] = true;
-        }
-
-        $args['popupClass'] = 'pfy-overlay';
-        $args['anker'] = 'body';
-        $jsArgs = '';
-        foreach ($args as $key => $value) {
-            if (is_string(($key))) {
-                if ($value === true) {
-                    $jsArgs .= "\t$key: true,\n";
-                } elseif ($value === false) {
-                    $jsArgs .= "\t$key: false,\n";
-                } else {
-                    $value = str_replace("'", "\\'", $value);
-                    $jsArgs .= "\t$key: '$value',\n";
-                }
+    $args['popupClass'] = 'pfy-overlay';
+    $args['anker'] = 'body';
+    $jsArgs = '';
+    foreach ($args as $key => $value) {
+        if (is_string(($key))) {
+            if ($value === true) {
+                $jsArgs .= "\t$key: true,\n";
+            } elseif ($value === false) {
+                $jsArgs .= "\t$key: false,\n";
+            } else {
+                $value = str_replace("'", "\\'", $value);
+                $jsArgs .= "\t$key: '$value',\n";
             }
         }
-        $jq = <<<EOT
+    }
+    $jq = <<<EOT
 
 var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
-        PageFactory::$pg->addJq($jq);
-    return '';
-    } // render
+    PageFactory::$pg->addJq($jq);
+
+    return $sourceCode;
 }
 
-
-
-
-// ==================================================================
-$macroConfig['macroObj'] = new $thisMacroName($this->pfy);  // <- don't modify
-return $macroConfig;

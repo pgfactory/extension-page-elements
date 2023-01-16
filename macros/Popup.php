@@ -1,127 +1,117 @@
 <?php
-
-/*
- * 
- */
-
 namespace Usility\PageFactory;
 
-$macroConfig =  [
-    'parameters' => [
-        'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
-            'contentFrom). "content" functions as synonym for "text".', false],
+/*
+ * Twig function
+ */
 
-        'contentFrom'		=> ['[string] Selector that identifies content which will be imported and displayed '.
-            'in the popup (example: "#box").', false],
+function popup($argStr = '')
+{
+    // Definition of arguments and help-text:
+    $config =  [
+        'options' => [
+            'text'		=> ['[html or string]Text to be displayed in the popup (for small messages, otherwise use '.
+                'contentFrom). "content" functions as synonym for "text".', false],
 
-        'header'		=> ['[string] Defines the text in the popup header. If false, no header is displayed.', false],
+            'contentFrom'		=> ['[string] Selector that identifies content which will be imported and displayed '.
+                'in the popup (example: "#box").', false],
 
-        'triggerSource'		=> ['[true, string, false] If set, the popup opens upon activation of the trigger '.
-            'source element (example: "#btn").', true],
+            'header'		=> ['[string] Defines the text in the popup header. If false, no header is displayed.', false],
 
-        'triggerEvent'		=> ['[click, right-click, dblclick, blur] Specifies the type of event that shall '.
-            'open the popup.', false],
+            'triggerSource'		=> ['[true, string, false] If set, the popup opens upon activation of the trigger '.
+                'source element (example: "#btn").', true],
 
-        'closeButton'		=> ['[true,false] Specifies whether a close button shall be displayed in the upper '.
-            'right corner (default: true).', false],
+            'triggerEvent'		=> ['[click, right-click, dblclick, blur] Specifies the type of event that shall '.
+                'open the popup.', false],
 
-        'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
-            '(default: true).', false],
+            'closeButton'		=> ['[true,false] Specifies whether a close button shall be displayed in the upper '.
+                'right corner (default: true).', false],
 
-        'buttons'		=> ['[Comma-separated-list of button labels] Example: "Cancel,Ok". Predefined: "Cancel", '.
-            '"Close", "Ok", "Continue", "Confirm".', false],
+            'closeOnBgClick'		=> ['[true,false] Specifies whether clicks on the background will close the popup '.
+                '(default: true).', false],
 
-        'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
-            'matter which way closing was initiated (including click on background).', false],
+            'buttons'		=> ['[Comma-separated-list of button labels] Example: "Cancel,Ok". Predefined: "Cancel", '.
+                '"Close", "Ok", "Continue", "Confirm".', false],
 
-        'onOk'		=> ['[function or string] Callback function invoked when "ok" key is activated', false],
-        'onConfirm'		=> ['[function or string] Callback function invoked when "Confirm" key is activated', false],
-        'onContinue'		=> ['[function or string] Callback function invoked when "Continue" key is activated', false],
-        'onCancel'		=> ['[function or string] Callback function invoked when "Cancel" key is activated', false],
-        'onClose'		=> ['[function or string] Callback function invoked when "Close" key is activated', false],
+            'closeCallback'		=> ['[function or string] A function to be executed upon closing the popup, no '.
+                'matter which way closing was initiated (including click on background).', false],
 
-        'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
-            false],
+            'onOk'		=> ['[function or string] Callback function invoked when "ok" key is activated', false],
+            'onConfirm'		=> ['[function or string] Callback function invoked when "Confirm" key is activated', false],
+            'onContinue'		=> ['[function or string] Callback function invoked when "Continue" key is activated', false],
+            'onCancel'		=> ['[function or string] Callback function invoked when "Cancel" key is activated', false],
+            'onClose'		=> ['[function or string] Callback function invoked when "Close" key is activated', false],
 
-        'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
+            'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
+                false],
 
-        'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
+            'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
 
-        'popupClass'		=> ['[string] Class(es) applied to popup element.', false],
+            'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
 
-        'containerClass'		=> ['[string] Class(es) applied to container element.', false],
+            'popupClass'		=> ['[string] Class(es) applied to popup element.', false],
 
-        'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
+            'containerClass'		=> ['[string] Class(es) applied to container element.', false],
 
-        'buttonClasses'		=> ['[Comma-separated-list of classes] Will be applied to corresponding '.
-            'buttons defined by "buttons" argument.', false],
+            'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
 
-        'anker'		=> ['[string] If defined, popup will be placed inside elemented selected by "anker" '.
-            '(e.g. ".box"). Default: "body".', false],
+            'buttonClasses'		=> ['[Comma-separated-list of classes] Will be applied to corresponding '.
+                'buttons defined by "buttons" argument.', false],
 
-    ],
-    'summary' => <<<EOT
+            'anker'		=> ['[string] If defined, popup will be placed inside elemented selected by "anker" '.
+                '(e.g. ".box"). Default: "body".', false],
+        ],
+        'summary' => <<<EOT
+# popup()
+
 Displays a popup window.
 EOT,
-    'mdCompile' => false,
-    'assetsToLoad' => 'POPUPS'
-];
+    ];
 
+    // parse arguments, handle help and showSource:
+    if (is_string($str = TransVars::initMacro(__FILE__, $config, $argStr))) {
+        return $str;
+    } else {
+        list($args, $sourceCode, $inx, $funcName) = $str;
+    }
 
+    // assemble output:
+    // option 'triggerButton' -> render button to open popup:
+    if (isset($args['triggerButton'])) {
+        $label = $args['triggerButton'];
+        $buttonId = "pfy-popup-trigger-$inx";
+        unset($args['triggerButton']);
+        $args['trigger'] = "#$buttonId";
+        $args['closeButton'] = true;
+    }
 
-class Popup extends Macros
-{
-    public static $inx = 1;
-
-
-    /**
-     * Macro rendering method
-     * @param array $args
-     * @param string $argStr
-     * @return string
-     */
-    public function render(array $args, string $argStr): string
-    {
-        $inx = self::$inx++;
-
-        // option 'triggerButton' -> render button to open popup:
-        if (isset($args['triggerButton'])) {
-            $label = $args['triggerButton'];
-            $buttonId = "pfy-popup-trigger-$inx";
-            unset($args['triggerButton']);
-            $args['trigger'] = "#$buttonId";
-            $args['closeButton'] = true;
-        }
-
-        $jsArgs = '';
-        foreach ($args as $key => $value) {
-            if (is_string(($key))) {
-                if ($value === true) {
-                    $jsArgs .= "\t$key: true,\n";
-                } elseif ($value === false) {
-                    $jsArgs .= "\t$key: false,\n";
-                } else {
-                    $value = str_replace("'", "\\'", $value);
-                    $jsArgs .= "\t$key: '$value',\n";
-                }
+    $jsArgs = '';
+    foreach ($args as $key => $value) {
+        if (is_string(($key))) {
+            if ($value === true) {
+                $jsArgs .= "\t$key: true,\n";
+            } elseif ($value === false) {
+                $jsArgs .= "\t$key: false,\n";
+            } else {
+                $value = str_replace("'", "\\'", $value);
+                $jsArgs .= "\t$key: '$value',\n";
             }
         }
+    }
 
-        $jq = <<<EOT
+    $jq = <<<EOT
 
 var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
-        PageFactory::$pg->addJq($jq);
+    PageFactory::$pg->addJq($jq);
+    //$str = markdown($str); // markdown-compile
+    //$str = shieldStr($str); // shield from further processing if necessary
 
-        return '';
-    } // render
+    PageFactory::$pg->requireFramework();
+    PageFactory::$pg->addAssets('POPUPS');
+
+    return $sourceCode;
 }
 
-
-
-
-// ==================================================================
-$macroConfig['macroObj'] = new $thisMacroName($this->pfy);  // <- don't modify
-return $macroConfig;
