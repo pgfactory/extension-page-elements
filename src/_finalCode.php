@@ -9,7 +9,7 @@
 
 namespace Usility\PageFactoryElements;
 use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\TwigVars as TwigVars;
+use Usility\PageFactory\TransVars as TransVars;
 
 use function \Usility\PageFactory\writeFile;
 use function \Usility\PageFactory\translateToIdentifier;
@@ -17,7 +17,7 @@ use function \Usility\PageFactory\getDir;
 use function \Usility\PageFactory\fileTime;
 use function \Usility\PageFactory\getFile;
 
-$transVars =    TwigVars::$transVars;
+$transVars =    TransVars::$transVars;
 $translated = [];
 $files = getDir(PAGE_ELEMENTS_PATH.'js/*.js');
 foreach ($files as $file) {
