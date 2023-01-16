@@ -285,7 +285,7 @@ class SitemapManager
         $defaultLang = PageFactory::$defaultLanguage;
         // initialize/update meta-files:
         foreach (self::$supportedLanguages as $lang) {
-            $txtFile = $folder . "z_pfy.$lang.txt";
+            $txtFile = $folder . "z.$lang.txt";
             if (!file_exists($txtFile)) {
                 file_put_contents($txtFile, "Title: $name\n");
                 $modified = true;
