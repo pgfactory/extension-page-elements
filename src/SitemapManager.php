@@ -2,8 +2,10 @@
 
 namespace Usility\PageFactoryElements;
 use Usility\PageFactory\PageFactory as PageFactory;
+use Usility\PageFactory\Utils as Utils;
 use function \Usility\PageFactory\fileTime;
 use function \Usility\PageFactory\getFile;
+use function \Usility\PageFactory\getDir;
 use function \Usility\PageFactory\getDirDeep;
 use function \Usility\PageFactory\mylog;
 use function \Usility\PageFactory\decodeStr;
@@ -32,7 +34,8 @@ class SitemapManager
     public static function updateSitemap(): void
     {
         // only run in debug mode:
-        if (!PageFactory::$debug || !self::updateNecessary()) {
+        $debug = Utils::determineDebugState();
+        if (!$debug || !self::updateNecessary()) {
             return;
         }
         self::$allowNonPfyPages = PageFactory::$config['allowNonPfyPages']??false;
@@ -76,7 +79,7 @@ class SitemapManager
      */
     public static function writeSitemapFile(): void
     {
-        $zap = getFile(SITEMAP_FILE, 'z');
+        $zap = getFile(SITEMAP_FILE, 'zapped');
         if ($zap) {
             $zap = "\n\n$zap";
         }
@@ -237,6 +240,9 @@ class SitemapManager
             $indent = str_repeat('    ', $depth-1);
             $path = substr($pg->root(), $len).'/';
             $unlisted = (preg_match('/^\d+_/', basename($path)))? '': '^';
+            if ($unlisted !== '^') {
+                self::updatePageIndexes($pg);
+            }
             $title = html_entity_decode($pg->title()->html());
 
             if ($depth === 1) {
@@ -277,7 +283,7 @@ class SitemapManager
      */
     private static function updateMetaFiles(string $folder, string $name, string $baseName): bool
     {
-        if (!self::$allowNonPfyPages) { // means 'don't check metafiles'
+        if (self::$allowNonPfyPages) { // means 'don't check metafiles'
             return false;
         }
 
@@ -360,5 +366,39 @@ EOT;
         }
         return $deletedFolders;
     } // removeUnusedFolders
+
+
+    private static function updatePageIndexes($pg)
+    {
+        $path = $pg->root();
+        $index = '';
+        if (preg_match_all('|/(\d+)_|',$path, $m)) {
+            foreach ($m[1] as $item) {
+                $index .= "$item.";
+            }
+            self::updateMetaFile($path, $index);
+        }
+    } // updatePageIndexes
+
+
+    private static function updateMetaFile($path, $index)
+    {
+        $txts = glob("$path/".PFY_PAGE_META_FILE_BASENAME."*.txt");
+        if (!$txts) {
+            return;
+        }
+        foreach ($txts as $txtFile) {
+            $str = file_get_contents($txtFile);
+            $parts = explode("\n----\n", $str);
+            foreach ($parts as $i => $s) {
+                if (preg_match('/^PageIndex:/', trim($s))) {
+                    unset($parts[$i]);
+                }
+            }
+            $out = implode("\n----\n", $parts)."\n";
+            $out = "PageIndex: $index\n\n----\n$out";
+            file_put_contents($txtFile, $out);
+        }
+    } // updateMetaFile
 
 } // SitemapManager
