@@ -4,15 +4,20 @@ namespace Usility\PageFactoryElements;
 use Usility\PageFactory\PageFactory as PageFactory;
 use Usility\PageFactory\Scss as Scss;
 use function \Usility\PageFactory\getDir;
+use function \Usility\PageFactory\getStaticUrlArg;
 
 
 
 class PageElements
 {
+    public $pfy;
+    public $pg;
+    public $assets;
+    public $extensionPath;
     /**
      * @param $pfy
      */
-    public function __construct($pfy)
+    public function __construct($pfy = null)
     {
         $this->pfy = $pfy;
         $this->pg = PageFactory::$pg;
@@ -21,6 +26,8 @@ class PageElements
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
         $this->updateScss();
+        $this->initPresentationSupport();
+        $this->handleCssRefactor();
     } // __construct
 
 
@@ -36,6 +43,22 @@ class PageElements
             }
         }
     } // initMacros
+
+
+
+    private function initPresentationSupport()
+    {
+        $optionsFromConfigFile = kirby()->option('usility.pagefactory-pageelements.options');
+        if (($optionsFromConfigFile['activatePresentationSupport']??false) && getStaticUrlArg('present')) {
+            PageFactory::$pg->addAssets([
+                'site/plugins/pagefactory-pageelements/assets/css/-presentation_support.css',
+                'site/plugins/pagefactory-pageelements/assets/js/jquery.sizes.js',
+                'site/plugins/pagefactory-pageelements/assets/js/presentation_support.js'
+            ]);
+            PageFactory::$pg->addBodyTagClass('pfy-presentation-support');
+            PageFactory::$pg->addBodyEndInjections("<div id='pfy-cursor-mark' style='display: none;'></div>\n");
+        }
+    } // initPresentationSupport
 
 
     /**
@@ -69,6 +92,37 @@ class PageElements
     {
         return PE_ASSET_GROUPS;
     } // getAssetGroups
+
+
+    private function handleCssRefactor()
+    {
+        $file = $_GET['cssrefactor']??false;
+        if ($file === false) {
+            return;
+        }
+        if ($file === '') {
+            exit("CSS-Refactoring:<br>Please supply path to CSS file(s)<br>You can use wildcards, ".
+                "e.g. '?cssrefactor=site/plugins/pagefactory/assets/css/*.css'");
+        }
+
+        if (file_exists($file)) {
+            $files = [$file];
+        } else {
+            $files = getDir($file);
+        }
+        if ($files) {
+            echo "Compiling files to SCSS:<br>\n";
+            foreach ($files as $file) {
+                $res = CssRefactor::exec($file);
+                if (is_array($res)) {
+                    $scssFile = $res[1];
+                    exit("ERROR occured while compiling file '$file'<br>\n");
+                }
+                echo("- $file -> $res<br>\n");
+            }
+               }
+        exit("Done <br>\n");
+    } // handleCssRefactor
 
 
     /**
