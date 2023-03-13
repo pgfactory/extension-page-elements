@@ -24,6 +24,7 @@ class SitemapManager
     private static array $supportedLanguages;
     private static bool $modified;
     private static bool $allowNonPfyPages;
+    private static int $pageNr = 1;
 
     /**
      * There is a control file 'site/config/sitemap.txt'. And there is the actual site structure.
@@ -370,12 +371,14 @@ EOT;
 
     private static function updatePageIndexes($pg)
     {
+        self::$pageNr++;
         $path = $pg->root();
         $index = '';
         if (preg_match_all('|/(\d+)_|',$path, $m)) {
             foreach ($m[1] as $item) {
                 $index .= "$item.";
             }
+            $index = trim($index, '.');
             self::updateMetaFile($path, $index);
         }
     } // updatePageIndexes
@@ -391,12 +394,13 @@ EOT;
             $str = file_get_contents($txtFile);
             $parts = explode("\n----\n", $str);
             foreach ($parts as $i => $s) {
-                if (preg_match('/^PageIndex:/', trim($s))) {
+                if (preg_match('/^(PageIndex|PageNr):/', trim($s))) {
                     unset($parts[$i]);
                 }
             }
+            $pageNr = self::$pageNr;
             $out = implode("\n----\n", $parts)."\n";
-            $out = "PageIndex: $index\n\n----\n$out";
+            $out = "PageIndex: $index\n----\nPageNr: $pageNr\n----\n$out";
             file_put_contents($txtFile, $out);
         }
     } // updateMetaFile
