@@ -1,0 +1,71 @@
+// Automatic Numbering of Headers
+//
+// To activate: add class 'pfy-auto-heading-numbers' to body
+
+// Variables
+//     --heading-h1-start: 1 
+//     --heading-number-separator: "-";
+//     --heading-number-last-separator: ") ";
+
+
+$headBefore: var(--heading-number-before, "");
+$headSep: var(--heading-number-separator, ".");
+$headLastSep: var(--heading-number-last-separator, "\0000a0\0000a0");
+
+.pfy-default-styling.pfy-auto-heading-numbers {
+    counter-reset: h1-cnt 0 h2-cnt 0 h3-cnt 0 h4-cnt 0 h5-cnt 0 h6-cnt 0;
+//    --heading-number-before: "[1.";
+//    --heading-number-last-separator: "]\0000a0\0000a0"
+
+	h1 {
+		counter-increment: h1-cnt;
+	}
+	#pfy h1 {
+		counter-reset: h2-cnt 0 h3-cnt 0 h4-cnt 0 h5-cnt 0 h6-cnt 0;
+	}
+	h1::before {
+		content: $headBefore counter(h1-cnt) $headLastSep;
+	}
+	h2 {
+		counter-increment: h2-cnt;
+		counter-reset: h3-cnt 0 h4-cnt 0 h5-cnt 0 h6-cnt 0;
+	}
+	h2::before {
+		content: $headBefore counter(h1-cnt) $headSep counter(h2-cnt) $headLastSep;
+	}
+	h3 {
+		counter-increment: h3-cnt;
+		counter-reset: h4-cnt 0 h5-cnt 0 h6-cnt 0;
+	}
+	h3::before {
+		content: $headBefore counter(h1-cnt) $headSep counter(h2-cnt) $headSep counter(h3-cnt) $headLastSep;
+	}
+	h4 {
+		counter-increment: h4-cnt;
+		counter-reset: h5-cnt 0 h6-cnt 0;
+	}
+	h4::before {
+		content: $headBefore counter(h1-cnt) $headSep counter(h2-cnt) $headSep counter(h3-cnt) $headSep counter(h4-cnt) $headLastSep;
+	}
+	h5 {
+		counter-increment: h5-cnt;
+		counter-reset: h6-cnt 0;
+	}
+	h5::before {
+		content: $headBefore counter(h1-cnt) $headSep counter(h2-cnt) $headSep counter(h3-cnt) $headSep counter(h4-cnt) $headSep counter(h5-cnt) $headLastSep;
+	}
+	h6 {
+		counter-increment: h6-cnt;
+	}
+	h6::before {
+		content: $headBefore counter(h1-cnt) $headSep counter(h2-cnt) $headSep counter(h3-cnt) $headSep counter(h4-cnt) $headSep counter(h5-cnt) $headSep counter(h6-cnt) $headLastSep;
+	}
+
+	h1,h2,h3,h4,h5,h6 {
+		&::before {
+			opacity: 0.5;
+			font-size: 80%;
+		}
+	}
+
+}
