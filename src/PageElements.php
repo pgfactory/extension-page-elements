@@ -48,7 +48,7 @@ class PageElements
 
     private function initPresentationSupport()
     {
-        $optionsFromConfigFile = kirby()->option('usility.pagefactory-pageelements.options');
+        $optionsFromConfigFile = kirby()->option('pgfactory.pagefactory-pageelements.options');
         if (($optionsFromConfigFile['activatePresentationSupport']??false) && getStaticUrlArg('present')) {
             PageFactory::$pg->addAssets([
                 'site/plugins/pagefactory-pageelements/assets/css/-presentation_support.css',
