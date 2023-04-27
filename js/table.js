@@ -13,7 +13,7 @@ $('.pfy-table-header .pfy-col-1 input[type=checkbox]').click(function () {
 $('.pfy-table-delete-recs-open-dialog').click(function (e) {
   e.stopPropagation();
   let $form = $('form', $(this).closest('.pfy-table-wrapper'));
-  let selected = $('.td-row-selector input[type=checkbox]:checked', $form);
+  let selected = $('.pfy-col-row-selector input[type=checkbox]:checked', $form);
   if (!selected.length) {
     currentlyOpenPopup = pfyPopup({
         text: `{{ pfy-table-delete-nothing-selected }}`,
@@ -27,16 +27,23 @@ $('.pfy-table-delete-recs-open-dialog').click(function (e) {
         text: `{{ pfy-data-delete-records }}`,
         header: `{{ pfy-table-delete-recs-header }}`,
         closeOnBgClick: true,
-        buttons: `Cancel, {{ pfy-edit-rec-delete-btn }}`,
+        buttons: `Cancel, Confirm`,
+        // buttons: `Cancel, {{ pfy-edit-rec-delete-btn }}`,
         wrapperClass: 'pfy-data-delete-records',
         callbackArg: $form,
-        callbacks: [
-          null,
-          function (that, $form) {
-            $form.attr('action', pageUrl + '?delete');
-            $form.submit();
-          }
-        ],
+        onConfirm:  function (that, $form) {
+          // pfyReload('?delete=');
+          $form.attr('action', pageUrl + '?delete');
+          $form.submit();
+        }
+
+      // callbacks: [
+        //   null,
+        //   function (that, $form) {
+        //     $form.attr('action', pageUrl + '?delete');
+        //     $form.submit();
+        //   }
+        // ],
       });
   }
 });

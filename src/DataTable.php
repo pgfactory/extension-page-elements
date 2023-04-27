@@ -1,8 +1,11 @@
 <?php
 
 namespace Usility\PageFactoryElements;
+
+require_once __DIR__ . '/Data2DSet.php';
+
 use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\DataSet as DataSet;
+use Usility\PageFactory\Data2DSet as Data2DSet;
 use Usility\PageFactory\TransVars;
 use function \Usility\PageFactory\base_name;
 use function \Usility\PageFactory\explodeTrim;
@@ -11,6 +14,7 @@ use function \Usility\PageFactory\array_splice_assoc;
 use function \Usility\PageFactory\renderIcon;
 use function \Usility\PageFactory\fileExt;
 use function \Usility\PageFactory\reloadAgent;
+
 
 const TABLE_SUM_SYMBOL = '%sum';
 const TABLE_COUNT_SYMBOL = '%count';
@@ -23,7 +27,7 @@ if (!function_exists('array_is_list')) {
 }
 
 
-class DataTable extends DataSet
+class DataTable extends Data2DSet
 {
     private $tableData;
     private $tableHeaders;
@@ -33,6 +37,17 @@ class DataTable extends DataSet
     private $tableButtons;
     private $tableButtonDelete = false;
     private $tableButtonDownload = false;
+    private int $inx;
+    private string $tableId;
+    private $footers;
+    private string $caption;
+    private string $captionAbove;
+    private string $interactive;
+    private string $showRowNumbers;
+    private string $showRowSelectors;
+    private string $sort;
+    private string $export;
+    private $elementLabels;
 
     /**
      * @param string $file
@@ -42,7 +57,6 @@ class DataTable extends DataSet
     public function __construct(string $file, array $options = [])
     {
         parent::__construct($file, $options);
-
         if (isset($_GET['delete'])) {
             if ($_POST['pfy-reckey']??false) {
                 $this->handleTableRequests();
@@ -55,27 +69,26 @@ class DataTable extends DataSet
         $this->tableWrapperClass = isset($options['tableWrapperClass']) && $options['tableWrapperClass'] ? $options['tableWrapperClass'] : 'pfy-table-wrapper';
         $this->dataReference = isset($options['dataReference']) && $options['dataReference'] ? $options['dataReference'] : '';
         $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] :
-            (isset($options['footer']) && $options['footer'] ? $options['footer'] : false);
-        $this->options['footers'] = $this->footers;
+                        (isset($options['footer']) && $options['footer'] ? $options['footer'] : false);
         $this->caption = isset($options['caption']) && $options['caption'] ? $options['caption'] : false;
         $captionPosition = isset($options['captionPosition']) && $options['captionPosition'] ? $options['captionPosition'] : 'b';
         $this->captionAbove = $captionPosition[0] === 'a';
-        $this->interactive = isset($options['interactive']) ? $options['interactive'] : false;
-        $this->tableButtons = isset($options['tableButtons']) ? $options['tableButtons'] : false;
+        $this->interactive = $options['interactive'] ?? false;
+        $this->tableButtons = $options['tableButtons'] ?? false;
         $this->downloadFilename = isset($options['downloadFilename']) && $options['downloadFilename'] ? $options['downloadFilename'] : base_name($file, false);
-        $this->showRowNumbers = isset($options['showRowNumbers']) ? $options['showRowNumbers'] : false;
+        $this->showRowNumbers = $options['showRowNumbers'] ?? false;
         $this->showRowSelectors = isset($options['showRowSelectors']) && $options['showRowSelectors'] ? $options['showRowSelectors'] : false;
-        $this->sort = isset($options['sort']) ? $options['sort'] : false;
-        $this->export = isset($options['export']) ? $options['export'] : false;
+        $this->sort = $options['sort'] ?? false;
+        $this->export = $options['export'] ?? false;
+        $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
 
-        if (isset($this->options['tableHeaders'])) {
-            $this->options['tableHeaders'] = $this->options['headers'];
-        } elseif (isset($this->options['headers'])) {
-            $this->options['tableHeaders'] = $this->options['headers'];
-        } else {
-            $this->options['tableHeaders'] = [];
+
+        if ($this->tableHeaders && !is_array($this->tableHeaders)) {
+            $this->parseArrayArg('tableHeaders');
         }
-        $this->parseArrayArg('tableHeaders'); // options['tableHeaders'] or options['headers']
+        if ($this->footers && !is_array($this->footers)) {
+            $this->parseArrayArg('footers');
+        }
 
         if ($this->tableButtons === true) {
             $this->tableButtonDelete = true;
@@ -87,11 +100,6 @@ class DataTable extends DataSet
             $this->tableButtonDownload = (strpos('download', $this->tableButtonDownload) !== false);
             $this->dataReference = true;
         }
-        if ($this->dataReference && is_string($this->dataReference)) {
-            $this->dataReference = " data-ref='$this->dataReference'";
-        } else {
-            $this->dataReference = '';
-        }
 
         if ($this->tableButtonDelete) {
             $this->showRowSelectors = true;
@@ -100,12 +108,18 @@ class DataTable extends DataSet
 
         if ($this->sort) {
             $this->sort($this->sort);
-        } else {
-            // DataSet may consist of inconsistently structured records. Thus, we need to narmalize first:
-            $this->tableData = $this->get2DNormalizedData();
         }
-        PageFactory::$pg->addAssets('TABLES');
+
+        $this->prepareTableData();
     } // __construct
+
+
+    private function prepareTableData(): void
+    {
+        $this->tableData = $this->getNormalized2D_Data($this->tableHeaders);
+        PageFactory::$pg->addAssets('TABLES');
+    } // prepareTableData
+
 
 
     /**
@@ -114,8 +128,8 @@ class DataTable extends DataSet
      */
     public function render(): string
     {
-        if (!$this->tableData) {
-            return ''; // done if no data available
+        if (!$this->tableData || sizeof($this->tableData['_hdr']??[]) === 0) {
+            return '<div class="pfy-table-wrapper">{{ no-data-available }}</div>'; // done if no data available
         }
 
         // Option row numbers:
@@ -148,42 +162,6 @@ class DataTable extends DataSet
 
 
 
-    public function sort($sortArg, $sortFunction = false)
-    {
-        parent::sort($sortArg, $sortFunction);
-        $this->tableData = $this->get2DNormalizedData();
-        return $this;
-    } // sort
-
-
-    /**
-     * Returns an array containing element-labels, taking arg. tableHeaders into account.
-     *  -> permits to specify column order and translate column headers.
-     * @param bool $includeMeta
-     * @return array
-     */
-    public function getElementLabels(bool $includeMeta = false): array
-    {
-        $elmentLabels = parent::getElementLabels($includeMeta);
-        if (!$elmentLabels) {
-            return $elmentLabels; // no labels -> nothing to do
-        }
-        if (!$this->tableHeaders || !is_array($this->tableHeaders)) {
-            // no tableHeaders defined -> copy from $elmentLabels
-            $this->tableHeaders = array_combine($elmentLabels, $elmentLabels);
-
-        } else {
-            if (!array_is_list($this->tableHeaders)) {
-                // tableHeaders is scalar array -> convert to assoc array:
-                $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
-            }
-            $elmentLabels = $this->tableHeaders;
-        }
-        $this->elementLabels = $elmentLabels;
-        return $elmentLabels;
-    } // getElementLabels
-
-
     /**
      * Injects a new column of data into the array.
      * Examples:
@@ -199,6 +177,7 @@ class DataTable extends DataSet
     {
         $data = &$this->tableData;
         $newCol = [];
+        $this->nRows = sizeof($this->tableData);
         $fillWith = '';
         // negative col -> count from right, -1 == last or append
         if ($col < 0) {
@@ -222,7 +201,10 @@ class DataTable extends DataSet
 
         // fix $this->elementLabels accordingly:
         $name = translateToIdentifier($headElement, removeNonAlpha: true);
-        array_splice_assoc($this->elementLabels, $col, $col, [$name => $headElement]);
+        $name = rtrim($name, '_');
+        if (is_array($this->tableHeaders)) {
+            array_splice_assoc($this->tableHeaders, $col, $col, [$name => $headElement]);
+        }
 
         foreach ($data as $key => $rec) {
             $newElem = str_replace('%nameAttr'," name='pfy-reckey[]' value='$key'", $newCol[$i]);
@@ -231,43 +213,8 @@ class DataTable extends DataSet
             $data[$key] = $rec;
             $i++;
         }
-
         $this->nCols++;
     } // injectColumn
-
-
-    /**
-     * Parses a comma-separated-list of scalar elements or tuples
-     * @param $key
-     * @return array|mixed
-     */
-    private function parseArrayArg($key)
-    {
-        $var = $this->options[$key] ?? [];
-        if (is_string($var)) {
-            $var = explodeTrim(',', $var);
-            $isAssoc = false;
-            foreach ($var as $value) {
-                if (strpos($value, ':') !== false) {
-                    $isAssoc = true;
-                    break;
-                }
-            }
-            if ($isAssoc) {
-                $tmp = [];
-                foreach ($var as $value) {
-                    if (preg_match('/(.*):\s*(.*)/', $value, $m)) {
-                        $tmp[$m[1]] = trim($m[2], '\'"');
-                    } else {
-                        $tmp[$value] = $value;
-                    }
-                }
-                $var = $tmp;
-            }
-        }
-        $this->$key = $var;
-        return $var;
-    } // parseArrayArg
 
 
     /**
@@ -277,7 +224,7 @@ class DataTable extends DataSet
     private function renderTableHead(): string
     {
         $data = &$this->tableData;
-        $out = "\n<div class='$this->tableWrapperClass'$this->dataReference>\n";
+        $out = "\n<div class='$this->tableWrapperClass'>\n";
         $out .= $this->renderTableButtons();
 
         $out .= "<table id='$this->tableId' class='$this->tableClass'>\n";
@@ -291,15 +238,15 @@ class DataTable extends DataSet
 
         $out .= "  <thead>\n    <tr class='pfy-table-header pfy-row-0'>\n";
         $headerRow = array_shift($data);
-        $i = 0;
-        foreach ($headerRow as $key => $elem) {
-            $i++;
-            $class = 'td-'.translateToIdentifier($key, removeNonAlpha: true);
+        $this->elementLabels = $headerRow;
+        foreach ($headerRow as $i => $elem) {
+            $class = 'td-'.translateToIdentifier($elem, removeNonAlpha: true);
             $out .= "      <th class='pfy-col-$i $class'>$elem</th>\n";
         }
         $out .= "    </tr>\n  </thead>\n";
         return $out;
     } // renderTableHead
+
 
 
     /**
@@ -309,30 +256,33 @@ class DataTable extends DataSet
     private function renderTableBody(): string
     {
         $data = &$this->tableData;
+        $elemKeys = $this->elementLabels;
         $out = "  <tbody>\n";
         $r = 0;
         foreach ($data as $key => $rec) {
             if ($this->dataReference) {
-                $key = " data-reckey='$key'";
+                $recKey = " data-reckey='$key'";
             } else {
-                $key = '';
+                $recKey = '';
             }
             $r++;
-            $out .= "    <tr class='pfy-row-$r'$key>\n";
-            $c = 0;
-            foreach ($rec as $k => $v) {
+            $out .= "    <tr class='pfy-row-$r'$recKey>\n";
+            foreach ($elemKeys as $c => $k) {
+                $v = $rec[$c];
                 $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
-                if ($this->dataReference) {
-                    $k = " data-elemkey='$k'";
+                if ($this->dataReference && in_array($k, $this->elementFlattenedKeys)) {
+                    $elemid = " data-elemkey='$c'";
+                } else {
+                    $elemid = '';
                 }
-                $c++;
-                $out .= "      <td class='pfy-col-$c $class'>$v</td>\n";
+                $out .= "      <td class='pfy-col-$c $class'$elemid>$v</td>\n";
             }
             $out .= "    </tr>\n";
         }
         $out .= "  </tbody>\n";
         return $out;
     } // renderTableBody
+
 
 
     /**
@@ -344,7 +294,7 @@ class DataTable extends DataSet
         $data = &$this->tableData;
         $out = '';
         if ($this->footers) {
-            $footer = $this->parseArrayArg('footers');
+            $footer = $this->footers;
             $nCols = sizeof($this->elementLabels);
             $counts = $sums = array_combine(array_keys($this->elementLabels), array_fill(0, $nCols, 0));
             foreach ($data as $rec) {
@@ -383,6 +333,7 @@ class DataTable extends DataSet
     } // renderTableFooter
 
 
+
     /**
      * Renders closing tags
      * @return string
@@ -397,6 +348,7 @@ class DataTable extends DataSet
         $out .= "</div> <!-- table-wrapper $this->tableWrapperClass -->\n\n";
         return $out;
     } // renderTableTail
+
 
 
     private function renderTableButtons()
@@ -445,6 +397,7 @@ EOT;
     } // renderTableButtons
 
 
+
     private function activateInteractiveTable()
     {
         PageFactory::$pg->addAssets('DATATABLES');
@@ -465,6 +418,40 @@ $order$paging$pageLength$orderable
 EOT;
         PageFactory::$pg->addJq($jq);
     } // activateInteractiveTable
+
+
+    /**
+     * Parses a comma-separated-list of scalar elements or tuples
+     * @param $key
+     * @return array|mixed
+     */
+    private function parseArrayArg($key)
+    {
+        $var = $this->$key ?? [];
+        if (is_string($var)) {
+            $var = explodeTrim(',', $var);
+            $isAssoc = false;
+            foreach ($var as $value) {
+                if (strpos($value, ':') !== false) {
+                    $isAssoc = true;
+                    break;
+                }
+            }
+            if ($isAssoc) {
+                $tmp = [];
+                foreach ($var as $value) {
+                    if (preg_match('/(.*):\s*(.*)/', $value, $m)) {
+                        $tmp[$m[1]] = trim($m[2], '\'"');
+                    } else {
+                        $tmp[$value] = $value;
+                    }
+                }
+                $var = $tmp;
+            }
+        }
+        $this->$key = $var;
+        return $var;
+    } // parseArrayArg
 
 
     /**
