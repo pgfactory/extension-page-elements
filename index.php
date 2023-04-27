@@ -10,4 +10,4 @@
 use Kirby\Cms\App as Kirby;
 
 
-Kirby::plugin('usility/pagefactory-pageelements', []);
+Kirby::plugin('pgfactory/pagefactory-pageelements', []);

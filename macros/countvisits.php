@@ -22,7 +22,7 @@ Counts visits per page and returns the count.
 
 Excludes visits from bots and IP-addresses defined in `site/config/config.php:
 
-    'usility.pagefactory.options' \=> [
+    'pgfactory.pagefactory.options' \=> [
         'visitCounterIgnoreIPs' \=> '001.002.003.005,::1', \// define list of IP addresses to exclude from visit counts
     ],
 
