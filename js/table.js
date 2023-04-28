@@ -2,10 +2,10 @@
 
 
 // propagate click on selection checkbox in header row to all rows:
-$('.pfy-table-header .pfy-col-1 input[type=checkbox]').click(function () {
+$('.pfy-table-header .td-row-selector input[type=checkbox]').click(function () {
   let $table = $(this).closest('.pfy-table-wrapper');
   let val = $(this).prop('checked');
-  $('.pfy-table .pfy-col-1 input[type=checkbox]', $table).prop('checked', val);
+  $('.pfy-table .td-row-selector input[type=checkbox]', $table).prop('checked', val);
 });
 
 
@@ -13,7 +13,7 @@ $('.pfy-table-header .pfy-col-1 input[type=checkbox]').click(function () {
 $('.pfy-table-delete-recs-open-dialog').click(function (e) {
   e.stopPropagation();
   let $form = $('form', $(this).closest('.pfy-table-wrapper'));
-  let selected = $('.pfy-col-row-selector input[type=checkbox]:checked', $form);
+  let selected = $('.td-row-selector input[type=checkbox]:checked', $form);
   if (!selected.length) {
     currentlyOpenPopup = pfyPopup({
         text: `{{ pfy-table-delete-nothing-selected }}`,

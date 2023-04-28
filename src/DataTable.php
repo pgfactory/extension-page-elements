@@ -81,6 +81,7 @@ class DataTable extends Data2DSet
         $this->sort = $options['sort'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
+        $this->dataStructure = $options['dataStructure'] ?? false;
 
 
         if ($this->tableHeaders && !is_array($this->tableHeaders)) {
@@ -239,8 +240,15 @@ class DataTable extends Data2DSet
         $out .= "  <thead>\n    <tr class='pfy-table-header pfy-row-0'>\n";
         $headerRow = array_shift($data);
         $this->elementLabels = $headerRow;
-        foreach ($headerRow as $i => $elem) {
-            $class = 'td-'.translateToIdentifier($elem, removeNonAlpha: true);
+        $i = 0;
+        foreach ($headerRow as $c => $elem) {
+            $i++;
+            if (!preg_match('/^\{\{.*}}$/', $elem)) {
+                $class = translateToIdentifier($elem, removeNonAlpha: true);
+            } else {
+                $class = false;
+            }
+            $class = $class? "td-$class": "td-$c";
             $out .= "      <th class='pfy-col-$i $class'>$elem</th>\n";
         }
         $out .= "    </tr>\n  </thead>\n";
@@ -267,15 +275,22 @@ class DataTable extends Data2DSet
             }
             $r++;
             $out .= "    <tr class='pfy-row-$r'$recKey>\n";
+            $i = 0;
             foreach ($elemKeys as $c => $k) {
-                $v = $rec[$c];
-                $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
+                $i++;
+                $v = $rec[$c]??'';
+                if (!preg_match('/^\{\{.*}}$/', $k)) {
+                    $class = translateToIdentifier($k, removeNonAlpha: true);
+                } else {
+                    $class = false;
+                }
+                $class = $class? "td-$class": "td-$c";
                 if ($this->dataReference && in_array($k, $this->elementFlattenedKeys)) {
                     $elemid = " data-elemkey='$c'";
                 } else {
                     $elemid = '';
                 }
-                $out .= "      <td class='pfy-col-$c $class'$elemid>$v</td>\n";
+                $out .= "      <td class='pfy-col-$i $class'$elemid>$v</td>\n";
             }
             $out .= "    </tr>\n";
         }

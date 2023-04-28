@@ -25,8 +25,8 @@ mb_internal_encoding("utf-8");
 class PfyForm extends Form
 {
     private array $options;
-//    private array $dataOptions;
     private array $fieldNames = [];
+    private array $formElements = [];
     private array $choiceOptions = [];
     private $db = false;
     private $dataTable = false;
@@ -69,7 +69,6 @@ class PfyForm extends Form
         if ($options['action']??false) {
             $this->setAction($options['action']);
         }
-
     } // createForm
 
 
@@ -119,8 +118,6 @@ class PfyForm extends Form
         // determine $label, $name, $type and $subType:
         list($label, $name, $type) = $this->determineMainOptions($options);
 
-//        $this->dataOptions[$name] = $options;
-
         $subType = '';
         switch ($type) {
             case 'search':
@@ -159,6 +156,9 @@ class PfyForm extends Form
                 $selectionElems = parseArgumentStr($options['options']);
                 if ($type === 'multiselect') {
                     $elem = $this->addMultiSelect($name, $label, $selectionElems);
+                    $this->fieldNames = array_merge($this->fieldNames, array_keys($selectionElems));
+                    $this->formElements[$name]['isArray'] = true;
+                    $this->formElements[$name]['subKeys'] = array_keys($selectionElems);
                 } else {
                     $elem = $this->addSelect($name, $label, $selectionElems);
                 }
@@ -178,6 +178,8 @@ class PfyForm extends Form
                 if ($options['preset']??false) {
                     $elem->setDefaultValue($options['preset']);
                 }
+                $this->formElements[$name]['isArray'] = true;
+                $this->formElements[$name]['subKeys'] = array_keys($radioElems);
                 break;
             case 'checkbox':
                 if ($options['options']??false) {
@@ -188,6 +190,8 @@ class PfyForm extends Form
                     }
                     $this->choiceOptions[$name] = $checkboxes;
                     $this->fieldNames = array_merge($this->fieldNames, array_keys($checkboxes));
+                    $this->formElements[$name]['isArray'] = true;
+                    $this->formElements[$name]['subKeys'] = array_keys($checkboxes);
                 } else {
                     $elem = $this->addCheckbox($name, $label);
                 }
@@ -204,8 +208,8 @@ class PfyForm extends Form
                 break;
         }
 
-        if (isset($options['required'])) {
-            $elem->setRequired();
+        if (($options['required']??false) !== false) {
+            $elem->setRequired($options['required']);
         }
     } // addElem
 
@@ -299,26 +303,30 @@ EOT;
      */
     public function handleReceivedData(): string
     {
+        $html = '';
         $dataRec = $this->getValues(true);
         $dataRec = $this->normalizeData($dataRec);
 
         if ($this->options['file']) {
             $err = $this->storeSubmittedData($dataRec, $this->options['file']);
             if ($err) {
-//ToDo: communicate warning
+                $err = TransVars::getVariable($err, true);
+                $html = "<div class='pfy-form-error'>$err</div>\n";
             }
         }
 
-        if ($this->options['mailTo']) {
-            $this->notifyOwner($dataRec);
-        }
+        if (!$html) {
+            if ($this->options['mailTo']) {
+                $this->notifyOwner($dataRec);
+            }
 
-        if ($this->options['confirmationText']) {
-            $html = $this->options['confirmationText'];
-        } else {
-            $html = '{{ form-submit-success }}';
+            if ($this->options['confirmationText']) {
+                $html = $this->options['confirmationText'];
+            } else {
+                $html = '{{ form-submit-success }}';
+            }
         }
-        $html .= TransVars::getVariable('form-success-continue');
+        $html .= TransVars::getVariable('form-success-continue', true);
         return $html;
     } // handleReceivedData
 
@@ -447,9 +455,10 @@ EOT;
         }
         $file = resolvePath($this->options['file'], relativeToPage: true);
         $tableOptions = [
+            'dataStructure' => $this->formElements,
             'tableButtons' => true,
-//            'tableHeaders' => true,
-            'tableHeaders' => $this->fieldNames,
+            'tableHeaders' => true,
+//            'tableHeaders' => $this->fieldNames,
             'elementSubKeys' => $this->choiceOptions,
             'footers' => $this->options['tableFooters']??false,
 
@@ -489,9 +498,10 @@ EOT;
         if ($label && !$name) {
             $name = $label;
         } elseif (!$label && $name) {
-            $label = str_replace('_', ' ', $name);
+            $label = ucwords(str_replace('_', ' ', $name)).':';
         }
-        $name = translateToIdentifier($name, toCamelCase: true);
+        $name = str_replace('-', '_', $name);
+        $name = preg_replace('/\W/', '', $name);
 
         if ($label[strlen($label) - 1] === '*') {
             $options['required'] = true;
@@ -519,6 +529,12 @@ EOT;
         // register found $name with global list of field-names (used for table-output):
         if (!str_contains('submit,reset,cancel,hidden',$name)) {
             $this->fieldNames[] = $name;
+            $this->formElements[$name] = [
+                'name' => $name,
+                'label' => $label,
+                'type' => $type,
+                'isArray' => false,
+            ];
         }
 
         $options['required'] = $options['required']??false;
