@@ -35,6 +35,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/-table.css',
         PAGE_ELEMENTS_URL.'js/-table.js',
     ],
+    'FORMS' => [
+        PAGE_ELEMENTS_URL.'css/-forms.css',
+        PAGE_ELEMENTS_URL.'js/-forms.js',
+    ],
     'TOOLTIPSTER' => [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',

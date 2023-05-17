@@ -1,0 +1,182 @@
+/*
+  CSS-Variables:
+    --form-width: 26em;
+    --form-y-gap-width: 1em;
+    --form-label-width: 7em;
+    --form-input-width: 15em;
+    --form-required-marker-color: gray;
+    --form-tooltip-anker-color: gray;
+ */
+
+
+.pfy-default-styling {
+
+  .pfy-label-wrapper, .pfy-input-wrapper {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .pfy-label-wrapper {
+    width: var(--form-label-width, 6em);
+
+    label {
+      padding-top: 0.2em;
+      display: inline-block;
+    }
+  }
+
+  .pfy-input-wrapper {
+    width: calc(100% - var(--form-label-width, 6em) - 6px);
+    max-width: var(--form-input-width, 22em);
+
+    input {
+      width: 100%;
+    }
+  }
+
+  .pfy-elem-wrapper {
+    padding-top: calc(var(--form-y-gap-width, 1em) / 2);
+    padding-bottom: calc(var(--form-y-gap-width, 1em) / 2);
+  }
+
+  label.required::after {
+    content: '*';
+    color: var(--form-required-marker-color, orange);
+    padding-left: 0.1em;
+  }
+
+  .pfy-table-wrapper {
+    margin-top: 3em;
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+
+  .pfy-label-wrapper {
+    position: relative;
+  }
+
+  .pfy-tooltip-anker {
+    border: none;
+    background: none;
+    padding: 0;
+    margin-left: 0.5em;
+    color: var(--form-tooltip-anker-color, black);
+    font-size: 80%;
+    font-family: "Times New Roman", serif;
+    opacity: 0.8;
+  }
+
+  .pfy-tooltip-anker:hover,
+  .pfy-tooltip-anker:hover {
+    opacity: 1;
+  }
+
+  .pfy-tooltip {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translate(2em, 2em);
+    width: max-content;
+    max-width: min(33em, 80vw);
+    background: var(--pfy-form-tooltip-bg, #fef5e0);
+    color: var(--pfy-form-tooltip-color, #222);
+    z-index: 1;
+    border-radius: 3px;
+    padding: 5px;
+    box-shadow: 0 0 5px #888;
+  }
+
+  .pfy-tooltip-anker:focus + .pfy-tooltip,
+  .pfy-tooltip-anker:hover + .pfy-tooltip {
+    display: block;
+  }
+
+  .pfy-form {
+    max-width: var(--form-width, 28em);
+    input::placeholder {
+      text-align: right;
+      font-style: italic;
+      font-size: 80%;
+    }
+    select {
+      min-width: 8em;
+    }
+    .pfy-single-checkbox .pfy-label-wrapper {
+      display: none;
+    }
+    .error {
+      color: red;
+    }
+  }
+
+  .pfy-elem-wrapper.button {
+    text-align: right;
+    .pfy-label-wrapper {
+      display: none;
+    }
+    input {
+      width: fit-content;
+      padding: 0.3em 1.3em;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      &.pfy-submit.button {
+        border: 1px solid black;
+      }
+    }
+  }
+  input.short {
+    width: 4em;
+  }
+  &.pfy-large-screen {
+    .pfy-elem-wrapper.button {
+      margin-right: 3px;
+    }
+  }
+  &.pfy-small-screen {
+    .pfy-form {
+      .pfy-elem-wrapper:not(.short) {
+        --form-input-width: 100%;
+
+        .pfy-label-wrapper,
+        .pfy-label-wrapper label,
+        .pfy-input-wrapper,
+        .pfy-input-wrapper input {
+          width: 100%;
+        }
+      }
+      .pfy-submit {
+        input.button {
+          max-width: 49%;
+        }
+      }
+    }
+  }
+
+  .pfy-input-wrapper {
+    label {
+      min-width: 6em;
+      display: inline-block;
+    }
+  }
+  .pfy-input-wrapper label input {
+    width: fit-content!important;
+    margin-right: 0.5em;
+  }
+  .pfy-horizontal {
+    br {
+      display: none;
+    }
+  }
+
+  .pfy-textarea {
+    .pfy-label-wrapper,
+    .pfy-input-wrapper,
+    .pfy-input-wrapper textarea{
+      width: 100%;
+      max-width: unset;
+    }
+  }
+
+} // .pfy-default-styling
+

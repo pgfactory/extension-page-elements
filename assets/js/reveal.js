@@ -8,8 +8,14 @@ var pfyRevealTransitionTime = 300;
 
 $('.pfy-reveal-controller').each(function() {
   let $revealController = $(this);
-  let inx = $revealController.parent().attr('class');
-  inx = inx.replace(/pfy-reveal-controller-wrapper-(\d+).*/, '$1');
+  let inx = 0;
+  let revealControllerId = $revealController.data('reveal-target');
+  if (revealControllerId) {
+    inx = revealControllerId.replace(/\D*/, '');
+  } else {
+    inx = $revealController.parent().attr('class');
+    inx = inx.replace(/pfy-reveal-controller-wrapper-(\d+).*/, '$1');
+  }
   $revealController.attr('aria-expanded','false');
   let target = $(this).attr('data-reveal-target');
   let $revealContainer = null;

@@ -23,39 +23,44 @@ function form($args = '')
 
             'class' =>	['Class applied to the form element.', false],
 
-//            'method' =>	['[post|get] Argument applied to the form element\'s "method"-attribute.', false],
-
             'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
             'mailTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
 
             'mailFrom' =>	['The address from which above email is sent. (default: "{{ webmaster_email }}").', false],
-            'mailFromName' =>	['Name from which above email is sent. (default: "{{ webmaster_email }}").', false],
+            'mailFromName' =>	['Name from which above email is sent. (default: "").', false],
 
-            'formHeader' =>	['Text rendered above the form. Will be hidden upon successful completion of form entry.', false],
+            'formTop' =>	['Text rendered above the form. Will be hidden upon successful completion of form entry.', false],
 
             'formHint' =>	['Text rendered above the form buttons. Will be hidden upon successful completion of form entry.', false],
 
-            'formFooter' =>	['Text rendered below the form buttons. Will be hidden upon successful completion of form entry.', false],
+            'formBottom' =>	['Text rendered below the form buttons. Will be hidden upon successful completion of form entry.', false],
 
-            'customResponseEvaluation' =>	['Name of a PHP function to be called when user submitted form data.', false],
+            'deadline' =>	['(ISO-date) If set, the form will be disabled after deadline has passed.', false],
 
-            'next' =>	['When a user successfully submits a form, "confirmationText" will be output. '.
-                'Default contains a "continue..." link, whose address is defined by this argument.', false],
+            'deadlineNotice' =>	['(string) Defines the response displayed when deadline has passed.', false],
 
-            'confirmationText' =>	['The text rendered upon completion of a form entry.', false],
+            'maxCount' =>	['If set, the number of sign-ups will be limited.', false],
+
+            'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
+
+//            'customResponseEvaluation' =>	['Name of a PHP function to be called when user submitted form data.', false],
+
+            'confirmationText' =>	['The text rendered upon successful completion of a form entry.', false],
+
             'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
-            'formDataCaching' =>	['If the user enters data into the form an leaves the page,  '.
-                ' without submitting, values will be cached on the server and prefilled upon returning to the page. '.
-                'This can be disabled by setting this option to false (Default: true).', true],
 
-            'options' =>	['[nocolor,validate,norequiredcomment] "nocolor" disables default coloring '.
-                'of form elements; "validate" enables form validation by browser; "norequiredcomment" suppresses the explation of *=required', false],
+//            'formDataCaching' =>	['If the user enters data into the form an leaves the page,  '.
+//                ' without submitting, values will be cached on the server and prefilled upon returning to the page. '.
+//                'This can be disabled by setting this option to false (Default: true).', true],
 
-            'labelWidth' =>	['[width incl. unit] Defines the default label width, e.g. "8em" (default: 6em)',  'auto'],
+//            'options' =>	['[nocolor,validate,norequiredcomment] "nocolor" disables default coloring '.
+//                'of form elements; "validate" enables form validation by browser; "norequiredcomment" suppresses the explation of *=required', false],
 
-            'labelPosition' =>	['[left,above,auto] Defines where field labels are positioned (default: auto)',  'auto'],
-            'labelColons' =>	['[true,false] Defines whether to put a colon after each label (default: leave as is; false: suppress even if contained in label string)', false],
+//            'labelWidth' =>	['[width incl. unit] Defines the default label width, e.g. "8em" (default: 6em)',  'auto'],
+
+//            'labelPosition' =>	['[left,above,auto] Defines where field labels are positioned (default: auto)',  'auto'],
+//            'labelColons' =>	['[true,false] Defines whether to put a colon after each label (default: leave as is; false: suppress even if contained in label string)', false],
 
 //            'translateLabels' =>	['If true, Lizzy will try to translate all labels in this form (default: false)', false],
 
@@ -135,12 +140,6 @@ EOT,
         $html = $sourceCode;
     }
 
-    $headKeys = ['formName','mailfrom','mailto','formHeader','formHint','formFooter','showData','antiSpam',
-        'id','class','method','action','mailTo','mailFrom','customResponseEvaluation','next','confirmationText',
-        'file','formDataCaching','options','labelWidth','labelPosition','labelColons','formTimeout',
-        'avoidDuplicates','replaceQuotes','validate','confirmationEmail','confirmationEmailTemplate','showDataMinRows',
-        'tableFooters'];
-
     $form = new PfyForm($options);
     $form->createForm(null, $auxOptions);
 
@@ -154,7 +153,6 @@ EOT,
     $html = shieldStr($html, 'inline');
     return $html;
 } // form
-
 
 
 
