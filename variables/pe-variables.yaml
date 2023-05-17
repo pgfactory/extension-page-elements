@@ -1,0 +1,97 @@
+# Tables
+
+pfy-table-delete-recs-header:
+  de: Löschen
+  _:  Delete
+
+pfy-data-delete-records:
+  de: Diese Datensätze löschen?
+  _:  Delete these data records?
+
+pfy-table-delete-nothing-selected:
+  de: Bitte Datensätze zuerst auswählen.
+  _:  You need to select records first.
+
+pfy-popup-download-header:
+  de: Herunter laden
+  _:  Download
+
+
+# Popups
+pfy-confirm-header:
+  de: Bestätigen
+  _:  Confirm
+
+pfy-alert-header:
+  de: Achtung
+  _:  Attention
+
+
+# Forms
+form-submit-success:
+  de: '<p>Wir haben Ihre Daten empfangen und gespeichert.<br>Besten Dank</p>'
+  de2: '<p>Wir haben deine Daten empfangen und gespeichert.<br>Besten Dank</p>'
+  _:  '<p>We recived your data and stored it successfully.<br>Thanks a lot</p>'
+
+form-success-continue:
+  de: '<p><a href="~page/">Weiter...</a></p>'
+  _:  '<p><a href="~page/">Continue...</a></p>'
+
+form-owner-notification-subject: #Neue Anemldung auf host.net
+  de: Neue Anmeldung auf %host
+  _:  New sign-up on %host
+
+form-owner-notification-body:
+  de: |
+    Guten Tag\n
+    Es gibt eine neue Anmeldung:\n
+    %data\n
+    Beste Grüsse, der Webmaster
+  _:  |
+    Hello\n
+    We received a new sign-up:\n
+    %data\n
+    Best regards, the webmaster
+
+pfy-row-number-header: '#'
+
+form-warning-record-already-exists:
+  de: Diese Daten haben wir bereits empfangen.
+  _:  We already received your data.
+
+no-data-available:
+  de: '-- Noch keine Daten vorhanden --'
+  _:  '-- No data yet --'
+
+
+# Deadline:
+pfy-form-deadline-expired:
+  de: 'Die Anmeldefrist ist vorbei.'
+  _:  'Sorry, the deadline has passed.'
+
+pfy-form-deadline-expired-warning:
+  de: |
+    <strong>Achtung</strong>: Die Anmeldefrist ist vorbei. Normale Besucher erhalten folgende Mitteilung:
+    <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+
+  _:  |
+      <strong>Notice</strong>: Deadline expired. Response to regular visitors:
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+
+# MaxCount:
+pfy-form-maxcount-reached:
+  de: 'Die maximale Anzahl Anmeldungen ist bereits erreicht.'
+  _:  'Sorry, the max number of sign-ups has been reached.'
+
+pfy-form-maxcount-reached-warning:
+  de: |
+    <strong>Achtung</strong>: Die maximale Zahl von Anmeldungen ist erreicht. Normale Besucher erhalten folgende Mitteilung:
+    <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+
+  _:  |
+    <strong>Notice</strong>: The max number of sign-ups has been reached. Response to regular visitors:
+    <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+
+
+
+
