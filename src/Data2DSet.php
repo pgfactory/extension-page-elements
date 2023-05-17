@@ -122,13 +122,13 @@ class Data2DSet extends DataSet
         $nValues = sizeof($values);
         if ($nKeys < $nValues) {
             for ($i=$nKeys; $i<$nValues; $i++) {
-                $k = str_replace('-', '_', $values[$i]);
+                $k = str_replace('-', '_', ($values[$i]??''));
                 $k = preg_replace('/\W/', '', $k);
                 $keys[$i] = translateToIdentifier($k);
             }
         } elseif ($nKeys > $nValues) {
             for ($i=$nValues; $i<$nKeys; $i++) {
-                $values[$i] = str_replace('_', ' ', $keys[$i]);
+                $values[$i] = str_replace('_', ' ', ($keys[$i]??''));
             }
         }
         return array_combine($keys, $values);
