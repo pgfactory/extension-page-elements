@@ -62,7 +62,7 @@ $('.pfy-table-download-start').click(function () {
   currentlyOpenPopup = pfyPopup({
     // text: `{{ pfy-download-dialog }}`,
     text: pfyDownloadDialog,
-    header: `{{ pfy-popup-download }}`,
+    header: `{{ pfy-popup-download-header }}`,
     closeButton: true,
     closeOnBgClick: true,
     buttons: 'Close',
