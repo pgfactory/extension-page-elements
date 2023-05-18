@@ -687,7 +687,13 @@ class PfyForm extends Form
 
         // case: only name given:
         } elseif (!$label && $name) {
-            $label = ucwords(str_replace('_', ' ', $name)).':';
+            if ($name === 'cancel') { // handle short-hands for cancel and confirm
+                $label = '{{ pfy-cancel }}';
+            } elseif ($name === 'submit') {
+                $label = '{{ pfy-submit }}';
+            } else {
+                $label = ucwords(str_replace('_', ' ', $name)) . ':';
+            }
         }
 
         // shape name: replace '-' with '_' and remove all non-alpha:

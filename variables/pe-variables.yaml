@@ -16,20 +16,6 @@ pfy-popup-download-header:
   de: Herunter laden
   _:  Download
 
-#pfy-table-download-text:
-#  de: Herunter laden
-#  _:  Download as
-#
-#pfy-table-download-prefix:
-#  de: Als
-#  _:  Download
-#
-#pfy-table-download-csv: CSV
-#
-#pfy-table-download-postfix:
-#  de: herunter laden
-#  _:  ''
-
 pfy-table-download-title:
   de: 'Diese Tabelle herunter laden'
   _:  'Download this table'
@@ -74,6 +60,14 @@ pfy-alert-header:
 
 
 # Forms
+
+pfy-ancel:
+  de: Abbrechen
+  _:  Cancel
+pfy-submit:
+  de: Senden
+  _:  Submit
+
 form-submit-success:
   de: '<p>Wir haben Ihre Daten empfangen und gespeichert.<br>Besten Dank</p>'
   de2: '<p>Wir haben deine Daten empfangen und gespeichert.<br>Besten Dank</p>'
