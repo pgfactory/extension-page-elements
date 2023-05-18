@@ -63,7 +63,14 @@ class DataTable extends Data2DSet
             }
         }
 
-        $this->inx = $options['inx'] ?? '1';
+        if ($options['inx']??false) {
+            $this->inx = $GLOBALS['tableInx'] = $options['inx'];
+        } elseif (isset($GLOBALS['tableInx'])) {
+            $GLOBALS['tableInx']++;
+            $this->inx = $GLOBALS['tableInx'];
+        } else {
+            $this->inx = $GLOBALS['tableInx'] = 1;
+        }
         $this->tableId = isset($options['tableId']) && $options['tableId'] ? $options['tableId'] : "pfy-table-$this->inx";
         $this->tableClass = isset($options['tableClass']) && $options['tableClass'] ? $options['tableClass'] : 'pfy-table';
         $this->tableWrapperClass = isset($options['tableWrapperClass']) && $options['tableWrapperClass'] ? $options['tableWrapperClass'] : 'pfy-table-wrapper';
@@ -81,7 +88,6 @@ class DataTable extends Data2DSet
         $this->sort = $options['sort'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
-        $this->dataStructure = $options['dataStructure'] ?? false;
 
 
         if ($this->tableHeaders && !is_array($this->tableHeaders)) {
@@ -285,8 +291,8 @@ class DataTable extends Data2DSet
                     $class = false;
                 }
                 $class = $class? "td-$class": "td-$c";
-                if ($this->dataReference && in_array($k, $this->elementFlattenedKeys)) {
-                    $elemid = " data-elemkey='$c'";
+                if ($this->dataReference && ($kk = array_search($k, $this->columnKeys))) {
+                    $elemid = " data-elemkey='$kk'";
                 } else {
                     $elemid = '';
                 }
@@ -390,21 +396,25 @@ class DataTable extends Data2DSet
             if ($this->officeFormatAvailable) {
                 $file = fileExt($file, true);
                 $js = <<<EOT
-    const pfyDownloadDialog = '<p>{{ pfy-table-download-text }}:</p><ul><li>{{^ pfy-table-download-prefix }}'
+pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}</p><ul><li>{{ pfy-table-download-prefix }}'
         +'<a href="$appUrl{$file}.xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
-        +'{{^ pfy-table-download-postfix }}:</li><li>{{^ pfy-table-download-prefix }}'
+        +'{{ pfy-table-download-postfix }}:</li><li>{{ pfy-table-download-prefix }}'
         +'<a href="$appUrl{$file}.ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
-        +'{{^ pfy-table-download-postfix }}</li></ul>';
+        +'{{ pfy-table-download-postfix }}</li></ul>';
 EOT;
 
             } else {
                 $js = <<<EOT
-    const pfyDownloadDialog = '<p>{{ pfy-table-download-text }}<br>{{^ pfy-table-download-prefix }}'
+pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}<br>{{ pfy-table-download-prefix }}'
         +'<a href="$appUrl{$file}" download target="_blank">{{ pfy-table-download-csv }}</a>'
-        +'{{^ pfy-table-download-postfix }}</p>';
+        +'{{ pfy-table-download-postfix }}</p>';
 EOT;
             }
 
+            if ($this->inx === 1) {
+                $js = "var pfyDownloadDialog = [];\n".$js;
+            }
+            $js = TransVars::translate($js);
             PageFactory::$pg->addJs($js);
             PageFactory::$assets->addAssets('POPUPS, TABLES');
         }

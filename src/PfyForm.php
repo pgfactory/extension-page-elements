@@ -14,13 +14,15 @@ define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,'.
     'url,date,datetime-local,time,datetime,month,number,integer,range,tel,file,'.
-    'radio,checkbox,dropdown,select,multiselect,'.
-    'button,reset,submit,cancel,top,bottom,';
+    'radio,checkbox,dropdown,select,multiselect,upload,multiupload,'.
+    'button,reset,submit,cancel,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,bypassed,literal,readonly,
 
 const INFO_ICON = 'ⓘ';
+const MEGABYTE = 1048576;
 
 mb_internal_encoding("utf-8");
+
 
 class PfyForm extends Form
 {
@@ -31,6 +33,7 @@ class PfyForm extends Form
     private $db = false;
     private $file = false;
     private $dataTable = false;
+    private int $formIndex = 0;
     private int $index = 0;
     private int $revealInx = 0;
 
@@ -39,6 +42,7 @@ class PfyForm extends Form
      */
     public function __construct($options = [])
     {
+        $this->formIndex = $options['formInx'] ?? 1;
         $this->options = $options;
         if (isset($_GET['delete'])) {
             if ($_POST['pfy-reckey']??false) {
@@ -60,6 +64,8 @@ class PfyForm extends Form
         if ($options !== null) {
             $this->options = $options;
         }
+
+        $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex]);
 
         foreach ($auxOptions as $name => $rec) {
             $rec['name'] = $name;
@@ -188,6 +194,20 @@ class PfyForm extends Form
             case 'checkbox':
                 $elem = $this->addCheckboxElem($name, $label, $options);
                 break;
+            case 'upload':
+                $elem = $this->addUpload($name, $label);
+                $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
+                if ($mb = ($options['maxMegaByte']??false)) {
+                    $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
+                }
+                break;
+            case 'multiupload':
+                $elem = $this->addMultiUpload($name, $label);
+                $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
+                if ($mb = ($options['maxMegaByte']??false)) {
+                  $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
+                }
+                break;
             case 'cancel':
             case 'reset':
                 $elem = $this->addSubmit('cancel', $label);
@@ -291,7 +311,6 @@ class PfyForm extends Form
         $selectionElems = parseArgumentStr($options['options']);
         if ($type === 'multiselect') {
             $elem = $this->addMultiSelect($name, $label, $selectionElems);
-            $this->fieldNames = array_merge($this->fieldNames, array_keys($selectionElems));
             $this->formElements[$name]['isArray'] = true;
             $this->formElements[$name]['subKeys'] = array_keys($selectionElems);
         } else {
@@ -304,7 +323,10 @@ class PfyForm extends Form
             $elem->setPrompt($options['prompt']);
         }
         $this->choiceOptions[$name] = $selectionElems;
-        $this->fieldNames = array_merge($this->fieldNames, array_keys($selectionElems));
+
+        if ($options['splitOutput']??false) {
+            $this->addFieldNames($name, $selectionElems);
+        }
         return $elem;
     } // addSelectElem
 
@@ -328,6 +350,9 @@ class PfyForm extends Form
         // handle option 'horizontal':
         $options['class'] .= (($layout = ($options['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
 
+        if ($options['splitOutput']??false) {
+            $this->addFieldNames($name, $radioElems);
+        }
         return $elem;
     } // addRadioElem
 
@@ -348,7 +373,9 @@ class PfyForm extends Form
                 $elem->setDefaultValue($options['preset']);
             }
             $this->choiceOptions[$name] = $checkboxes;
-            $this->fieldNames = array_merge($this->fieldNames, array_keys($checkboxes));
+            if ($options['splitOutput']??false) {
+                $this->addFieldNames($name, $checkboxes);
+            }
             $this->formElements[$name]['isArray'] = true;
             $this->formElements[$name]['subKeys'] = array_keys($checkboxes);
 
@@ -365,10 +392,19 @@ class PfyForm extends Form
     } // addCheckboxElem
 
 
+    private function addFieldNames($name, $array)
+    {
+        array_pop($this->fieldNames); // remove mother elem and replace it with children
+        foreach ($array as $k => $v) {
+            $this->fieldNames["$name.$k"] = $k;
+        }
+    } // addFieldNames
+
+
     /**
      * @return string
      */
-    public function handleReceivedData(): string
+    public function handleReceivedData(int $formInx): string
     {
         $html = '';
         $dataRec = $this->getValues(true);
@@ -380,6 +416,10 @@ class PfyForm extends Form
 
         $dataRec = $this->normalizeData($dataRec);
 
+        if (($dataRec['_formInx']??false) !== (string)$formInx) {
+            return '';
+        }
+
         if ($maxCountOn = ($this->options['maxCountOn']??false)) {
             $pending = $dataRec[$maxCountOn]??1;
         } else {
@@ -390,7 +430,13 @@ class PfyForm extends Form
             return '';
         }
 
-        if ($this->options['file']) {
+        $this->handleUploads($dataRec);
+
+        if ($fun = ($this->options['customResponseEvaluation'])) {
+           if (function_exists($fun)) {
+               $html = $fun();
+           }
+        } elseif ($this->options['file']) {
             $this->file = $this->options['file'];
             $err = $this->storeSubmittedData($dataRec);
             if ($err) {
@@ -413,6 +459,38 @@ class PfyForm extends Form
         $html .= '{{ form-success-continue }}';
         return $html;
     } // handleReceivedData
+
+
+    private function handleUploads(mixed $recs): void
+    {
+        foreach ($recs as $key => $rec) {
+            if (is_array($rec)) {
+                foreach ($rec as $k => $r) {
+                    if (is_a($r, 'Nette\Http\FileUpload')) {
+                        $this->handleUploadedFile($key, $r);
+                        unset($recs[$key][$k]);
+                    }
+                }
+            } else {
+                if (is_a($rec, 'Nette\Http\FileUpload')) {
+                    $this->handleUploadedFile($key, $rec);
+                }
+            }
+        }
+    } // handleUploads
+
+
+    private function handleUploadedFile($key, $rec)
+    {
+        $path = $this->formElements[$key]['args']['path']??false;
+        $path = resolvePath($path);
+        preparePath($path);
+        $filename = $rec->name;
+        $filename = basename($filename);
+        $filename = str_replace('..','.', $filename);
+        $filename = preg_replace('/[^.\w-]/','', $filename);
+        $rec->move($path.$filename);
+    } // handleUploadedFile($key, $rec)
 
 
     /**
@@ -466,6 +544,22 @@ class PfyForm extends Form
      */
     private function storeSubmittedData(array $newRec): false|string
     {
+        foreach ($newRec as $key => $rec) {
+            if (is_array($rec)) {
+                foreach ($rec as $k => $r) {
+                    if (is_a($r, 'Nette\Http\FileUpload')) {
+                        unset($newRec[$key][$k]);
+                    }
+                }
+            } else {
+                if (is_a($rec, 'Nette\Http\FileUpload')) {
+                    unset($newRec[$key]);
+                }
+            }
+        }
+        if (!$newRec) {
+            return false;
+        }
         if (!$this->db) {
             $this->openDB();
         }
@@ -546,20 +640,19 @@ class PfyForm extends Form
         }
         $file = resolvePath($this->options['file'], relativeToPage: true);
         $tableOptions = [
-            'dataStructure' => $this->formElements,
+//            'tableHeaders' => true,
+            'tableHeaders' => $this->fieldNames,
+//            'elementSubKeys' => $this->choiceOptions,
             'tableButtons' => true,
-            'tableHeaders' => true,
-//            'tableHeaders' => $this->fieldNames,
-            'elementSubKeys' => $this->choiceOptions,
             'footers' => $this->options['tableFooters']??false,
 
             'masterFileRecKeyType' => 'index',
+//            'includeSystemElements' => true,
 //            'masterFileRecKeys' => 'uid',
 //            'masterFileRecKeySort' => true,
 //            'masterFileRecKeySortOnElement' => 'first_name',
             ];
         $this->dataTable = new DataTable($file, $tableOptions);
-//$this->dataTable->flush();
         return $this->dataTable;
     } // openDataTable
 
@@ -584,6 +677,7 @@ class PfyForm extends Form
      */
     private function determineMainOptions(array &$options): array
     {
+        $args = [];
         $label = $options['label'] ?? false;
         $name = $options['name'] ?? false;
 
@@ -638,18 +732,23 @@ class PfyForm extends Form
             }
         }
 
+        if ($path = ($options['path']??false)) {
+            $args['path'] = $path;
+        }
+
         if (!str_contains(FORMS_SUPPORTED_TYPES, ",$type,")) {
             throw new \Exception("Forms: requested type not supported: '$type'");
         }
 
         // register found $name with global list of field-names (used for table-output):
         if (!str_contains('submit,cancel,hidden', $_name)) {
-            $this->fieldNames[] = $name;
+//            $this->fieldNames[$_name] = $name;
+            $this->fieldNames[$name] = $name;
             $this->formElements[$name] = [
                 'name' => $name,
                 'label' => $label0,
-//                'label' => $label,
                 'type' => $type,
+                'args' => $args,
                 'isArray' => false,
             ];
         }

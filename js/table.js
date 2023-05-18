@@ -59,14 +59,17 @@ $('.pfy-popup-wrapper.pfy-data-delete-records .pfy-popup-btn-2').click(function 
 
 
 $('.pfy-table-download-start').click(function () {
+  let $form = $('form', $(this).closest('.pfy-table-wrapper'));
+  let $table = $('.pfy-table', $form);
+  let id = $table.attr('id');
+  let tableInx = $table.attr('id').replace(/\D*/, '');
+  mylog('tableInx: ' + tableInx);
   currentlyOpenPopup = pfyPopup({
-    // text: `{{ pfy-download-dialog }}`,
-    text: pfyDownloadDialog,
+    text: pfyDownloadDialog[tableInx],
     header: `{{ pfy-popup-download-header }}`,
     closeButton: true,
     closeOnBgClick: true,
     buttons: 'Close',
-//    buttonClass: 'pfy-button pfy-button-cancel'
   });
 });
 

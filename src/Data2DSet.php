@@ -17,11 +17,12 @@ if (!defined('ARRAY_SUMMARY_NAME')) {
     define('ARRAY_SUMMARY_NAME', '_');
 }
 
+const UNKNOWN = '?';
+
 class Data2DSet extends DataSet
 {
-    private array $elementSubKeys = [];
-    public  $elementFlattenedKeys;
-    protected $dataStructure = false;
+    protected array $columnKeys = [];
+    private string $unknownValue = UNKNOWN;
 
     /**
      * @param string $file
@@ -30,12 +31,10 @@ class Data2DSet extends DataSet
      */
     public function __construct(string $file, array $options = [])
     {
-        $this->elementFlattenedKeys = [];
         parent::__construct($file, $options);
-        if (is_array($options['elementSubKeys'] ?? false)) {
-            foreach ($options['elementSubKeys'] as $k => $v) {
-                $this->elementSubKeys[strtolower($k)] = array_keys($v);
-            }
+
+        if ($unknown = $options['unknownValue']??false) {
+            $this->unknownValue = $unknown;
         }
     } // __construct
 
@@ -47,68 +46,104 @@ class Data2DSet extends DataSet
      */
     public function getNormalized2D_Data($headerElems = true): array
     {
-        $data = $this->data(false);
+        $includeSystemElements = $this->options['includeSystemElements']??false;
+        $data = $this->data($includeSystemElements);
         if (!$data) {
             return []; // nothing to do
         }
-        $data2D = [];
-        $elementKeys = [];
-        if ($this->dataStructure) {
-            foreach ($this->dataStructure as $key => $rec) {
-                $elementKeys[] = $key;
-                if ($rec['isArray']) {
-                    $elementKeys = array_merge($elementKeys, $rec['subKeys']);
-                }
-            }
+        list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
 
-        } else {
-            $rec0 = reset($data);
-            foreach ($rec0 as $key => $value) {
-                $elementKeys[] = $key;
-                if (is_array($value)) {
-                    $subKeys = $this->elementSubKeys[$key]??[];
-                    $elementKeys = array_merge($elementKeys, $subKeys);
-                }
-            }
-        }
-
-        if ($headerElems) {
-            if ($headerElems === true) {
-                $headerElems = $elementKeys;
-            }
-            $data2D['_hdr'] = $this->arrayCombine($elementKeys, $headerElems);
-        }
         foreach ($data as $recKey => $rec) {
             $newRec = [];
-            foreach ($rec as $key => $value) {
-                if (($key[0] === '_')) {
-                    continue;
-                }
-                if (is_array($value)) {
-                    $newRec[] = $value[ARRAY_SUMMARY_NAME];
-                    foreach ($value as $k => $v) {
-                        if ($k === ARRAY_SUMMARY_NAME) {
-                            continue;
-                        }
-                        $newRec[] = $v?'1':'0';
+            foreach ($headerElems as $key => $value) {
+                if (isset($rec[$key])) {
+                    if (is_bool($rec[$key])) {
+                        $newRec[$key] = $rec[$key]? '1':'0';
+                    } elseif (is_scalar($rec[$key])) {
+                        $newRec[$key] = $rec[$key];
+                    } elseif (is_array($rec[$key]) && isset($rec[$key]['_'])) {
+                        $newRec[$key] = $rec[$key]['_'];
+                    } elseif (is_array($rec[$key])) {
+                        $newRec[$key] = json_encode($rec[$key]);
                     }
                 } else {
-                    $newRec[] = $value;
+                    // no elem found, check for indexed element of type 'a.b':
+                    if (str_contains($key, '.')) {
+                        $indexes = explode('.', $key);
+                        $v = $rec;
+                        foreach ($indexes as $index) {
+                            if (isset($v[$index])) {
+                                $v = $v[$index];
+                            } elseif (is_scalar($v)) {
+                                $v = ($v === $value);
+                            } else {
+                                $newRec[$value] = $this->unknownValue;
+                                continue 2;
+                            }
+                        }
+                        $newRec[$index] = is_bool($v) ? ($v?'1':'0'): $v;
+
+                    // no matching data found -> mark as unknown
+                    } else {
+                        $newRec[$key] = $this->unknownValue;
+                    }
                 }
             }
-            $data2D[$recKey] = $this->arrayCombine($elementKeys, $newRec);;
+            $data2D[$recKey] = $this->arrayCombine($elementKeys, $newRec);
         }
-
 
         $this->nRows = sizeof($data2D)-1;
-        if ($headerElems) {
-            $this->elementFlattenedKeys = $this->arrayCombine($elementKeys, $headerElems);
-        } else {
-            $this->elementFlattenedKeys = $elementKeys;
-        }
-        $this->nCols = sizeof($this->elementFlattenedKeys);
+        $this->columnKeys = $headerElems;
+        $this->nCols = sizeof($headerElems);
         return $data2D;
     } // get2DNormalizedData
+
+
+    /**
+     * @param array $headerElems
+     * @param bool $includeSystemElements
+     * @return array
+     * @throws \Exception
+     */
+    private function prepare(array|bool $headerElems, bool $includeSystemElements): array
+    {
+        $data2D = [];
+        if ($headerElems) {
+            if ($headerElems === true) {
+                // derive headerElems from first data record:
+                $rec0 = reset($this->data);
+                $dataRec0 = $rec0->recData;
+                $elementKeys = array_keys($dataRec0);
+                if ($includeSystemElements) {
+                    $elementKeys[] = DATAREC_TIMESTAMP;
+                    $elementKeys[] = '_reckey';
+                } else {
+                    $elementKeys = array_filter($elementKeys, function ($e) {
+                        return ($e[0] !== '_');
+                    });
+                    $elementKeys = array_values($elementKeys);
+                }
+                $headerElems = array_combine($elementKeys, $elementKeys);
+
+            } else {
+                $elementKeys = array_values($headerElems);
+                if ($includeSystemElements) {
+                    $elementKeys[] = DATAREC_TIMESTAMP;
+                    $elementKeys[] = '_reckey';
+                } else {
+                    $headerElems = array_filter($headerElems, function ($e) {
+                        return ($e[0] !== '_');
+                    });
+                    $elementKeys = array_filter($elementKeys, function ($e) {
+                        return ($e[0] !== '_');
+                    });
+                    $elementKeys = array_values($elementKeys);
+                }
+            }
+            $data2D['_hdr'] = $this->arrayCombine($elementKeys, $elementKeys);
+        }
+        return [$data2D, $headerElems, $elementKeys];
+    } // prepare
 
 
     /**
