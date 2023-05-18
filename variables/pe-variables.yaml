@@ -16,6 +16,52 @@ pfy-popup-download-header:
   de: Herunter laden
   _:  Download
 
+#pfy-table-download-text:
+#  de: Herunter laden
+#  _:  Download as
+#
+#pfy-table-download-prefix:
+#  de: Als
+#  _:  Download
+#
+#pfy-table-download-csv: CSV
+#
+#pfy-table-download-postfix:
+#  de: herunter laden
+#  _:  ''
+
+pfy-table-download-title:
+  de: 'Diese Tabelle herunter laden'
+  _:  'Download this table'
+
+
+pfy-table-download-text:
+  de: 'Tabelle herunter laden:'
+  _:  'Click to download:'
+
+
+pfy-table-download-header:
+  de: 'Download'
+  _:  'Download'
+
+pfy-table-download-excel:
+  _: 'Excel (.xlsx)'
+
+pfy-table-download-ods:
+  _: 'OpenOffice (.ods)'
+
+pfy-table-download-csv:
+  de: 'CSV-Datei (.csv)'
+  _: 'CSV-File (.csv)'
+
+pfy-table-download-prefix:
+  de: 'als '
+  _:  'as '
+
+pfy-table-download-postfix:
+  de: ''
+  _:  ''
+
 
 # Popups
 pfy-confirm-header:
