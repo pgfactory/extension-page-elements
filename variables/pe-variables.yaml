@@ -61,13 +61,6 @@ pfy-alert-header:
 
 # Forms
 
-pfy-ancel:
-  de: Abbrechen
-  _:  Cancel
-pfy-submit:
-  de: Senden
-  _:  Submit
-
 form-submit-success:
   de: '<p>Wir haben Ihre Daten empfangen und gespeichert.<br>Besten Dank</p>'
   de2: '<p>Wir haben deine Daten empfangen und gespeichert.<br>Besten Dank</p>'
