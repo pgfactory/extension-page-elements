@@ -575,7 +575,7 @@ class PfyForm extends Form
                     }
                 }
             } else {
-                if (is_a($rec, 'Nette\Http\FileUpload') || ($key === '_formInx')) {
+                if (is_a($rec, 'Nette\Http\FileUpload')) {
                     unset($newRec[$key]);
                 }
             }
