@@ -11,6 +11,13 @@
 
 .pfy-default-styling {
 
+  input[type=cancel],
+  input[type=submit],
+  input[type=button],
+  button {
+    cursor: pointer;
+  }
+
   .pfy-label-wrapper, .pfy-input-wrapper {
     display: inline-block;
     vertical-align: top;

@@ -113,8 +113,10 @@ pfy-form-deadline-expired-warning:
 
 # MaxCount:
 pfy-form-maxcount-reached:
-  de: 'Die maximale Anzahl Anmeldungen ist bereits erreicht.'
-  _:  'Sorry, the max number of sign-ups has been reached.'
+  de: 'Die Veranstaltung ist ausgebucht.'
+  _:  'The event is fully booked.'
+#  de: 'Die maximale Anzahl Anmeldungen ist bereits erreicht.'
+#  _:  'Sorry, the max number of sign-ups has been reached.'
 
 pfy-form-maxcount-reached-warning:
   de: |

@@ -36,6 +36,7 @@ class PfyForm extends Form
     private int $formIndex = 0;
     private int $index = 0;
     private int $revealInx = 0;
+    protected string|bool $permissionQuery = '';
 
     /**
      * @param $options
@@ -49,6 +50,12 @@ class PfyForm extends Form
                 $this->openDataTable(); // triggers delete-handler
             }
         }
+
+        $this->permissionQuery = ($options['showData']??'noone') ?: 'noone';
+        if ($this->permissionQuery === true) {
+            $this->permissionQuery = 'loggedin|localhost';
+        }
+
         parent::__construct();
         PageFactory::$pg->addAssets('FORMS');
     } // __construct
@@ -113,11 +120,7 @@ class PfyForm extends Form
         $html = "<form$id class='pfy-form$formClass'" . substr($html, 5);
 
         if ($options['showData'] && $options['file']) {
-            $permissionQuery = $options['showData'];
-            if ($permissionQuery === true) {
-                $permissionQuery = 'loggedin|localhost';
-            }
-            $admitted = Permission::evaluate($permissionQuery);
+            $admitted = Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug);
             if ($admitted) {
                 $html .= $this->renderDataTable();
             }
@@ -292,6 +295,10 @@ class PfyForm extends Form
             $elem->setHtmlAttribute('min', $min);
         }
         if ($max = ($options['max']??false)) {
+            list($available, $maxCount) = $this->getAvailableAndMaxCount();
+            if ($maxCount) {
+                $max = min($max, $available);
+            }
             $elem->setHtmlAttribute('max', $max);
         }
         return $elem;
@@ -531,7 +538,9 @@ class PfyForm extends Form
         if (!$this->options['file']) {
             return false;
         }
-        $this->db = new DataSet($this->options['file']);
+        $this->db = new DataSet($this->options['file'], [
+            'masterFileRecKeyType' => 'index',
+        ]);
         return $this->db;
     } // openDB
 
@@ -552,7 +561,7 @@ class PfyForm extends Form
                     }
                 }
             } else {
-                if (is_a($rec, 'Nette\Http\FileUpload')) {
+                if (is_a($rec, 'Nette\Http\FileUpload') || ($key === '_formInx')) {
                     unset($newRec[$key]);
                 }
             }
@@ -640,9 +649,7 @@ class PfyForm extends Form
         }
         $file = resolvePath($this->options['file'], relativeToPage: true);
         $tableOptions = [
-//            'tableHeaders' => true,
             'tableHeaders' => $this->fieldNames,
-//            'elementSubKeys' => $this->choiceOptions,
             'tableButtons' => true,
             'footers' => $this->options['tableFooters']??false,
 
@@ -748,7 +755,6 @@ class PfyForm extends Form
 
         // register found $name with global list of field-names (used for table-output):
         if (!str_contains('submit,cancel,hidden', $_name)) {
-//            $this->fieldNames[$_name] = $name;
             $this->fieldNames[$name] = $name;
             $this->formElements[$name] = [
                 'name' => $name,
@@ -968,7 +974,7 @@ EOT;
             $this->openDB();
             if ($this->db) {
                 if ($maxCountOn = ($this->options['maxCountOn']??false)) {
-                    $sum = $this->db->sum(strtolower($maxCountOn));
+                    $sum = $this->db->sum($maxCountOn);
                 } else {
                     $sum = $this->db->count();
                 }
@@ -980,7 +986,7 @@ EOT;
         if (str_contains($str, '%available') && ($maxCount = ($this->options['maxCount']??false))) {
             $this->openDB();
             if ($maxCountOn = ($this->options['maxCountOn']??false)) {
-                $currCount = $this->db->sum(strtolower($maxCountOn));
+                $currCount = $this->db->sum($maxCountOn);
             } else {
                 $currCount = $this->db->count();
             }
@@ -1011,7 +1017,7 @@ EOT;
             // now check deadline:
             if ($deadline < time()) { // deadline expired:
                 // deadline is overridden if visitor is logged in:
-                if (!Permission::evaluate('loggedin|localhost')) {
+                if (!Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
                     if ($deadlineNotice = ($this->options['deadlineNotice'] ?? false)) {
                         return $deadlineNotice;
                     } else {
@@ -1031,19 +1037,15 @@ EOT;
      * @return string|false
      * @throws \Exception
      */
-    private function handleMaxCount($pending = 0): string|false
+    private function handleMaxCount(int $pending = 0): string|false
     {
-        if ($maxCount = ($this->options['maxCount']??false)) {
-            $this->openDB();
-            if ($maxCountOn = ($this->options['maxCountOn']??false)) {
-                $currCount = $this->db->sum(strtolower($maxCountOn));
-            } else {
-                $currCount = $this->db->count();
+        list($available, $maxCount, $currCount) = $this->getAvailableAndMaxCount();
+        if ($maxCount) {
+            if ($pending) {
+                $currCount += ($pending - 1);
             }
-
-            $currCount += $pending;
             if ($currCount >= $maxCount) {
-                if (!Permission::evaluate('loggedin|localhost')) {
+                if (!Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
                     if ($maxCountNotice = ($this->options['maxCountNotice'] ?? false)) {
                         return $maxCountNotice;
                     } else {
@@ -1057,4 +1059,21 @@ EOT;
         return false;
     } // handleMaxCount
 
+
+    private function getAvailableAndMaxCount(): array
+    {
+        if ($maxCount = ($this->options['maxCount']??false)) {
+            $this->openDB();
+            if ($maxCountOn = ($this->options['maxCountOn'] ?? false)) {
+                $currCount = $this->db->sum($maxCountOn);
+            } else {
+                $currCount = $this->db->count();
+            }
+        } else {
+            $currCount = 100000;
+        }
+        $available = $maxCount - $currCount;
+        return [$available, $maxCount, $currCount];
+    } // getAvailableAndMaxCount
+    
 } // PfyForm
