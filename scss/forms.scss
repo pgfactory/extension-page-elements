@@ -187,8 +187,12 @@
 
   .pfy-elem-wrapper.pfy-reveal-controller {
     position: relative;
+    width: 100%;
     .pfy-label-wrapper {
       display: none;
+    }
+    .pfy-input-wrapper  {
+      width: calc(100% - 2em);
     }
     .pfy-input-wrapper label {
       margin-left: 1.3em;
@@ -197,6 +201,7 @@
       left: -0.7em !important;
     }
   }
+
   .pfy-reveal-container .pfy-reveal-container-inner.pfy-reveal-container-inner {
     padding-top: 0.5em;
     .pfy-elem-wrapper.pfy-textarea {
