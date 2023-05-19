@@ -296,7 +296,8 @@ class PfyForm extends Form
         }
         if ($max = ($options['max']??false)) {
             list($available, $maxCount) = $this->getAvailableAndMaxCount();
-            if ($maxCount) {
+            // if sign-up limitation is active, limit max input if necessary, unless privileged:
+            if ($maxCount && !Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
                 $max = min($max, $available);
             }
             $elem->setHtmlAttribute('max', $max);
