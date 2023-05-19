@@ -14,8 +14,12 @@ $('.pfy-reveal-controller').each(function() {
     inx = revealControllerId.replace(/\D*/, '');
   } else {
     inx = $revealController.parent().attr('class');
-    inx = inx.replace(/pfy-reveal-controller-wrapper-(\d+).*/, '$1');
+    inx = inx.replace(/\D*/, '');
+    if (!inx) {
+      return;
+    }
   }
+
   $revealController.attr('aria-expanded','false');
   let target = $(this).attr('data-reveal-target');
   let $revealContainer = null;

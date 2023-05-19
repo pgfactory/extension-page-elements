@@ -185,5 +185,30 @@
     }
   }
 
+  .pfy-elem-wrapper.pfy-reveal-controller {
+    position: relative;
+    .pfy-label-wrapper {
+      display: none;
+    }
+    .pfy-input-wrapper label {
+      margin-left: 1.3em;
+    }
+    &::before {
+      left: -0.7em !important;
+    }
+  }
+  .pfy-reveal-container .pfy-reveal-container-inner.pfy-reveal-container-inner {
+    padding-top: 0.5em;
+    .pfy-elem-wrapper.pfy-textarea {
+      padding-top: 0;
+      .pfy-label-wrapper {
+        display: none;
+      }
+    }
+  }
+  .pfy-elem-wrapper input.pfy-reveal-controller::before {
+    left: -0.7em !important;
+  }
+
 } // .pfy-default-styling
 

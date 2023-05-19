@@ -422,11 +422,11 @@ class PfyForm extends Form
             reloadAgent();
         }
 
-        $dataRec = $this->normalizeData($dataRec);
-
         if (($dataRec['_formInx']??false) !== (string)$formInx) {
             return '';
         }
+
+        $dataRec = $this->normalizeData($dataRec);
 
         if ($maxCountOn = ($this->options['maxCountOn']??false)) {
             $pending = $dataRec[$maxCountOn]??1;
@@ -508,7 +508,10 @@ class PfyForm extends Form
     private function normalizeData(array $dataRec): array
     {
         foreach ($dataRec as $name => $value) {
-            if (is_array($value) && isset($this->choiceOptions[$name])) {
+            if ($name === '_formInx') {
+                unset($dataRec[$name]);
+
+            } elseif (is_array($value) && isset($this->choiceOptions[$name])) {
                 $template = $this->choiceOptions[$name];
                 $value1 = [];
                 $value1[ARRAY_SUMMARY_NAME] = '';
@@ -520,6 +523,16 @@ class PfyForm extends Form
                 }
                 $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ', ');
                 $dataRec[$name] = $value1;
+
+            } elseif (str_contains($name, 'CommentController')) {
+                $commentController = $value;
+                unset($dataRec[$name]);
+
+            } elseif (isset($commentController)) {
+                if (!$commentController) {
+                    $dataRec[$name] = '';
+                }
+                unset($commentController);
             }
         }
         return $dataRec;
@@ -839,7 +852,7 @@ class PfyForm extends Form
 
             $l = strlen($html);
             // find backwards the .pfy-elem-wrapper of the reveal-controller:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper">', $p-$l);
+            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l);
             $p2 = strpos($html, '</div>', $p1);
             $s1 = substr($html,0, $p1);
             $s2 = substr($html, $p1, $p2 - $p1 + 6);
@@ -851,7 +864,7 @@ class PfyForm extends Form
             // find corresponding <textarea> contains attrib 'data-revealed-by':
             $p = strpos($html, "data-revealed-by=\"$controllerInx\"", $p2 + strlen(" pfy-reveal-controller-wrapper-$controllerInx pfy-reveal-controller-wrapper"));
             // find backwards the enclosing div.pfy-elem-wrapper:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper">', $p-$l);
+            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l);
             $p2 = strpos($html, '</div>', $p);
             $s1 = substr($html,0, $p1);
             $s2 = substr($html, $p1, $p2 - $p1 + 6);
@@ -859,9 +872,11 @@ class PfyForm extends Form
             $html = <<<EOT
 
 $s1
+
 <div id='pfy-reveal-container-$i' class="pfy-reveal-container">
 $s2
-</div>
+</div><!-- pfy-reveal-container-$i -->
+
 $s3
 
 EOT;
