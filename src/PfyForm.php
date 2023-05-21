@@ -132,6 +132,15 @@ class PfyForm extends Form
         $html = $this->handleFormHint($html);
         $html = $this->handleFormBottom($html);
 
+        $html = <<<EOT
+
+<div class="pfy-form-wrapper pfy-form-wrapper-$this->formIndex">
+<noscript>{{ pfy-noscript-warning }}</noscript>
+
+$html
+
+</div><!-- .pfy-form-wrapper -->
+EOT;
         return $html;
     } // renderForm
 
@@ -465,6 +474,8 @@ class PfyForm extends Form
             }
         }
         $html .= '{{ form-success-continue }}';
+        $logText = strip_tags($html);
+        mylog($logText, 'form-log.txt');
         return $html;
     } // handleReceivedData
 
@@ -730,8 +741,8 @@ class PfyForm extends Form
 
         // handle 'info' option:
         if ($info = ($options['info'] ?? false)) {
-            $label .= "<button type='button' class='pfy-tooltip-anker'>".INFO_ICON.
-                "</button><div class='pfy-tooltip'>$info</div>";
+            $label .= "<span tabindex='0' class='pfy-tooltip-anker'>".INFO_ICON.
+                "</span><span class='pfy-tooltip'>$info</span>";
         }
 
         // if label contains HTML, we need to transform it:

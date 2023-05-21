@@ -2,6 +2,7 @@
 
 namespace Usility\PageFactoryElements;
 
+use Usility\PageFactory\PageFactory;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
 define('PAGE_ELEMENTS_PATH', 'site/plugins/'.PE_FOLDER_NAME);
@@ -60,5 +61,41 @@ if ($optionsFromConfigFile['activateSitemapManager']??false) {
     require_once 'site/plugins/pagefactory-pageelements/src/SitemapManager.php';
     SitemapManager::updateSitemap();
 }
+handleUrlToken();
+PageFactory::$pg->addAssets(PAGE_ELEMENTS_URL.'js/pe-helper.js');
+
 return 'PageElements';
 
+
+
+/**
+ * Entry point for handling UrlTokens, in particular for access-code-login:
+ * @return void
+ */
+function handleUrlToken()
+{
+    $urlToken = PageFactory::$urlToken;
+    if (!$urlToken) {
+        return;
+    }
+
+    // do something with $urlToken...
+    $found = kirby()->users()->filter(function($p) {
+        $data = $p->content()->data();
+        $ac = $data['accesscode']??'';
+        $urlToken = PageFactory::$urlToken;
+        if ($ac === $urlToken) {
+            return true;
+        }
+        return false;
+    });
+    $user = $found->first();
+    if ($user) {
+        $user->loginPasswordless();
+    }
+
+    // remove the urlToken:
+//        $target = page()->url();
+    $target = PageFactory::$appUrl . PageFactory::$slug;
+    \Usility\PageFactory\reloadAgent($target);
+} // handleUrlToken
