@@ -95,6 +95,14 @@ class Data2DSet extends DataSet
         $this->nRows = sizeof($data2D)-1;
         $this->columnKeys = $headerElems;
         $this->nCols = sizeof($headerElems);
+
+        if ($this->options['obfuscateRows']??false) {
+            $data2D = $this->obfuscateRows($data2D);
+        }
+        if ($this->options['minRows']) {
+            $data2D = $this->addRows($data2D, $elementKeys);
+        }
+
         return $data2D;
     } // get2DNormalizedData
 
@@ -168,4 +176,33 @@ class Data2DSet extends DataSet
         }
         return array_combine($keys, $values);
     } // arrayCombine
+
+
+    private function addRows(array $data2D, array $elementKeys): array
+    {
+        if (($minRows = $this->options['minRows']) && ($minRows > $this->nRows)) {
+            $emptyRec = $this->arrayCombine($elementKeys, array_fill(0, $this->nCols, ''));
+            $emptyRecs = array_fill(0, ($minRows - $this->nRows), $emptyRec);
+            $data2D = array_merge_recursive($data2D, $emptyRecs);
+            $this->nRows = sizeof($data2D)-1;
+        }
+        return $data2D;
+    } // addRows
+
+
+    private function obfuscateRows($data2D)
+    {
+        $rows = $this->options['obfuscateRows'];
+        foreach ($data2D as $row => $rec) {
+            if ($row === '_hdr') {
+                continue;
+            }
+            foreach ($rec as $key => $value) {
+                if (in_array($key, $rows)) {
+                    $data2D[$row][$key] = '*****';
+                }
+            }
+        }
+        return $data2D;
+    }
 } // Data2DSet

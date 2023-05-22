@@ -46,6 +46,7 @@ class DataTable extends Data2DSet
     private string $showRowNumbers;
     private string $showRowSelectors;
     private string $sort;
+    private $minRows;
     private string $export;
     private $elementLabels;
 
@@ -86,6 +87,7 @@ class DataTable extends Data2DSet
         $this->showRowNumbers = $options['showRowNumbers'] ?? false;
         $this->showRowSelectors = isset($options['showRowSelectors']) && $options['showRowSelectors'] ? $options['showRowSelectors'] : false;
         $this->sort = $options['sort'] ?? false;
+        $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
 
