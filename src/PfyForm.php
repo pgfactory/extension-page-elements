@@ -14,7 +14,7 @@ define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,'.
     'url,date,datetime-local,time,datetime,month,number,integer,range,tel,file,'.
-    'radio,checkbox,dropdown,select,multiselect,upload,multiupload,'.
+    'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'button,reset,submit,cancel,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,bypassed,literal,readonly,
 
@@ -30,13 +30,15 @@ class PfyForm extends Form
     private array $fieldNames = [];
     private array $formElements = [];
     private array $choiceOptions = [];
+    private array $bypassedElements = [];
     private $db = false;
     private $file = false;
     private $dataTable = false;
     private int $formIndex = 0;
     private int $index = 0;
     private int $revealInx = 0;
-    protected string|bool $permissionQuery = '';
+    protected bool $isFormAdmin = false;
+    private string $name;
 
     /**
      * @param $options
@@ -51,9 +53,11 @@ class PfyForm extends Form
             }
         }
 
-        $this->permissionQuery = ($options['showData']??'noone') ?: 'noone';
-        if ($this->permissionQuery === true) {
-            $this->permissionQuery = 'loggedin|localhost';
+        if ($permissionQuery = ($options['showData']??false)) {
+            if ($permissionQuery === true) {
+                $permissionQuery = 'loggedin|localhost';
+            }
+            $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
 
         parent::__construct();
@@ -75,6 +79,9 @@ class PfyForm extends Form
         $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex]);
 
         foreach ($auxOptions as $name => $rec) {
+            if (!is_array($rec)) {
+                throw new \Exception("Syntax error in Forms option '$name'");
+            }
             $rec['name'] = $name;
             $this->addElem($rec);
         }
@@ -117,13 +124,14 @@ class PfyForm extends Form
         $id = $options['id']? " id='{$options['id']}'" : '';
         $formClass = $options['class'] ? " {$options['class']}" : '';
 
+        if ($this->isFormAdmin) {
+            $formClass = " screen-only$formClass";
+        }
+
         $html = "<form$id class='pfy-form$formClass'" . substr($html, 5);
 
-        if ($options['showData'] && $options['file']) {
-            $admitted = Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug);
-            if ($admitted) {
-                $html .= $this->renderDataTable();
-            }
+        if ($options['showData'] && $options['file'] && $this->isFormAdmin) {
+            $html .= $this->renderDataTable();
         }
 
         $html = $this->injectFormElemClasses($html);
@@ -160,6 +168,13 @@ EOT;
         switch ($type) {
             case 'hidden':
                 $elem = $this->addHidden($name, $options['value']??'');
+                if ($id = $options['id']??false) {
+                    $elem->setHtmlId($id);
+                }
+                break;
+            case 'bypassed':
+                $this->bypassedElements[$name] = $options['value']??'';
+                $elem = $this->addHidden($name, '');
                 if ($id = $options['id']??false) {
                     $elem->setHtmlId($id);
                 }
@@ -254,6 +269,19 @@ EOT;
             $elem->setDefaultValue($default);
         }
 
+        // handle min/max
+        if ($min = ($options['min']??false)) {
+            $elem->setHtmlAttribute('min', $min);
+        }
+        if ($max = ($options['max']??false)) {
+            list($available, $maxCount) = $this->getAvailableAndMaxCount();
+            // if sign-up limitation is active, limit max input if necessary, unless privileged:
+            if ($maxCount && !$this->isFormAdmin) {
+                $max = min($max, $available);
+            }
+            $elem->setHtmlAttribute('max', $max);
+        }
+
         // handle 'description' option:
         if ($str = ($options['description']??false)) {
             $str = Html::el('span')->setHtml($str);
@@ -300,17 +328,6 @@ EOT;
     private function addNumberElem(string $name, string|object $label, array $options): object
     {
         $elem = $this->addInteger($name, $label);
-        if ($min = ($options['min']??false)) {
-            $elem->setHtmlAttribute('min', $min);
-        }
-        if ($max = ($options['max']??false)) {
-            list($available, $maxCount) = $this->getAvailableAndMaxCount();
-            // if sign-up limitation is active, limit max input if necessary, unless privileged:
-            if ($maxCount && !Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
-                $max = min($max, $available);
-            }
-            $elem->setHtmlAttribute('max', $max);
-        }
         return $elem;
     } // addNumberElem
 
@@ -518,6 +535,7 @@ EOT;
      */
     private function normalizeData(array $dataRec): array
     {
+        $bypassedElements = array_keys($this->bypassedElements);
         foreach ($dataRec as $name => $value) {
             if ($name === '_formInx') {
                 unset($dataRec[$name]);
@@ -544,6 +562,10 @@ EOT;
                     $dataRec[$name] = '';
                 }
                 unset($commentController);
+            }
+
+            if (in_array($name, $bypassedElements)) {
+                $dataRec[$name] = $this->bypassedElements[$name];
             }
         }
         return $dataRec;
@@ -677,6 +699,7 @@ EOT;
             'tableHeaders' => $this->fieldNames,
             'tableButtons' => true,
             'footers' => $this->options['tableFooters']??false,
+            'minRows' => $this->options['minRows']??false,
 
             'masterFileRecKeyType' => 'index',
 //            'includeSystemElements' => true,
@@ -684,6 +707,9 @@ EOT;
 //            'masterFileRecKeySort' => true,
 //            'masterFileRecKeySortOnElement' => 'first_name',
             ];
+
+        $tableOptions = $this->setObfuscatePassword($tableOptions);
+        
         $this->dataTable = new DataTable($file, $tableOptions);
         return $this->dataTable;
     } // openDataTable
@@ -804,6 +830,7 @@ EOT;
         if (!isset($options['class'])) {
             $options['class'] = '';
         }
+        $this->name = $name;
         return array($label, $name, $type);
     } // determineMainOptions
 
@@ -1044,7 +1071,7 @@ EOT;
             // now check deadline:
             if ($deadline < time()) { // deadline expired:
                 // deadline is overridden if visitor is logged in:
-                if (!Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
+                if (!$this->isFormAdmin) {
                     if ($deadlineNotice = ($this->options['deadlineNotice'] ?? false)) {
                         return $deadlineNotice;
                     } else {
@@ -1072,7 +1099,7 @@ EOT;
                 $currCount += ($pending - 1);
             }
             if ($currCount >= $maxCount) {
-                if (!Permission::evaluate($this->permissionQuery, allowOnLocalhost: PageFactory::$debug)) {
+                if (!$this->isFormAdmin) {
                     if ($maxCountNotice = ($this->options['maxCountNotice'] ?? false)) {
                         return $maxCountNotice;
                     } else {
@@ -1089,18 +1116,36 @@ EOT;
 
     private function getAvailableAndMaxCount(): array
     {
+        $available = PHP_INT_MAX - 10;
+        $currCount = false;
         if ($maxCount = ($this->options['maxCount']??false)) {
             $this->openDB();
-            if ($maxCountOn = ($this->options['maxCountOn'] ?? false)) {
-                $currCount = $this->db->sum($maxCountOn);
-            } else {
-                $currCount = $this->db->count();
+            $maxCountOn = ($this->options['maxCountOn'] ?? false);
+            if ($maxCountOn === $this->name) {
+                if ($maxCountOn = ($this->options['maxCountOn'] ?? false)) {
+                    $currCount = $this->db->sum($maxCountOn);
+                } else {
+                    $currCount = $this->db->count();
+                }
+                $available = $maxCount - $currCount;
             }
-        } else {
-            $currCount = 100000;
         }
-        $available = $maxCount - $currCount;
         return [$available, $maxCount, $currCount];
     } // getAvailableAndMaxCount
+
     
+    private function setObfuscatePassword(array $tableOptions): array
+    {
+        $obfuscateRows = [];
+        foreach ($this->formElements as $key => $rec) {
+            if ($rec['type'] === 'password') {
+                $obfuscateRows[] = $rec['name'];
+            }
+        }
+        if ($obfuscateRows) {
+            $tableOptions['obfuscateRows'] = $obfuscateRows;
+        }
+        return $tableOptions;
+    } // setObfuscatePassword
+
 } // PfyForm
