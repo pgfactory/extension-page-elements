@@ -66,20 +66,20 @@ pfy-noscript-warning:
   de: Ihr Browser lässt die Auführung von JavaScripts nicht zu. Deshalb wird dieses Formular nicht funktionieren.
   _:  Your browser does not permit javascripts. Thus, this form will not work.
 
-form-submit-success:
+pfy-form-submit-success:
   de: '<p>Wir haben Ihre Daten empfangen und gespeichert.<br>Besten Dank</p>'
   de2: '<p>Wir haben deine Daten empfangen und gespeichert.<br>Besten Dank</p>'
   _:  '<p>We recived your data and stored it successfully.<br>Thanks a lot</p>'
 
-form-success-continue:
+pfy-form-success-continue:
   de: '<p><a href="~page/">Weiter...</a></p>'
   _:  '<p><a href="~page/">Continue...</a></p>'
 
-form-owner-notification-subject: #Neue Anemldung auf host.net
+pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
   de: Neue Anmeldung auf %host
   _:  New sign-up on %host
 
-form-owner-notification-body:
+pfy-form-owner-notification-body:
   de: |
     Guten Tag\n
     Es gibt eine neue Anmeldung:\n
@@ -93,11 +93,11 @@ form-owner-notification-body:
 
 pfy-row-number-header: '#'
 
-form-warning-record-already-exists:
+pfy-form-warning-record-already-exists:
   de: Diese Daten haben wir bereits empfangen.
   _:  We already received your data.
 
-no-data-available:
+pfy-no-data-available:
   de: '-- Noch keine Daten vorhanden --'
   _:  '-- No data yet --'
 
@@ -122,7 +122,10 @@ pfy-form-honeypot-failed:
   de2: 'Das klappte nicht, deine Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuche es erneut.'
   _:  'That didn\'t work, your data has <strong>not</strong> been submitted.</p><p>Please try again.'
 
-
+pfy-form-confirmation-email-sent:
+  de: 'Wir haben Ihnen eine Bestätigung per E-Mail geschickt.'
+  de2: 'Wir haben dir eine Bestätigung per E-Mail geschickt.'
+  _:  'We have sent a confirmation to your e-mail address.'
 
 # Deadline:
 pfy-form-deadline-expired:

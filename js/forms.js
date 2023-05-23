@@ -42,13 +42,15 @@ function pfyCheck(form) {
   var check = true;
   var checkElement = form.querySelector('[data-check]');
   if (checkElement) {
-    var name = checkElement.dataset.check;
-    var value = checkElement.value;
-    var referenceElement = form.querySelector('[name="' + name + '"]');
-    var referenceValue = referenceElement.value;
+    const name = checkElement.dataset.check;
+    const wrapper = document.querySelector('input[name='+name+']').closest('.pfy-elem-wrapper');
+    const label = wrapper.querySelector('.pfy-label-wrapper span').innerHTML.replace(/(.*):(.*)/, "$1");
+    const value = checkElement.value;
+    const referenceElement = form.querySelector('[name="' + name + '"]');
+    const referenceValue = referenceElement.value;
     check = !value;
     if (!check) {
-      openCheckPopup(form, referenceValue, name);
+      openCheckPopup(form, referenceValue, label);
     }
   }
   return check;

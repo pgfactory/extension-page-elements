@@ -123,8 +123,12 @@ class Data2DSet extends DataSet
                 $dataRec0 = $rec0->recData;
                 $elementKeys = array_keys($dataRec0);
                 if ($includeSystemElements) {
-                    $elementKeys[] = DATAREC_TIMESTAMP;
-                    $elementKeys[] = '_reckey';
+                    if (!in_array(DATAREC_TIMESTAMP, $elementKeys)) {
+                        $elementKeys[] = DATAREC_TIMESTAMP;
+                    }
+                    if (!in_array('_reckey', $elementKeys)) {
+                        $elementKeys[] = '_reckey';
+                    }
                 } else {
                     $elementKeys = array_filter($elementKeys, function ($e) {
                         return ($e[0] !== '_');
@@ -136,8 +140,12 @@ class Data2DSet extends DataSet
             } else {
                 $elementKeys = array_values($headerElems);
                 if ($includeSystemElements) {
-                    $elementKeys[] = DATAREC_TIMESTAMP;
-                    $elementKeys[] = '_reckey';
+                    if (!in_array(DATAREC_TIMESTAMP, $elementKeys)) {
+                        $elementKeys[] = DATAREC_TIMESTAMP;
+                    }
+                    if (!in_array('_reckey', $elementKeys)) {
+                        $elementKeys[] = '_reckey';
+                    }
                 } else {
                     $headerElems = array_filter($headerElems, function ($e) {
                         return ($e[0] !== '_');

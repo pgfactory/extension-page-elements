@@ -48,6 +48,7 @@ class DataTable extends Data2DSet
     private string $sort;
     private $minRows;
     private string $export;
+    private bool $includeSystemElements;
     private $elementLabels;
 
     /**
@@ -89,11 +90,16 @@ class DataTable extends Data2DSet
         $this->sort = $options['sort'] ?? false;
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
+        $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
 
 
         if ($this->tableHeaders && !is_array($this->tableHeaders)) {
             $this->parseArrayArg('tableHeaders');
+        }
+        if ($this->includeSystemElements) {
+            $this->tableHeaders['_timestamp'] = '_timestamp';
+            $this->tableHeaders['_reckey'] = '_reckey';
         }
         if ($this->footers && !is_array($this->footers)) {
             $this->parseArrayArg('footers');
@@ -138,7 +144,7 @@ class DataTable extends Data2DSet
     public function render(): string
     {
         if (!$this->tableData || sizeof($this->tableData['_hdr']??[]) === 0) {
-            return '<div class="pfy-table-wrapper">{{ no-data-available }}</div>'; // done if no data available
+            return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
         }
 
         // Option row numbers:

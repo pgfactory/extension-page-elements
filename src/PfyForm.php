@@ -13,10 +13,10 @@ use function Usility\PageFactory\var_r as var_r;
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,'.
-    'url,date,datetime-local,time,datetime,month,number,integer,range,tel,file,'.
+    'url,date,datetime-local,time,datetime,month,number,integer,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'button,reset,submit,cancel,';
-    // future: toggle,hash,fieldset,fieldset-end,reveal,bypassed,literal,readonly,
+    // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
@@ -129,7 +129,7 @@ class PfyForm extends Form
             $formClass = " screen-only$formClass";
         }
 
-        $html = "<form$id class='pfy-form$formClass'" . substr($html, 5);
+        $html = "<form$id class='pfy-form pfy-form-$this->formIndex$formClass'" . substr($html, 5);
 
         if ($options['showData'] && $options['file'] && $this->isFormAdmin) {
             $html .= $this->renderDataTable();
@@ -257,6 +257,11 @@ EOT;
             $elem->setDisabled();
         }
 
+        // handle 'readonly' option:
+        if (($options['readonly']??false) !== false) {
+            $elem->setHtmlAttribute('readonly', '');
+        }
+
         // handle 'class' option:
         if (($class1 = ($options['class']??''))) {
             $class .= " $class1";
@@ -267,7 +272,7 @@ EOT;
         if ($placeholder = ($options['placeholder']??false)) {
             $elem->setHtmlAttribute('placeholder', $placeholder);
         }
-        if ($default = ($options['default']??false)) {
+        if ($default = ($options['default']?? ($options['value']??false))) {
             $elem->setDefaultValue($default);
         }
 
@@ -503,10 +508,12 @@ EOT;
             if ($this->options['confirmationText']) {
                 $html = $this->options['confirmationText'];
             } else {
-                $html = '{{ form-submit-success }}';
+                $html = "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n";
             }
         }
-        $html .= '{{ form-success-continue }}';
+        $html .= $this->handleConfirmationMail($dataRec);
+        $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
+
         $logText = strip_tags($html);
         mylog($logText, 'form-log.txt');
         return $html;
@@ -644,7 +651,7 @@ EOT;
         }
 
         if ($this->db->recExists($newRec)) {
-            return 'form-warning-record-already-exists';
+            return 'pfy-form-warning-record-already-exists';
         }
 
         $res = $this->db->addRec($newRec);
@@ -673,38 +680,27 @@ EOT;
             if ($key[0] === '_') {
                 continue;
             }
+            $type = $this->formElements[$key]['type']??false;
+            if ($type === 'password') {
+                $value = '*****';
+            }
             $key = str_pad("$key: ", $labelLen, '. ');
             if (is_array($value)) {
                 $value = $value[ARRAY_SUMMARY_NAME]??'';
             }
             $out .= "$key$value\n";
         }
-        $webmasterMail = TransVars::getVariable('webmaster_email');
 
-        $subject = TransVars::getVariable('form-owner-notification-subject');
+        $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
         if (str_contains($subject, '%host')) {
             $subject = str_replace('%host', PageFactory::$hostUrl, $subject);
         }
 
-        $body = TransVars::getVariable('form-owner-notification-body');
+        $body = TransVars::getVariable('pfy-form-owner-notification-body');
         $body = str_replace(['%data', '%host', '\n'], [$out, PageFactory::$hostUrl, "\n"], $body);
-        $props = [
-            'to'        => $options['mailTo']?: $webmasterMail,
-            'from'      => $options['mailFrom']?: $webmasterMail,
-            'fromName'  => $options['mailFromName']?: false,
-            'subject'   => $subject,
-            'body'      => $body,
-        ];
 
-
-        if (PageFactory::$isLocalhost) {
-            $props['body'] = "\n\n".$props['body'];
-            $text = var_r($props);
-            $html = "<pre>Notification Mail to Onwer:\n$text</pre>";
-            PageFactory::$pg->setOverlay($html);
-        } else {
-            new PHPMailer($props);
-        }
+        $to = $options['mailTo']?: TransVars::getVariable('webmaster_email');
+        $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
     } // notifyOwner
 
 
@@ -718,17 +714,19 @@ EOT;
             return $this->dataTable;
         }
         $file = resolvePath($this->options['file'], relativeToPage: true);
+        $fieldNames = $this->fieldNames;
+        if (isset($fieldNames['_formInx'])) {
+            unset($fieldNames['_formInx']);
+        }
         $tableOptions = [
-            'tableHeaders' => $this->fieldNames,
+            'tableHeaders' => $fieldNames,
             'tableButtons' => true,
             'footers' => $this->options['tableFooters']??false,
             'minRows' => $this->options['minRows']??false,
+            'sort' =>    $this->options['sortData']??false,
 
             'masterFileRecKeyType' => 'index',
-//            'includeSystemElements' => true,
-//            'masterFileRecKeys' => 'uid',
-//            'masterFileRecKeySort' => true,
-//            'masterFileRecKeySortOnElement' => 'first_name',
+            'includeSystemElements' => $this->options['includeSystemFields']??false,
             ];
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
@@ -1179,5 +1177,87 @@ EOT;
         }
         return $tableOptions;
     } // setObfuscatePassword
+
+
+    private function handleConfirmationMail(array $dataRec): mixed
+    {
+        if (!$this->options['confirmationEmail']??false) {
+            return '';
+        }
+
+        list($subject, $message) = $this->getEmailComponents();
+        $to = $this->propagateDataToVariables($dataRec);
+        $subject = TransVars::translate($subject);
+        $message = TransVars::translate($message);
+        if ($to) {
+            $this->sendMail($to, $subject, $message, 'Confirmation Mail to Visitor');
+            return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
+        }
+        return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-missing }}</div>\n";
+    } // sendConfirmationMail
+
+
+    private function getEmailComponents(): array
+    {
+        $confirmationEmailTemplate = ($this->options['confirmationEmailTemplate']??true);
+        if ($confirmationEmailTemplate === true) {
+            $subject = '{{ pfy-confirmation-response-subject }}';
+            $template = '{{ pfy-confirmation-response-message }}';
+
+        } else {
+            $confirmationEmailTemplate = resolvePath($confirmationEmailTemplate, relativeToPage: true);
+            if (!file_exists($confirmationEmailTemplate)) {
+                throw new \Exception("Forms confirmationEmail: confirmationEmailTemplate not found");
+            }
+            $template = fileGetContents($confirmationEmailTemplate);
+            if (preg_match("/^subject:(.*?)\n/i", $template, $m)) {
+                $subject = trim($m[1]);
+                $template = trim(str_replace($m[0], '', $template));
+            } else {
+                $subject = '{{ pfy-form-confirmation-email-subject }}';
+            }
+        }
+        return [$subject, $template];
+    } // getEmailComponents
+
+
+    private function propagateDataToVariables(array $dataRec): string
+    {
+        $to = false;
+        $emailFieldName = $this->options['confirmationEmail'];
+        // add variables for all form values, so they can be used in mail-template:
+        foreach ($dataRec as $key => $value) {
+            if (is_array($value)) {
+                $value = $value[0]?? json_encode($value);
+            }
+            if ($key === $emailFieldName) {
+                $to = $value;
+            }
+            $value = $value?: '{{ pfy-confirmation-response-element-empty }}';
+            TransVars::setVariable("__{$key}__", $value);
+        }
+        return $to;
+    } // propagateDataToVariables
+
+
+    private function sendMail(string $to, string $subject, string $body, string $debugInfo = ''): void
+    {
+        $props = [
+            'to' => $to,
+            'from' => $this->options['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
+            'fromName' => $this->options['mailFromName'] ?: false,
+            'subject' => $subject,
+            'body' => $body,
+        ];
+
+        if (PageFactory::$isLocalhost) {
+            $props['body'] = "\n\n" . $props['body'];
+            $text = var_r($props);
+            $html = "<pre>$debugInfo:\n$text</pre>";
+            PageFactory::$pg->setOverlay($html);
+        } else {
+            new PHPMailer($props);
+        }
+    } // sendMail
 
 } // PfyForm

@@ -28,7 +28,8 @@ function form($args = '')
             'mailFrom' =>	['The address from which service emails are sent. (default: "{{ webmaster_email }}").', false],
             'mailFromName' =>	['Name from which service emails are sent.', ''],
 
-            'formTop' =>	['Text rendered above the form. BR Note: form* info will not show up in form response. BR '.
+            'formTop' =>	['Text rendered above the form. BR Note: formTop/formHint/formBottom will not show up in '.
+                'form response following form submission. BR '.
                 'These fields may contain placeholders ``%deadline``, ``%count``, ``%sum``, ``%available``, ``%max`` '.
                 '(or ``%total``).', false],
 
@@ -54,7 +55,12 @@ function form($args = '')
                 'exists in DB. If so, skips storing data.', true],
 
             'showData' =>	['[false, true, loggedIn] '.
-                'Defines, to whom previously received data is presented (Default: false).', false],
+                'Defines, to whom previously received data is presented.', false],
+
+            'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
+
+            'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
+                'in output table.', false],
 
             'tableFooters' =>	['(recId:\'%sum\' or \'%count\' or \'string\') '.
                 'Adds a footer row to the table showing counts and sums for specified columns..', false],
@@ -67,11 +73,12 @@ function form($args = '')
                 'e-mail field within the form, a confirmation mail will be sent.', false],
 
             'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
-                'what to put into the mail. If true, standard variables will be used: "pfy-confirmation-response-subject" '.
-                'and "pfy-confirmation-response-message". Alternatively, you can specify the name of a template file. '.
-                'All form-inputs are available as variables of the form "&#123;&#123; <strong>var_name</strong>_value }}" '
+                'what to put into the mail. If true, standard variables will be used: "&#123;&#123;pfy-confirmation-response-subject }}" '.
+                'and "&#123;&#123;pfy-confirmation-response-message }}".<br>Alternatively, you can specify the name of a template file. <br>'.
+                'All form-inputs are available as variables of the form "&#123;&#123; <strong>&#95;&#95;fieldName&#95;&#95;</strong> }}" '
                 , false],
 
+            'labelWidth' =>	['Sets the label width (-> defines CSS-variable "-\-form-label-width")', false],
         ],
         'summary' => <<<EOT
 
@@ -121,8 +128,10 @@ All:
 : - label   >> [string] 
 : - placeholder   >> [string] 
 : - value   >> [any] initial value
+: - default   >> [any] same as value
 : - required    >> [bool]
 : - disabled    >> [bool]
+: - readonly    >> [bool]
 : - info        >> [string] info icon showing info text
 : - description     >> [string] text next/below input field
 : - antiSpam        >> [string] -> see below
@@ -136,10 +145,10 @@ number/integer/range:
 : - default     >> [integer]
 
 radio/checkbox/dropdown/select/multiselect:
-: - options          >> ['name:label' array]  Options, e.g. "a:A, b:B, c:C"
-: - preset          >> [any] initial value
-: - prompt          >> [integer] first option "call-to-action" (select only)
-: - splitOutput     >> [true,false] If true, table of "showData" output shows row for each option 
+: - options          >> ['name:label' array] Choice options, e.g. "a:A, b:B, c:C"
+: - prompt          >> [string] first option "call-to-action" (select only)
+: - preset          >> [string] initially selected option
+: - splitOutput     >> [bool] If true, table of "showData" output shows row for each option 
 : - layout          >> [horizontal,vertical]
 
 upload/multiupload: (currently only image files supported)
@@ -175,6 +184,10 @@ if ($inx !== 1) {
     }
     $form = new PfyForm($options);
     $form->createForm(null, $auxOptions);
+
+    if ($lWidth = $options['labelWidth']) {
+        PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
+    }
 
     $res = false;
     if ($form->isSuccess()) {
