@@ -1,41 +1,97 @@
-// forms
-
-$(document).ready(function() {
-
-  // handle errors in input -> scroll into view:
-  $('.pfy-form .error').first().each(function() {
-    let $input = $('input', $(this).parent());
-    $input[0].scrollIntoView(false);
+document.addEventListener('DOMContentLoaded', function() {
+  var errorElement = document.querySelector('.pfy-form .error');
+  if (errorElement) {
+    var input = errorElement.parentNode.querySelector('input');
+    input.scrollIntoView({ block: 'end' });
     setTimeout(function() {
-      $input.focus();
+      input.focus();
     }, 500);
-  });
+  }
 });
 
+var forms = document.querySelectorAll('.pfy-form');
+if (forms) {
+  forms.forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (typeof submitNow !== 'undefined') {
+        return;
+      }
+      e.preventDefault();
+      var check = pfyCheck(form);
+      if (!check) {
+        e.stopPropagation();
+        return;
+      }
+      doSubmitForm(form);
+    });
+  });
+}
 
-// handle submit -> send log-info to server before submitting:
-$('.pfy-form').submit(function (e) {
-  if (typeof submitNow !== 'undefined') {
-    return;
+var cancelInputs = document.querySelectorAll('input.pfy-cancel');
+if (cancelInputs) {
+  cancelInputs.forEach(function (input) {
+    input.addEventListener('click', function (e) {
+      e.preventDefault();
+      var form = input.closest('.pfy-form');
+      form.reset();
+    });
+  });
+}
+
+function pfyCheck(form) {
+  var check = true;
+  var checkElement = form.querySelector('[data-check]');
+  if (checkElement) {
+    var name = checkElement.dataset.check;
+    var value = checkElement.value;
+    var referenceElement = form.querySelector('[name="' + name + '"]');
+    var referenceValue = referenceElement.value;
+    check = !value;
+    if (!check) {
+      openCheckPopup(form, referenceValue, name);
+    }
   }
-  e.preventDefault();
-  let $form = $(this);
-  $('.button', $form).prop('disabled', true).addClass('pfy-button-disabled');
+  return check;
+}
 
-  // create copy of form data and replace any password fields with '*****':
-  let $clone = $form.clone();
-  $('input[type=password]', $clone).val('******');
-  const dataStr = JSON.stringify( $clone.serializeArray() );
+function openCheckPopup(form, referenceValue, referenceName) {
+  var text = `<label>{{ pfy-form-override-honeypot }} <input type="text" id="pfy-check-input"></label>`;
+  text = text.replace(/%refName/, referenceName);
+  pfyPopupPromise({
+    text: text,
+    buttons: 'cancel,confirm',
+    closeCallback: function() {
+      pfyResponseValue = document.querySelector('#pfy-check-input').value;
+    },
+  }).then(
+    function() {
+      if (referenceValue.charAt(0).toLowerCase() === pfyResponseValue.toLowerCase()) {
+        doSubmitForm(form);
+      } else {
+        pfyAlert({
+          text: `{{ pfy-form-honeypot-failed }}`,
+        });
+      }
+    }
+  );
+}
+
+function doSubmitForm(form) {
+  var buttons = form.querySelectorAll('.button');
+  buttons.forEach(function(button) {
+    button.disabled = true;
+    button.classList.add('pfy-button-disabled');
+  });
+
+  var clone = form.cloneNode(true);
+  var passwordInputs = clone.querySelectorAll('input[type="password"]');
+  passwordInputs.forEach(function(input) {
+    input.value = '******';
+  });
+  var data = new FormData(clone);
+  var dataStr = JSON.stringify(Array.from(data.entries()));
   serverLog('Browser submits: ' + dataStr, 'form-log.txt');
 
   submitNow = true;
-  $form.submit();
-});
-
-
-// handle click on Cancel
-$('input.pfy-cancel').click(function (e) {
-  e.preventDefault();
-  let $form = $(this).closest('.pfy-form');
-  $form.trigger('reset');
-});
+  form.submit();
+}

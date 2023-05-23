@@ -102,6 +102,28 @@ no-data-available:
   _:  '-- No data yet --'
 
 
+pfy-anti-spam-warning:
+  de: |
+    Ihre Eingaben konnten nicht verarbeitet werden weil serverseitig ein Fehler aufgetreten ist.<br>
+    Bitte senden Sie Ihr Angaben per E-Mail an den {{ webmaster_link }}.<br>
+    Wir entschuldigen uns für die Unannahmlichkeiten.
+  _:  |
+    Your input could not be processed due to an error condition on the server.<br>
+    Please send your request by e-mail to the {{ webmaster_link }}<br>
+    We apologize for the inconvenience.
+
+pfy-form-override-honeypot:
+  de: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte geben Sie den <strong> ersten Buchstaben</strong> aus Feld <strong>«%refName»</strong> ein:</p>'
+  de2: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte gib den <strong>ersten Buchstaben</strong> aus Feld <strong>«%refName»</strong> ein:</p>'
+  _:  '<h3>As a measure of precaution against spam:</h3><p>Please enter the <strong>first letter</strong> of field <strong>"%refName"</strong>:</p>'
+
+pfy-form-honeypot-failed:
+  de: 'Das klappte nicht, Ihre Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuchen Sie es erneut.'
+  de2: 'Das klappte nicht, deine Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuche es erneut.'
+  _:  'That didn\'t work, your data has <strong>not</strong> been submitted.</p><p>Please try again.'
+
+
+
 # Deadline:
 pfy-form-deadline-expired:
   de: 'Die Anmeldefrist ist vorbei.'

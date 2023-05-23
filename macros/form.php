@@ -26,7 +26,7 @@ function form($args = '')
             'mailTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
 
             'mailFrom' =>	['The address from which service emails are sent. (default: "{{ webmaster_email }}").', false],
-            'mailFromName' =>	['Name from which service emails are sent. (default: "").', false],
+            'mailFromName' =>	['Name from which service emails are sent.', ''],
 
             'formTop' =>	['Text rendered above the form. BR Note: form* info will not show up in form response. BR '.
                 'These fields may contain placeholders ``%deadline``, ``%count``, ``%sum``, ``%available``, ``%max`` '.
@@ -53,31 +53,24 @@ function form($args = '')
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
 
-//            'antiSpam' =>	['[false,field-ID] If true, an invisible "honey-pot" field is added '.
-//                'to the form. Spam-attacks typically try to fill in data and thus can be identified on the server. '.
-//                'To use, provide the field-name of the input field that accepts "last-name" input. The user can then override the '.
-//                'mechanism by re-entering his/her last name in UPPERCASE letters.', false],
-////                'mechanism by re-entering his/her last name in UPPERCASE letters. You could use any other input field,  '.
-////                'but need to modify the text resource "pfy-form-override-honeypot" accordingly. (default: false)', false],
-
             'showData' =>	['[false, true, loggedIn] '.
                 'Defines, to whom previously received data is presented (Default: false).', false],
 
             'tableFooters' =>	['(recId:\'%sum\' or \'%count\' or \'string\') '.
-                'Adds a footer row to the table showing counts and sums for specified columns.  (Default: false).', false],
+                'Adds a footer row to the table showing counts and sums for specified columns..', false],
 
             'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
                 'empty rows up to given number. BR '.
                 'Note: if ``maxCount`` is active, ``minRows`` will be set automatically to that value.', false],
 
-//            'confirmationEmail' =>	['[name-of-email-field] If set to the name of an '.
-//                'e-mail field within the form, a confirmation mail will be sent (Default: false).', false],
-//
-//            'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
-//                'what to put into the mail. If true, standard variables will be used: "lzy-confirmation-response-subject" '.
-//                'and "lzy-confirmation-response-message". Alternatively, you can specify the name of a template file. '.
-//                'All form-inputs are available as variables of the form "&#123;&#123; <strong>var_name</strong>_value }}" '.
-//                '(Default: false).', false],
+            'confirmationEmail' =>	['[name-of-email-field] If set to the name of an '.
+                'e-mail field within the form, a confirmation mail will be sent.', false],
+
+            'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
+                'what to put into the mail. If true, standard variables will be used: "pfy-confirmation-response-subject" '.
+                'and "pfy-confirmation-response-message". Alternatively, you can specify the name of a template file. '.
+                'All form-inputs are available as variables of the form "&#123;&#123; <strong>var_name</strong>_value }}" '
+                , false],
 
         ],
         'summary' => <<<EOT
@@ -96,6 +89,7 @@ function form($args = '')
         maxCount:       12
     \// form fields:  "name: { field arguments... }"
         Name:           {required:true}
+        Name2:          { antiSpam:Name }
         Comment:		{type: textarea },
     \// buttons:
         cancel:    		{ },
@@ -131,6 +125,7 @@ All:
 : - disabled    >> [bool]
 : - info        >> [string] info icon showing info text
 : - description     >> [string] text next/below input field
+: - antiSpam        >> [string] -> see below
 
 textarea:
 : - reveal      >> [string] If set, textarea is hidden until label is clicked
@@ -151,6 +146,14 @@ upload/multiupload: (currently only image files supported)
 : - maxMegaByte     10em>> [integer] allowed file size in MB
 
 {{ vgap }}
+
+#### AntiSpam
+
+To activate the anti-spam mechanism, you need to add an additional text field to your form, e.g. 
+
+    Name2: { antiSpam:Name }
+
+where *Name* is the field-name of another field in your form. This will insert an invisible honeypot field.
 
 EOT,
     ];

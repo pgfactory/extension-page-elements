@@ -61,6 +61,7 @@ class PfyForm extends Form
         }
 
         parent::__construct();
+        PageFactory::$pg->addAssets('POPUPS');
         PageFactory::$pg->addAssets('FORMS');
     } // __construct
 
@@ -162,7 +163,7 @@ EOT;
     {
         $this->index++;
         // determine $label, $name, $type and $subType:
-        list($label, $name, $type) = $this->determineMainOptions($options);
+        list($label, $name, $type) = $this->parseMainOptions($options);
 
         $subType = '';
         switch ($type) {
@@ -244,6 +245,8 @@ EOT;
                 break;
         }
 
+        $class = "pfy-$type";
+
         // handle 'required' option:
         if (($options['required']??false) !== false) {
             $elem->setRequired($options['required']);
@@ -255,11 +258,10 @@ EOT;
         }
 
         // handle 'class' option:
-        if ($class = ($options['class']??false)) {
-            $elem->setHtmlAttribute('class', "$class pfy-$type");
-        } else {
-            $elem->setHtmlAttribute('class', "pfy-$type");
+        if (($class1 = ($options['class']??''))) {
+            $class .= " $class1";
         }
+        $elem->setHtmlAttribute('class', trim($class));
 
         // handle placeholders:
         if ($placeholder = ($options['placeholder']??false)) {
@@ -287,7 +289,16 @@ EOT;
             $str = Html::el('span')->setHtml($str);
             $elem->setOption('description', $str);
         }
-        // note: 'info' option handled in determineMainOptions()
+
+        // handle 'antiSpam' option:
+        if ($antiSpam = ($options['antiSpam']??false)) {
+            $elem->setHtmlAttribute('data-check', $antiSpam);
+            $elem->setHtmlAttribute('aria-hidden', 'true');
+            unset($this->fieldNames[$name]);
+            unset($this->formElements[$name]);
+        }
+
+        // note: 'info' option handled in parseMainOptions()
     } // addElem
 
 
@@ -426,7 +437,7 @@ EOT;
     } // addCheckboxElem
 
 
-    private function addFieldNames($name, $array)
+    private function addFieldNames(string $name, array $array): void
     {
         array_pop($this->fieldNames); // remove mother elem and replace it with children
         foreach ($array as $k => $v) {
@@ -453,6 +464,11 @@ EOT;
         }
 
         $dataRec = $this->normalizeData($dataRec);
+
+        if (is_string($dataRec)) {
+            // string means spam detected:
+            return "<div class='pfy-form-error'>$dataRec</div>\n";
+        }
 
         if ($maxCountOn = ($this->options['maxCountOn']??false)) {
             $pending = $dataRec[$maxCountOn]??1;
@@ -533,10 +549,17 @@ EOT;
      * @param array $dataRec
      * @return array
      */
-    private function normalizeData(array $dataRec): array
+    private function normalizeData(array $dataRec): array|string
     {
         $bypassedElements = array_keys($this->bypassedElements);
         foreach ($dataRec as $name => $value) {
+            if ($this->formElements[$name]['args']['antiSpam']??false) {
+                if ($value !== '') {
+                    mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
+                    return 'pfy-anti-spam-warning';
+                }
+                unset($dataRec[$name]);
+            }
             if ($name === '_formInx') {
                 unset($dataRec[$name]);
 
@@ -733,7 +756,7 @@ EOT;
      * @return array
      * @throws \Exception
      */
-    private function determineMainOptions(array &$options): array
+    private function parseMainOptions(array &$options): array
     {
         $args = [];
         $label = $options['label'] ?? false;
@@ -796,9 +819,20 @@ EOT;
             }
         }
 
+        if (!isset($options['class'])) {
+            $options['class'] = '';
+        }
+
         if ($path = ($options['path']??false)) {
             $args['path'] = $path;
         }
+
+        // handle 'antiSpam' option:
+        if (($options['antiSpam']??false) !== false) {
+            $options['class'] .= ' pfy-obfuscate';
+            $args['antiSpam'] = $options['antiSpam'];
+        }
+
 
         if (!str_contains(FORMS_SUPPORTED_TYPES, ",$type,")) {
             throw new \Exception("Forms: requested type not supported: '$type'");
@@ -827,12 +861,9 @@ EOT;
             $options['disabled'] = false;
         }
 
-        if (!isset($options['class'])) {
-            $options['class'] = '';
-        }
         $this->name = $name;
         return array($label, $name, $type);
-    } // determineMainOptions
+    } // parseMainOptions
 
 
     /**
@@ -841,6 +872,7 @@ EOT;
      */
     private function injectFormElemClasses(string $html): string
     {
+        //ToDo: propagate 'aria-hidden' to wrapper
         $l1 = strlen('<div class="pfy-elem-wrapper');
         $p = 0;
         while (($p = strpos($html, '<input type="', $p)) !== false) {

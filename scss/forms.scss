@@ -227,5 +227,19 @@
     }
     position: relative;
   }
+
+  .pfy-obfuscate {
+    position: absolute;
+    left: -100000px;
+  }
+  &.debug .pfy-obfuscate {
+    background: #fee;
+    position: unset;
+    left: unset;
+  }
+
+  #pfy-check-input {
+    width: 4em;
+  }
 } // .pfy-default-styling
 
