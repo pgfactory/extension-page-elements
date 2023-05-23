@@ -180,7 +180,6 @@ function pfyPopup( options, index ) {
   }; // renderHeader
 
 
-
   this.renderButtons = function () {
     let buttonHtml = '';
 
@@ -238,7 +237,6 @@ function pfyPopup( options, index ) {
       this.buttonHtml = '<div class="pfy-popup-buttons">' + buttonHtml + '</div>';
     }
   }; // renderButtons
-
 
 
   this.setupTriggers = function () {
@@ -430,7 +428,12 @@ function pfyPopup( options, index ) {
     // for accessibility: make sure focus can't go outside of popup. (workaround while 'inert' is not reliable)
     this.trapFocus();
     setTimeout(function () {
-      $('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue', parent.$popup).focus();
+      let $input = $('input', parent.$popup);
+      if ($input.length) {
+        $input.first().focus();
+      } else {
+        $('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue', parent.$popup).focus();
+      }
     }, 50);
   }; // open
 
