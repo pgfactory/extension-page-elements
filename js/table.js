@@ -1,75 +1,90 @@
-/* table.js */
+/*
+ *  Table helper
+ *    -> support for table buttons: delete records, download table
+ */
 
+"use strict";
 
-// propagate click on selection checkbox in header row to all rows:
-$('.pfy-table-header .td-row-selector input[type=checkbox]').click(function () {
-  let $table = $(this).closest('.pfy-table-wrapper');
-  let val = $(this).prop('checked');
-  $('.pfy-table .td-row-selector input[type=checkbox]', $table).prop('checked', val);
-});
-
-
-
-$('.pfy-table-delete-recs-open-dialog').click(function (e) {
-  e.stopPropagation();
-  let $form = $('form', $(this).closest('.pfy-table-wrapper'));
-  let selected = $('.td-row-selector input[type=checkbox]:checked', $form);
-  if (!selected.length) {
-    currentlyOpenPopup = pfyPopup({
-        text: `{{ pfy-table-delete-nothing-selected }}`,
-        header: `{{ pfy-table-delete-recs-header }}`,
-        closeOnBgClick: true,
-        buttons: 'Ok'
+const tableHelper = {
+  init: function () {
+    const tables = document.querySelectorAll('.pfy-table');
+    if ((typeof tables !== 'undefined') && tables.length) {
+      tables.forEach(function (table) {
+        tableHelper.setupPropagateCheckbox(table);
+        tableHelper.setupOpenDeleteRecordsDialog(table);
+        tableHelper.setupDownloadButton(table);
       });
+    }
+  }, // init
 
-  } else {
-    currentlyOpenPopup = pfyPopup({
-        text: `{{ pfy-data-delete-records }}`,
-        header: `{{ pfy-table-delete-recs-header }}`,
-        closeOnBgClick: true,
-        buttons: `Cancel, Confirm`,
-        // buttons: `Cancel, {{ pfy-edit-rec-delete-btn }}`,
-        wrapperClass: 'pfy-data-delete-records',
-        callbackArg: $form,
-        onConfirm:  function (that, $form) {
-          // pfyReload('?delete=');
-          $form.attr('action', pageUrl + '?delete');
-          $form.submit();
+
+  setupPropagateCheckbox: function (table) {
+    const hdrCheckbox = table.querySelector('thead .td-row-selector input[type=checkbox]');
+    if (hdrCheckbox) {
+      hdrCheckbox.addEventListener('change', function () {
+        var isChecked = this.checked;
+        const checkboxes = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]');
+        if (checkboxes.length) {
+          checkboxes.forEach(function(rowCheckbox) {
+            rowCheckbox.checked = isChecked;
+          });
         }
-
-      // callbacks: [
-        //   null,
-        //   function (that, $form) {
-        //     $form.attr('action', pageUrl + '?delete');
-        //     $form.submit();
-        //   }
-        // ],
       });
-  }
-});
+    }
+  }, // setupPropagateCheckbox
 
 
+  setupOpenDeleteRecordsDialog: function (table) {
+    const form = table.closest('.pfy-table-wrapper').querySelector('form');
+    const deleteButton = form.querySelector('.pfy-table-delete-recs-open-dialog');
+    if (deleteButton) {
+      deleteButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+        if (!selected.length) {
+          currentlyOpenPopup = pfyPopup({
+            text: `{{ pfy-table-delete-nothing-selected }}`,
+            header: `{{ pfy-table-delete-recs-header }}`,
+            closeOnBgClick: true,
+            buttons: 'Ok'
+          });
+        } else {
+          currentlyOpenPopup = pfyPopup({
+            text: `{{ pfy-data-delete-records }}`,
+            header: `{{ pfy-table-delete-recs-header }}`,
+            closeOnBgClick: true,
+            buttons: 'Cancel, Confirm',
+            wrapperClass: 'pfy-data-delete-records',
+            callbackArg: form,
+            onConfirm: function (that, form) {
+              form.setAttribute('action', pageUrl + '?delete');
+              form.submit();
+            }
+          });
+        }
+      });
+    }
+  }, // setupOpenDeleteRecordsDialog
 
-$('.pfy-popup-wrapper.pfy-data-delete-records .pfy-popup-btn-2').click(function () {
-  let $form = $('form');
-  $form.attr('action', pageUrl + '?delete');
-  $form.submit();
-});
 
+  setupDownloadButton: function (table) {
+    const form = table.closest('.pfy-table-wrapper').querySelector('form');
+    const downloadBtn = form.querySelector('.pfy-table-download-start');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function () {
+        const id = table.getAttribute('id');
+        const tableInx = id.replace(/\D*/, '');
+        mylog('tableInx: ' + tableInx);
+        currentlyOpenPopup = pfyPopup({
+          text: pfyDownloadDialog[tableInx],
+          header: `{{ pfy-popup-download-header }}`,
+          closeButton: true,
+          closeOnBgClick: true,
+          buttons: 'Close'
+        });
+      });
+    }
+  } // setupDownloadButton
+};
 
-
-$('.pfy-table-download-start').click(function () {
-  let $form = $('form', $(this).closest('.pfy-table-wrapper'));
-  let $table = $('.pfy-table', $form);
-  let id = $table.attr('id');
-  let tableInx = $table.attr('id').replace(/\D*/, '');
-  mylog('tableInx: ' + tableInx);
-  currentlyOpenPopup = pfyPopup({
-    text: pfyDownloadDialog[tableInx],
-    header: `{{ pfy-popup-download-header }}`,
-    closeButton: true,
-    closeOnBgClick: true,
-    buttons: 'Close',
-  });
-});
-
+tableHelper.init();

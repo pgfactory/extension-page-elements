@@ -16,7 +16,8 @@ function table($argStr = '')
             'tableClass' => ['(optional) Applies an CLASS to the table tag.', false],
             'tableWrapperClass' => ['(optional) Applies an CLASS to the table-wrapper div.', false],
             'headers' => ['[Comma-separated-list] List of column labels to define order and selection of columns.'.
-                'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', false],
+                'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', true],
+//                'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', false],
             'footers' => ['[Comma-separated-list] If set, a footer row is added. For selected columns cell content '.
                 'can be specified as "%sum" or "%count" (any other values rendered as text). '.
                 'E.g. footers: "name:%count, amount:%sum"', false],
@@ -64,6 +65,7 @@ EOT,
     $file = resolvePath($file, relativeToPage: true);
     $ds = new DataTable($file, $args);
     $str .= $ds->render();
+    $str = shieldStr($str); // shield from further processing if necessary
 
     return $str;
 }

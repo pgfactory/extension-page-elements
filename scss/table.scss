@@ -1,4 +1,7 @@
 /* === Tables ================= */
+
+$focus-color: orange;
+
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
@@ -32,6 +35,25 @@
   }
   .td-row-number {
     width: 2.5em;
+  }
+
+  .pfy-interactive {
+    .pfy-table-buttons {
+      position: absolute;
+      z-index: 2;
+    }
+    .td-row-selector,
+    .td-row-number {
+      max-width: 1.1em;
+      text-align: right;
+      padding-right: 0.6em;
+      &::before,
+      &::before,
+      &::after,
+      &::after {
+        display: none;
+      }
+    }
   }
 
 } // pfy-encapsulated

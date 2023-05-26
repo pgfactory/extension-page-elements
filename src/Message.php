@@ -3,6 +3,9 @@
 namespace Usility\PageFactoryElements;
 
 
+use Usility\PageFactory\PageFactory;
+use Usility\PageFactory\TransVars;
+
 class Message extends PageElements
 {
     public function render($msg, $mdCompile)
@@ -10,7 +13,7 @@ class Message extends PageElements
         $html = '';
         if ($msg) {
             if (strpos($msg, '{{') !== false) {
-                $msg = $this->trans->translate($msg);
+                $msg = TransVars::translate($msg);
             }
             if ($mdCompile) {
                 $msg = \Usility\PageFactory\compileMarkdown($msg);

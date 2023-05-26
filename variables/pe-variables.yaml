@@ -49,6 +49,19 @@ pfy-table-download-postfix:
   de: ''
   _:  ''
 
+pfy-datatables-filter-label:
+  de: 'Filtern'
+  _:  'Filter'
+
+pfy-datatables-records:
+  de: 'Datensätze'
+  _:  'Records'
+
+pfy-table-data-output-header:
+  de: 'Empfangene Daten'
+  _:  'Received Data'
+
+
 
 # Popups
 pfy-confirm-header:
@@ -90,6 +103,10 @@ pfy-form-owner-notification-body:
     We received a new sign-up:\n
     %data\n
     Best regards, the webmaster
+
+pfy-form-required-info:
+  de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben.'
+  _:  '<span class="pfy-form-required-marker">*</span> Required input.'
 
 pfy-row-number-header: '#'
 

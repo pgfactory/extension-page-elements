@@ -99,7 +99,8 @@ class Data2DSet extends DataSet
         if ($this->options['obfuscateRows']??false) {
             $data2D = $this->obfuscateRows($data2D);
         }
-        if ($this->options['minRows']) {
+//        if ($this->options['minRows']) {
+        if ($this->options['minRows']??false) {
             $data2D = $this->addRows($data2D, $elementKeys);
         }
 
@@ -116,6 +117,8 @@ class Data2DSet extends DataSet
     private function prepare(array|bool $headerElems, bool $includeSystemElements): array
     {
         $data2D = [];
+//todo
+        $elementKeys = [];
         if ($headerElems) {
             if ($headerElems === true) {
                 // derive headerElems from first data record:
@@ -157,6 +160,8 @@ class Data2DSet extends DataSet
                 }
             }
             $data2D['_hdr'] = $this->arrayCombine($elementKeys, $elementKeys);
+        } else {
+            $headerElems = [];
         }
         return [$data2D, $headerElems, $elementKeys];
     } // prepare

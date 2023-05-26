@@ -386,10 +386,10 @@ class DataTable extends Data2DSet
         if ($this->tableButtons) {
             $out .= "  <form method='post'>\n";
         }
-
+        $buttons = '';
         if ($this->tableButtonDelete) {
             $icon = renderIcon('trash');
-            $out .= "<button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
+            $buttons = "<button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
                 "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
             PageFactory::$pg->addAssets('POPUPS');
         }
@@ -397,7 +397,7 @@ class DataTable extends Data2DSet
         if ($this->tableButtonDownload) {
             $file = $this->exportDownloadDocs();
             $icon = renderIcon('cloud_download_alt');
-            $out .= "<button class='pfy-button pfy-button-lean pfy-table-download-start' ".
+            $buttons .= "<button class='pfy-button pfy-button-lean pfy-table-download-start' ".
                 "type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
 
             $appUrl = PageFactory::$appUrl;
@@ -426,6 +426,13 @@ EOT;
             PageFactory::$pg->addJs($js);
             PageFactory::$assets->addAssets('POPUPS, TABLES');
         }
+        if ($buttons) {
+            $out .= <<<EOT
+<div class='pfy-table-buttons'>
+$buttons
+</div>
+EOT;
+        }
         return $out;
     } // renderTableButtons
 
@@ -434,20 +441,25 @@ EOT;
     private function activateInteractiveTable()
     {
         PageFactory::$pg->addAssets('DATATABLES');
-        $this->tableClass .= ' pfy-interactive';
+        $this->tableWrapperClass .= ' pfy-interactive';
 
         $order = '';
         $paging = 'paging: false,';
         $pageLength = '';
         $orderable = '';
 
+        $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
+        $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
+
         $jq = <<<EOT
 
-var pfyDatatable = $('#{$this->tableId}').DataTable({
-'language':{'search':'{{ pfy-datatables-search-button }}:', 'info': '_TOTAL_ {{ pfy-datatables-records }}'},
-$order$paging$pageLength$orderable
+let pfyDatatable = new DataTable('#$this->tableId', {
+  language: {
+    search: '$searchButtonLabel:',
+    info: '_TOTAL_ $pfyDatatablesRecords'
+  },
+  $order$paging$pageLength$orderable
 });
-
 EOT;
         PageFactory::$pg->addJq($jq);
     } // activateInteractiveTable

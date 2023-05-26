@@ -105,11 +105,11 @@ var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
-    PageFactory::$pg->addJq($jq);
+    PageFactory::$pg->addJsReady($jq);
+//    PageFactory::$pg->addJq($jq);
     //$str = markdown($str); // markdown-compile
     //$str = shieldStr($str, 'inline'); // shield from further processing if necessary
 
-    PageFactory::$pg->requireFramework();
     PageFactory::$pg->addAssets('POPUPS');
 
     return $sourceCode;

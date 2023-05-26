@@ -238,7 +238,7 @@ EOT;
                 break;
             case 'cancel':
             case 'reset':
-                $elem = $this->addSubmit('cancel', $label);
+                $elem = $this->addButton('cancel', $label);
                 break;
             case 'submit':
                 $elem = $this->addSubmit($name, $label);
@@ -272,8 +272,9 @@ EOT;
         if ($placeholder = ($options['placeholder']??false)) {
             $elem->setHtmlAttribute('placeholder', $placeholder);
         }
-        if ($default = ($options['default']?? ($options['value']??false))) {
-            $elem->setDefaultValue($default);
+        if ($preset = ($options['preset']??($options['value']??($options['default']??false)))) {
+            $elem->setHtmlAttribute('data-default', $preset);
+            $elem->setDefaultValue($preset);
         }
 
         // handle min/max
@@ -366,8 +367,17 @@ EOT;
         } else {
             $elem = $this->addSelect($name, $label, $selectionElems);
         }
-        if ($options['preset']??false) {
-            $elem->setDefaultValue($options['preset']);
+        if ($preset = ($options['preset']??false)) {
+            // only single preset possible due to Nette Forms:
+            //            if (str_contains($preset, ',')) {
+            //                $presets = explodeTrim(',', $preset);
+            //                foreach ($presets as $preset) {
+            //                    $elem->setDefaultValue($preset);
+            //                }
+            //            } else {
+            //                $elem->setDefaultValue($preset);
+            //            }
+            $elem->setHtmlAttribute('data-preset', $preset);
         }
         if ($options['prompt']??false) {
             $elem->setPrompt($options['prompt']);
@@ -393,7 +403,7 @@ EOT;
         $radioElems = parseArgumentStr($options['options']);
         $elem = $this->addRadioList($name, $label, $radioElems);
         if ($options['preset']??false) {
-            $elem->setDefaultValue($options['preset']);
+            $elem->setHtmlAttribute('data-preset', $options['preset']);
         }
         $this->formElements[$name]['isArray'] = true;
         $this->formElements[$name]['subKeys'] = array_keys($radioElems);
@@ -420,7 +430,7 @@ EOT;
             $checkboxes = parseArgumentStr($options['options']);
             $elem = $this->addCheckboxList($name, $label, $checkboxes);
             if ($options['preset']??false) {
-                $elem->setDefaultValue($options['preset']);
+                $elem->setHtmlAttribute('data-preset', $options['preset']);
             }
             $this->choiceOptions[$name] = $checkboxes;
             if ($options['splitOutput']??false) {
@@ -435,6 +445,10 @@ EOT;
         } else {
             $options['class'] .= ' pfy-single-checkbox';
             $elem = $this->addCheckbox($name, $label);
+            if ($options['preset']??false) {
+                $elem->setHtmlAttribute('data-preset', $options['preset']);
+                $elem->setHtmlAttribute('value', $options['preset']);
+            }
         }
 
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
@@ -487,11 +501,7 @@ EOT;
 
         $this->handleUploads($dataRec);
 
-        if ($fun = ($this->options['customResponseEvaluation'])) {
-           if (function_exists($fun)) {
-               $html = $fun();
-           }
-        } elseif ($this->options['file']) {
+        if ($this->options['file']) {
             $this->file = $this->options['file'];
             $err = $this->storeSubmittedData($dataRec);
             if ($err) {
@@ -499,6 +509,19 @@ EOT;
                 $html = "<div class='pfy-form-error'>$err</div>\n";
             }
         }
+        // Future: customResponseEvaluation
+        //        if ($fun = ($this->options['customResponseEvaluation']??false)) {
+        //           if (function_exists($fun)) {
+        //               $html = $fun();
+        //           }
+        //        } elseif ($this->options['file']) {
+        //            $this->file = $this->options['file'];
+        //            $err = $this->storeSubmittedData($dataRec);
+        //            if ($err) {
+        //                $err = TransVars::getVariable($err, true);
+        //                $html = "<div class='pfy-form-error'>$err</div>\n";
+        //            }
+        //        }
 
         if (!$html) {
             if ($this->options['mailTo']) {
@@ -507,8 +530,10 @@ EOT;
 
             if ($this->options['confirmationText']) {
                 $html = $this->options['confirmationText'];
-            } else {
+            } elseif ($this->options['confirmationText'] === null) {
                 $html = "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n";
+            } else {
+                reloadAgent(message: "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n");
             }
         }
         $html .= $this->handleConfirmationMail($dataRec);
@@ -721,6 +746,7 @@ EOT;
         $tableOptions = [
             'tableHeaders' => $fieldNames,
             'tableButtons' => true,
+            'interactive' => $this->options['interactiveTable']??false,
             'footers' => $this->options['tableFooters']??false,
             'minRows' => $this->options['minRows']??false,
             'sort' =>    $this->options['sortData']??false,
@@ -744,6 +770,14 @@ EOT;
     {
         $ds = $this->openDataTable();
         $html = $ds ? $ds->render() : '';
+        if ($html) {
+            $html = <<<EOT
+<div class='pfy-table-data-output-wrapper'>
+<h2>{{ pfy-table-data-output-header }}</h2>
+$html
+</div>
+EOT;
+        }
 
         return $html;
     } // renderDataTable
@@ -871,6 +905,9 @@ EOT;
     private function injectFormElemClasses(string $html): string
     {
         //ToDo: propagate 'aria-hidden' to wrapper
+        // poss. rewrite using DOM manipulator
+
+        // propagate class of <input elements
         $l1 = strlen('<div class="pfy-elem-wrapper');
         $p = 0;
         while (($p = strpos($html, '<input type="', $p)) !== false) {
@@ -889,6 +926,7 @@ EOT;
             $p += strlen($class) + 10;
         }
 
+        // propagate class of <textarea elements
         $p = 0;
         while (($p = strpos($html, '<textarea', $p)) !== false) {
             $l = strlen($html);
@@ -897,6 +935,18 @@ EOT;
             $s1 = substr($html, 0, $p1) ;
             $s2 = substr($html, $p1);
             $html = "$s1 pfy-textarea$s2";
+            $p += 20;
+        }
+
+        // propagate class of <select elements
+        $p = 0;
+        while (($p = strpos($html, '<select', $p)) !== false) {
+            $l = strlen($html);
+            // find backwards the .pfy-elem-wrapper of the reveal-controller:
+            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l) + $l1;
+            $s1 = substr($html, 0, $p1) ;
+            $s2 = substr($html, $p1);
+            $html = "$s1 pfy-select$s2";
             $p += 20;
         }
         return $html;
@@ -993,8 +1043,10 @@ EOT;
      */
     private function handleFormHint(string $html): string
     {
-        if ($str = ($this->options['formHint']??false)) {
-            $str = $this->compileFormBanner($str);
+        if (!($str = ($this->options['formHint']??false))) {
+            $str = '{{ pfy-form-required-info }}';
+        }
+        $str = $this->compileFormBanner($str);
             $str = "\n<div class='pfy-form-hint'>$str</div>\n";
             if ($p = strpos($html, 'type="submit"')) {
                 $l = strlen($html);
@@ -1005,7 +1057,6 @@ EOT;
                     $html = $s1 . $str . $s2;
                 }
             }
-        }
         return $html;
     } // handleFormHint
 

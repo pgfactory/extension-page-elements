@@ -33,29 +33,34 @@ function form($args = '')
                 'These fields may contain placeholders ``%deadline``, ``%count``, ``%sum``, ``%available``, ``%max`` '.
                 '(or ``%total``).', false],
 
-            'formHint' =>	['Text rendered above the form buttons.', false],
+            'formHint' =>	['Text rendered above the form buttons. (Default: ``\{\{ pfy-form-required-info }}``)', false],
 
             'formBottom' =>	['Text rendered below the form buttons.', false],
 
-            'deadline' =>	['(ISO-date) If set, the form will be disabled after deadline has passed.', false],
+            'deadline' =>	['(ISO-date) If set, the form will be disabled after deadline has passed. '.
+                'Then ``\{\{ pfy-form-deadline-expired }}`` is shown.', false],
 
             'deadlineNotice' =>	['(string) Defines the response displayed when deadline has passed.', false],
 
-            'maxCount' =>	['If set, the number of sign-ups will be limited.', false],
+            'maxCount' =>	['If set, the number of sign-ups will be limited. '.
+                'If exeeded, ``\{\{ pfy-form-maxcount-reached }}`` is shown.', false],
 
             'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
 
-            'customResponseEvaluation' =>	['Name of a PHP function to be called when user submitted form data.', false],
+            //'customResponseEvaluation' =>	['Name of a PHP function to be called when user submitted form data.', false],
 
-            'confirmationText' =>	['The text rendered upon successful completion of a form entry.', false],
+            'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
+                '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
+//                '(Default: ``\{\{ pfy-form-submit-success }}``).', false],
 
             'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
 
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
 
-            'showData' =>	['[false, true, loggedIn] '.
-                'Defines, to whom previously received data is presented.', false],
+            'showData' =>	['[false, true, loggedIn, anybody, etc.] '.
+                'Defines, to whom previously received data is presented. (true = ``loggedin|localhost``). '.
+                '**Note:** When printing the page, only the table will be shown, not the form.', false],
 
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
 
@@ -67,18 +72,20 @@ function form($args = '')
 
             'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
                 'empty rows up to given number. BR '.
-                'Note: if ``maxCount`` is active, ``minRows`` will be set automatically to that value.', false],
+                'Note: if ``maxCount`` is active, ``minRows`` will be automatically set to that value.', false],
+
+            'interactiveTable' =>	['[bool] If true, data table can be interactively sorted and filtered.', false],
 
             'confirmationEmail' =>	['[name-of-email-field] If set to the name of an '.
                 'e-mail field within the form, a confirmation mail will be sent.', false],
 
             'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
-                'what to put into the mail. If true, standard variables will be used: "&#123;&#123;pfy-confirmation-response-subject }}" '.
-                'and "&#123;&#123;pfy-confirmation-response-message }}".<br>Alternatively, you can specify the name of a template file. <br>'.
-                'All form-inputs are available as variables of the form "&#123;&#123; <strong>&#95;&#95;fieldName&#95;&#95;</strong> }}" '
+                'what to put into the mail. If true, standard variables will be used: ``&#123;&#123;pfy-confirmation-response-subject }}`` '.
+                'and ``&#123;&#123;pfy-confirmation-response-message }}``.<br>Alternatively, you can specify the name of a template file. <br>'.
+                'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;&#95;fieldName&#95;&#95;</strong> }}`` '
                 , false],
 
-            'labelWidth' =>	['Sets the label width (-> defines CSS-variable "-\-form-label-width")', false],
+            'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
         ],
         'summary' => <<<EOT
 
@@ -90,32 +97,37 @@ function form($args = '')
     ## Form
     @@@
     \{{ form(
-    \// form arguments:
+    \//=== form arguments:
         file:			'\~data/db.yaml',
         showData:       true
         maxCount:       12
-    \// form fields:  "name: { field arguments... }"
-        Name:           {required:true}
+    \//=== form fields:
+        Name:           { required:true }
         Name2:          { antiSpam:Name }
-        Comment:		{type: textarea },
-    \// buttons:
+        Comment:		{ type: textarea },
+    \//=== buttons:
         cancel:    		{ },
         submit:    		{ },
         ) 
     }}
 
+#### Form Arguments:
+-> any arguments stated below under **Arguments** are interpreted as *form arguments*.\
+All other arguments are interpreted as field definitions/buttons.
+
 #### Form Fields:
-Syntax: ``field-name: { field arguments, \... }`
+Syntax: ``field-name: { field arguments, \... }``
 
 ``field-name``   10em>> -> name under which data will be stored in DB.
                 >> -> Also row header in "showData" table
 
 #### Supported Field Types:
 
-`text,password,email,textarea,hidden,
-url,date,datetime-local,time,datetime,month,number,integer,range,tel,file,
-radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,
-button,reset,submit,cancel`
+`text, password, email, textarea, hidden, url,
+date, datetime-local, time, datetime, month,
+number, integer, range, tel, file,
+radio, checkbox, dropdown, select, multiselect, upload, multiupload, bypassed, 
+button, reset, submit, cancel`
 
 Default type: **text**  
 Types automatically derived from field *field-names*: `email`, `passwor*`, `submit`, `cancel`
@@ -127,12 +139,11 @@ All:
 : - class   >> [string] (-> e.g. class:short )
 : - label   >> [string] 
 : - placeholder   >> [string] 
-: - value   >> [any] initial value
-: - default   >> [any] same as value
+: - preset   >> [any] initial value (also: 'default' or 'value')
 : - required    >> [bool]
 : - disabled    >> [bool]
 : - readonly    >> [bool]
-: - info        >> [string] info icon showing info text
+: - info        >> [string] info icon showing info text as tooltip
 : - description     >> [string] text next/below input field
 : - antiSpam        >> [string] -> see below
 
@@ -163,6 +174,19 @@ To activate the anti-spam mechanism, you need to add an additional text field to
     Name2: { antiSpam:Name }
 
 where *Name* is the field-name of another field in your form. This will insert an invisible honeypot field.
+
+#### CSS-Variables:
+- -\-form-width
+- -\-form-row-gap-height
+- -\-form-label-width
+- -\-form-input-width
+- -\-form-field-background-color
+- -\-form-required-marker-color
+- -\-form-tooltip-anker-color
+- -\-form-field-description-color:
+- -\-form-field-error-color:
+
+{{ vgap }}
 
 EOT,
     ];
