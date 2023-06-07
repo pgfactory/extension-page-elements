@@ -54,24 +54,12 @@ $revealControllerHeight: 2em;
   } // .pfy-reveal-controller
 
   .pfy-reveal-controller-wrapper {
-    position: relative;
-    margin-top: 0.5em;
     background: var(--pfy-reveal-bg);
     border: 1px solid var(--pfy-reveal-border);
     &.pfy-target-revealed.pfy-target-shadow {
       box-shadow: 0 5px 5px -5px rgb(0 0 0 / 75%);
     }
 
-    label {
-      width: 100%;
-      cursor: pointer;
-      display: inline-block;
-      padding: calc(var(--pfy-reveal-controller-height, #{$revealControllerHeight}) / 2 - 0.575em) 0;
-      padding-left: 2em;
-    }
-    &:focus-within {
-      outline: 1px solid var( --pfy-form-focus-color, magenta);
-    }
   }
   .pfy-reveal-frame {
     border: 1px solid #ddd;

@@ -61,6 +61,18 @@ pfy-table-data-output-header:
   de: 'Empfangene Daten'
   _:  'Received Data'
 
+pfy-row-edit-header:
+  de: 'Edit'
+  _:  'Edit'
+
+pfy-table-edit-rec-popup-header:
+  de: 'Datensatz bearbeiten'
+  _:  'Edit Data Record'
+
+pfy-table-new-rec-popup-header:
+  de: 'Neuer Datensatz'
+  _:  'New Data Record'
+
 
 
 # Popups

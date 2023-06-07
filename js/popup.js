@@ -8,11 +8,11 @@
 
 var currentlyOpenPopup = false;
 
-function pfyPopup( options, index ) {
+function pfyPopup( options ) {
   var parent = this;
 
   this.init = function (options) {
-    this.checkAlreadyOpenPopup();
+    this.checkPopupAlreadyOpen();
     this.inihibitClosing = false;
     this.triggerInitialized = false;
     this.parseArgs( options );
@@ -20,14 +20,14 @@ function pfyPopup( options, index ) {
   }; // init
 
 
-  this.checkAlreadyOpenPopup = function() {
-    const $popupElem = document.querySelector('#pfy-popup');
-    if ($popupElem) {
+  this.checkPopupAlreadyOpen = function() {
+    const popupElem = document.querySelector('#pfy-popup');
+    if (popupElem) {
       if (currentlyOpenPopup) {
         currentlyOpenPopup.close();
         currentlyOpenPopup = false;
       } else {
-        $popupElem.remove();
+        popupElem.remove();
       }
     }
   }
@@ -43,7 +43,11 @@ function pfyPopup( options, index ) {
     this.text  = (typeof options.text !== 'undefined' && options.text)? options.text : ''; // text synonym for content
     this.content  = (typeof options.content !== 'undefined' && options.content)? options.content : this.text;
 
-    this.id  = (typeof options.id !== 'undefined' && options.id)? options.id : 'pfy-popup';
+    if (typeof options.id === 'undefined') {
+      this.id ='pfy-popup';
+    } else {
+      this.id  = options.id;
+    }
 
     this.contentFrom = (typeof options.contentFrom !== 'undefined' && options.contentFrom) ? options.contentFrom : ''; // contentFrom synonyme for contentRef
 
@@ -62,7 +66,11 @@ function pfyPopup( options, index ) {
     this.trigger = (typeof options.triggerSource !== 'undefined' && options.triggerSource) ? options.triggerSource : this.trigger;
     this.triggerEvent = (typeof options.triggerEvent !== 'undefined' && options.triggerEvent) ? options.triggerEvent : 'click';
     this.anker = (typeof options.anker !== 'undefined' && options.anker) ? options.anker : 'body';
-    this.closeOnBgClick = (typeof options.closeOnBgClick !== 'undefined' && options.closeOnBgClick) ? options.closeOnBgClick : true;
+    if (typeof options.closeOnBgClick === 'undefined') {
+      this.closeOnBgClick = true;
+    } else {
+      this.closeOnBgClick = options.closeOnBgClick;
+    }
     this.closeButton = (typeof options.closeButton !== 'undefined' && options.closeButton) ? options.closeButton : true;
     this.buttons = (typeof options.buttons === 'string' && options.buttons) ? options.buttons.split(/\s*,\s*/) : [];
 
@@ -76,6 +84,7 @@ function pfyPopup( options, index ) {
     this.onOk = (typeof options.onOk !== 'undefined' && options.onOk) ? options.onOk : '';
     this.onContinue = (typeof options.onContinue !== 'undefined' && options.onContinue) ? options.onContinue : '';
     this.onClose = (typeof options.onClose !== 'undefined' && options.onClose) ? options.onClose : '';
+    this.onOpen = (typeof options.onOpen !== 'undefined' && options.onOpen) ? options.onOpen : '';
 
     this.containerClass = (typeof options.containerClass !== 'undefined' && options.containerClass) ? ' ' + options.containerClass : '';
 
@@ -177,7 +186,7 @@ function pfyPopup( options, index ) {
       alert('Error in popup.js:prepareContent() -> unable to handle contentFrom');
       return ''; // error
     }
-    return $cFrom.innerHTML;
+    return $cFrom.outerHTML;
   }; // getContentFrom
 
 
@@ -336,9 +345,11 @@ function pfyPopup( options, index ) {
 
     // set up background click to close:
     const elem = document.querySelector('.pfy-popup-bg.pfy-close-on-bg-click');
-    elem.addEventListener('click', function (e) {
-      parent.close();
-    });
+    if (elem) {
+      elem.addEventListener('click', function (e) {
+        parent.close();
+      });
+    }
   }; // setupCloseTriggers
 
 
@@ -350,11 +361,9 @@ function pfyPopup( options, index ) {
         if (key === 27) {                // ESC
           if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
             parent.inihibitClosing = !executeCallback(parent.onCancel);
-            // parent.inihibitClosing = parent.onCancel();
 
           } else if (parent.onClose && document.querySelectorAll('.pfy-popup-btn-close').length) {
             parent.inihibitClosing = !executeCallback(parent.onClose);
-            // parent.inihibitClosing = parent.onClose();
           }
           parent.close();
           e.preventDefault();
@@ -362,15 +371,12 @@ function pfyPopup( options, index ) {
         if (key === 13) {         // Return
           if (parent.onConfirm && document.querySelectorAll('.pfy-popup-btn-confirm').length) {
             parent.inihibitClosing = !executeCallback(parent.onConfirm);
-            // parent.inihibitClosing = parent.onConfirm();
 
           } else if (parent.onOk && document.querySelectorAll('.pfy-popup-btn-ok').length) {
             parent.inihibitClosing = !executeCallback(parent.onOk);
-            // parent.inihibitClosing = parent.onOk();
 
           } else if (parent.onContinue && document.querySelectorAll('.pfy-popup-btn-continue').length) {
             parent.inihibitClosing = !executeCallback(parent.onContinue);
-            // parent.inihibitClosing = parent.onContinue();
           }
           parent.close();
           e.preventDefault();
@@ -380,7 +386,7 @@ function pfyPopup( options, index ) {
 
 
   this.trapFocus = function () {
-    const element = this.$popup;
+    const element = this.popup;
     const focusableEls = element.querySelectorAll('a[href]:not([disabled]), button:not([disabled]), ' +
       'textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), ' +
       'input[type="checkbox"]:not([disabled]), select:not([disabled])');
@@ -423,7 +429,7 @@ function pfyPopup( options, index ) {
     let mouseX0 = 0;
     let mouseY0 = 0;
 
-    const elmntHeader = parent.$popup.querySelector( '.pfy-popup-header > div' );
+    const elmntHeader = parent.popup.querySelector( '.pfy-popup-header > div' );
     elmntHeader.onpointerdown = dragMouseDown;
 
     function dragMouseDown(e) {
@@ -440,7 +446,7 @@ function pfyPopup( options, index ) {
       mouseY = e.clientY;
       let dx = parent.translX + mouseX - mouseX0;
       let dy = parent.translY + mouseY - mouseY0;
-      parent.$popup.style.transform = `translate(${dx}px, ${dy}px)`;
+      parent.popup.style.transform = `translate(${dx}px, ${dy}px)`;
     }
 
     function closeDragElement() {
@@ -455,16 +461,16 @@ function pfyPopup( options, index ) {
 
   this.open = function () {
 
-    this.checkAlreadyOpenPopup();
+    this.checkPopupAlreadyOpen();
 
     this.renderButtons();
-    this.$popup = this.renderContent();
+    this.popup = this.renderContent();
     this.initDraggable();
     this.setupButtonTriggers();
     this.setupKeyHandlers();
     this.setupCloseTriggers();
-    this.$popup.parentElement.removeAttribute('style');
-    this.$popup.style.display = 'initial';
+    this.popup.parentElement.removeAttribute('style');
+    this.popup.style.display = 'initial';
 
     // freeze background:
     if (this.modal) {
@@ -480,21 +486,25 @@ function pfyPopup( options, index ) {
 
     // set focus to either first input, ok-button or close-button:
     setTimeout(function () {
-      let $input =  parent.$popup.querySelectorAll('input')
+      let $input =  parent.popup.querySelectorAll('input')
       if ($input.length) {
         $input[0].focus();
       } else {
-        let buttons = parent.$popup.querySelectorAll('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue');
+        let buttons = parent.popup.querySelectorAll('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue');
         if (buttons.length) {
           buttons[0].focus();
         } else {
-          buttons = parent.$popup.querySelectorAll('.pfy-close-button, .pfy-popup-close-button');
+          buttons = parent.popup.querySelectorAll('.pfy-close-button, .pfy-popup-close-button');
           if (buttons.length) {
             buttons[0].focus();
           }
         }
       }
     }, 50);
+
+    if (this.onOpen) {
+      executeCallback(parent.onOpen);
+    }
     return this;
   }; // open
 
@@ -504,13 +514,13 @@ function pfyPopup( options, index ) {
     if (this.onClose) {
       this.inihibitClosing = !executeCallback(parent.onClose);
     }
-    if (!parent.$popup) {
-      // there is nothing to close
+    if (!parent.popup) {
+      // there is nothing to close:
       return;
     }
 
     // close popup now:
-    const popupWrapper = parent.$popup.parentElement;
+    const popupWrapper = parent.popup.parentElement;
     if (typeof popupWrapper !== 'undefined') {
       popupWrapper.remove();
     }
@@ -569,6 +579,10 @@ function pfyPopup( options, index ) {
       '\t<dt>buttons:</dt>\n' +
       '\t\t<dd>[Comma-separated-list of button labels] Example: "Cancel,Ok".<br>'+
       'Predefined: "Cancel", "Close", "Ok", "Continue", "Confirm".</dd>\n' +
+
+      '\t<dt>onOpen:</dt>\n' +
+      '\t\t<dd>[function or string] Callback function invoked when popup is opened.<br>'+
+      'Example: <code>onOpen: function(parent, callbackArg) { mylog(\'onOpen: \' + callbackArg); }</code></dd>\n' +
 
       '\t<dt>onOk, onConfirm, onContinue, onContinue, onCancel:</dt>\n' +
       '\t\t<dd>[function or string] Callback function invoked when corresponding key is activated.<br>'+
@@ -637,12 +651,12 @@ function pfyPopupPromise( options ) {
       let onCancel = options.onCancel;
       options.onCancel = function() {
         executeCallback(onCancel);
-        reject( false );
+        resolve( false );
       };
       let onClose = options.onClose;
       options.onClose = function () {
         executeCallback(onClose);
-        reject(false);
+        resolve( false );
       };
 
       currentlyOpenPopup = pfyPopup( options );
@@ -715,10 +729,18 @@ function pfyPopupClose() {
   }
 
   // just in case some popup code remained in body:
-  const $popupElem = document.querySelector('#pfy-popup');
-  if ($popupElem) {
-    $popupElem.remove();
+  const popups = document.querySelectorAll('.pfy-popup-bg');
+  if (popups.length) {
+    popups.forEach(function (popup) {
+      popup.remove();
+    });
   }
+  document.body.classList.remove('pfy-no-scroll', 'pfy-modal');
+  document.querySelector('.pfy-page').removeAttribute('inert');
 } // pfyPopupClose
 
 
+
+function pfyPopupHelp() {
+  pfyPopup({text:'help'});
+}

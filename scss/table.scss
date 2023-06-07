@@ -36,15 +36,48 @@ $focus-color: orange;
   .td-row-number {
     width: 2.5em;
   }
+  .pfy-table-new-rec {
+    width: 2em;
+    margin-right: 0.2em;
+  }
+  .pfy-rec-locked {
+    background: repeating-linear-gradient(
+        -45deg,
+        #FFF4F4,
+        #FFF4F4 10px,
+        #FDE0E0 10px,
+        #FDE0E0 20px
+    );
+    cursor: not-allowed;
+  }
+
 
   .pfy-interactive {
+    // DataTabes messes up position of table buttons, so we try to fix it:
+    position: relative;
+    padding-top: calc((1em - 10pt) * 0.5);
     .pfy-table-buttons {
       position: absolute;
       z-index: 2;
+      top: 0;
+      .pfy-button {
+        margin-bottom: 0;
+      }
     }
     .td-row-selector,
     .td-row-number {
       max-width: 1.1em;
+      text-align: right;
+      padding-right: 0.6em;
+      &::before,
+      &::before,
+      &::after,
+      &::after {
+        display: none;
+      }
+    }
+    .td-edit {
+      max-width: 1.7em;
       text-align: right;
       padding-right: 0.6em;
       &::before,

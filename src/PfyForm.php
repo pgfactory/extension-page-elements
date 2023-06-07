@@ -4,10 +4,10 @@ namespace Usility\PageFactory;
 
 use Nette\Forms\Form;
 use Nette\Utils\Html;
+use voku\helper\HtmlDomParser;
 use Kirby\Email\PHPMailer;
 use Usility\MarkdownPlus\Permission;
 use Usility\PageFactoryElements\DataTable as DataTable;
-use function Usility\PageFactory\translateToIdentifier as translateToIdentifier;
 use function Usility\PageFactory\var_r as var_r;
 
 define('ARRAY_SUMMARY_NAME', '_');
@@ -23,10 +23,12 @@ const MEGABYTE = 1048576;
 
 mb_internal_encoding("utf-8");
 
+require_once __DIR__ . '/ajax_server.php';
 
 class PfyForm extends Form
 {
-    private array $options;
+    private array $formOptions;
+    private array $elemOptions;
     private array $fieldNames = [];
     private array $formElements = [];
     private array $choiceOptions = [];
@@ -38,48 +40,113 @@ class PfyForm extends Form
     private int $index = 0;
     private int $revealInx = 0;
     protected bool $isFormAdmin = false;
+    protected bool $inhibitAntiSpam = false;
+    protected bool $showDirektFeedback = true;
     private string $name;
+    private string $formWrapperClass = '';
+    private string $tableButtons = '';
 
     /**
-     * @param $options
+     * @param $formOptions
      */
-    public function __construct($options = [])
+    public function __construct($formOptions = [])
     {
-        $this->formIndex = $options['formInx'] ?? 1;
-        $this->options = $options;
+        $this->formIndex = $formOptions['formInx'] ?? 1;
+        $this->formOptions = $formOptions;
         if (isset($_GET['delete'])) {
             if ($_POST['pfy-reckey']??false) {
+                $_POST['pfy-reckey'] = deObfuscateRecKeys($_POST['pfy-reckey']);
                 $this->openDataTable(); // triggers delete-handler
             }
         }
 
-        if ($permissionQuery = ($options['showData']??false)) {
+        if ($permissionQuery = ($formOptions['showData']??false)) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'loggedin|localhost';
+
+            } elseif (is_array($permissionQuery)) {
+                $this->tableButtons = $permissionQuery['tableButtons']??'';
+                $pq = $permissionQuery['permission']??true;
+                if ($pq === true) {
+                    $permissionQuery = 'loggedin|localhost';
+                } else {
+                    $permissionQuery = $pq;
+                }
             }
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
+        }
+
+        if ($formOptions['file']??false) {
+            $this->openDB();
         }
 
         parent::__construct();
         PageFactory::$pg->addAssets('POPUPS');
         PageFactory::$pg->addAssets('FORMS');
+        if ($editData = ($this->formOptions['editData'] ?? false)) {
+            $this->inhibitAntiSpam = true;
+            if ($editData === 'popup' && ($this->db->getSize() > 0)) {
+                $this->formWrapperClass .= ' pfy-table-edit-popup';
+                $this->showDirektFeedback = false;
+            } elseif ($editData === true) {
+                $this->formOptions['editData'] = 'inpage';
+            }
+        }
     } // __construct
 
 
+    public function renderForm(): string
+    {
+        $res = false;
+        if ($this->isSuccess()) {
+            $res = $this->handleReceivedData($this->formOptions['formInx']??1);
+            if (!$res && $this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+                reloadAgent();
+            }
+        }
+        if (!$res) {
+            $html = $this->renderFormHtml();
+            if ($this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+                $html .= $this->renderDataTable();
+            }
+
+        } else {
+            $html = $res;
+            if ($this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+                $html .= $this->renderDataTable();
+            }
+        }
+        $html = <<<EOT
+
+<div class="pfy-form-wrapper pfy-form-wrapper-$this->formIndex$this->formWrapperClass">
+<noscript>{{ pfy-noscript-warning }}</noscript>
+
+$html
+
+</div><!-- .pfy-form-wrapper -->
+EOT;
+        return $html;
+    } // renderForm
+
+
     /**
-     * @param array|null $options
-     * @param array $auxOptions
+     * @param array|null $formOptions
+     * @param array $formElements
      * @return void
      */
-    public function createForm(array|null $options, array $auxOptions): void
+    public function createForm(array|null $formOptions, array $formElements): void
     {
-        if ($options !== null) {
-            $this->options = $options;
+        if ($formOptions !== null) {
+            $this->options = $formOptions;
+        }
+        // $formOptions['recId'] may contain a recId to use as _formInx, if not, we use formIndex:
+        if ($formOptions['recId']??false) {
+            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $formOptions['recId'], 'default' => '']);
+        } else {
+            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
         }
 
-        $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex]);
-
-        foreach ($auxOptions as $name => $rec) {
+        foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
                 throw new \Exception("Syntax error in Forms option '$name'");
             }
@@ -87,8 +154,8 @@ class PfyForm extends Form
             $this->addElem($rec);
         }
 
-        if ($options['action']??false) {
-            $this->setAction($options['action']);
+        if ($formOptions['action']??false) {
+            $this->setAction($formOptions['action']);
         } else {
             $this->setAction(PageFactory::$pageUrl);
         }
@@ -98,9 +165,9 @@ class PfyForm extends Form
     /**
      * @return string
      */
-    public function renderForm(): string
+    private function renderFormHtml(): string
     {
-        $options = &$this->options;
+        $formOptions = &$this->formOptions;
 
         // handle deadline option:
         if ($str = $this->handleDeadline()) {
@@ -122,8 +189,8 @@ class PfyForm extends Form
 
         $html = $renderer->render($this);
 
-        $id = $options['id']? " id='{$options['id']}'" : '';
-        $formClass = $options['class'] ? " {$options['class']}" : '';
+        $id = $formOptions['id']? " id='{$formOptions['id']}'" : '';
+        $formClass = $formOptions['class'] ? " {$formOptions['class']}" : '';
 
         if ($this->isFormAdmin) {
             $formClass = " screen-only$formClass";
@@ -131,52 +198,42 @@ class PfyForm extends Form
 
         $html = "<form$id class='pfy-form pfy-form-$this->formIndex$formClass'" . substr($html, 5);
 
-        if ($options['showData'] && $options['file'] && $this->isFormAdmin) {
-            $html .= $this->renderDataTable();
-        }
-
         $html = $this->injectFormElemClasses($html);
-        $html = $this->handleFormReveals($html);
         $html = $this->handleFormTop($html);
         $html = $this->handleFormHint($html);
         $html = $this->handleFormBottom($html);
 
-        $html = <<<EOT
-
-<div class="pfy-form-wrapper pfy-form-wrapper-$this->formIndex">
-<noscript>{{ pfy-noscript-warning }}</noscript>
-
-$html
-
-</div><!-- .pfy-form-wrapper -->
-EOT;
         return $html;
-    } // renderForm
+    } // renderFormHtml
 
 
     /**
-     * @param array $options
+     * @param array $elemOptions
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    public function addElem(array $options): void
+    public function addElem(array $elemOptions): void
     {
         $this->index++;
         // determine $label, $name, $type and $subType:
-        list($label, $name, $type) = $this->parseMainOptions($options);
+        list($label, $name, $type) = $this->parseMainOptions($elemOptions);
+        if ($name === null) { // this is the case if antiSpam is suppressed by edit-rec option
+            return;
+        }
+        $this->elemOptions = &$elemOptions;
 
         $subType = '';
         switch ($type) {
             case 'hidden':
-                $elem = $this->addHidden($name, $options['value']??'');
-                if ($id = $options['id']??false) {
+                $elem = $this->addHidden($name, $elemOptions['value']??'');
+                if ($id = $elemOptions['id']??false) {
                     $elem->setHtmlId($id);
                 }
                 break;
             case 'bypassed':
-                $this->bypassedElements[$name] = $options['value']??'';
+                $this->bypassedElements[$name] = $elemOptions['value']??'';
                 $elem = $this->addHidden($name, '');
-                if ($id = $options['id']??false) {
+                if ($id = $elemOptions['id']??false) {
                     $elem->setHtmlId($id);
                 }
                 break;
@@ -198,12 +255,12 @@ EOT;
                 }
                 break;
             case 'textarea':
-                $elem = $this->addTextareaElem($name, $label, $options);
+                $elem = $this->addTextareaElem($name, $label, $elemOptions);
                 break;
             case 'integer':
             case 'number':
                 $type = 'number';
-                $elem = $this->addNumberElem($name, $label, $options);
+                $elem = $this->addNumberElem($name, $label, $elemOptions);
                 break;
             case 'email':
                 $elem = $this->addEmail($name, $label);
@@ -214,31 +271,31 @@ EOT;
             case 'dropdown':
             case 'multiselect':
             case 'select':
-                $elem = $this->addSelectElem($name, $label, $options, $type);
+                $elem = $this->addSelectElem($name, $label, $elemOptions, $type);
                 break;
             case 'radio':
-                $elem = $this->addRadioElem($name, $label, $options);
+                $elem = $this->addRadioElem($name, $label, $elemOptions);
                 break;
             case 'checkbox':
-                $elem = $this->addCheckboxElem($name, $label, $options);
+                $elem = $this->addCheckboxElem($name, $label, $elemOptions);
                 break;
             case 'upload':
                 $elem = $this->addUpload($name, $label);
                 $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
-                if ($mb = ($options['maxMegaByte']??false)) {
+                if ($mb = ($elemOptions['maxMegaByte']??false)) {
                     $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
                 }
                 break;
             case 'multiupload':
                 $elem = $this->addMultiUpload($name, $label);
                 $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
-                if ($mb = ($options['maxMegaByte']??false)) {
+                if ($mb = ($elemOptions['maxMegaByte']??false)) {
                   $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
                 }
                 break;
             case 'cancel':
             case 'reset':
-                $elem = $this->addButton('cancel', $label);
+                $elem = $this->addButton('_cancel', $label);
                 break;
             case 'submit':
                 $elem = $this->addSubmit($name, $label);
@@ -248,56 +305,65 @@ EOT;
         $class = "pfy-$type";
 
         // handle 'required' option:
-        if (($options['required']??false) !== false) {
-            $elem->setRequired($options['required']);
+        if (($elemOptions['required']??false) !== false) {
+            $elem->setRequired($elemOptions['required']);
         }
 
         // handle 'disabled' option:
-        if (($options['disabled']??false) !== false) {
+        if (($elemOptions['disabled']??false) !== false) {
             $elem->setDisabled();
         }
 
         // handle 'readonly' option:
-        if (($options['readonly']??false) !== false) {
+        if (($elemOptions['readonly']??false) !== false) {
             $elem->setHtmlAttribute('readonly', '');
         }
 
         // handle 'class' option:
-        if (($class1 = ($options['class']??''))) {
+        if (($class1 = ($elemOptions['class']??''))) {
             $class .= " $class1";
         }
         $elem->setHtmlAttribute('class', trim($class));
 
         // handle placeholders:
-        if ($placeholder = ($options['placeholder']??false)) {
+        if ($placeholder = ($elemOptions['placeholder']??false)) {
             $elem->setHtmlAttribute('placeholder', $placeholder);
         }
-        if ($preset = ($options['preset']??($options['value']??($options['default']??false)))) {
-            $elem->setHtmlAttribute('data-default', $preset);
+
+        // handle presets (resp. value / default):
+        if ($preset = ($elemOptions['preset']??($elemOptions['value']??($elemOptions['default']??false)))) {
             $elem->setDefaultValue($preset);
+            if (($elemOptions['default']??false) !== '') {
+                // $elemOptions['default'] === ''  means don't provide default:
+                $elem->setHtmlAttribute('data-default', $preset);
+            }
         }
 
-        // handle min/max
-        if ($min = ($options['min']??false)) {
+        // handle min:
+        if ($min = ($elemOptions['min']??false)) {
             $elem->setHtmlAttribute('min', $min);
         }
-        if ($max = ($options['max']??false)) {
-            list($available, $maxCount) = $this->getAvailableAndMaxCount();
-            // if sign-up limitation is active, limit max input if necessary, unless privileged:
-            if ($maxCount && !$this->isFormAdmin) {
-                $max = min($max, $available);
+
+        // handle max -> take into account case maxCount:
+        if ($max = ($elemOptions['max']??false)) {
+            if ($this->name === ($this->formOptions['maxCountOn']??false)) {
+                // if sign-up limitation is active, limit max input if necessary, unless privileged:
+                list($available, $maxCount) = $this->getAvailableAndMaxCount();
+                if ($maxCount && !$this->isFormAdmin) {
+                    $max = min($max, $available);
+                }
             }
             $elem->setHtmlAttribute('max', $max);
         }
 
         // handle 'description' option:
-        if ($str = ($options['description']??false)) {
+        if ($str = ($elemOptions['description']??false)) {
             $str = Html::el('span')->setHtml($str);
             $elem->setOption('description', $str);
         }
 
         // handle 'antiSpam' option:
-        if ($antiSpam = ($options['antiSpam']??false)) {
+        if ($antiSpam = ($elemOptions['antiSpam']??false)) {
             $elem->setHtmlAttribute('data-check', $antiSpam);
             $elem->setHtmlAttribute('aria-hidden', 'true');
             unset($this->fieldNames[$name]);
@@ -311,26 +377,29 @@ EOT;
     /**
      * @param string $name
      * @param string $label
-     * @param array $options
+     * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\TextArea
      * @throws \Exception
      */
-    private function addTextareaElem(string $name, string $label, array $options): object
+    private function addTextareaElem(string $name, string $label, array $elemOptions): object
     {
-        if ($revealLabel = ($options['reveal']??false)) {
+        if ($revealLabel = ($elemOptions['reveal']??false)) {
             $this->revealInx++;
+            $targetId = "#pfy-reveal-container-$this->revealInx";
             PageFactory::$pg->addAssets('REVEAL');
-            $elem1 = $this->addCheckbox("{$name}Controller$this->revealInx", $revealLabel);
+
+            $elem1 = $this->addCheckbox("CommentController$this->revealInx", $revealLabel);
             $elem1->setHtmlAttribute('class', 'pfy-reveal-controller');
-            $elem1->setHtmlAttribute('data-reveal', $this->revealInx);
-            $elem1->setHtmlAttribute('data-reveal-target', "#pfy-reveal-container-$this->revealInx");
+            $elem1->setHtmlAttribute('aria-controls', $targetId);
+            $elem1->setHtmlAttribute('data-reveal-target', $targetId);
             $elem1->setHtmlAttribute('data-icon-closed', '+');
             $elem1->setHtmlAttribute('data-icon-open', '∣');
-            $label = $options['label']??'';
+            $label = $elemOptions['label']??'';
         }
         $elem = $this->addTextarea($name, $label);
         if ($revealLabel) {
-            $elem->setHtmlAttribute('data-revealed-by', $this->revealInx);
+            $this->elemOptions['class'] = ($elemOptions['class']??'') ? $elemOptions['class'].' pfy-reveal-target':'pfy-reveal-target';
+            $elem->setHtmlAttribute('data-revealed-by', $targetId);
         }
         return $elem;
     } // addTextareaElem
@@ -339,10 +408,10 @@ EOT;
     /**
      * @param string $name
      * @param string $label
-     * @param array $options
+     * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\TextInput
      */
-    private function addNumberElem(string $name, string|object $label, array $options): object
+    private function addNumberElem(string $name, string|object $label, array $elemOptions): object
     {
         $elem = $this->addInteger($name, $label);
         return $elem;
@@ -352,14 +421,14 @@ EOT;
     /**
      * @param string $name
      * @param string $label
-     * @param array $options
+     * @param array $elemOptions
      * @param string $type
      * @return object|\Nette\Forms\Controls\MultiSelectBox|\Nette\Forms\Controls\SelectBox
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function addSelectElem(string $name, string $label, array $options, string $type): object
+    private function addSelectElem(string $name, string $label, array $elemOptions, string $type): object
     {
-        $selectionElems = parseArgumentStr($options['options']);
+        $selectionElems = parseArgumentStr($elemOptions['options']);
         if ($type === 'multiselect') {
             $elem = $this->addMultiSelect($name, $label, $selectionElems);
             $this->formElements[$name]['isArray'] = true;
@@ -367,7 +436,7 @@ EOT;
         } else {
             $elem = $this->addSelect($name, $label, $selectionElems);
         }
-        if ($preset = ($options['preset']??false)) {
+        if ($preset = ($elemOptions['preset']??false)) {
             // only single preset possible due to Nette Forms:
             //            if (str_contains($preset, ',')) {
             //                $presets = explodeTrim(',', $preset);
@@ -379,12 +448,12 @@ EOT;
             //            }
             $elem->setHtmlAttribute('data-preset', $preset);
         }
-        if ($options['prompt']??false) {
-            $elem->setPrompt($options['prompt']);
+        if ($elemOptions['prompt']??false) {
+            $elem->setPrompt($elemOptions['prompt']);
         }
         $this->choiceOptions[$name] = $selectionElems;
 
-        if ($options['splitOutput']??false) {
+        if ($elemOptions['splitOutput']??false) {
             $this->addFieldNames($name, $selectionElems);
         }
         return $elem;
@@ -394,23 +463,23 @@ EOT;
     /**
      * @param string $name
      * @param string $label
-     * @param array $options
+     * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\RadioList
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function addRadioElem(string $name, string $label, array &$options): object
+    private function addRadioElem(string $name, string $label, array &$elemOptions): object
     {
-        $radioElems = parseArgumentStr($options['options']);
+        $radioElems = parseArgumentStr($elemOptions['options']);
         $elem = $this->addRadioList($name, $label, $radioElems);
-        if ($options['preset']??false) {
-            $elem->setHtmlAttribute('data-preset', $options['preset']);
+        if ($elemOptions['preset']??false) {
+            $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
         }
         $this->formElements[$name]['isArray'] = true;
         $this->formElements[$name]['subKeys'] = array_keys($radioElems);
         // handle option 'horizontal':
-        $options['class'] .= (($layout = ($options['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
+        $elemOptions['class'] .= (($layout = ($elemOptions['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
 
-        if ($options['splitOutput']??false) {
+        if ($elemOptions['splitOutput']??false) {
             $this->addFieldNames($name, $radioElems);
         }
         return $elem;
@@ -420,34 +489,34 @@ EOT;
     /**
      * @param string $name
      * @param string $label
-     * @param array $options
+     * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\Checkbox|\Nette\Forms\Controls\CheckboxList
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function addCheckboxElem(string $name, string $label, array &$options): object
+    private function addCheckboxElem(string $name, string $label, array &$elemOptions): object
     {
-        if ($options['options']??false) {
-            $checkboxes = parseArgumentStr($options['options']);
+        if ($elemOptions['options']??false) {
+            $checkboxes = parseArgumentStr($elemOptions['options']);
             $elem = $this->addCheckboxList($name, $label, $checkboxes);
-            if ($options['preset']??false) {
-                $elem->setHtmlAttribute('data-preset', $options['preset']);
+            if ($elemOptions['preset']??false) {
+                $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
             }
             $this->choiceOptions[$name] = $checkboxes;
-            if ($options['splitOutput']??false) {
+            if ($elemOptions['splitOutput']??false) {
                 $this->addFieldNames($name, $checkboxes);
             }
             $this->formElements[$name]['isArray'] = true;
             $this->formElements[$name]['subKeys'] = array_keys($checkboxes);
 
             // handle option 'horizontal':
-            $options['class'] .= (($layout = ($options['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
+            $elemOptions['class'] .= (($layout = ($elemOptions['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
 
         } else {
-            $options['class'] .= ' pfy-single-checkbox';
+            $elemOptions['class'] .= ' pfy-single-checkbox';
             $elem = $this->addCheckbox($name, $label);
-            if ($options['preset']??false) {
-                $elem->setHtmlAttribute('data-preset', $options['preset']);
-                $elem->setHtmlAttribute('value', $options['preset']);
+            if ($elemOptions['preset']??false) {
+                $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
+                $elem->setHtmlAttribute('value', $elemOptions['preset']);
             }
         }
 
@@ -478,8 +547,22 @@ EOT;
             reloadAgent();
         }
 
-        if (($dataRec['_formInx']??false) !== (string)$formInx) {
+        if (($this->formOptions['confirmationText'] === '') || (isset($_GET['quiet']))) {
+            $this->showDirektFeedback = false;
+        }
+
+        // check presence of $formToken:
+        $formToken = $dataRec['_formInx']??false;
+        if (!$formToken || isset($_POST['cancel'])) {
             return '';
+        }
+
+        // _formInx either contains form-index (integer) or an recKey (hash string, valid only per session).
+        // So, figure out, which it is. If recKey -> replace it with real recId:
+        $recKey = false;
+        if (!intval($formToken)) {
+            // restore real recKey:
+            $recKey = deObfuscateRecKeys($formToken);
         }
 
         $dataRec = $this->normalizeData($dataRec);
@@ -489,33 +572,30 @@ EOT;
             return "<div class='pfy-form-error'>$dataRec</div>\n";
         }
 
-        if ($maxCountOn = ($this->options['maxCountOn']??false)) {
-            $pending = $dataRec[$maxCountOn]??1;
-        } else {
-            $pending = 1;
-        }
-
-        if ($this->handleDeadline() || $this->handleMaxCount($pending)) {
+        // handle optional 'deadline' and 'maxCount':
+        if ($this->handleDeadline() || $this->handleMaxCount($dataRec)) {
             return '';
         }
 
+        // handle uploads
         $this->handleUploads($dataRec);
 
-        if ($this->options['file']) {
-            $this->file = $this->options['file'];
-            $err = $this->storeSubmittedData($dataRec);
+        // if 'file' defined, save received data:
+        if ($this->formOptions['file']) {
+            $this->file = $this->formOptions['file'];
+            $err = $this->storeSubmittedData($dataRec, $recKey);
             if ($err) {
                 $err = TransVars::getVariable($err, true);
                 $html = "<div class='pfy-form-error'>$err</div>\n";
             }
         }
         // Future: customResponseEvaluation
-        //        if ($fun = ($this->options['customResponseEvaluation']??false)) {
+        //        if ($fun = ($this->formOptions['customResponseEvaluation']??false)) {
         //           if (function_exists($fun)) {
         //               $html = $fun();
         //           }
-        //        } elseif ($this->options['file']) {
-        //            $this->file = $this->options['file'];
+        //        } elseif ($this->formOptions['file']) {
+        //            $this->file = $this->formOptions['file'];
         //            $err = $this->storeSubmittedData($dataRec);
         //            if ($err) {
         //                $err = TransVars::getVariable($err, true);
@@ -523,24 +603,39 @@ EOT;
         //            }
         //        }
 
+        // if no error (i.e. error-message in $html) -> notify owner & create feedback:
         if (!$html) {
-            if ($this->options['mailTo']) {
-                $this->notifyOwner($dataRec);
+            if ($this->formOptions['mailTo']) {
+                if (!isAdminOrLocalhost()) {
+                    $this->notifyOwner($dataRec);
+                } else {
+                    PageFactory::$pg->setMessage('Admin: notifyOwner skipped.');
+                }
             }
 
-            if ($this->options['confirmationText']) {
-                $html = $this->options['confirmationText'];
-            } elseif ($this->options['confirmationText'] === null) {
+            if ($this->formOptions['confirmationText']) {
+                $html = $this->formOptions['confirmationText'];
+            } elseif ($this->formOptions['confirmationText'] === null) {
                 $html = "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n";
-            } else {
-                reloadAgent(message: "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n");
             }
         }
-        $html .= $this->handleConfirmationMail($dataRec);
-        $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
 
+        // handle optional confirmation mail:
+        $html .= $this->handleConfirmationMail($dataRec);
+        if ($this->showDirektFeedback) {
+            $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
+        }
+
+        // write log:
         $logText = strip_tags($html);
         mylog($logText, 'form-log.txt');
+
+        // handle indirect feedback -> via message:
+        if ($html && !$this->showDirektFeedback) {
+            PageFactory::$pg->setMessage($logText);
+            $html = '';
+        }
+
         return $html;
     } // handleReceivedData
 
@@ -592,7 +687,8 @@ EOT;
                 }
                 unset($dataRec[$name]);
             }
-            if ($name === '_formInx') {
+            // filter out any fields starting with '_':
+            if ($name[0] === '_') {
                 unset($dataRec[$name]);
 
             } elseif (is_array($value) && isset($this->choiceOptions[$name])) {
@@ -608,11 +704,13 @@ EOT;
                 $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ', ');
                 $dataRec[$name] = $value1;
 
-            } elseif (str_contains($name, 'CommentController')) {
+            // handle comment's reveal-controller: if unchecked, we erase the textarea entry:
+            } elseif (str_starts_with($name, 'CommentController')) {
                 $commentController = $value;
                 unset($dataRec[$name]);
 
             } elseif (isset($commentController)) {
+                // the last element was a reveal-controller -> erase value if it was unchecked:
                 if (!$commentController) {
                     $dataRec[$name] = '';
                 }
@@ -637,12 +735,14 @@ EOT;
         if ($this->db) {
             return $this->db;
         }
-        if (!$this->options['file']) {
+        if (!$this->formOptions['file']) {
             return false;
         }
-        $this->db = new DataSet($this->options['file'], [
+        $this->db = new DataSet($this->formOptions['file'], [
             'masterFileRecKeyType' => 'index',
         ]);
+        $sessKey = 'form:'.PageFactory::$slug.':file';
+        PageFactory::$session->set($sessKey, $this->formOptions['file']);
         return $this->db;
     } // openDB
 
@@ -653,7 +753,7 @@ EOT;
      * @return false|string
      * @throws \Exception
      */
-    private function storeSubmittedData(array $newRec): false|string
+    private function storeSubmittedData(array $newRec, string|false $recId = false): false|string
     {
         foreach ($newRec as $key => $rec) {
             if (is_array($rec)) {
@@ -671,15 +771,13 @@ EOT;
         if (!$newRec) {
             return false;
         }
-        if (!$this->db) {
-            $this->openDB();
-        }
+        $this->openDB();
 
-        if ($this->db->recExists($newRec)) {
+        if (!$recId && $this->db->recExists($newRec)) {
             return 'pfy-form-warning-record-already-exists';
         }
 
-        $res = $this->db->addRec($newRec);
+        $res = $this->db->addRec($newRec, recKeyToUse: $recId);
         if (is_string($res)) {
             return $res;
         }
@@ -694,7 +792,7 @@ EOT;
      */
     private function notifyOwner(array $dataRec): void
     {
-        $options = $this->options;
+        $formOptions = $this->formOptions;
         $out = '';
         $labelLen = 0;
         foreach ($dataRec as $key => $value) {
@@ -724,7 +822,7 @@ EOT;
         $body = TransVars::getVariable('pfy-form-owner-notification-body');
         $body = str_replace(['%data', '%host', '\n'], [$out, PageFactory::$hostUrl, "\n"], $body);
 
-        $to = $options['mailTo']?: TransVars::getVariable('webmaster_email');
+        $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
         $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
     } // notifyOwner
 
@@ -735,25 +833,36 @@ EOT;
      */
     private function openDataTable(): DataTable|false
     {
-        if ($this->dataTable || (!$this->options['file']??false)) {
+        if ($this->dataTable || (!$this->formOptions['file']??false)) {
             return $this->dataTable;
         }
-        $file = resolvePath($this->options['file'], relativeToPage: true);
+        $file = resolvePath($this->formOptions['file'], relativeToPage: true);
         $fieldNames = $this->fieldNames;
         if (isset($fieldNames['_formInx'])) {
             unset($fieldNames['_formInx']);
         }
         $tableOptions = [
             'tableHeaders' => $fieldNames,
-            'tableButtons' => true,
-            'interactive' => $this->options['interactiveTable']??false,
-            'footers' => $this->options['tableFooters']??false,
-            'minRows' => $this->options['minRows']??false,
-            'sort' =>    $this->options['sortData']??false,
+            'interactive' => $this->formOptions['interactiveTable']??false,
+            'footers' => $this->formOptions['tableFooters']??false,
+            'minRows' => $this->formOptions['minRows']??false,
+            'sort' =>    $this->formOptions['sortData']??false,
 
             'masterFileRecKeyType' => 'index',
-            'includeSystemElements' => $this->options['includeSystemFields']??false,
+            'includeSystemElements' => $this->formOptions['includeSystemFields']??false,
+            'markLocked' => true,
             ];
+
+        if ($tableButtons = $this->tableButtons) {
+            if ($tableButtons === true || $tableButtons === '1') {
+                $tableButtons = 'delete,download';
+            }
+            if ($editData = ($this->formOptions['editData'] ?? false)) {
+                $tableButtons .= ',edit';
+                $tableOptions['editRecs'] = str_contains($editData, 'inp') ? 'inpage' : 'popup';
+            }
+            $tableOptions['tableButtons'] = $tableButtons;
+        }
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
@@ -784,15 +893,15 @@ EOT;
 
 
     /**
-     * @param array $options
+     * @param array $elemOptions
      * @return array
      * @throws \Exception
      */
-    private function parseMainOptions(array &$options): array
+    private function parseMainOptions(array &$elemOptions): array
     {
         $args = [];
-        $label = $options['label'] ?? false;
-        $name = $options['name'] ?? false;
+        $label = $elemOptions['label'] ?? false;
+        $name = $elemOptions['name'] ?? false;
 
         // case: only label given:
         if ($label && !$name) {
@@ -814,14 +923,14 @@ EOT;
         $name = preg_replace('/\W/', '', $name);
 
         if ($label[strlen($label) - 1] === '*') {
-            $options['required'] = true;
+            $elemOptions['required'] = true;
             $label = substr($label, 0, -1);
         }
 
         $label0 = str_replace(['*',':'], '', $label);
 
         // handle 'info' option:
-        if ($info = ($options['info'] ?? false)) {
+        if ($info = ($elemOptions['info'] ?? false)) {
             $label .= "<span tabindex='0' class='pfy-tooltip-anker'>".INFO_ICON.
                 "</span><span class='pfy-tooltip'>$info</span>";
         }
@@ -831,9 +940,9 @@ EOT;
             $label = Html::el('span')->setHtml($label);
         }
 
-        $type = isset($options['type']) ? ($options['type']?:'text'): 'text';
+        $type = isset($elemOptions['type']) ? ($elemOptions['type']?:'text'): 'text';
         if ($type === 'required') {
-            $options['required'] = true;
+            $elemOptions['required'] = true;
             $type = 'text';
         }
 
@@ -851,18 +960,23 @@ EOT;
             }
         }
 
-        if (!isset($options['class'])) {
-            $options['class'] = '';
+        if (!isset($elemOptions['class'])) {
+            $elemOptions['class'] = '';
         }
 
-        if ($path = ($options['path']??false)) {
+        if ($path = ($elemOptions['path']??false)) {
             $args['path'] = $path;
         }
 
         // handle 'antiSpam' option:
-        if (($options['antiSpam']??false) !== false) {
-            $options['class'] .= ' pfy-obfuscate';
-            $args['antiSpam'] = $options['antiSpam'];
+        if (($elemOptions['antiSpam']??false) !== false) {
+            if ($this->inhibitAntiSpam) {
+                $elemOptions['antiSpam'] = false;
+                return [null, null, null];
+            } else {
+                $elemOptions['class'] .= ' pfy-obfuscate';
+                $args['antiSpam'] = $elemOptions['antiSpam'];
+            }
         }
 
 
@@ -882,15 +996,30 @@ EOT;
             ];
         }
 
-        if (array_key_exists('required', $options)) {
-            $options['required'] = ($options['required'] !== false);
+        if (array_key_exists('required', $elemOptions)) {
+            $elemOptions['required'] = ($elemOptions['required'] !== false);
         } else {
-            $options['required'] = false;
+            $elemOptions['required'] = false;
         }
-        if (array_key_exists('disabled', $options)) {
-            $options['disabled'] = ($options['disabled'] !== false);
+        if (array_key_exists('disabled', $elemOptions)) {
+            $elemOptions['disabled'] = ($elemOptions['disabled'] !== false);
         } else {
-            $options['disabled'] = false;
+            $elemOptions['disabled'] = false;
+        }
+
+        // check choice options, convert to key:value if scalar:
+        if (isset($elemOptions['options'])) {
+            $o = parseArgumentStr($elemOptions['options']);
+            $out = '';
+            foreach ($o as $k => $v) {
+                if (is_int($k)) {
+                    $out .= "$v:'$v',";
+                } else {
+                    $out .= "$k:'$v',";
+                }
+            }
+            $out= rtrim($out, ',');
+            $elemOptions['options'] = rtrim($out, ',');
         }
 
         $this->name = $name;
@@ -907,101 +1036,73 @@ EOT;
         //ToDo: propagate 'aria-hidden' to wrapper
         // poss. rewrite using DOM manipulator
 
-        // propagate class of <input elements
-        $l1 = strlen('<div class="pfy-elem-wrapper');
-        $p = 0;
-        while (($p = strpos($html, '<input type="', $p)) !== false) {
-            $s = substr($html, $p);
-            if (!preg_match('/class="(.+?)"/', $s, $m)) {
-                $p += 20;
-                continue;
+         $dom = HtmlDomParser::str_get_html($html);
+
+        $revealController = false;
+        $elements = $dom->findMulti('.pfy-elem-wrapper');
+        foreach ($elements as $e) {
+            $wrapperClass = $e->getAttribute('class');
+            // input, textarea:
+            $inputs = $e->findMultiOrFalse('input, textarea');
+            if ($inputs) {
+                $cl = [];
+                foreach ($inputs as $input) {
+                    $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
+                }
+                $class = implode(' ', array_combine($cl, $cl));
+                $e->setAttribute('class', trim("$wrapperClass $class"));
             }
-            $class = $m[1];
-            $l = strlen($html);
-            // find backwards the .pfy-elem-wrapper of the reveal-controller:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l) + $l1;
-            $s1 = substr($html, 0, $p1) ;
-            $s2 = substr($html, $p1);
-            $html = "$s1 $class$s2";
-            $p += strlen($class) + 10;
-        }
 
-        // propagate class of <textarea elements
-        $p = 0;
-        while (($p = strpos($html, '<textarea', $p)) !== false) {
-            $l = strlen($html);
-            // find backwards the .pfy-elem-wrapper of the reveal-controller:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l) + $l1;
-            $s1 = substr($html, 0, $p1) ;
-            $s2 = substr($html, $p1);
-            $html = "$s1 pfy-textarea$s2";
-            $p += 20;
-        }
+            // select:
+            $select = $e->findOneOrFalse('select');
+            if ($select) {
+                $class = $select->getAttribute('class');
+                $e->setAttribute('class', trim("$wrapperClass $class"));
+            }
 
-        // propagate class of <select elements
-        $p = 0;
-        while (($p = strpos($html, '<select', $p)) !== false) {
-            $l = strlen($html);
-            // find backwards the .pfy-elem-wrapper of the reveal-controller:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l) + $l1;
-            $s1 = substr($html, 0, $p1) ;
-            $s2 = substr($html, $p1);
-            $html = "$s1 pfy-select$s2";
-            $p += 20;
-        }
+
+            // aria-hidden:
+            $aria = $e->findOneOrFalse('[aria-hidden]');
+            if ($aria) {
+                $e->setAttribute('aria-hidden', $aria);
+            }
+
+            // reveal:
+            if ($revealController) {
+                $revealController = false;
+                continue;
+            } else {
+                $revealController = $e->findOneOrFalse('[data-reveal-target]');
+                if ($revealController) {
+                    $revealController->setAttribute('aria-expanded', 'false');
+                    $id = $revealController->getAttribute('data-reveal-target');
+                    if ($id) {
+                        $inx = preg_replace('/\D/', '', $id);
+                        $target = $e->nextNonWhitespaceSibling();
+                        if ($target) {
+                            $input = $target->findOneOrFalse('input, textarea');
+                            if ($input) {
+                                $class = $input->getAttribute('class');
+                                $target->setAttribute('class', trim("$wrapperClass $class"));
+                            }
+                            $innerHtml = (string)$target;
+                            $outerHtml = <<<EOT
+<div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
+$innerHtml
+</div>
+EOT;
+                            $target->outerhtml = str_replace("'", '"', $outerHtml);
+                        }
+                    }
+                }
+            } // reveal
+        } // $elements
+
+
+         $html = (string)$dom;
         return $html;
     } // injectFormElemClasses
 
-
-    /**
-     * @param string $html
-     * @return string
-     */
-    private function handleFormReveals(string $html): string
-    {
-        $i = 1;
-        // loop over instances of elements to reveal:
-        while (preg_match('/data-reveal="(.*?)"/', $html, $m)) {
-            $controllerInx = $m[1];
-            // p now points into <textarea>:
-            $p = strpos($html, $m[0]);
-            // remove the original attrib, it's obsolete now:
-            $html = str_replace(" {$m[0]}", '', $html);
-
-            $l = strlen($html);
-            // find backwards the .pfy-elem-wrapper of the reveal-controller:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l);
-            $p2 = strpos($html, '</div>', $p1);
-            $s1 = substr($html,0, $p1);
-            $s2 = substr($html, $p1, $p2 - $p1 + 6);
-            $s2 = str_replace('class="pfy-elem-wrapper"', "class=\"pfy-elem-wrapper pfy-reveal-controller-wrapper-$controllerInx pfy-reveal-controller-wrapper\"", $s2);
-            $s3 = substr($html, $p2+6);
-            $html = "$s1$s2$s3";
-            $l = strlen($html);
-
-            // find corresponding <textarea> contains attrib 'data-revealed-by':
-            $p = strpos($html, "data-revealed-by=\"$controllerInx\"", $p2 + strlen(" pfy-reveal-controller-wrapper-$controllerInx pfy-reveal-controller-wrapper"));
-            // find backwards the enclosing div.pfy-elem-wrapper:
-            $p1 = strrpos($html, '<div class="pfy-elem-wrapper', $p-$l);
-            $p2 = strpos($html, '</div>', $p);
-            $s1 = substr($html,0, $p1);
-            $s2 = substr($html, $p1, $p2 - $p1 + 6);
-            $s3 = substr($html, $p2+6);
-            $html = <<<EOT
-
-$s1
-
-<div id='pfy-reveal-container-$i' class="pfy-reveal-container">
-$s2
-</div><!-- pfy-reveal-container-$i -->
-
-$s3
-
-EOT;
-            $i++;
-        }
-        return $html;
-    } // handleFormReveals
 
 
     /**
@@ -1010,7 +1111,7 @@ EOT;
      */
     private function handleFormTop(string $html): string
     {
-        if ($str = ($this->options['formTop']??false)) {
+        if ($str = ($this->formOptions['formTop']??false)) {
             $str = $this->compileFormBanner($str);
             $str = "\n<div class='pfy-form-top'>$str</div>\n";
             $p = strpos($html, '<div class="pfy-elems-wrapper">');
@@ -1026,7 +1127,7 @@ EOT;
      */
     private function handleFormBottom(string $html): string
     {
-        if ($str = ($this->options['formBottom']??false)) {
+        if ($str = ($this->formOptions['formBottom']??false)) {
             $str = $this->compileFormBanner($str);
             $str = "\n<div class='pfy-form-bottom'>$str</div>\n";
 
@@ -1043,7 +1144,7 @@ EOT;
      */
     private function handleFormHint(string $html): string
     {
-        if (!($str = ($this->options['formHint']??false))) {
+        if (!($str = ($this->formOptions['formHint']??false))) {
             $str = '{{ pfy-form-required-info }}';
         }
         $str = $this->compileFormBanner($str);
@@ -1087,7 +1188,7 @@ EOT;
     private function handleFormBannerValues(string $str): string
     {
         // %deadline:
-        if (str_contains($str, '%deadline') && ($deadline = ($this->options['deadline']??false))) {
+        if (str_contains($str, '%deadline') && ($deadline = ($this->formOptions['deadline']??false))) {
             $deadlineStr = Utils::timeToString($deadline);
             $str = str_replace('%deadline', $deadlineStr, $str);
         }
@@ -1108,7 +1209,7 @@ EOT;
             $sum = 0;
             $this->openDB();
             if ($this->db) {
-                if ($maxCountOn = ($this->options['maxCountOn']??false)) {
+                if ($maxCountOn = ($this->formOptions['maxCountOn']??false)) {
                     $sum = $this->db->sum($maxCountOn);
                 } else {
                     $sum = $this->db->count();
@@ -1118,9 +1219,9 @@ EOT;
         }
 
         // %available:
-        if (str_contains($str, '%available') && ($maxCount = ($this->options['maxCount']??false))) {
+        if (str_contains($str, '%available') && ($maxCount = ($this->formOptions['maxCount']??false))) {
             $this->openDB();
-            if ($maxCountOn = ($this->options['maxCountOn']??false)) {
+            if ($maxCountOn = ($this->formOptions['maxCountOn']??false)) {
                 $currCount = $this->db->sum($maxCountOn);
             } else {
                 $currCount = $this->db->count();
@@ -1131,7 +1232,7 @@ EOT;
 
         // %max or %total:
         if (str_contains($str, '%max') || str_contains($str, '%total')) {
-            $max = $this->options['maxCount']??'{{ pfy-unlimited }}';
+            $max = $this->formOptions['maxCount']??'{{ pfy-unlimited }}';
             $str = str_replace(['%max','%total'], $max, $str);
         }
         return $str;
@@ -1143,7 +1244,7 @@ EOT;
      */
     private function handleDeadline(): string|false
     {
-        if ($deadlineStr = ($this->options['deadline']??false)) {
+        if ($deadlineStr = ($this->formOptions['deadline']??false)) {
             $deadline = strtotime($deadlineStr);
             // if no time is defined, extend the deadline till midnight:
             if (!str_contains($deadlineStr, 'T')) {
@@ -1153,13 +1254,13 @@ EOT;
             if ($deadline < time()) { // deadline expired:
                 // deadline is overridden if visitor is logged in:
                 if (!$this->isFormAdmin) {
-                    if ($deadlineNotice = ($this->options['deadlineNotice'] ?? false)) {
+                    if ($deadlineNotice = ($this->formOptions['deadlineNotice'] ?? false)) {
                         return $deadlineNotice;
                     } else {
                         return '{{ pfy-form-deadline-expired }}';
                     }
                 } else {
-                    $this->options['formTop'] = "{{ pfy-form-deadline-expired-warning }}" . $this->options['formTop'];
+                    $this->formOptions['formTop'] = "{{ pfy-form-deadline-expired-warning }}" . $this->formOptions['formTop'];
                 }
             }
         }
@@ -1168,12 +1269,17 @@ EOT;
 
 
     /**
-     * @param $pending
+     * @param array $dataRec
      * @return string|false
      * @throws \Exception
      */
-    private function handleMaxCount(int $pending = 0): string|false
+    private function handleMaxCount(array $dataRec = []): string|false
     {
+        if ($dataRec && ($maxCountOn = ($this->formOptions['maxCountOn']??false))) {
+            $pending = $dataRec[$maxCountOn]??1;
+        } else {
+            $pending = 1;
+        }
         list($available, $maxCount, $currCount) = $this->getAvailableAndMaxCount();
         if ($maxCount) {
             if ($pending) {
@@ -1181,13 +1287,13 @@ EOT;
             }
             if ($currCount >= $maxCount) {
                 if (!$this->isFormAdmin) {
-                    if ($maxCountNotice = ($this->options['maxCountNotice'] ?? false)) {
+                    if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
                         return $maxCountNotice;
                     } else {
                         return '{{ pfy-form-maxcount-reached }}';
                     }
                 } else {
-                    $this->options['formTop'] = "{{ pfy-form-maxcount-reached-warning }}" . $this->options['formTop'];
+                    $this->formOptions['formTop'] = "{{ pfy-form-maxcount-reached-warning }}" . $this->formOptions['formTop'];
                 }
             }
         }
@@ -1199,17 +1305,14 @@ EOT;
     {
         $available = PHP_INT_MAX - 10;
         $currCount = false;
-        if ($maxCount = ($this->options['maxCount']??false)) {
+        if ($maxCount = ($this->formOptions['maxCount']??false)) {
             $this->openDB();
-            $maxCountOn = ($this->options['maxCountOn'] ?? false);
-            if ($maxCountOn === $this->name) {
-                if ($maxCountOn = ($this->options['maxCountOn'] ?? false)) {
-                    $currCount = $this->db->sum($maxCountOn);
-                } else {
-                    $currCount = $this->db->count();
-                }
-                $available = $maxCount - $currCount;
+            if ($maxCountOn = ($this->formOptions['maxCountOn'] ?? false)) {
+                $currCount = $this->db->sum($maxCountOn);
+            } else {
+                $currCount = $this->db->count();
             }
+            $available = $maxCount - $currCount;
         }
         return [$available, $maxCount, $currCount];
     } // getAvailableAndMaxCount
@@ -1232,7 +1335,7 @@ EOT;
 
     private function handleConfirmationMail(array $dataRec): mixed
     {
-        if (!$this->options['confirmationEmail']??false) {
+        if (!$this->formOptions['confirmationEmail']??false) {
             return '';
         }
 
@@ -1250,7 +1353,7 @@ EOT;
 
     private function getEmailComponents(): array
     {
-        $confirmationEmailTemplate = ($this->options['confirmationEmailTemplate']??true);
+        $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
         if ($confirmationEmailTemplate === true) {
             $subject = '{{ pfy-confirmation-response-subject }}';
             $template = '{{ pfy-confirmation-response-message }}';
@@ -1275,7 +1378,7 @@ EOT;
     private function propagateDataToVariables(array $dataRec): string
     {
         $to = false;
-        $emailFieldName = $this->options['confirmationEmail'];
+        $emailFieldName = $this->formOptions['confirmationEmail'];
         // add variables for all form values, so they can be used in mail-template:
         foreach ($dataRec as $key => $value) {
             if (is_array($value)) {
@@ -1295,8 +1398,8 @@ EOT;
     {
         $props = [
             'to' => $to,
-            'from' => $this->options['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
-            'fromName' => $this->options['mailFromName'] ?: false,
+            'from' => $this->formOptions['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
+            'fromName' => $this->formOptions['mailFromName'] ?: false,
             'subject' => $subject,
             'body' => $body,
         ];

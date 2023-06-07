@@ -1,14 +1,20 @@
+/*
+ * Helper functions for PageElements
+ */
 
 function serverLog(str, logFileName) {
-  let data = {text: str};
+  let data = { text: str };
   if (typeof logFileName !== 'undefined') {
     data['filename'] = logFileName;
   }
   let url = hostUrl + '?log';
-  $.ajax({
+
+  fetch(url, {
     method: 'POST',
-    url: url,
-    data: data
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
 }
 
@@ -41,24 +47,30 @@ function reloadAgent( arg, url, confirmMsg ) {
 } // pfyReload
 
 
-
 function execAjaxPromise(cmd, options, url) {
-    return new Promise(function(resolve) {
-
-        if (typeof url === 'undefined') {
-            url = appRoot;
-        }
-        url = appendToUrl(url, cmd);
-        $.ajax({
-            method: 'POST',
-            url: url,
-            data: options
-        })
-        .done(function ( json ) {
-            resolve( json );
-        });
-    });
-} // execAjax
+  return new Promise(function(resolve) {
+    if (typeof url === 'undefined') {
+      url = pageUrl;
+    }
+    url = appendToUrl(url, cmd);
+    if (typeof options === 'undefined') {
+      options = {};
+    }
+    fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(options),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(function(json) {
+        resolve(json);
+      });
+  });
+}
 
 
 

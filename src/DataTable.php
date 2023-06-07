@@ -35,8 +35,10 @@ class DataTable extends Data2DSet
     private $tableWrapperClass;
     private $dataReference;
     private $tableButtons;
-    private $tableButtonDelete = false;
-    private $tableButtonDownload = false;
+    private bool $tableButtonDelete = false;
+    private bool $tableButtonDownload = false;
+    private bool $tableButtonEdit = false;
+    private bool $tableButtonNew = false;
     private int $inx;
     private string $tableId;
     private $footers;
@@ -50,6 +52,8 @@ class DataTable extends Data2DSet
     private string $export;
     private bool $includeSystemElements;
     private $elementLabels;
+    private $editRecs;
+    protected $markLocked;
 
     /**
      * @param string $file
@@ -90,8 +94,10 @@ class DataTable extends Data2DSet
         $this->sort = $options['sort'] ?? false;
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
+        $this->editRecs = $options['editRecs'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
+        $this->markLocked = $options['markLocked'] ?? false;
 
 
         if ($this->tableHeaders && !is_array($this->tableHeaders)) {
@@ -111,15 +117,20 @@ class DataTable extends Data2DSet
             $this->dataReference = true;
 
         } elseif ($this->tableButtons) {
-            $this->tableButtonDelete = (strpos('delete', $this->tableButtons) !== false);
-            $this->tableButtonDownload = (strpos('download', $this->tableButtonDownload) !== false);
+            $this->tableButtonDelete = (strpos($this->tableButtons, 'delete') !== false);
+            $this->tableButtonDownload = (strpos($this->tableButtons, 'download') !== false);
+            $this->tableButtonEdit = (strpos($this->tableButtons, 'edit') !== false);
+            $this->tableButtonNew = (strpos($this->tableButtons, 'new') !== false);
             $this->dataReference = true;
+        }
+
+        if ($this->editRecs === 'popup') {
+            $this->tableClass .= ' pfy-table-edit-popup';
         }
 
         if ($this->tableButtonDelete) {
             $this->showRowSelectors = true;
         }
-
 
         if ($this->sort) {
             $this->sort($this->sort);
@@ -129,6 +140,10 @@ class DataTable extends Data2DSet
     } // __construct
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     private function prepareTableData(): void
     {
         $this->tableData = $this->getNormalized2D_Data($this->tableHeaders);
@@ -147,6 +162,56 @@ class DataTable extends Data2DSet
             return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
         }
 
+        // inject service rows: select(delete), row-numbers, edit-buttons
+        $this->prependServiceRows();
+
+        if ($this->interactive) {
+            $this->activateInteractiveTable();
+        }
+
+        $out = "\n<div class='$this->tableWrapperClass'>\n";
+        $out .= $this->renderTableButtons();
+
+
+        // render table header tags:
+        $out .= $this->renderTableHead();
+
+        // render data cells:
+        $out .= $this->renderTableBody();
+
+        // render table footer:
+        $out .= $this->renderTableFooter();
+
+        // render table end tags:
+        $out .= "</table>\n";
+        if ($this->tableButtons) {
+            $out .= "  </form>\n";
+        }
+        $out .= "</div> <!-- table-wrapper $this->tableWrapperClass -->\n\n";
+        return $out;
+    } // render
+
+
+
+
+
+    /**
+     * Injects rows into data and header for delete,edit,row-numbers.
+     * @return void
+     */
+    private function prependServiceRows(): void
+    {
+        // Option edit records:
+        if ($this->tableButtonEdit !== false) {
+            $cell = "<button class='pfy-button pfy-button-lean pfy-table-edit-button' type='button'>✎</button>";
+            $hdrCell = TransVars::getVariable('pfy-row-edit-header');
+            if ($hdrCell) {
+                $this->injectColumn($cell, $hdrCell);
+            } else {
+                $this->injectColumn($cell, '{{ pfy-row-edit-header }}');
+            }
+        }
+
         // Option row numbers:
         if ($this->showRowNumbers !== false) {
             $this->injectColumn('%row-numbers', '{{^ pfy-row-number-header }}');
@@ -156,27 +221,7 @@ class DataTable extends Data2DSet
         if ($this->showRowSelectors) {
             $this->injectColumn('%row-selectors');
         }
-
-        if ($this->interactive) {
-            $this->activateInteractiveTable();
-        }
-
-        // render table header tags:
-        $out = $this->renderTableHead();
-
-        // render data cells:
-        $out .= $this->renderTableBody();
-
-        // render table footer:
-        $out .= $this->renderTableFooter();
-
-        // render table end tags:
-        $out .= $this->renderTableTail();
-        return $out;
-    } // render
-
-
-
+    } // prependServiceRows
     /**
      * Injects a new column of data into the array.
      * Examples:
@@ -199,16 +244,25 @@ class DataTable extends Data2DSet
             $col = $this->nCols + $col + 1;
         }
         $newElemName = $headElement ?: "col-$col";
+
+        // case row-selectors:
         if ($newElement === '%row-selectors') {
             $fillWith = '<input type="checkbox"%nameAttr>';
             $newElemName = 'row-selector';
 
+        // case row-numbers:
         } elseif ($newElement === '%row-numbers') {
             $newElemName = 'row-number';
             $newCol = range(0, $this->nRows - 1);
 
+        // case other content:
         } elseif (is_string($newElement)) {
-            $newCol = explodeTrim(',', ",$newElement");
+            if (str_contains($newElement, ',')) {
+                $newCol = explodeTrim(',', ",$newElement");
+            } else {
+                $fillWith = $newElement;
+                $newCol = [$headElement];
+            }
         }
         $newCol[0] = $headElement ?: $fillWith;
         $newCol = array_pad($newCol, $this->nRows, $fillWith);
@@ -239,10 +293,7 @@ class DataTable extends Data2DSet
     private function renderTableHead(): string
     {
         $data = &$this->tableData;
-        $out = "\n<div class='$this->tableWrapperClass'>\n";
-        $out .= $this->renderTableButtons();
-
-        $out .= "<table id='$this->tableId' class='$this->tableClass'>\n";
+        $out = "<table id='$this->tableId' class='$this->tableClass'>\n";
 
         // caption:
         if ($this->caption) {
@@ -256,6 +307,9 @@ class DataTable extends Data2DSet
         $this->elementLabels = $headerRow;
         $i = 0;
         foreach ($headerRow as $c => $elem) {
+            if ($c === '_locked') {
+                continue;
+            }
             $i++;
             if (!preg_match('/^\{\{.*}}$/', $elem)) {
                 $class = translateToIdentifier($elem, removeNonAlpha: true);
@@ -288,9 +342,22 @@ class DataTable extends Data2DSet
                 $recKey = '';
             }
             $r++;
-            $out .= "    <tr class='pfy-row-$r'$recKey>\n";
+            $rowClass = '';
+
+            // mark record if locked:
+            if ($this->markLocked) {
+                if ($rec['_locked']??false) {
+                    $rowClass = ' pfy-rec-locked';
+                }
+                unset($rec['_locked']);
+            }
+
+            $out .= "    <tr class='pfy-row-$r$rowClass'$recKey>\n";
             $i = 0;
             foreach ($elemKeys as $c => $k) {
+                if ($c === '_locked') {
+                    continue;
+                }
                 $i++;
                 $v = $rec[$c]??'';
                 if (!preg_match('/^\{\{.*}}$/', $k)) {
@@ -329,6 +396,9 @@ class DataTable extends Data2DSet
             foreach ($data as $rec) {
                 $i = 0;
                 foreach ($rec as $key => $value) {
+                    if ($key === '_locked') {
+                        continue;
+                    }
                     if (isset($footer[$key])) {
                         if (str_contains($footer[$key],TABLE_SUM_SYMBOL) && is_numeric($value)) {
                             $sums[$key] += $value;
@@ -343,6 +413,9 @@ class DataTable extends Data2DSet
             $out .= "    <tr>\n";
             $c = 1;
             foreach (array_keys($this->elementLabels) as $key) {
+                if ($key === '_locked') {
+                    continue;
+                }
                 if (isset($footer[$key])) {
                     if (str_contains($footer[$key], TABLE_SUM_SYMBOL) || str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
                         $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $footer[$key]);
@@ -362,29 +435,16 @@ class DataTable extends Data2DSet
     } // renderTableFooter
 
 
-
     /**
-     * Renders closing tags
+     * Renders buttons for table's buttons row: delete,new,download etc.
      * @return string
+     * @throws \Exception
      */
-    private function renderTableTail(): string
-    {
-        $out = '';
-        $out .= "</table>\n";
-        if ($this->tableButtons) {
-            $out .= "  </form>\n";
-        }
-        $out .= "</div> <!-- table-wrapper $this->tableWrapperClass -->\n\n";
-        return $out;
-    } // renderTableTail
-
-
-
     private function renderTableButtons()
     {
         $out = '';
         if ($this->tableButtons) {
-            $out .= "  <form method='post'>\n";
+            $out .= "  <form method='post'>\n"; // form around table for selectors
         }
         $buttons = '';
         if ($this->tableButtonDelete) {
@@ -394,38 +454,16 @@ class DataTable extends Data2DSet
             PageFactory::$pg->addAssets('POPUPS');
         }
 
-        if ($this->tableButtonDownload) {
-            $file = $this->exportDownloadDocs();
-            $icon = renderIcon('cloud_download_alt');
-            $buttons .= "<button class='pfy-button pfy-button-lean pfy-table-download-start' ".
-                "type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
-
-            $appUrl = PageFactory::$appUrl;
-            if ($this->officeFormatAvailable) {
-                $file = fileExt($file, true);
-                $js = <<<EOT
-pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}</p><ul><li>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}.xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
-        +'{{ pfy-table-download-postfix }}:</li><li>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}.ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
-        +'{{ pfy-table-download-postfix }}</li></ul>';
-EOT;
-
-            } else {
-                $js = <<<EOT
-pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}<br>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}" download target="_blank">{{ pfy-table-download-csv }}</a>'
-        +'{{ pfy-table-download-postfix }}</p>';
-EOT;
-            }
-
-            if ($this->inx === 1) {
-                $js = "var pfyDownloadDialog = [];\n".$js;
-            }
-            $js = TransVars::translate($js);
-            PageFactory::$pg->addJs($js);
-            PageFactory::$assets->addAssets('POPUPS, TABLES');
+        if ($this->tableButtonNew) {
+            $icon = '+';
+            $buttons .= "<button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
+                "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>";
         }
+
+        if ($this->tableButtonDownload) {
+            $buttons .= $this->renderTableDownloadButton();
+        }
+
         if ($buttons) {
             $out .= <<<EOT
 <div class='pfy-table-buttons'>
@@ -437,8 +475,12 @@ EOT;
     } // renderTableButtons
 
 
-
-    private function activateInteractiveTable()
+    /**
+     * Injects class and JS code to invoke DataTable library
+     * @return void
+     * @throws \Exception
+     */
+    private function activateInteractiveTable(): void
     {
         PageFactory::$pg->addAssets('DATATABLES');
         $this->tableWrapperClass .= ' pfy-interactive';
@@ -463,6 +505,81 @@ let pfyDatatable = new DataTable('#$this->tableId', {
 EOT;
         PageFactory::$pg->addJq($jq);
     } // activateInteractiveTable
+
+
+    /**
+     * Handles requests to delete records, reloads page.
+     * @return void
+     * @throws \Exception
+     */
+    private function handleTableRequests(): void
+    {
+        $keysSelected = $_POST['pfy-reckey'];
+        if ($keysSelected) {
+            foreach ($keysSelected as $key) {
+                if (strlen($key) > 4) { // skip _hdr and empty records
+                    $this->remove($key);
+                }
+            }
+            $this->flush();
+        }
+        unset($_POST['pfy-reckey']);
+        $msg = TransVars::getVariable('pfy-form-rec-deleted');
+        reloadAgent(message: $msg);
+    } // handleTableRequests
+
+
+    /**
+     * Remders a download button for the table button row
+     * @return string
+     * @throws \Exception
+     */
+    private function renderTableDownloadButton(): string
+    {
+        $file = $this->exportDownloadDocs();
+        $icon = renderIcon('cloud_download_alt');
+        $buttons = "<button class='pfy-button pfy-button-lean pfy-table-download-start' " .
+            "type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
+
+        $appUrl = PageFactory::$appUrl;
+        if ($this->officeFormatAvailable) {
+            $file = fileExt($file, true);
+            $js = <<<EOT
+pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}</p><ul><li>{{ pfy-table-download-prefix }}'
+        +'<a href="$appUrl{$file}.xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
+        +'{{ pfy-table-download-postfix }}:</li><li>{{ pfy-table-download-prefix }}'
+        +'<a href="$appUrl{$file}.ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
+        +'{{ pfy-table-download-postfix }}</li></ul>';
+EOT;
+
+        } else {
+            $js = <<<EOT
+pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}<br>{{ pfy-table-download-prefix }}'
+        +'<a href="$appUrl{$file}" download target="_blank">{{ pfy-table-download-csv }}</a>'
+        +'{{ pfy-table-download-postfix }}</p>';
+EOT;
+        }
+
+        if ($this->inx === 1) {
+            $js = "var pfyDownloadDialog = [];\n" . $js;
+        }
+        $js = TransVars::translate($js);
+        PageFactory::$pg->addJs($js);
+        PageFactory::$assets->addAssets('POPUPS, TABLES');
+        return $buttons;
+    } // renderTableDownloadButton
+
+
+    /**
+     * Prepares data for download -> converts and saves in temp files.
+     * @return string
+     * @throws \Exception
+     */
+    private function exportDownloadDocs(): string
+    {
+        $file = $this->export(fileType: true);
+        return $file;
+    } // exportDownloadDocs
 
 
     /**
@@ -497,32 +614,5 @@ EOT;
         $this->$key = $var;
         return $var;
     } // parseArrayArg
-
-
-    /**
-     * Handles requests to delete records
-     * @return void
-     * @throws \Exception
-     */
-    private function handleTableRequests()
-    {
-        $keysSelected = $_POST['pfy-reckey'];
-        if ($keysSelected) {
-            foreach ($keysSelected as $key) {
-                $this->remove($key);
-            }
-            $this->flush();
-        }
-        unset($_POST['pfy-reckey']);
-        $msg = TransVars::getVariable('pfy-form-rec-deleted');
-        reloadAgent(message: $msg);
-    } // handleTableRequests
-
-
-    private function exportDownloadDocs(): string
-    {
-        $file = $this->export(fileType: true);
-        return $file;
-    } // exportDownloadDocs
 
 } // DataTable

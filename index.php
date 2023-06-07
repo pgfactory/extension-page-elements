@@ -26,23 +26,14 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
                 // check pattern 'p1/ABCDEF':
                 if (preg_match('|^(.*?) / ([A-Z]{5,15})$|x', $slug, $m)) {
                     $slug = $m[1];
-//                    if ($locales = Kirby\Toolkit\I18n::fallbacks()) {
-//                        $pat = implode('|', $locales);
-//                        $slug = preg_replace("#^($pat)/#", '', $slug);
-//                    }
                     PageFactory::$slug = $slug;
                     PageFactory::$urlToken = $m[2];
 
-//                    $appUrl = dirname(substr($_SERVER['SCRIPT_FILENAME'], -strlen($_SERVER['SCRIPT_NAME']))).'/';
-//                    $target = $appUrl . $slug;
-//                    header("Location: $target");
-//                    exit;
-
-                    // check pattern 'ABCDEF', i.e. page without slug:
+                // check pattern 'ABCDEF', i.e. page without slug:
                 } elseif (preg_match('|^ ([A-Z]{5,15})$|x', $slug, $m)) {
                     PageFactory::$slug = '';
                     PageFactory::$urlToken = $m[1];
-                    return site()->visit(page());
+                    return site()->visit(page()); //ToDo: fix
                 }
                 return $this->next();
             }
@@ -53,11 +44,25 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
         'route:before' => function (\Kirby\Http\Route $route, string $path) {
             // intercept serverLog request: ?log
             if (isset($_GET['log'])) {
-                require_once __DIR__ . "/src/pe_helper.php";
+                require_once __DIR__ . "/src/ajax_server.php";
                 serverLog();
                 unset($_GET['log']);
             }
+
         },
+        'route:after' => function ($route, $path, $method, $result, $final) {
+            // intercept serverLog request: ?getRec and ?lockRec
+            if ($final && ($_GET??false)) {
+                if (!preg_match('/^(panel|media|api)/', $path)) {
+                    if (!defined('PFY_CACHE_PATH')) { // available in extensions
+                        define('PFY_CACHE_PATH', 'site/cache/pagefactory/'); // available in extensions
+                    }
+                    require_once __DIR__ . "/src/ajax_server.php";
+                    ajaxHandler($result);
+                }
+            }
+            return $result;
+        }
     ], // hooks
 
 ]);

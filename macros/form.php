@@ -51,7 +51,6 @@ function form($args = '')
 
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
-//                '(Default: ``\{\{ pfy-form-submit-success }}``).', false],
 
             'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
 
@@ -61,6 +60,9 @@ function form($args = '')
             'showData' =>	['[false, true, loggedIn, anybody, etc.] '.
                 'Defines, to whom previously received data is presented. (true = ``loggedin|localhost``). '.
                 '**Note:** When printing the page, only the table will be shown, not the form.', false],
+
+            'editData' =>	['[true,popup,inpage] Defines, whether data records can be edited. '.
+                'Injects a service column with edit buttons per row.', false],
 
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
 
@@ -207,20 +209,11 @@ if ($inx !== 1) {
         $options['minRows'] = $options['maxCount'];
     }
     $form = new PfyForm($options);
-    $form->createForm(null, $auxOptions);
+    $form->createForm(null, $auxOptions); // $auxOptions = form-elements
+    $html .= $form->renderForm();
 
     if ($lWidth = $options['labelWidth']) {
         PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
-    }
-
-    $res = false;
-    if ($form->isSuccess()) {
-        $res = $form->handleReceivedData($inx);
-    }
-    if (!$res) {
-        $html .= $form->renderForm();
-    } else {
-        $html .= $res;
     }
 
     $html = TransVars::translate($html);

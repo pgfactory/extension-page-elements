@@ -7,17 +7,36 @@
 
 const pfyFormsHelper = {
 
-  init() {
-    const forms = document.querySelectorAll('.pfy-form');
+  init(forms) {
+    if (typeof forms === 'string') {
+      forms = document.querySelectorAll(forms);
+    } else if (typeof form !== 'object') {
+      forms = document.querySelectorAll('.pfy-form');
+    }
     if ((typeof forms !== 'undefined') && forms.length) {
       forms.forEach(function(form) {
         pfyFormsHelper.handleErrorInForm(form);
         pfyFormsHelper.setupCancelButtonHandler(form);
         pfyFormsHelper.setupSubmitHandler(form);
+        pfyFormsHelper.setupModifiedMonitor(form);
       });
     }
   }, // init
 
+
+  setupModifiedMonitor(form) {
+    const formInputs = form.querySelectorAll('input, textarea, select');
+    if (formInputs) {
+      formInputs.forEach(function (input) {
+        if (input.classList.contains('button')) {
+          return;
+        }
+        input.addEventListener('change', function () {
+          form.dataset.changed = true;
+        });
+      });
+    }
+  }, // setupModifiedMonitor
 
 
   handleErrorInForm(form) {
@@ -39,9 +58,15 @@ const pfyFormsHelper = {
     if (cancelInputs.length) {
       cancelInputs.forEach(function(input) {
         input.addEventListener('click', function(e) {
-          e.preventDefault();
-          pfyFormsHelper.clearForm(form);
-          form.reset();
+          if (pfyFormsHelper.isFormChanged(form)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            form.dataset.changed = false;
+            pfyFormsHelper.clearForm(form);
+            pfyFormsHelper.unlockRecs();
+            form.reset();
+          }
         });
       });
     }
@@ -99,6 +124,13 @@ const pfyFormsHelper = {
         });
       }
     }
+    // reset _formInx hidden field:
+    const formInxField = form.querySelector('input[name=_formInx]');
+    if (formInxField) {
+      const defaultVal = formInxField.dataset.default;
+      formInxField.setAttribute('value', defaultVal);
+    }
+
     const errors = form.querySelectorAll('.error');
     if ((typeof errors !== 'undefined') && errors.length) {
       errors.forEach(function(field) {
@@ -106,6 +138,80 @@ const pfyFormsHelper = {
       });
     }
   }, // clearForm
+
+
+
+  presetForm(form, data, recId) {
+    if (typeof form === 'string') {
+      form = document.querySelector(form);
+    }
+    this.clearForm(form);
+    const simpleTypes = 'hidden,submit,cancel,checkbox,radio,button';
+    if (data) {
+      if (typeof recId !== 'undefined') {
+        const formInx = form.querySelector('input[name=_formInx]');
+        if (formInx) {
+          formInx.setAttribute('value', recId);
+        }
+      }
+      for (let name in data) {
+        const val = data[name];
+        if (typeof val === 'object') {
+          // it's a choice field:
+          for (let opt in val) {
+            if (opt === '_') { // skip summary elem
+              continue;
+            }
+            const field = form.querySelector('[name=' + name + '\\[\\]]');
+            if (!field) {
+              continue; // elem not found, skip it
+            }
+            const inputWrapper = field.closest('.pfy-input-wrapper');
+            const fld = inputWrapper.querySelector('[value=' + opt + ']');
+            if (fld) {
+              fld.checked = val[opt];
+              fld.selected = val[opt];
+            }
+          }
+
+        } else {
+          // it's an input or textarea field:
+          const query = '[name=' + name + ']';
+          const field = form.querySelector(query);
+          if (!field) {
+            continue;
+          }
+          const tagName = field.tagName;
+          const type = field.getAttribute('type');
+          if (type !== null) {
+            mylog(`name: ${name}  type: ${type}  val: ${val}`);
+            if (!simpleTypes.includes(type)) {
+              field.setAttribute('value', val);
+
+            } else if (type === 'radio') {
+              const inputWrapper = field.closest('.pfy-input-wrapper');
+              const fld = inputWrapper.querySelector('[value=' + val + ']');
+              if (fld) {
+                fld.checked = true;
+                fld.selected = true;
+              }
+
+            } else if (type === 'checkbox') { // single checkbox, multiple handled above under choice fields
+              field.checked = val;
+
+            } else {
+              mylog('presetForm() -> choice elems not implemented yet');
+            }
+          } else if (tagName === 'TEXTAREA') {
+            field.innerText = val;
+          } else {
+            mylog(`Error: type "${type}" unknown.`);
+          }
+        }
+      }
+    }
+    form.dataset.changed = true;
+  }, // presetForm
 
 
 
@@ -174,6 +280,19 @@ const pfyFormsHelper = {
     pfyFormsHelper.submitNow = true;
     form.submit();
   }, // doSubmitForm
+
+
+  unlockRecs: function () {
+    if (typeof tableHelper !== 'undefined') {
+      tableHelper.unlockRecs();
+    }
+  }, // unlockRecs
+
+
+  isFormChanged(form) {
+    const changed = form.dataset.changed??'false';
+    return (changed !== 'false');
+  }, // isFormChanged
 
 }; // pfyFormsHelper
 

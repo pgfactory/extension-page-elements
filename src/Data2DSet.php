@@ -23,6 +23,7 @@ class Data2DSet extends DataSet
 {
     protected array $columnKeys = [];
     private string $unknownValue = UNKNOWN;
+    private bool $obfuscateRecId = false;
 
     /**
      * @param string $file
@@ -36,6 +37,7 @@ class Data2DSet extends DataSet
         if ($unknown = $options['unknownValue']??false) {
             $this->unknownValue = $unknown;
         }
+        $this->obfuscateRecId = $options['obfuscateRecId']??true;
     } // __construct
 
 
@@ -52,6 +54,9 @@ class Data2DSet extends DataSet
             return []; // nothing to do
         }
         list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
+
+        $sessKey = 'form:'.PageFactory::$slug.':tableRecKeyTab';
+        $tableRecKeyTab = PageFactory::$session->get($sessKey);
 
         foreach ($data as $recKey => $rec) {
             $newRec = [];
@@ -89,17 +94,34 @@ class Data2DSet extends DataSet
                     }
                 }
             }
+
+            if ($this->markLocked) {
+                $origRec = $this->find($recKey);
+                $newRec['_locked'] = $origRec->isLocked();
+            }
+
+            if ($this->obfuscateRecId) {
+                if ($tableRecKeyTab && ($tableRecKeyTab[$recKey]??false)) {
+                    $recKey = $tableRecKeyTab[$recKey];
+                } else {
+                    $rk = createHash();
+                    $tableRecKeyTab[$recKey] = $rk;
+                    $recKey = $rk;
+                }
+            }
+
             $data2D[$recKey] = $this->arrayCombine($elementKeys, $newRec);
         }
 
+        PageFactory::$session->set($sessKey, $tableRecKeyTab);
+
         $this->nRows = sizeof($data2D)-1;
         $this->columnKeys = $headerElems;
-        $this->nCols = sizeof($headerElems);
+        $this->nCols = sizeof($elementKeys);
 
         if ($this->options['obfuscateRows']??false) {
             $data2D = $this->obfuscateRows($data2D);
         }
-//        if ($this->options['minRows']) {
         if ($this->options['minRows']??false) {
             $data2D = $this->addRows($data2D, $elementKeys);
         }
@@ -117,7 +139,6 @@ class Data2DSet extends DataSet
     private function prepare(array|bool $headerElems, bool $includeSystemElements): array
     {
         $data2D = [];
-//todo
         $elementKeys = [];
         if ($headerElems) {
             if ($headerElems === true) {
@@ -137,6 +158,8 @@ class Data2DSet extends DataSet
                         return ($e[0] !== '_');
                     });
                     $elementKeys = array_values($elementKeys);
+                }
+                if ($this->markLocked) {
                 }
                 $headerElems = array_combine($elementKeys, $elementKeys);
 
@@ -158,6 +181,9 @@ class Data2DSet extends DataSet
                     });
                     $elementKeys = array_values($elementKeys);
                 }
+            }
+            if ($this->markLocked) {
+                $elementKeys[] = '_locked';
             }
             $data2D['_hdr'] = $this->arrayCombine($elementKeys, $elementKeys);
         } else {
