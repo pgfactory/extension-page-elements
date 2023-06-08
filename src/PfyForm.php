@@ -60,6 +60,30 @@ class PfyForm extends Form
             }
         }
 
+        // open data base
+        if ($formOptions['file']??false) {
+            $this->openDB();
+        }
+
+        // option 'editData':
+        if ($editData = ($formOptions['editData'] ?? false)) {
+            $this->inhibitAntiSpam = true;
+            if ($editData === 'popup' && $this->db && ($this->db->getSize() > 0)) {
+                $this->formWrapperClass .= ' pfy-table-edit-popup';
+                $this->showDirektFeedback = false;
+            } elseif ($editData === true) {
+                $this->formOptions['editData'] = 'inpage';
+            }
+            if (!($formOptions['showData']??false)) {
+                $formOptions['showData'] = [
+                    'permission' => 'loggedin|localhost',
+                    'tableButtons' => 'delete,new,download'
+                ];
+                $this->formOptions['showData'] = $formOptions['showData'];
+            }
+        }
+
+        // option 'showData':
         if ($permissionQuery = ($formOptions['showData']??false)) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'loggedin|localhost';
@@ -76,22 +100,11 @@ class PfyForm extends Form
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
 
-        if ($formOptions['file']??false) {
-            $this->openDB();
-        }
-
         parent::__construct();
+
         PageFactory::$pg->addAssets('POPUPS');
         PageFactory::$pg->addAssets('FORMS');
-        if ($editData = ($this->formOptions['editData'] ?? false)) {
-            $this->inhibitAntiSpam = true;
-            if ($editData === 'popup' && ($this->db->getSize() > 0)) {
-                $this->formWrapperClass .= ' pfy-table-edit-popup';
-                $this->showDirektFeedback = false;
-            } elseif ($editData === true) {
-                $this->formOptions['editData'] = 'inpage';
-            }
-        }
+
     } // __construct
 
 
@@ -614,14 +627,17 @@ EOT;
             }
 
             if ($this->formOptions['confirmationText']) {
-                $html = $this->formOptions['confirmationText'];
-            } elseif ($this->formOptions['confirmationText'] === null) {
-                $html = "<div class='pfy-form-success'>{{ pfy-form-submit-success }}</div>\n";
+                $response = $this->formOptions['confirmationText'];
+            } else {
+                $response = "{{ pfy-form-submit-success }}";
             }
+            $html = "<div class='pfy-form-success'>$response</div>\n";
         }
 
         // handle optional confirmation mail:
         $html .= $this->handleConfirmationMail($dataRec);
+
+        // add 'continue...' if direct feedback is active:
         if ($this->showDirektFeedback) {
             $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
         }
@@ -632,8 +648,7 @@ EOT;
 
         // handle indirect feedback -> via message:
         if ($html && !$this->showDirektFeedback) {
-            PageFactory::$pg->setMessage($logText);
-            $html = '';
+            reloadAgent(message: $logText);
         }
 
         return $html;
@@ -1033,71 +1048,85 @@ EOT;
      */
     private function injectFormElemClasses(string $html): string
     {
-        //ToDo: propagate 'aria-hidden' to wrapper
-        // poss. rewrite using DOM manipulator
+        $dom = HtmlDomParser::str_get_html($html);
 
-         $dom = HtmlDomParser::str_get_html($html);
+        // check for errors, log them:
+        $errors = $dom->findMultiOrFalse('.error');
+        if ($errors) {
+            foreach ($errors as $error) {
+                $errorStr = strip_tags($error);
+                $parent = $error->parentNode();
+                $input = $parent->findOneOrFalse('input, textarea');
+                $name = $input->getAttribute('name');
+                $ip = $_SERVER['REMOTE_ADDR'];
+                if (option('pgfactory.pagefactory-elements.options.log-ip', false)) {
+                    $errorStr = "[$ip]  $name: $errorStr";
+                }
+                mylog($errorStr, 'form-log.txt');
+            }
+        }
 
         $revealController = false;
-        $elements = $dom->findMulti('.pfy-elem-wrapper');
-        foreach ($elements as $e) {
-            $wrapperClass = $e->getAttribute('class');
-            // input, textarea:
-            $inputs = $e->findMultiOrFalse('input, textarea');
-            if ($inputs) {
-                $cl = [];
-                foreach ($inputs as $input) {
-                    $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
+        $elements = $dom->findMultiOrFalse('.pfy-elem-wrapper');
+        if ($elements) {
+            foreach ($elements as $e) {
+                $wrapperClass = $e->getAttribute('class');
+                // input, textarea:
+                $inputs = $e->findMultiOrFalse('input, textarea');
+                if ($inputs) {
+                    $cl = [];
+                    foreach ($inputs as $input) {
+                        $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
+                    }
+                    $class = implode(' ', array_combine($cl, $cl));
+                    $e->setAttribute('class', trim("$wrapperClass $class"));
                 }
-                $class = implode(' ', array_combine($cl, $cl));
-                $e->setAttribute('class', trim("$wrapperClass $class"));
-            }
 
-            // select:
-            $select = $e->findOneOrFalse('select');
-            if ($select) {
-                $class = $select->getAttribute('class');
-                $e->setAttribute('class', trim("$wrapperClass $class"));
-            }
+                // select:
+                $select = $e->findOneOrFalse('select');
+                if ($select) {
+                    $class = $select->getAttribute('class');
+                    $e->setAttribute('class', trim("$wrapperClass $class"));
+                }
 
 
-            // aria-hidden:
-            $aria = $e->findOneOrFalse('[aria-hidden]');
-            if ($aria) {
-                $e->setAttribute('aria-hidden', $aria);
-            }
+                // aria-hidden:
+                $aria = $e->findOneOrFalse('[aria-hidden]');
+                if ($aria) {
+                    $e->setAttribute('aria-hidden', $aria);
+                }
 
-            // reveal:
-            if ($revealController) {
-                $revealController = false;
-                continue;
-            } else {
-                $revealController = $e->findOneOrFalse('[data-reveal-target]');
+                // reveal:
                 if ($revealController) {
-                    $revealController->setAttribute('aria-expanded', 'false');
-                    $id = $revealController->getAttribute('data-reveal-target');
-                    if ($id) {
-                        $inx = preg_replace('/\D/', '', $id);
-                        $target = $e->nextNonWhitespaceSibling();
-                        if ($target) {
-                            $input = $target->findOneOrFalse('input, textarea');
-                            if ($input) {
-                                $class = $input->getAttribute('class');
-                                $target->setAttribute('class', trim("$wrapperClass $class"));
-                            }
-                            $innerHtml = (string)$target;
-                            $outerHtml = <<<EOT
+                    $revealController = false;
+                    continue;
+                } else {
+                    $revealController = $e->findOneOrFalse('[data-reveal-target]');
+                    if ($revealController) {
+                        $revealController->setAttribute('aria-expanded', 'false');
+                        $id = $revealController->getAttribute('data-reveal-target');
+                        if ($id) {
+                            $inx = preg_replace('/\D/', '', $id);
+                            $target = $e->nextNonWhitespaceSibling();
+                            if ($target) {
+                                $input = $target->findOneOrFalse('input, textarea');
+                                if ($input) {
+                                    $class = $input->getAttribute('class');
+                                    $target->setAttribute('class', trim("$wrapperClass $class"));
+                                }
+                                $innerHtml = (string)$target;
+                                $outerHtml = <<<EOT
 <div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
 $innerHtml
 </div>
 EOT;
-                            $target->outerhtml = str_replace("'", '"', $outerHtml);
+                                $target->outerhtml = str_replace("'", '"', $outerHtml);
+                            }
                         }
                     }
-                }
-            } // reveal
-        } // $elements
-
+                } // reveal
+            } // $elements
+        }
 
          $html = (string)$dom;
         return $html;
