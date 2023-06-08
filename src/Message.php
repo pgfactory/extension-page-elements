@@ -12,7 +12,7 @@ class Message extends PageElements
     {
         $html = '';
         if ($msg) {
-            if (strpos($msg, '{{') !== false) {
+            if (str_contains($msg, '{{')) {
                 $msg = TransVars::translate($msg);
             }
             if ($mdCompile) {
