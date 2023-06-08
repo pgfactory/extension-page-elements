@@ -44,7 +44,7 @@ function ajaxHandler(object $result): void
  */
 function serverLog(): void
 {
-    if (!$text = ($_REQUEST['text']??false)) {
+    if (!$text = ($_REQUEST['log']??'').($_REQUEST['text']??'')) {
         return;
     }
     if ($logFile = ($_REQUEST['filename']??'')) {
@@ -63,7 +63,7 @@ function serverLog(): void
     }
     require_once 'site/plugins/pagefactory/src/helper.php';
     Usility\PageFactory\mylog($text, $logFile);
-    exit('ok');
+    exit('"ok"');
 } // serverLog
 
 
