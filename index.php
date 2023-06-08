@@ -43,16 +43,16 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
     'hooks' => [
         'route:before' => function (\Kirby\Http\Route $route, string $path) {
             // intercept serverLog request: ?log
-            if (isset($_GET['log'])) {
+            if (isset($_GET['log']) && isset($_REQUEST['ajax'])) {
                 require_once __DIR__ . "/src/ajax_server.php";
                 serverLog();
                 unset($_GET['log']);
             }
-
         },
+
         'route:after' => function ($route, $path, $method, $result, $final) {
-            // intercept serverLog request: ?getRec and ?lockRec
-            if ($final && ($_GET??false)) {
+            // intercept requests: ?getRec and ?lockRec
+            if ($final && ($_GET??false) && isset($_REQUEST['ajax'])) {
                 if (!preg_match('/^(panel|media|api)/', $path)) {
                     if (!defined('PFY_CACHE_PATH')) { // available in extensions
                         define('PFY_CACHE_PATH', 'site/cache/pagefactory/'); // available in extensions
