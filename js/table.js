@@ -122,7 +122,7 @@ const tableHelper = {
           const recKey = tr.dataset.reckey ?? '';
 
           // get latest data for this record:
-          execAjaxPromise('getRec='+recKey+'&lock', {})
+          execAjaxPromise('getRec='+recKey+'&lock&ajax', {})
             .then(function (data) {
               if (data.status === 'error') {
                 // handle case where rec locked by somebody else:
