@@ -109,8 +109,7 @@ EOT;
         "\n\t\t<label for='$id'>{$args['label']}</label>\n";
 
     $out = "\t<div class='pfy-reveal-controller-wrapper-$inx pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
-    $out = shieldStr($out); // shield from further processing if necessary
 
-    return $out;
+    return [$out];
 }
 

@@ -65,8 +65,7 @@ EOT,
     $file = resolvePath($file, relativeToPage: true);
     $ds = new DataTable($file, $args);
     $str .= $ds->render();
-    $str = shieldStr($str); // shield from further processing if necessary
 
-    return $str;
+    return [$str];
 }
 

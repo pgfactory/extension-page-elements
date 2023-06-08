@@ -217,8 +217,7 @@ if ($inx !== 1) {
     }
 
     $html = TransVars::translate($html);
-    $html = shieldStr($html, 'inline');
-    return $html;
+    return [$html];
 } // form
 
 
