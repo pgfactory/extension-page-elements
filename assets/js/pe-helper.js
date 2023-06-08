@@ -2,21 +2,15 @@
  * Helper functions for PageElements
  */
 
-function serverLog(str, logFileName) {
-  let data = { text: str };
-  if (typeof logFileName !== 'undefined') {
-    data['filename'] = logFileName;
-  }
-  let url = hostUrl + '?log';
 
-  fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-}
+function serverLog(text, logFileName) {
+  let url = window.location.href + '?ajax&log=' +  encodeURI(text);
+  if (typeof logFileName !== 'undefined') {
+    url += '&filename=' + encodeURI(logFileName);
+  }
+  mylog('url: ' + url);
+  fetch(url, { headers: {'Content-Type': 'application/json'} });
+} // serverLog
 
 
 function camelize(str) {
@@ -52,7 +46,7 @@ function execAjaxPromise(cmd, options, url) {
     if (typeof url === 'undefined') {
       url = pageUrl;
     }
-    url = appendToUrl(url, cmd);
+    url = appendToUrl(url, cmd, 'ajax');
     if (typeof options === 'undefined') {
       options = {};
     }
@@ -74,11 +68,16 @@ function execAjaxPromise(cmd, options, url) {
 
 
 
-function appendToUrl(url, arg) {
+function appendToUrl(url, arg, arg2) {
     if (!arg) {
         return url;
     }
     arg = arg.replace(/^[?&]/, '');
+
+    if (typeof arg2 !== 'undefined') {
+      arg = arg + '&' + arg2;
+    }
+
     if (url.match(/\?/)) {
         url = url + '&' + arg;
     } else {
