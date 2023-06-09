@@ -17,6 +17,8 @@ function form($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
+            'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
+
             'id' =>	['Id applied to the form element.', false],
 
             'class' =>	['Class applied to the form element.', false],
@@ -51,8 +53,6 @@ function form($args = '')
 
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
-
-            'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
 
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
