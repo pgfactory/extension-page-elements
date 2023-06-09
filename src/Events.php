@@ -15,7 +15,8 @@ use function Usility\PageFactory\fileTime;
 use function Usility\PageFactory\resolvePath;
 use function Usility\PageFactory\loadFile;
 use Usility\PageFactory\TransVars;
-use Twig\Extra\Intl\IntlExtension;
+ // Optional support for propre localization of dates -> requires twig/intl-extra
+ //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
 
 const TRANSLATIONS = [
    'Monday' => ['en' => 'Monday', 'de' => 'Montag',],
@@ -267,7 +268,7 @@ class Events extends DataSet
             'index' => $template,
         ]);
         $twig = new \Twig\Environment($loader);
-        $twig->addExtension(new IntlExtension());
+        // $twig->addExtension(new IntlExtension());
         return $twig->render('index', $eventRec);
     } // compileTemplate
 
