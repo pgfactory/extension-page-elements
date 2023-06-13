@@ -12,7 +12,7 @@ use function Usility\PageFactory\var_r as var_r;
 
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
-    ',text,password,email,textarea,hidden,'.
+    ',text,password,email,textarea,hidden,readonly,'.
     'url,date,datetime-local,time,datetime,month,number,integer,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'button,reset,submit,cancel,';
@@ -45,14 +45,16 @@ class PfyForm extends Form
     private string $name;
     private string $formWrapperClass = '';
     private string $tableButtons = '';
+    private $callback;
 
     /**
      * @param $formOptions
+     * @throws \Exception
      */
     public function __construct($formOptions = [])
     {
+        $this->formOptions = &$formOptions;
         $this->formIndex = $formOptions['formInx'] ?? 1;
-        $this->formOptions = $formOptions;
         if (isset($_GET['delete'])) {
             if ($_POST['pfy-reckey']??false) {
                 $_POST['pfy-reckey'] = deObfuscateRecKeys($_POST['pfy-reckey']);
@@ -60,13 +62,30 @@ class PfyForm extends Form
             }
         }
 
-        // open data base
-        if ($formOptions['file']??false) {
+        // make sure essential options are instantiated:
+        $formOptions['file']                = $formOptions['file']??false;
+        $formOptions['showData']            = $formOptions['showData']??false;
+        $formOptions['editData']            = $formOptions['editData']??false;
+        $formOptions['confirmationText']    = $formOptions['confirmationText']??false;
+        $formOptions['mailTo']              = $formOptions['mailTo']??false;
+        $formOptions['maxCount']            = $formOptions['maxCount']??false;
+        $formOptions['maxCountOn']          = $formOptions['maxCountOn']??false;
+        $formOptions['formTop']             = $formOptions['formTop']??false;
+        $formOptions['confirmationEmail']   = $formOptions['confirmationEmail']??false;
+        $formOptions['mailFrom']            = $formOptions['mailFrom']??false;
+        $formOptions['mailFromName']        = $formOptions['mailFromName']??false;
+        $formOptions['deadline']            = $formOptions['deadline']??false;
+        $formOptions['id']                  = $formOptions['id']??false;
+        $formOptions['class']               = $formOptions['class']??false;
+        $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
+
+        // open database:
+        if ($formOptions['file']) {
             $this->openDB();
         }
 
         // option 'editData':
-        if ($editData = ($formOptions['editData'] ?? false)) {
+        if ($editData = $formOptions['editData']) {
             $this->inhibitAntiSpam = true;
             if ($editData === 'popup' && $this->db && ($this->db->getSize() > 0)) {
                 $this->formWrapperClass .= ' pfy-table-edit-popup';
@@ -74,7 +93,7 @@ class PfyForm extends Form
             } elseif ($editData === true) {
                 $this->formOptions['editData'] = 'inpage';
             }
-            if (!($formOptions['showData']??false)) {
+            if (!$formOptions['showData']) {
                 $formOptions['showData'] = [
                     'permission' => 'loggedin|localhost',
                     'tableButtons' => 'delete,new,download'
@@ -84,7 +103,7 @@ class PfyForm extends Form
         }
 
         // option 'showData':
-        if ($permissionQuery = ($formOptions['showData']??false)) {
+        if ($permissionQuery = $formOptions['showData']) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'loggedin|localhost';
 
@@ -129,9 +148,10 @@ class PfyForm extends Form
                 $html .= $this->renderDataTable();
             }
         }
+        $wrapperId = ($this->formOptions['wrapperId']??false)? " id='{$this->formOptions['wrapperId']}'": '';
         $html = <<<EOT
 
-<div class="pfy-form-wrapper pfy-form-wrapper-$this->formIndex$this->formWrapperClass">
+<div$wrapperId class="pfy-form-wrapper pfy-form-wrapper-$this->formIndex$this->formWrapperClass">
 <noscript>{{ pfy-noscript-warning }}</noscript>
 
 $html
@@ -250,6 +270,10 @@ EOT;
                     $elem->setHtmlId($id);
                 }
                 break;
+            case 'readonly':
+                $elem = $this->addText($name, $label);
+                $elem->setHtmlAttribute('readonly', '');
+                break;
             case 'search':
             case 'tel':
             case 'url':
@@ -306,6 +330,9 @@ EOT;
                   $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
                 }
                 break;
+            case 'button':
+                $elem = $this->addButton($name, $label);
+                break;
             case 'cancel':
             case 'reset':
                 $elem = $this->addButton('_cancel', $label);
@@ -313,6 +340,8 @@ EOT;
             case 'submit':
                 $elem = $this->addSubmit($name, $label);
                 break;
+            default:
+                throw new \Exception("PfyForm: field type '$type' not supported");
         }
 
         $class = "pfy-$type";
@@ -359,7 +388,7 @@ EOT;
 
         // handle max -> take into account case maxCount:
         if ($max = ($elemOptions['max']??false)) {
-            if ($this->name === ($this->formOptions['maxCountOn']??false)) {
+            if ($this->name === $this->formOptions['maxCountOn']) {
                 // if sign-up limitation is active, limit max input if necessary, unless privileged:
                 list($available, $maxCount) = $this->getAvailableAndMaxCount();
                 if ($maxCount && !$this->isFormAdmin) {
@@ -558,6 +587,14 @@ EOT;
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
             reloadAgent();
+        }
+
+        // handle 'callback' on data received:
+        if ($this->formOptions['callback']??false) {
+            $res = $this->formOptions['callback']($dataRec);
+            if ($res !== false) {
+                return $res;
+            }
         }
 
         if (($this->formOptions['confirmationText'] === '') || (isset($_GET['quiet']))) {
@@ -848,7 +885,7 @@ EOT;
      */
     private function openDataTable(): DataTable|false
     {
-        if ($this->dataTable || (!$this->formOptions['file']??false)) {
+        if ($this->dataTable || !$this->formOptions['file']) {
             return $this->dataTable;
         }
         $file = resolvePath($this->formOptions['file'], relativeToPage: true);
@@ -857,22 +894,22 @@ EOT;
             unset($fieldNames['_formInx']);
         }
         $tableOptions = [
-            'tableHeaders' => $fieldNames,
-            'interactive' => $this->formOptions['interactiveTable']??false,
-            'footers' => $this->formOptions['tableFooters']??false,
-            'minRows' => $this->formOptions['minRows']??false,
-            'sort' =>    $this->formOptions['sortData']??false,
+            'tableHeaders'          => $fieldNames,
+            'interactive'           => $this->formOptions['interactiveTable']??false,
+            'footers'               => $this->formOptions['tableFooters']??false,
+            'minRows'               => $this->formOptions['minRows']??false,
+            'sort'                  => $this->formOptions['sortData']??false,
 
-            'masterFileRecKeyType' => 'index',
+            'masterFileRecKeyType'  => 'index',
             'includeSystemElements' => $this->formOptions['includeSystemFields']??false,
-            'markLocked' => true,
+            'markLocked'            => true,
             ];
 
         if ($tableButtons = $this->tableButtons) {
             if ($tableButtons === true || $tableButtons === '1') {
                 $tableButtons = 'delete,download';
             }
-            if ($editData = ($this->formOptions['editData'] ?? false)) {
+            if ($editData = $this->formOptions['editData']) {
                 $tableButtons .= ',edit';
                 $tableOptions['editRecs'] = str_contains($editData, 'inp') ? 'inpage' : 'popup';
             }
@@ -1078,7 +1115,14 @@ EOT;
                     foreach ($inputs as $input) {
                         $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
                     }
-                    $class = implode(' ', array_combine($cl, $cl));
+                    $cl = array_combine($cl, $cl);
+
+                    // special case: general button -> avoid propagating class 'pfy-button':
+                    if (in_array('pfy-button', $cl)) {
+                        unset($cl['pfy-button']);
+                    }
+
+                    $class = implode(' ', $cl);
                     $e->setAttribute('class', trim("$wrapperClass $class"));
                 }
 
@@ -1140,7 +1184,7 @@ EOT;
      */
     private function handleFormTop(string $html): string
     {
-        if ($str = ($this->formOptions['formTop']??false)) {
+        if ($str = $this->formOptions['formTop']) {
             $str = $this->compileFormBanner($str);
             $str = "\n<div class='pfy-form-top'>$str</div>\n";
             $p = strpos($html, '<div class="pfy-elems-wrapper">');
@@ -1217,7 +1261,7 @@ EOT;
     private function handleFormBannerValues(string $str): string
     {
         // %deadline:
-        if (str_contains($str, '%deadline') && ($deadline = ($this->formOptions['deadline']??false))) {
+        if (str_contains($str, '%deadline') && ($deadline = $this->formOptions['deadline'])) {
             $deadlineStr = Utils::timeToString($deadline);
             $str = str_replace('%deadline', $deadlineStr, $str);
         }
@@ -1238,7 +1282,7 @@ EOT;
             $sum = 0;
             $this->openDB();
             if ($this->db) {
-                if ($maxCountOn = ($this->formOptions['maxCountOn']??false)) {
+                if ($maxCountOn = $this->formOptions['maxCountOn']) {
                     $sum = $this->db->sum($maxCountOn);
                 } else {
                     $sum = $this->db->count();
@@ -1248,9 +1292,9 @@ EOT;
         }
 
         // %available:
-        if (str_contains($str, '%available') && ($maxCount = ($this->formOptions['maxCount']??false))) {
+        if (str_contains($str, '%available') && ($maxCount = $this->formOptions['maxCount'])) {
             $this->openDB();
-            if ($maxCountOn = ($this->formOptions['maxCountOn']??false)) {
+            if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $currCount = $this->db->sum($maxCountOn);
             } else {
                 $currCount = $this->db->count();
@@ -1261,7 +1305,7 @@ EOT;
 
         // %max or %total:
         if (str_contains($str, '%max') || str_contains($str, '%total')) {
-            $max = $this->formOptions['maxCount']??'{{ pfy-unlimited }}';
+            $max = $this->formOptions['maxCount']?:'{{ pfy-unlimited }}';
             $str = str_replace(['%max','%total'], $max, $str);
         }
         return $str;
@@ -1273,7 +1317,7 @@ EOT;
      */
     private function handleDeadline(): string|false
     {
-        if ($deadlineStr = ($this->formOptions['deadline']??false)) {
+        if ($deadlineStr = $this->formOptions['deadline']) {
             $deadline = strtotime($deadlineStr);
             // if no time is defined, extend the deadline till midnight:
             if (!str_contains($deadlineStr, 'T')) {
@@ -1283,7 +1327,7 @@ EOT;
             if ($deadline < time()) { // deadline expired:
                 // deadline is overridden if visitor is logged in:
                 if (!$this->isFormAdmin) {
-                    if ($deadlineNotice = ($this->formOptions['deadlineNotice'] ?? false)) {
+                    if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
                         return $deadlineNotice;
                     } else {
                         return '{{ pfy-form-deadline-expired }}';
@@ -1304,7 +1348,7 @@ EOT;
      */
     private function handleMaxCount(array $dataRec = []): string|false
     {
-        if ($dataRec && ($maxCountOn = ($this->formOptions['maxCountOn']??false))) {
+        if ($dataRec && ($maxCountOn = $this->formOptions['maxCountOn'])) {
             $pending = $dataRec[$maxCountOn]??1;
         } else {
             $pending = 1;
@@ -1316,7 +1360,7 @@ EOT;
             }
             if ($currCount >= $maxCount) {
                 if (!$this->isFormAdmin) {
-                    if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
+                    if ($maxCountNotice = ($this->formOptions['maxCountNotice']??false)) {
                         return $maxCountNotice;
                     } else {
                         return '{{ pfy-form-maxcount-reached }}';
@@ -1334,9 +1378,9 @@ EOT;
     {
         $available = PHP_INT_MAX - 10;
         $currCount = false;
-        if ($maxCount = ($this->formOptions['maxCount']??false)) {
+        if ($maxCount = $this->formOptions['maxCount']) {
             $this->openDB();
-            if ($maxCountOn = ($this->formOptions['maxCountOn'] ?? false)) {
+            if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $currCount = $this->db->sum($maxCountOn);
             } else {
                 $currCount = $this->db->count();
@@ -1364,7 +1408,7 @@ EOT;
 
     private function handleConfirmationMail(array $dataRec): mixed
     {
-        if (!$this->formOptions['confirmationEmail']??false) {
+        if (!$this->formOptions['confirmationEmail']) {
             return '';
         }
 

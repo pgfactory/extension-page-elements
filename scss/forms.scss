@@ -27,6 +27,7 @@ $focus-color: orange;
 }
 
 
+#pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
   input[type=cancel],
@@ -293,6 +294,12 @@ $focus-color: orange;
     width: 4em;
     margin-bottom: 3px;
     border-width: 1px;
+  }
+
+  input[readonly],
+  input.pfy-readonly {
+    background: var(--pfy-form-readonly-field-bg, #eee);
+    border-color: #ddd;
   }
 } // .pfy-default-styling
 
