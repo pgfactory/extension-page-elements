@@ -40,6 +40,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/-forms.css',
         PAGE_ELEMENTS_URL.'js/-forms.js',
     ],
+    'ENLIST' => [
+        PAGE_ELEMENTS_URL.'css/-enlist.css',
+        PAGE_ELEMENTS_URL.'js/-enlist.js',
+    ],
     'TOOLTIPSTER' => [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
@@ -55,6 +59,9 @@ const PE_URL_DEFINITIONS = [
     ],
 ];
 
+
+require_once __DIR__.'/pe_helper.php';
+
  // activate site-manager if requested:
 $optionsFromConfigFile = kirby()->option('pgfactory.pagefactory-pageelements.options');
 if ($optionsFromConfigFile['activateSitemapManager']??false) {
@@ -68,34 +75,3 @@ return 'PageElements';
 
 
 
-/**
- * Entry point for handling UrlTokens, in particular for access-code-login:
- * @return void
- */
-function handleUrlToken()
-{
-    $urlToken = PageFactory::$urlToken;
-    if (!$urlToken) {
-        return;
-    }
-
-    // do something with $urlToken...
-    $found = kirby()->users()->filter(function($p) {
-        $data = $p->content()->data();
-        $ac = $data['accesscode']??'';
-        $urlToken = PageFactory::$urlToken;
-        if ($ac === $urlToken) {
-            return true;
-        }
-        return false;
-    });
-    $user = $found->first();
-    if ($user) {
-        $user->loginPasswordless();
-    }
-
-    // remove the urlToken:
-//        $target = page()->url();
-    $target = PageFactory::$appUrl . PageFactory::$slug;
-    \Usility\PageFactory\reloadAgent($target);
-} // handleUrlToken
