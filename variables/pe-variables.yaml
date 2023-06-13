@@ -159,7 +159,7 @@ pfy-form-confirmation-email-sent:
 # Deadline:
 pfy-form-deadline-expired:
   de: 'Die Anmeldefrist ist vorbei.'
-  _:  'Sorry, the deadline has passed.'
+  _:  'Sorry, registration is closed.'
 
 pfy-form-deadline-expired-warning:
   de: |
@@ -189,3 +189,149 @@ pfy-form-maxcount-reached-warning:
 
 
 
+# Enlist
+
+pfy-enlist-add-title:
+  de: Neuer Eintrag
+  _:  New entry
+
+pfy-enlist-delete-title:
+  de: Diesen Eintrag löschen
+  _:  Delete this entry
+
+pfy-enlist-add-text: 
+  de: 'Hier eintragen'
+  _:  'enlist here'
+
+pfy-enlist-empty-text: &nbsp;
+
+pfy-enlist-add-popup-header:
+  de: 'Eintragen'
+  _:  'New entry'
+
+pfy-enlist-del-popup-header:
+  de: 'Löschen'
+  _:  'Delete entry'
+
+pfy-enlist-delete:
+  de: Löschen
+  _:  Delete
+
+
+pfy-enlist-popup-add-nofreeze-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag später wieder löschen. </p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag später wieder löschen. </p>'
+  en: '<p><strong>Comment</strong>:</p><p>You can delete later if needed.</p>'
+
+pfy-enlist-popup-add-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag noch bis %freezetime% selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag noch bis %freezetime% selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>You can delete this entry until %freezetime%.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
+
+pfy-enlist-popup-del-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
+
+
+pfy-enlist-error-rec-exists:
+  de: 'Ein Eintrag mit diesem Namen existiert bereits, aber die E-Mail Adresse stimmt nicht überein.'
+  _:  'An entry with this name already exists, but your e-mail address does not match.'
+
+
+pfy-enlist-error-deadline-exeeded:
+  de: 'Die Anmeldefrist ist abgelaufen.'
+  _:  'Registration is closed.'
+
+pfy-enlist-del-error-wrong-email:
+  de: 'Die eingegebene E-Mail Adresse entspricht nicht der hinterlegten.'
+  _:  'The e-mail address you supplied did not match.'
+
+pfy-enlist-deleted:
+  de: 'Ihr Eintrag wurde gelöscht.'
+  de2: 'Dein Eintrag wurde gelöscht.'
+  _:  'Your entry has been deleted.'
+
+pfy-enlist-add-notification-subject:
+  de: 'Neue Anmeldung für %topic auf %host'
+  _:  'Newly enlisted for %topic on %host'
+
+pfy-enlist-del-notification-subject:
+  de: 'Neue Abmeldung für %topic auf %host'
+  _:  'Deleted entry from %topic on %host'
+
+pfy-enlist-add-notification-body:
+  de: |
+    Hallo
+    %name hat sich angemeldet für %topic.
+
+    -> %host/%page
+
+    Der Webmaster
+  _:  |
+    Hello
+    %name enlisted for %topic.
+
+    -> %host/%page
+
+    The webmaster
+
+pfy-enlist-del-notification-body:
+  de: |
+    Hallo
+    %name hat sich abgemeldet von %topic.
+
+    -> %host/%page
+
+    Der Webmaster
+
+  _:  |
+    Hello
+    %name withdrew from %topic.
+
+    -> %host/%page
+
+    The webmaster
+
+pfy-enlist-visitor-confirmation-subject:
+  de: |
+    Anmeldebestätigung
+
+  _:  |
+    Registration confirmation
+
+pfy-enlist-visitor-confirmation-body:
+  de: |
+    Guten Tat %name
+
+    Wir haben Ihre Anmeldung auf %host erhalten. 
+
+    Besten Dank.
+    
+  de2: |
+    Hallo %name
+
+    Wir haben deine Anmeldung auf %host erhalten.
+
+    Besten Dank.
+
+  _:  |
+    Hello %name
+
+    We have received your registration on %host.
+
+    Thank you.
+
+pfy-enlist-confirmation-sent:
+  de: Sie erhalten eine Anmeldebestätigung per E-Mail.
+  de2: Du erhältst eine Anmeldebestätigung per E-Mail.
+  _:  You will receive a registration confirmation by e-mail.
+
+pfy-enlist-sendmail-button-title:
+  de: E-Mail an alle in dieser Liste verfassen.
+  _:  Create e-mail to all in list.
+
+pfy-enlist-del-freeze-time-expired:
+  de: 'Die Zeit ist abgelaufen, in der Sie den Eintrag noch löschen konnten.'
+  de2: 'Die Zeit ist abgelaufen, in der du den Eintrag noch löschen konntest.'
+  _:  'Time expired during which you could delete your entry.'
