@@ -281,16 +281,7 @@ class Events extends DataSet
 
     private function cleanup(string $str): string
     {
-        $lang = PageFactory::$langCode;
-        $translations = TRANSLATIONS;
-        $e0 = reset($translations);
-        if (!isset($e0[$lang])) {
-            return $str; // language not found, skip translation
-        }
-        $to = array_map(function ($e) use($lang) {
-            return $e[$lang]??'???';
-        }, array_values(TRANSLATIONS));
-        $str = str_replace(array_keys($translations), $to, $str);
+        $str = translateDateTimes($str);
 
         $str = str_replace(['{!', '!}'], ['{{', '}}'], $str);
         return $str;
