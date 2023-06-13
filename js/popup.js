@@ -86,6 +86,8 @@ function pfyPopup( options ) {
     this.onClose = (typeof options.onClose !== 'undefined' && options.onClose) ? options.onClose : '';
     this.onOpen = (typeof options.onOpen !== 'undefined' && options.onOpen) ? options.onOpen : '';
 
+    this.autofocus = (typeof options.autofocus !== 'undefined' && options.autofocus) ? options.autofocus : false;
+
     this.containerClass = (typeof options.containerClass !== 'undefined' && options.containerClass) ? ' ' + options.containerClass : '';
 
     this.popupClass = '';
@@ -485,22 +487,24 @@ function pfyPopup( options ) {
     this.trapFocus();
 
     // set focus to either first input, ok-button or close-button:
-    setTimeout(function () {
-      let $input =  parent.popup.querySelectorAll('input')
-      if ($input.length) {
-        $input[0].focus();
-      } else {
-        let buttons = parent.popup.querySelectorAll('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue');
-        if (buttons.length) {
-          buttons[0].focus();
+    if (this.autofocus) {
+      setTimeout(function () {
+        let $input = parent.popup.querySelectorAll('input')
+        if ($input.length) {
+          $input[0].focus();
         } else {
-          buttons = parent.popup.querySelectorAll('.pfy-close-button, .pfy-popup-close-button');
+          let buttons = parent.popup.querySelectorAll('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue');
           if (buttons.length) {
             buttons[0].focus();
+          } else {
+            buttons = parent.popup.querySelectorAll('.pfy-close-button, .pfy-popup-close-button');
+            if (buttons.length) {
+              buttons[0].focus();
+            }
           }
         }
-      }
-    }, 50);
+      }, 50);
+    }
 
     if (this.onOpen) {
       executeCallback(parent.onOpen);
