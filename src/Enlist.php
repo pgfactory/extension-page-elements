@@ -55,6 +55,9 @@ class Enlist
                 $permissionQuery = 'localhost|loggedin';
             }
             $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
+            if ($this->isEnlistAdmin && ($this->inx === 1)) {
+                PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
+            }
         }
     } // __construct
 
@@ -72,11 +75,13 @@ class Enlist
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
 
-            if ($adminEmail = ($this->options['adminEmail']??false)) {
-                PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
-            } else {
-                $adminEmail = PageFactory::$webmasterEmail;
-                PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+            if ($this->inx === 1) {
+                if ($adminEmail = ($this->options['adminEmail'] ?? false)) {
+                    PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+                } else {
+                    $adminEmail = PageFactory::$webmasterEmail;
+                    PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+                }
             }
         }
         if ($this->listFrozen) {
@@ -120,6 +125,7 @@ EOT;
             $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
             $text = $rec['Name']??'## unknown ##';
             if ($obfuscate = ($this->options['obfuscate']??false)) {
+                $text0 = $text;
                 if ($obfuscate === true) {
                     $text = '*****';
                     $icon = '';
@@ -130,6 +136,9 @@ EOT;
                         $text .= strtoupper($s[0]??'').' ';
                     }
                     $text = rtrim($text);
+                }
+                if ($this->isEnlistAdmin) { // in admin mode: show
+                    $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
                 }
             }
             if ($this->freezeTime) {
