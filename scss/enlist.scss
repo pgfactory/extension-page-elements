@@ -134,6 +134,7 @@
   .pfy-enlist-admin {
     .pfy-enlist-email {
       margin-left: 1em;
+      overflow-wrap: anywhere;
     }
     .pfy-enlist-email::before {
       content: "<";
