@@ -3,6 +3,7 @@
 namespace Usility\PageFactoryElements;
 use Usility\PageFactory\PageFactory as PageFactory;
 use Usility\PageFactory\Scss as Scss;
+use function Usility\PageFactory\createHash;
 use function \Usility\PageFactory\getDir;
 use function \Usility\PageFactory\getStaticUrlArg;
 
@@ -22,6 +23,8 @@ class PageElements
         $this->pfy = $pfy;
         $this->pg = PageFactory::$pg;
         $this->assets = PageFactory::$assets;
+
+        $this->handleCreateHashRequest();
 
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
@@ -133,4 +136,13 @@ class PageElements
     {
         $this->assets->addAssets($assets);
     } // addAssets
+
+
+    private function handleCreateHashRequest(): void
+    {
+        if (isset($_GET['hash'])) {
+            $hash = createHash();
+            exit($hash);
+        }
+    } // handleCreateHashRequest
 } // PageElements
