@@ -35,6 +35,8 @@ class Enlist
     private $freezeTime;
     private $listFrozen = false;
     private $isEnlistAdmin = false;
+    private $pagePath;
+    private $pageId;
 
     /**
      * @param $options
@@ -46,6 +48,8 @@ class Enlist
             $options['info'] = $options['description'];
         }
         $this->parseOptions($options);
+        $this->pagePath = substr(page()->url(), strlen(site()->url()) + 1) ?: 'home';
+        $this->pageId = str_replace('/', '_', $this->pagePath);
 
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
@@ -191,7 +195,7 @@ EOT;
         if (($filename = $this->options['file'])) {
             $filename = basename($filename);
         } else {
-            $filename = translateToFilename(PageFactory::$slug, false);
+            $filename = $this->pageId;
         }
         $file = "~data/enlist/$filename.yaml";
         $file = resolvePath($file);
@@ -223,7 +227,7 @@ EOT;
     {
         $sess = kirby()->session();
         $setnames = $sess->get('pfy.enlist-setnames')?: [];
-        return $setnames[PageFactory::$slug][$setInx]??false;
+        return $setnames[$this->pageId][$setInx]??false;
     } // getSetName
 
 
@@ -305,7 +309,7 @@ EOT;
     private function callback(array $data): string
     {
         $setName = $this->getSetName((int)$data['setinx']);
-        $context = "[$setName: ".PageFactory::$hostUrl.PageFactory::$slug.']';
+        $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
         $dataset = $this->getDataset($setName);
 
         $recId = $data['recid'];
@@ -406,7 +410,7 @@ EOT;
             '%email' => $data['Email'],
             '%topic' => $setName,
             '%host' => PageFactory::$hostUrl,
-            '%page' => PageFactory::$slug,
+            '%page' => $this->pagePath,
         ];
         $subject = str_replace(
             array_keys($replace),
@@ -439,7 +443,7 @@ EOT;
             '%email' => $data['Email'],
             '%topic' => $setName,
             '%host' => PageFactory::$hostUrl,
-            '%page' => PageFactory::$slug,
+            '%page' => $this->pagePath,
         ];
         $subject = str_replace(
             array_keys($replace),
@@ -516,7 +520,6 @@ EOT;
         if ($this->freezeTime) {
             $this->freezeTime = time() - ($this->freezeTime * 3600); // freezeTime is in hours
         }
-
     } // parseOptions
 
 } // Enlist
