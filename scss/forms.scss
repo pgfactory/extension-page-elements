@@ -180,6 +180,9 @@ $focus-color: orange;
   input.short {
     width: 4em;
   }
+  input.medium {
+    width: 8em;
+  }
   &.pfy-large-screen {
     .pfy-elem-wrapper.button {
       margin-right: 3px;

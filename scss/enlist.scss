@@ -16,27 +16,59 @@
     flex-wrap: wrap;
     align-content: space-between;
     gap: 1em;
-    > div {
+    .pfy-enlist-wrapper {
       flex: 1 0 14em;
     }
   }
 
-  .pfy-enlist-wrapper {
-    max-width: 30em;
+  .pfy-enlist-table {
+    border-collapse: collapse;
+    width: 100%;
+    th, td {
+      border: 1px solid #ddd;
+      padding: 5px;
+    }
+    .pfy-enlist-row-num {
+      width: 1em;
+      font-size: 85%;
+      color: #aaa;
+      text-align: right;
+      left: 1px;
+      padding-right: 1px;
+    }
+    .pfy-enlist-icon-1,
+    .pfy-enlist-icon-2 {
+      width: 2em;
+      text-align: center;
+    }
+    &:not(.pfy-enlist-custom-fields) thead {
+      display: none;
+    }
   }
 
   .pfy-enlist-field {
-    border: 1px solid #ddd;
-    padding: 5px;
-    width: 100%;
+    background: var(--pfy-enlist-field-bg, #fffff6);
     display: flex;
     justify-content: space-between;
-    background: var(--pfy-enlist-field-bg, #fffff6);
+  }
 
+  .pfy-enlist-table:not(.pfy-enlist-custom-fields) {
+    .pfy-enlist-add .pfy-enlist-name {
+      text-align: right;
+    }
+  }
+
+  .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-enlist-icon-1,
+  .pfy-enlist-custom-fields .pfy-enlist-icon-2 {
+    display: none;
+  }
+
+  .pfy-enlist-icon-1,
+  .pfy-enlist-icon-2 {
     button {
       display: inline-block;
-      width: 1.2em;
-      height: 1.2em;
+      width: 1.4em;
+      height: 1.4em;
       border: 1px solid #aaa;
       border-radius: 3px;
       text-align: center;
@@ -83,13 +115,9 @@
       border-color: #4d4;
     }
 
-    > span {
-      text-align: right;
+    .pfy-enlist-name {
       color: gray;
       font-style: italic;
-      display: inline-block;
-      width: 100%;
-      padding-right: 1em;
     }
   }
 
@@ -118,7 +146,9 @@
 
   .pfy-popup-wrapper.pfy-enlist-del-mode {
     .add { display: none; }
-    .pfy-form {
+    .pfy-enlist-custom {
+      opacity: 50%;
+      pointer-events:none;
     }
   }
 

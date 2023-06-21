@@ -34,7 +34,6 @@ function enlist($args = '')
                 'Can be an ISO-datetime (e.g. 2023-06-12T1159) or an expression relative to "datetime" (e.g. "-1day").', false],
             'nSlots' =>	['[integer] Number of slots to show in the enlistment table.', 1],
             'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table.', 0],
-//            'customFields' =>	['[array] List of key:value pairs representing additional form fields.', false],
             'sendConfirmation' =>	['[bool] If true, a confirmation mail is sent to the address stated when '.
                 'somebody enlists.', false],
             'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry.', false],
@@ -46,6 +45,7 @@ function enlist($args = '')
             'admin' =>	['[bool|permissionQuery] Defines who may administrate the enlistment.', true],
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people.', false],
+            'adminMail' =>	['[string] Synonyme for adminEmail.', true],
         ],
         'summary' => <<<EOT
 
@@ -65,7 +65,13 @@ EOT,
         $html = $sourceCode;
     }
 
-    $enlist = new Enlist($options);
+    // adminMail synonyme for adminEmail:
+    if ($options['adminMail']) {
+        $options['adminEmail'] = $options['adminMail'];
+    }
+    unset($options['adminMail']);
+
+    $enlist = new Enlist($options, $auxOptions);
     $html .= $enlist->render();
 
     if ($inx === 1) {

@@ -8,6 +8,8 @@ use Usility\PageFactory\PfyForm;
 use Usility\PageFactory\Utils;
 use Usility\MarkdownPlus\Permission;
 use Usility\PageFactory\TransVars;
+use function Usility\PageFactory\explodeTrim;
+use function Usility\PageFactory\parseArgumentStr;
 use function Usility\PageFactory\reloadAgent;
 use function Usility\PageFactory\resolvePath;
 use function Usility\PageFactory\translateToFilename;
@@ -37,19 +39,45 @@ class Enlist
     private $isEnlistAdmin = false;
     private $pagePath;
     private $pageId;
+    private $fieldNames = [];
+    private $customFields = [];
+    private $customFieldsEmpty = [];
 
     /**
      * @param $options
      * @throws \Exception
      */
-    public function __construct($options)
+    public function __construct($options, $customFields)
     {
+        $this->pagePath = substr(page()->url(), strlen(site()->url()) + 1) ?: 'home';
+        $this->pageId = str_replace('/', '_', $this->pagePath);
+
         if ($options['description']??false) {
             $options['info'] = $options['description'];
         }
+        $this->fieldNames = ['#', '&nbsp;', 'Name'];
+        if ($customFields) {
+            $nCustFiels = sizeof($customFields);
+            foreach ($customFields as $key => $customField) {
+                // special case 'checkbox options':
+                if ((($customField['type']??'text') === 'checkbox') ||
+                            ($customField['options']??false)) {
+                    $customField['type'] = 'checkbox';
+                    $customOptions = parseArgumentStr($customField['options']??'');
+                    $customFields[$key]['options'] = $customOptions;
+                    $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
+                    $nCustFiels += sizeof($customOptions) - 1;
+                } else {
+                    $this->fieldNames[] = $key;
+                }
+            }
+            $this->customFields = $customFields;
+
+            $this->customFieldsEmpty = array_fill(0, $nCustFiels, '');
+            $this->fieldNames[] = '&nbsp;';
+        }
+
         $this->parseOptions($options);
-        $this->pagePath = substr(page()->url(), strlen(site()->url()) + 1) ?: 'home';
-        $this->pageId = str_replace('/', '_', $this->pagePath);
 
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
@@ -63,6 +91,11 @@ class Enlist
                 PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
             }
         }
+
+        // isEnlistAdmin overrides listFrozen:
+        if ($this->isEnlistAdmin) {
+            $this->listFrozen = null; // -> null signifies frozen, but class still added to wrapper
+        }
     } // __construct
 
 
@@ -71,11 +104,10 @@ class Enlist
      */
     public function render(): string
     {
-        $html = '';
         $this->entries = $this->getDataset($this->datasetName);
 
-        $id = $this->options['id']?: "pfy-enlist-wrapper-$this->inx";
-        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . $this->options['class']?: '');
+        $id = ($this->options['id']??false)?: "pfy-enlist-wrapper-$this->inx";
+        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . ($this->options['class']??false)?: '');
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
 
@@ -88,7 +120,9 @@ class Enlist
                 }
             }
         }
-        if ($this->listFrozen) {
+
+        // add class to show that list is frozen (even if isEnlistAdmin):
+        if ($this->listFrozen || ($this->listFrozen === null)) {
             $class .= ' pfy-enlist-frozen';
         }
 
@@ -100,9 +134,7 @@ class Enlist
 
         $headButtons = $this->renderSendMailToAllButton();
 
-        for ($i=0; $i<$nTotal; $i++) {
-            $html .= $this->renderListEntry($i);
-        }
+        $html = $this->renderEntryTable();
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setInx="$this->inx">
@@ -115,75 +147,165 @@ EOT;
 
 
     /**
+     * @return string
+     */
+    private function renderEntryTable()
+    {
+        $thead = $this->renderEntryTableHeader();
+        $rows = '';
+        for ($i=0; $i<$this->nTotalSlots; $i++) {
+            $rows .= $this->renderListEntry($i);
+        }
+        $tableClass = $this->customFields? ' pfy-enlist-custom-fields': '';
+
+        $html = <<<EOT
+<table class='pfy-enlist-table$tableClass'>
+  <thead>
+$thead
+  </thead>
+
+  <tbody>
+$rows
+  </tbody>
+</table>
+EOT;
+
+        return $html;
+    } // renderEntryTable
+
+
+    /**
+     * @return string
+     */
+    private function renderEntryTableHeader(): string
+    {
+        $thead = '';
+        $n = sizeof($this->fieldNames);
+        $hClasses = ['pfy-enlist-row-num','pfy-enlist-icon pfy-enlist-icon-1','pfy-enlist-name'];
+        for ($i=3; $i<$n; $i++) {
+            $hClasses[$i] = "pfy-enlist-custom-field pfy-enlist-custom-field-".($i+1);
+        }
+        $hClasses[] = 'pfy-enlist-icon pfy-enlist-icon-2';
+        foreach ($this->fieldNames as $i => $headElem) {
+            if ($i !== $n-1) {
+                $thead .= "      <th class='{$hClasses[$i]}'>$headElem</th>\n";
+            } else {
+                $thead .= "      <th class='pfy-enlist-icon pfy-enlist-icon-2'>$headElem</th>\n";
+            }
+        }
+        $header = <<<EOT
+    <tr>
+$thead    </tr>
+EOT;
+
+        return $header;
+    } // renderEntryTableHeader
+
+
+    /**
      * @param int $i
      * @return string
      */
     private function renderListEntry(int $i): string
     {
-        $icon = $class = '';
-        $text = '&nbsp;';
-        // filled slots:
+        $html = "      <td class='pfy-enlist-row-num'>".($i+1).":</td>\n";
+        // filled element:
         if ($i < $this->nEntries) {
-            $class = 'pfy-enlist-delete';
-            $rec = $this->entries[$i];
-            $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
-            $text = $rec['Name']??'## unknown ##';
-            if ($obfuscate = ($this->options['obfuscate']??false)) {
-                $text0 = $text;
-                if ($obfuscate === true) {
-                    $text = '*****';
-                    $icon = '';
-                } else {
-                    $t = explode(' ', $text);
-                    $text = '';
-                    foreach ($t as $s) {
-                        $text .= strtoupper($s[0]??'').' ';
-                    }
-                    $text = rtrim($text);
-                }
-                if ($this->isEnlistAdmin) { // in admin mode: show
-                    $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
-                }
-            }
-            if ($this->freezeTime) {
-                $time = $rec['_time']??PHP_INT_MAX;
-                if ($time < $this->freezeTime) {
-                    $icon = '';
-                }
-            }
+            list($icon, $class, $name, $customFields) = $this->renderFilledRow($i);
 
-        // empty slots:
-        } elseif ($i === $this->nEntries) {
-            if (!$this->listFrozen) {
-                $class = 'pfy-enlist-add';
-                $text = '{{ pfy-enlist-add-text }}';
-                $icon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
-            }
+        // add element:
+        } elseif ($i === $this->nEntries && !$this->listFrozen) {
+            $icon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
+            list($class, $name, $customFields) = ['pfy-enlist-add', '{{ pfy-enlist-add-text }}', $this->customFieldsEmpty];
+
         } else {
-            $class = 'pfy-enlist-empty';
-            $text = '{{ pfy-enlist-empty-text }}';
+            list($icon, $class, $name, $customFields) = ['', 'pfy-enlist-empty', '', $this->customFieldsEmpty];
         }
         if ($i >= $this->nSlots) {
             $class .= ' pfy-enlist-reserve';
+        }
+        $html .= "      <td class='pfy-enlist-icon-1'>$icon</td>\n";
+        $html .= "      <td class='pfy-enlist-name'>$name</td>\n";
+        if (is_array($customFields)) {
+            $j = 1;
+            foreach ($customFields as $name => $value) {
+                if ($value['options']??false) {
+                    foreach ($value['options'] as $elem) {
+                        $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$elem</td>\n";
+                        $j++;
+                    }
+                    $j++;
+                } else {
+                    $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$value</td>\n";
+                }
+            }
+        }
+        $html .= "      <td class='pfy-enlist-icon-2'>$icon</td>\n";
+
+        $html = <<<EOT
+    <tr class="$class" data-inx="$i">
+$html    </tr>
+
+
+EOT;
+        return $html;
+    } // renderListEntry
+
+
+    /**
+     * @param int $i
+     * @return array
+     */
+    private function renderFilledRow(int $i): array
+    {
+        $class = 'pfy-enlist-delete';
+        $rec = $this->entries[$i];
+        $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
+        $text = $rec['Name']??'## unknown ##';
+        if ($obfuscate = ($this->options['obfuscate']??false)) {
+            $text0 = $text;
+            if ($obfuscate === true) {
+                $text = '*****';
+                $icon = '';
+            } else {
+                $t = explode(' ', $text);
+                $text = '';
+                foreach ($t as $s) {
+                    $text .= strtoupper($s[0]??'').' ';
+                }
+                $text = rtrim($text);
+            }
+            if ($this->isEnlistAdmin) { // in admin mode: show
+                $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
+            }
+        }
+        if ($this->freezeTime) {
+            $time = $rec['_time']??PHP_INT_MAX;
+            if ($time < $this->freezeTime) {
+                $icon = '';
+            }
         }
         if ($this->listFrozen) {
             $icon = '';
         }
 
-        $text = "<span class='pfy-enlist-name'>$text</span>";
-        $adminExt = '';
         if ($this->isEnlistAdmin && ($email = ($rec['Email']??false))) {
-            $adminExt = "<span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
+            $text .= " <span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
         }
 
-        $html = <<<EOT
-    <div class='pfy-enlist-field $class' data-inx="$i">
-        <span>$text$adminExt</span>$icon
-    </div>
+        $customFields = [];
+        foreach ($this->customFields as $key => $value) {
+            if ($value['options']??false) {
+                foreach ($value['options'] as $k => $v) {
+                    $customFields[] = $rec[$key][$k]??'?';
+                }
 
-EOT;
-        return $html;
-    } // renderListEntry
+            } else {
+                $customFields[] = $rec[$key]??'?';
+            }
+        }
+        return [$icon, $class, $text, $customFields];
+    } // renderFilledRow
 
 
     /**
@@ -192,16 +314,21 @@ EOT;
      */
     private function openDb(): void
     {
-        if (($filename = $this->options['file'])) {
+        if ($filename = ($this->options['file']??false)) {
             $filename = basename($filename);
         } else {
             $filename = $this->pageId;
         }
         $file = "~data/enlist/$filename.yaml";
         $file = resolvePath($file);
-        $this->db = new DataSet($file, []);
+        $this->db = new DataSet($file, [
+            'masterFileRecKeyType' => 'origKey',
+            'masterFileRecKeySort' => true,
+            'masterFileRecKeySortOnElement' => '_origRecKey',
+            'recKeyType' => '_reckey',
+        ]);
 
-        $this->datasets = $this->db->data();
+        $this->datasets = $this->db->data(recKeyType: 'origKey');
     } // openDb
 
 
@@ -213,6 +340,7 @@ EOT;
     {
         $this->entries = $this->datasets[$setName]??[];
         if (is_array($this->entries)) {
+            $this->entries = array_values($this->entries);
             $this->nEntries = sizeof($this->entries);
         }
         return $this->entries;
@@ -281,14 +409,27 @@ EOT;
             'formBottom' => $popupHelp,
             'callback' => function($data) { return $this->callback($data); },
         ];
+        // minimum required fields:
         $formFields = [
             'Name' => ['label' => 'Name:', 'required' => true],
             'Email' => ['label' => 'E-Mail:', 'required' => true],
-            'cancel' => [],
-            'submit' => [],
-            'recid' => ['type' => 'hidden'],
-            'setinx' => ['type' => 'hidden'],
         ];
+        // optional custom fields:
+        $i = 1;
+        foreach ($this->customFields as $fieldName => $rec) {
+            // special case 'checkbox options':
+            if ($rec['options']??false) {
+                $rec['type'] = 'checkbox';
+            }
+            $rec['class'] = 'pfy-enlist-custom pfy-enlist-custom-'.$i++;
+            $formFields[$fieldName] = $rec;
+        }
+        // standard form end fields:
+        $formFields['cancel'] = [];
+        $formFields['submit'] = [];
+        $formFields['recid'] = ['type' => 'hidden'];
+        $formFields['setinx'] = ['type' => 'hidden'];
+
         $form = new PfyForm($formOptions);
         $form->createForm(null, $formFields); // $auxOptions = form-elements
         $html = $form->renderForm();
@@ -331,6 +472,19 @@ EOT;
             $exists = array_filter($dataset, function ($e) use($name){
                 return ($e['Name']??'') === $name;
             });
+            if ($this->customFields) {
+                foreach ($this->customFields as $key => $args) {
+                    if (is_array($args['options']??false)) {
+                        $o = [];
+                        foreach ($args['options'] as $k => $v) {
+                            $o[$k] = in_array($k, $data[$key]);
+                        }
+                        $data[$key] = $o;
+                    }
+                }
+            }
+
+
             if ($exists) {
                 $prevRecId = array_keys($exists)[0];
                 $email = $data['Email']??'#####';
@@ -513,7 +667,7 @@ EOT;
 
         $sess = kirby()->session();
         $setnames = $sess->get('pfy.enlist-setnames')?: [];
-        $setnames[PageFactory::$slug][$this->inx] = $this->datasetName;
+        $setnames[$this->pageId][$this->inx] = $this->datasetName;
         $sess->set('pfy.enlist-setnames', $setnames);
 
         $this->freezeTime = $this->options['freezeTime']??false;

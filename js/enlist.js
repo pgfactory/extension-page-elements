@@ -55,11 +55,6 @@ const Enlist = {
             entries.forEach(function (entry) {
               const name = entry.querySelector('.pfy-enlist-name').textContent;
               const email = entry.querySelector('.pfy-enlist-email').textContent;
-              // let emailAddr = email;
-              // if (!this.isWindows) {
-              //   emailAddr = `${name} <${email}>`;
-              // }
-              // mailAddresses = mailAddresses + sep + emailAddr;
               mailAddresses = mailAddresses + sep + email;
             });
           }
@@ -82,7 +77,7 @@ const Enlist = {
       autofocus: false,
     };
     if (typeof elem !== 'undefined') {
-      const elemWrapper = elem.classList.contains('pfy-enlist-field')? elem: elem.parentElement;
+      const elemWrapper = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
       const recId = elemWrapper.dataset.inx;
       options.onOpen = function() { Enlist.preparePopupForm(mode, elemWrapper, recId); };
     }
@@ -92,7 +87,7 @@ const Enlist = {
 
   preparePopupForm: function(mode, elemWrapper, recId) {
     const name = elemWrapper.querySelector('.pfy-enlist-name').textContent;
-    const setInx = elemWrapper.parentElement.dataset.setinx;
+    const setInx = elemWrapper.closest('.pfy-enlist-wrapper').dataset.setinx;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
     popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
 
