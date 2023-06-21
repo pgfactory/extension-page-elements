@@ -17,7 +17,6 @@ function table($argStr = '')
             'tableWrapperClass' => ['(optional) Applies an CLASS to the table-wrapper div.', false],
             'headers' => ['[Comma-separated-list] List of column labels to define order and selection of columns.'.
                 'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', true],
-//                'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', false],
             'footers' => ['[Comma-separated-list] If set, a footer row is added. For selected columns cell content '.
                 'can be specified as "%sum" or "%count" (any other values rendered as text). '.
                 'E.g. footers: "name:%count, amount:%sum"', false],
@@ -31,8 +30,8 @@ function table($argStr = '')
             'interactive' => ['If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.', false],
             'tableButtons' => ['(true|list of buttons) If set, includes a row of buttons above the table to perform '.
                 'various actions. Available buttons: \'delete\', \'download\'.', false],
-//            'various actions. Available buttons: \'delete\', \'download\', \'add\'.', false],
-//        'editableBy' => ['(role) If set, restricts availability of tableButtons to specified user roles.', false],
+            'edit' => ['[true|delete,add,download].', false],
+            'editableBy' => ['[none,anyone,localhost,loggedin etc.].', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
@@ -43,10 +42,10 @@ function table($argStr = '')
 Renders data as an HTML table.
 
 Only for special use: 
-- 'masterFileRecKeys' \=> 'index' or '_uid' or '_origRecKey' or any recData element as '.xy'
+- 'masterFileRecKeyType' \=> 'index' or '_uid' or '_origRecKey' or any recData element as '.xy'
 - 'masterFileRecKeySort' \=> 'asc' or 'desc' 
 - 'masterFileRecKeySortOnElement' \=> name of a recData element as 'xy'
-- short form, e.g. 'masterFileRecKeys' \=> 'index,sort:name'
+- short form, e.g. 'masterFileRecKeyType' \=> 'index,sort:name'
 
 EOT,
     ];
@@ -61,6 +60,13 @@ EOT,
 
     // assemble output:
     $file = $args['file'];
+    if ($edit = $args['edit']) {
+        $args['tableButtons'] = $edit;
+        unset($args['edit']);
+        if ($args['editableBy'] === null) {
+            $args['editableBy'] = true;
+        }
+    }
 
     $file = resolvePath($file, relativeToPage: true);
     $ds = new DataTable($file, $args);

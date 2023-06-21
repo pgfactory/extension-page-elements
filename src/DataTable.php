@@ -4,6 +4,7 @@ namespace Usility\PageFactoryElements;
 
 require_once __DIR__ . '/Data2DSet.php';
 
+use Usility\MarkdownPlus\Permission;
 use Usility\PageFactory\PageFactory as PageFactory;
 use Usility\PageFactory\Data2DSet as Data2DSet;
 use Usility\PageFactory\TransVars;
@@ -54,6 +55,7 @@ class DataTable extends Data2DSet
     private $elementLabels;
     private $editRecs;
     protected $markLocked;
+    protected $isTableAdmin;
 
     /**
      * @param string $file
@@ -98,6 +100,11 @@ class DataTable extends Data2DSet
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
         $this->markLocked = $options['markLocked'] ?? false;
+        $editableBy = $options['editableBy'] ?? false;
+        if ($editableBy === true) {
+            $editableBy = 'localhost|loggedin';
+        }
+        $this->isTableAdmin = Permission::evaluate($editableBy);
 
 
         if ($this->tableHeaders && !is_array($this->tableHeaders)) {
@@ -111,6 +118,9 @@ class DataTable extends Data2DSet
             $this->parseArrayArg('footers');
         }
 
+        if (!$this->isTableAdmin) {
+            $this->tableButtons = false;
+        }
         if ($this->tableButtons === true) {
             $this->tableButtonDelete = true;
             $this->tableButtonDownload = true;
