@@ -76,9 +76,8 @@ EOT,
 
     if ($inx === 1) {
         $html .= $enlist->renderForm();
+        PageFactory::$pg->addAssets('ENLIST');
     }
-
-    PageFactory::$pg->addAssets('ENLIST');
 
     return [$html];
 } // form

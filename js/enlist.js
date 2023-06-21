@@ -34,7 +34,10 @@ const Enlist = {
       delButtons.forEach(function(delButton) {
         delButton.addEventListener('click', function(e) {
           e.stopPropagation();
-          Enlist.openPopup(this, 'del');
+          const hasFrozenClass = this.closest('.pfy-enlist-frozen');
+          if (!hasFrozenClass) {
+            Enlist.openPopup(this, 'del');
+          }
         });
       });
     } // delButtons

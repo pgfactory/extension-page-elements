@@ -449,6 +449,7 @@ EOT;
      */
     private function callback(array $data): string
     {
+        $setInx = (int)$data['setinx'];
         $setName = $this->getSetName((int)$data['setinx']);
         $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
         $dataset = $this->getDataset($setName);
@@ -461,7 +462,9 @@ EOT;
         unset($data['recid']);
         unset($data['setinx']);
 
-        if ($this->listFrozen) {
+        $sess = kirby()->session();
+        $listsFrozen = $sess->get('pfy.listsFrozen', []);
+        if ($listsFrozen[$this->pageId][$setInx]??true) {
             mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-error-deadline-exeeded }}');
         }
@@ -651,9 +654,6 @@ EOT;
             $title = translateDateTimes($title0);
             $title0 = trim(str_replace('%%', '', $title0));
         }
-        if ($deadline) {
-            $this->listFrozen = ($deadline < time());
-        }
 
         $this->title = $title;
 
@@ -670,6 +670,16 @@ EOT;
         $setnames[$this->pageId][$this->inx] = $this->datasetName;
         $sess->set('pfy.enlist-setnames', $setnames);
 
+        // determine whether list is past deadline:
+        if ($deadline) {
+            $this->listFrozen = ($deadline < time());
+        }
+        // record frozenList state in $sess for callback():
+        $listsFrozen = $sess->get('pfy.listsFrozen', []);
+        $listsFrozen[$this->pageId][$this->inx] = $this->listFrozen;
+        $sess->set('pfy.listsFrozen', $listsFrozen);
+
+        // prepare freezeTime threshold to apply to individual entries:
         $this->freezeTime = $this->options['freezeTime']??false;
         if ($this->freezeTime) {
             $this->freezeTime = time() - ($this->freezeTime * 3600); // freezeTime is in hours
