@@ -110,10 +110,10 @@ const tableHelper = {
     if (!form) {
       return;
     }
-    const parentForm = table.closest('.pfy-form-wrapper').querySelector('.pfy-form');
+    const parentForm = table.closest('form');
     const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     const editBtns = form.querySelectorAll('td .pfy-table-edit-button');
-    if (editBtns) {
+    if (editBtns && editBtns.length) {
       editBtns.forEach(function (editBtn) {
         editBtn.addEventListener('click', function () {
           // upon clicking one of the edit buttons:
@@ -153,7 +153,8 @@ const tableHelper = {
     if (!form) {
       return;
     }
-    const parentForm = table.closest('.pfy-form-wrapper').querySelector('.pfy-form');
+    // const parentForm = table.closest('.pfy-form-wrapper').querySelector('.pfy-form');
+    const parentForm = table.closest('form');
     const editBtn = form.querySelector('.pfy-table-new-rec');
     if (editBtn) {
       editBtn.addEventListener('click', function () {
