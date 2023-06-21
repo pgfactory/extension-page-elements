@@ -13,7 +13,7 @@ use function Usility\PageFactory\var_r as var_r;
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
-    'url,date,datetime-local,time,datetime,month,number,integer,range,tel,'.
+    'url,date,datetime-local,time,datetime,month,integer,number,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'button,reset,submit,cancel,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
@@ -92,6 +92,9 @@ class PfyForm extends Form
                 $this->showDirektFeedback = false;
             } elseif ($editData === true) {
                 $this->formOptions['editData'] = 'inpage';
+                if ($formOptions['showData'] === true) {
+                    $formOptions['showData'] = [];
+                }
             }
             if (!$formOptions['showData']) {
                 $formOptions['showData'] = [
@@ -296,8 +299,7 @@ EOT;
                 break;
             case 'integer':
             case 'number':
-                $type = 'number';
-                $elem = $this->addNumberElem($name, $label, $elemOptions);
+            $elem = $this->addIntegerElem($name, $label);
                 break;
             case 'email':
                 $elem = $this->addEmail($name, $label);
@@ -453,11 +455,11 @@ EOT;
      * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\TextInput
      */
-    private function addNumberElem(string $name, string|object $label, array $elemOptions): object
+    private function addIntegerElem(string $name, string|object $label): object
     {
         $elem = $this->addInteger($name, $label);
         return $elem;
-    } // addNumberElem
+    } // addIntegerElem
 
 
     /**
@@ -538,7 +540,11 @@ EOT;
     private function addCheckboxElem(string $name, string $label, array &$elemOptions): object
     {
         if ($elemOptions['options']??false) {
-            $checkboxes = parseArgumentStr($elemOptions['options']);
+            if (is_string($elemOptions['options'])) {
+                $checkboxes = parseArgumentStr($elemOptions['options']);
+            } else {
+                $checkboxes = $elemOptions['options'];
+            }
             $elem = $this->addCheckboxList($name, $label, $checkboxes);
             if ($elemOptions['preset']??false) {
                 $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
@@ -1059,18 +1065,19 @@ EOT;
             $elemOptions['disabled'] = false;
         }
 
-        // check choice options, convert to key:value if scalar:
-        if (isset($elemOptions['options'])) {
+        // check choice options, convert to key:value if string:
+        if (is_string($elemOptions['options']??false)) {
             $o = parseArgumentStr($elemOptions['options']);
             $out = '';
             foreach ($o as $k => $v) {
+                $v = str_replace("'", "\\'", $v);
                 if (is_int($k)) {
                     $out .= "$v:'$v',";
                 } else {
                     $out .= "$k:'$v',";
                 }
             }
-            $out= rtrim($out, ',');
+            $out = rtrim($out, ',');
             $elemOptions['options'] = rtrim($out, ',');
         }
 
