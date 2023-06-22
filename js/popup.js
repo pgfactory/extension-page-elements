@@ -388,15 +388,17 @@ function pfyPopup( options ) {
 
 
   this.trapFocus = function () {
-    const element = this.popup;
-    const focusableEls = element.querySelectorAll('a[href]:not([disabled]), button:not([disabled]), ' +
+    const popupWrapper = this.popup;
+    const focusableEls = popupWrapper.querySelectorAll(
+      'a[href]:not([disabled]), button:not([disabled]), ' +
       'textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), ' +
-      'input[type="checkbox"]:not([disabled]), select:not([disabled])');
+      'input[type="checkbox"]:not([disabled]), select:not([disabled]), ' +
+      'input[type="submit"]:not([disabled]), input[type="cancel"]:not([disabled]), input[type="button"]:not([disabled])');
     const firstFocusableEl = focusableEls[0];
     const lastFocusableEl = focusableEls[focusableEls.length - 1];
     const KEYCODE_TAB = 9;
 
-    element.addEventListener('keydown', function(e) {
+    popupWrapper.addEventListener('keydown', function(e) {
       const isTabPressed = (e.key === 'Tab' || e.keyCode === KEYCODE_TAB);
 
       if (!isTabPressed) {
