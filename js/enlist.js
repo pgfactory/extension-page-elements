@@ -35,7 +35,9 @@ const Enlist = {
         delButton.addEventListener('click', function(e) {
           e.stopPropagation();
           const hasFrozenClass = this.closest('.pfy-enlist-frozen');
-          if (!hasFrozenClass) {
+          if (hasFrozenClass && !Enlist.isEnlistAdmin) {
+            pfyAlert(`{{ pfy-enlist-deadline-expired-alert }}`);
+          } else {
             Enlist.openPopup(this, 'del');
           }
         });

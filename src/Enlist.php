@@ -454,6 +454,7 @@ EOT;
         $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
         $dataset = $this->getDataset($setName);
 
+        $message = '';
         $recId = $data['recid'];
         $data['_time'] = time();
 
@@ -464,9 +465,14 @@ EOT;
 
         $sess = kirby()->session();
         $listsFrozen = $sess->get('pfy.listsFrozen', []);
-        if ($listsFrozen[$this->pageId][$setInx]??true) {
-            mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-            reloadAgent(message: '{{ pfy-enlist-error-deadline-exeeded }}');
+        $deadlineExpired = $listsFrozen[$this->pageId][$setInx]??true;
+        if ($deadlineExpired) {
+            if ($this->isEnlistAdmin) {
+                $message = '{{ pfy-enlist-error-deadline-was-expired }}';
+            } else {
+                mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
+            }
         }
 
         if ($recId === '') {
@@ -486,7 +492,6 @@ EOT;
                     }
                 }
             }
-
 
             if ($exists) {
                 $prevRecId = array_keys($exists)[0];
@@ -512,7 +517,7 @@ EOT;
                 reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
             }
             mylog("EnList new entry: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-            reloadAgent();
+            reloadAgent(message: $message);
 
         // delete entry:
         } else {
@@ -520,8 +525,12 @@ EOT;
             if ($rec) {
                 $time = $rec['_time']??0;
                 if ($time < $this->freezeTime) {
-                    mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                    reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
+                    if ($this->isEnlistAdmin) {
+                        $message = '{{ pfy-enlist-del-freeze-time-expired }}';
+                    } else {
+                        mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                        reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
+                    }
                 }
 
                 $email = $data['Email']??'#####';
@@ -535,7 +544,8 @@ EOT;
                     $this->db->addRec($dataset, recKeyToUse:$setName);
                     $this->notifyOwner($rec, 'del', $setName);
                     mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                    reloadAgent(message: '{{ pfy-enlist-deleted }}');
+                    $message = $message?"<br>$message":'';
+                    reloadAgent(message: '{{ pfy-enlist-deleted }}'.$message);
                 }
             }
         }
@@ -651,6 +661,14 @@ EOT;
             }
             $pattern = ['%datetime' => $dateTimeStr, '%deadline' => $deadlineStr?:''];
             $title0 = str_replace(array_keys($pattern), array_values($pattern), $title);
+            $title = translateDateTimes($title0);
+            $title0 = trim(str_replace('%%', '', $title0));
+
+        } elseif ($deadlineStr = ($this->options['deadline'] ?? '')) {
+            $deadline = strtotime($deadlineStr);
+            $deadline = intval($deadline / 86400) * 86400 + 86400; // round up to end of day
+            $deadlineStr = date('l, d.F Y', $deadline - 86400);
+            $title0 = str_replace('%deadline', $deadlineStr, $title);
             $title = translateDateTimes($title0);
             $title0 = trim(str_replace('%%', '', $title0));
         }

@@ -218,6 +218,15 @@ pfy-enlist-delete:
   _:  Delete
 
 
+pfy-enlist-deadline-expired-alert:
+  de: Die Anmeldefrist ist abgelaufen
+  _:  Deadline expired
+
+pfy-enlist-error-deadline-was-expired:
+  de: Die Anmeldefrist wäre abgelaufen für Nicht-Admins
+  _:  Deadline would have been expired for non-admins
+
+
 pfy-enlist-popup-add-nofreeze-help:
   de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag später wieder löschen. </p>'
   de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag später wieder löschen. </p>'
@@ -239,7 +248,7 @@ pfy-enlist-error-rec-exists:
   _:  'An entry with this name already exists, but your e-mail address does not match.'
 
 
-pfy-enlist-error-deadline-exeeded:
+pfy-enlist-error-deadline-expired:
   de: 'Die Anmeldefrist ist abgelaufen.'
   _:  'Registration is closed.'
 
