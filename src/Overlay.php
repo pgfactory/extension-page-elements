@@ -7,28 +7,30 @@ use Usility\PageFactory\PageFactory as PageFactory;
 class Overlay extends PageElements
 {
     public static $inx = 1;
-    public function render(mixed $options, $mdCompile = true)
+    public function render(mixed $content, $mdCompile = true)
     {
         $inx = self::$inx++;
         $jsOptions = '';
 
-        if (is_string($options)) {
+        if (is_string($content)) {
             if ($mdCompile) {
-                $options = \Usility\PageFactory\compileMarkdown($options);
+                $content = \Usility\PageFactory\compileMarkdown($content);
             }
-            $options = <<<EOT
+            $content = <<<EOT
     <div id='pfy-overlay-$inx' class='pfy-overlay' style="display: none;">
-$options
+        <div class="pfy-overlay-inner">
+$content
+        </div>
     </div>
 EOT;
-            $this->pg->addBodyEndInjections($options);
+            $this->pg->addBodyEndInjections($content);
             $jsOptions = <<<EOT
-    contentFrom: 'pfy-overlay-$inx',
+    contentFrom: '#pfy-overlay-$inx .pfy-overlay-inner',
     popupClass: 'pfy-overlay',
 EOT;
 
-        } elseif (is_array($options)) {
-            foreach ($options as $key => $option) {
+        } elseif (is_array($content)) {
+            foreach ($content as $key => $option) {
                 if (is_bool($option)) {
                     $option = $option?'true':'false';
                 } else {
@@ -45,7 +47,6 @@ EOT;
         PageFactory::$pg->setBodyTagClass('pfy-overlay-open');
         return '';
     } // render
-
 
 
     public function set(mixed $options, $mdCompile = false): void
