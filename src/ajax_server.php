@@ -9,29 +9,29 @@ require_once __DIR__ . "/../../pagefactory/src/helper.php";
 
 function ajaxHandler(object $result): void
 {
-    $slug = $result->slug();
+    $pageId = $result->id();
 
     // handle lockRec:
     if (isset($_GET['lockRec'])) {
-        lockRec($_GET['lockRec'], $slug);
+        lockRec($_GET['lockRec'], $pageId);
         unset($_GET['lockRec']);
     }
 
     // handle unlockRec:
     if (isset($_GET['unlockRec'])) {
-        unlockRec($_GET['unlockRec'], $slug);
+        unlockRec($_GET['unlockRec'], $pageId);
         unset($_GET['unlockRec']);
     }
 
     // handle unlockAll:
     if (isset($_GET['unlockAll'])) {
-        unlockAll($slug);
+        unlockAll($pageId);
         unset($_GET['unlockAll']);
     }
 
     // handle getRec:
     if (isset($_GET['getRec'])) {
-        getRec($_GET['getRec'], $slug);
+        getRec($_GET['getRec'], $pageId);
         unset($_GET['getRec']);
     }
 } // ajaxHandler
@@ -68,9 +68,9 @@ function serverLog(): void
 
 
 
-function lockRec(string $recKey, string $slug): void
+function lockRec(string $recKey, string $pageId): void
 {
-    $rec = findRec($recKey, $slug);
+    $rec = findRec($recKey, $pageId);
     if ($rec) {
         try {
             $rec->lock();
@@ -84,17 +84,17 @@ function lockRec(string $recKey, string $slug): void
 } // lockRec
 
 
-function unlockAll(string $slug): void
+function unlockAll(string $pageId): void
 {
-    $db = openDb($slug);
+    $db = openDb($pageId);
     $db->unlockRecs();
      exit('"ok"');
 } // unlockRec
 
 
-function unlockRec(string $recKey, string $slug): void
+function unlockRec(string $recKey, string $pageId): void
 {
-    $rec = findRec($recKey, $slug);
+    $rec = findRec($recKey, $pageId);
     if ($rec) {
         $rec->unlock();
         exit('"ok"');
@@ -104,10 +104,10 @@ function unlockRec(string $recKey, string $slug): void
 } // unlockRec
 
 
-function getRec($recKey, $slug): void
+function getRec($recKey, $pageId): void
 {
     $recData = [];
-    $rec = findRec($recKey, $slug);
+    $rec = findRec($recKey, $pageId);
     if ($rec) {
         // lock record, if requested:
         if (isset($_GET['lock']) && !$rec->lock(blocking: true)) {
@@ -124,22 +124,22 @@ function getRec($recKey, $slug): void
 } // getRec
 
 
-function findRec($recKey, $slug)
+function findRec($recKey, $pageId)
 {
-    $recKey = deObfuscateRecKeys($recKey, $slug);
+    $recKey = deObfuscateRecKeys($recKey, $pageId);
     if (!$recKey) {
         exit('"recKey unknown"');
     }
 
-    $db = openDb($slug);
+    $db = openDb($pageId);
     return $db->find($recKey);
 } // findRec
 
 
-function openDb($slug)
+function openDb($pageId)
 {
     $session = kirby()->session();
-    $sessKey = "form:$slug:file";
+    $sessKey = "form:$pageId:file";
     $file = $session->get($sessKey);
     if (!$file) {
         exit('"Error: file unknown"');
@@ -151,10 +151,10 @@ function openDb($slug)
 } // openDb
 
 
-function deObfuscateRecKeys(string|array $data, string|false $slug = false): string|array
+function deObfuscateRecKeys(string|array $data, string|false $pageId = false): string|array
 {
-    $slug = $slug ?: PageFactory::$slug;
-    $sessKey = "form:$slug:tableRecKeyTab";
+    $pageId = $pageId ?: PageFactory::$pageId;
+    $sessKey = "form:$pageId:tableRecKeyTab";
     $session = kirby()->session();
     $tableRecKeyTab = $session->get($sessKey);
     if (is_string($data)) {
@@ -170,3 +170,33 @@ function deObfuscateRecKeys(string|array $data, string|false $slug = false): str
     }
     return $data;
 } // deObfuscateRecKeys
+
+
+function obfuscateRecKey(string $key, string|false $pageId = false): string
+{
+    $pageId = $pageId ?: PageFactory::$pageId;
+    $sessKey = "pfy:$pageId:keys";
+    $session = kirby()->session();
+    $tableRecKeyTab = $session->get($sessKey);
+    if (!$tableRecKeyTab || !($obfuscatedKey = array_search($key, $tableRecKeyTab))) {
+        $obfuscatedKey = \Usility\PageFactory\createHash();
+    }
+    $tableRecKeyTab[$obfuscatedKey] = $key;
+    $session->set($sessKey, $tableRecKeyTab);
+    return $obfuscatedKey;
+} // deObfuscateRecKey
+
+
+function deObfuscateRecKey(string $key, string|false $pageId = false): string
+{
+    $pageId = $pageId ?: PageFactory::$pageId;
+    $sessKey = "pfy:$pageId:keys";
+    $session = kirby()->session();
+    $tableRecKeyTab = $session->get($sessKey);
+    if ($tableRecKeyTab && (isset($tableRecKeyTab[$key]))) {
+        $key = $tableRecKeyTab[$key];
+    }
+    return $key;
+} // deObfuscateRecKey
+
+
