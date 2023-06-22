@@ -456,7 +456,7 @@ EOT;
 
         $message = '';
         $recId = $data['recid'];
-        $data['_time'] = time();
+        $data['_time'] = date('Y-m-d\TH:i');
 
         unset($data['_formInx']);
         unset($data['_cancel']);
@@ -523,7 +523,7 @@ EOT;
         } else {
             $rec = $dataset[$recId]??false;
             if ($rec) {
-                $time = $rec['_time']??0;
+                $time = strtotime($rec['_time']??0);
                 if ($time < $this->freezeTime) {
                     if ($this->isEnlistAdmin) {
                         $message = '{{ pfy-enlist-del-freeze-time-expired }}';
