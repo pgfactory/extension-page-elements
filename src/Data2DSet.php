@@ -55,7 +55,7 @@ class Data2DSet extends DataSet
         }
         list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
 
-        $sessKey = 'form:'.PageFactory::$slug.':tableRecKeyTab';
+        $sessKey = 'form:'.PageFactory::$pageId.':tableRecKeyTab';
         $tableRecKeyTab = PageFactory::$session->get($sessKey);
 
         foreach ($data as $recKey => $rec) {

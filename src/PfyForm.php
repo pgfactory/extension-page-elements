@@ -135,8 +135,10 @@ class PfyForm extends Form
         $res = false;
         if ($this->isSuccess()) {
             $res = $this->handleReceivedData($this->formOptions['formInx']??1);
-            if (!$res && $this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
-                reloadAgent();
+            if ($res !== false) { // false = data was for other form
+                if (!$res && $this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+                    reloadAgent();
+                }
             }
         }
         if (!$res) {
@@ -179,7 +181,8 @@ EOT;
         if ($formOptions['recId']??false) {
             $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $formOptions['recId'], 'default' => '']);
         } else {
-            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
+            $obfuscatedKey = obfuscateRecKey($this->formIndex);
+            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $obfuscatedKey, 'default' => $obfuscatedKey]);
         }
 
         foreach ($formElements as $name => $rec) {
@@ -585,7 +588,7 @@ EOT;
     /**
      * @return string
      */
-    public function handleReceivedData(int $formInx): string
+    public function handleReceivedData(int $formInx): string|false
     {
         $html = '';
         $dataRec = $this->getValues(true);
@@ -611,6 +614,11 @@ EOT;
         $formToken = $dataRec['_formInx']??false;
         if (!$formToken || isset($_POST['cancel'])) {
             return '';
+        }
+
+        $formToken = deObfuscateRecKey($formToken);
+        if ($formToken != $formInx) {
+            return false;
         }
 
         // _formInx either contains form-index (integer) or an recKey (hash string, valid only per session).
@@ -643,21 +651,13 @@ EOT;
             if ($err) {
                 $err = TransVars::getVariable($err, true);
                 $html = "<div class='pfy-form-error'>$err</div>\n";
+                mylog($err, 'form-log.txt');
+            } else {
+                $logMsg = 'Stored: '.PageFactory::$pageId."[$formToken] ";
+                $logMsg .= var_r($dataRec);
+                mylog($logMsg, 'form-log.txt');
             }
         }
-        // Future: customResponseEvaluation
-        //        if ($fun = ($this->formOptions['customResponseEvaluation']??false)) {
-        //           if (function_exists($fun)) {
-        //               $html = $fun();
-        //           }
-        //        } elseif ($this->formOptions['file']) {
-        //            $this->file = $this->formOptions['file'];
-        //            $err = $this->storeSubmittedData($dataRec);
-        //            if ($err) {
-        //                $err = TransVars::getVariable($err, true);
-        //                $html = "<div class='pfy-form-error'>$err</div>\n";
-        //            }
-        //        }
 
         // if no error (i.e. error-message in $html) -> notify owner & create feedback:
         if (!$html) {
@@ -799,7 +799,7 @@ EOT;
         $this->db = new DataSet($this->formOptions['file'], [
             'masterFileRecKeyType' => 'index',
         ]);
-        $sessKey = 'form:'.PageFactory::$slug.':file';
+        $sessKey = 'form:'.PageFactory::$pageId.':file';
         PageFactory::$session->set($sessKey, $this->formOptions['file']);
         return $this->db;
     } // openDB

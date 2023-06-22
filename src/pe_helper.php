@@ -76,7 +76,6 @@ function handleUrlToken()
     }
 
     // remove the urlToken:
-//        $target = page()->url();
-    $target = PageFactory::$appUrl . PageFactory::$slug;
+    $target = PageFactory::$appUrl . PageFactory::$pageId;
     \Usility\PageFactory\reloadAgent($target);
 } // handleUrlToken

@@ -200,9 +200,6 @@ EOT,
         list($options, $sourceCode, $inx, $macroName, $auxOptions) = $res;
         $html = $sourceCode;
     }
-if ($inx !== 1) {
-    throw new \Exception("Forms: multiple instances not possible yet.");
-}
     $options['formInx'] = $inx;
 
     if ($options['maxCount'] && !$options['minRows']) {
