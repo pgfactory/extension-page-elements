@@ -673,7 +673,7 @@ function pfyPopupPromise( options ) {
 function pfyConfirm( options ) {
   if (typeof options === 'string') {
     let text = options;
-    let options = {};
+    options = {};
     options.text = text;
   }
   if (typeof options.triggerSource === 'undefined') {
@@ -704,7 +704,7 @@ function pfyConfirm( options ) {
 function pfyAlert( options ) {
   if (typeof options === 'string') {
     let text = options;
-    let options = {};
+    options = {};
     options.text = text;
   }
   if (typeof options.triggerSource === 'undefined') {
