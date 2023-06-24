@@ -50,6 +50,9 @@ $focus-color: orange;
     );
     cursor: not-allowed;
   }
+  button[disabled] {
+    opacity: 0.5;
+  }
 
 
   .pfy-interactive {

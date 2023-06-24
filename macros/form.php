@@ -95,7 +95,7 @@ function form($args = '')
 
 #### Example:
 
-    @@@ .screen-only
+    @@@ .pfy-screen-only
     ## Form
     @@@
     \{{ form(

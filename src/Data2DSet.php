@@ -23,7 +23,6 @@ class Data2DSet extends DataSet
 {
     protected array $columnKeys = [];
     private string $unknownValue = UNKNOWN;
-    private bool $obfuscateRecId = false;
 
     /**
      * @param string $file
@@ -37,7 +36,6 @@ class Data2DSet extends DataSet
         if ($unknown = $options['unknownValue']??false) {
             $this->unknownValue = $unknown;
         }
-        $this->obfuscateRecId = $options['obfuscateRecId']??true;
     } // __construct
 
 
@@ -54,9 +52,6 @@ class Data2DSet extends DataSet
             return []; // nothing to do
         }
         list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
-
-        $sessKey = 'form:'.PageFactory::$pageId.':tableRecKeyTab';
-        $tableRecKeyTab = PageFactory::$session->get($sessKey);
 
         foreach ($data as $recKey => $rec) {
             $newRec = [];
@@ -100,20 +95,8 @@ class Data2DSet extends DataSet
                 $newRec['_locked'] = $origRec->isLocked();
             }
 
-            if ($this->obfuscateRecId) {
-                if ($tableRecKeyTab && ($tableRecKeyTab[$recKey]??false)) {
-                    $recKey = $tableRecKeyTab[$recKey];
-                } else {
-                    $rk = createHash();
-                    $tableRecKeyTab[$recKey] = $rk;
-                    $recKey = $rk;
-                }
-            }
-
             $data2D[$recKey] = $this->arrayCombine($elementKeys, $newRec);
         }
-
-        PageFactory::$session->set($sessKey, $tableRecKeyTab);
 
         $this->nRows = sizeof($data2D)-1;
         $this->columnKeys = $headerElems;

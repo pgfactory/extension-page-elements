@@ -10,21 +10,22 @@ const tableHelper = {
     const tables = document.querySelectorAll('.pfy-table');
     if ((typeof tables !== 'undefined') && tables.length) {
       tables.forEach(function (table) {
+        const tableInx = table.dataset.tableinx;
         tableHelper.setupPropagateCheckbox(table);
         tableHelper.setupOpenDeleteRecordsDialog(table);
         tableHelper.setupDownloadButton(table);
-        tableHelper.setupEditButtons(table);
-        tableHelper.setupNewRecButton(table);
+        tableHelper.setupEditButtons(table, tableInx);
+        tableHelper.setupNewRecButton(table, tableInx);
         tableHelper.setupUnloadEvent(table);
       });
     }
   }, // init
 
 
-  setupUnloadEvent: function(table) {
+  setupUnloadEvent: function(table, tableInx) {
     window.addEventListener('beforeunload', (event) => {
       mylog('unlocking locked records');
-      tableHelper.unlockRecs();
+      tableHelper.unlockRecs(tableInx);
     });
   }, // setupUnloadEvent
 
@@ -55,16 +56,17 @@ const tableHelper = {
     if (deleteButton) {
       deleteButton.addEventListener('click', function (e) {
         e.stopPropagation();
-        var selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+        const selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+        let options = {};
         if (!selected.length) {
-          currentlyOpenPopup = pfyPopup({
+          options = {
             text: `{{ pfy-table-delete-nothing-selected }}`,
             header: `{{ pfy-table-delete-recs-header }}`,
             closeOnBgClick: true,
             buttons: 'Ok'
-          });
+          };
         } else {
-          currentlyOpenPopup = pfyPopup({
+          options = {
             text: `{{ pfy-data-delete-records }}`,
             header: `{{ pfy-table-delete-recs-header }}`,
             closeOnBgClick: true,
@@ -75,14 +77,15 @@ const tableHelper = {
               form.setAttribute('action', pageUrl + '?delete');
               form.submit();
             }
-          });
+          };
         }
+        currentlyOpenPopup = pfyPopup(options);
       });
     }
   }, // setupOpenDeleteRecordsDialog
 
 
-  setupDownloadButton: function (table) {
+  setupDownloadButton: function (table, tableInx) {
     const form = table.closest('.pfy-table-wrapper').querySelector('form');
     if (!form) {
       return;
@@ -91,8 +94,6 @@ const tableHelper = {
     if (downloadBtn) {
       downloadBtn.addEventListener('click', function () {
         const id = table.getAttribute('id');
-        const tableInx = id.replace(/\D*/, '');
-        mylog('tableInx: ' + tableInx);
         currentlyOpenPopup = pfyPopup({
           text: pfyDownloadDialog[tableInx],
           header: `{{ pfy-popup-download-header }}`,
@@ -105,14 +106,16 @@ const tableHelper = {
   }, // setupDownloadButton
 
 
-  setupEditButtons: function (table) {
-    const form = table.closest('.pfy-table-wrapper').querySelector('form');
-    if (!form) {
+  setupEditButtons: function (table, tableInx) {
+    const tableFormWrapper = table.closest('.pfy-form-and-table-wrapper');
+    if (!tableFormWrapper) {
+      mylog('Error: .pfy-form-and-table-wrapper not present');
+    }
+    const tableForm = tableFormWrapper.querySelector('.pfy-form');
+    if (!tableForm) {
       return;
     }
-    const parentForm = table.closest('form');
-    const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
-    const editBtns = form.querySelectorAll('td .pfy-table-edit-button');
+    const editBtns = table.querySelectorAll('td .pfy-table-edit-button');
     if (editBtns && editBtns.length) {
       editBtns.forEach(function (editBtn) {
         editBtn.addEventListener('click', function () {
@@ -122,7 +125,9 @@ const tableHelper = {
           const recKey = tr.dataset.reckey ?? '';
 
           // get latest data for this record:
-          execAjaxPromise('getRec='+recKey+'&lock&ajax', {})
+          const args = 'getRec='+recKey+'&datasrcinx='+tableInx+'&lock';
+          mylog('fetching data record '+recKey);
+          execAjaxPromise(args, {})
             .then(function (data) {
               if (data.status === 'error') {
                 // handle case where rec locked by somebody else:
@@ -133,8 +138,9 @@ const tableHelper = {
                 return;
               }
               // popup is open, now prepare the form, inject obtained data:
-              tableHelper.prepareEditForm(table, parentForm, editbyPopupMode, recKey, data, editBtn);
-              const input1 = parentForm.querySelector('input');
+              mylog(data);
+              tableHelper.prepareEditForm(table, tableForm, recKey, data, editBtn, tableInx);
+              const input1 = tableForm.querySelector('input');
               if (input1) {
                 input1.focus();
               }
@@ -148,58 +154,65 @@ const tableHelper = {
   }, // setupEditButtons
 
 
-  setupNewRecButton: function (table) {
-    const form = table.closest('.pfy-table-wrapper').querySelector('form');
-    if (!form) {
+  setupNewRecButton: function (table, tableInx) {
+    const formWrapper = table.closest('.pfy-form-wrapper');
+    if (!formWrapper) {
       return;
     }
-    // const parentForm = table.closest('.pfy-form-wrapper').querySelector('.pfy-form');
-    const parentForm = table.closest('form');
-    const editBtn = form.querySelector('.pfy-table-new-rec');
-    if (editBtn) {
-      editBtn.addEventListener('click', function () {
-        const options = {
-          header: `{{ pfy-table-new-rec-popup-header }}`,
-          contentFrom: parentForm,
-          closeOnBgClick: false,
-          id: 'pfy-popup-form',
-          onOpen: function () {
-            mylog('prepareEditForm - onOpen new');
-            const form = document.querySelector('#pfy-popup-form .pfy-form');
-            if (form) {
-              const cancelInputs = form.querySelectorAll('input.pfy-cancel');
-              if (cancelInputs.length) {
-                cancelInputs.forEach(function(input) {
-                  input.addEventListener('click', function(e) {
-                    pfyPopupClose();
-                    tableHelper.unlockRecs();
-                    // set newRecButton back to not-expanded:
-                    const tableWrapper = table.closest('.pfy-table-wrapper');
-                    const newRecButton = tableWrapper.querySelector('.pfy-table-new-rec');
-                    if (newRecButton) {
-                      newRecButton.setAttribute('aria-expanded', 'false');
-                    }
+    const parentForm = formWrapper.querySelector('.pfy-form');
+    const newRecBtn = formWrapper.querySelector('.pfy-table-new-rec');
+    if (newRecBtn) {
+      newRecBtn.addEventListener('click', function () {
+        const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
+        if (editbyPopupMode) {
+          const options = {
+            header: `{{ pfy-table-new-rec-popup-header }}`,
+            contentFrom: parentForm,
+            closeOnBgClick: false,
+            id: 'pfy-popup-form',
+            onOpen: function () {
+              mylog('prepareEditForm - onOpen new');
+              const form = document.querySelector('#pfy-popup-form .pfy-form');
+              if (form) {
+                const cancelInputs = form.querySelectorAll('input.pfy-cancel');
+                if (cancelInputs.length) {
+                  cancelInputs.forEach(function(input) {
+                    input.addEventListener('click', function(e) {
+                      pfyPopupClose();
+                      tableHelper.unlockRecs(tableInx);
+                      // set newRecButton back to not-expanded:
+                      const tableWrapper = table.closest('.pfy-table-wrapper');
+                      const newRecButton = tableWrapper.querySelector('.pfy-table-new-rec');
+                      if (newRecButton) {
+                        newRecButton.setAttribute('aria-expanded', 'false');
+                      }
+                    });
                   });
-                });
+                }
               }
-            }
-            tableHelper.enableEditButtons(table);
-          },
-        };
-        pfyPopup(options);
-        editBtn.setAttribute('aria-expanded', 'true');
+              tableHelper.enableEditButtons(table);
+            },
+          };
+          tableHelper.popupForm(options, editbyPopupMode, parentForm);
+        } else {
+          const input1 = parentForm.querySelector('.pfy-input-wrapper input');
+          if (input1) {
+            input1.focus();
+          }
+        }
+        newRecBtn.setAttribute('aria-expanded', 'true');
       });
     }
-  }, // setupEditButtons
+  }, // setupNewRecButton
 
 
-  setupCancelButton: function(table) {
+  setupCancelButton: function(table, tableInx) {
     const cancelInputs = document.querySelectorAll('#pfy-popup-form input.pfy-cancel');
     if (cancelInputs.length) {
       cancelInputs.forEach(function(input) {
         input.addEventListener('click', function(e) {
           pfyPopupClose();
-          tableHelper.unlockRecs();
+          tableHelper.unlockRecs(tableInx);
           const newRecOpenButton = table.querySelector('.pfy-table-new-rec');
           if (newRecOpenButton) {
             newRecOpenButton.setAttribute('aria-expanded', 'false');
@@ -210,7 +223,8 @@ const tableHelper = {
   }, // setupCancelButton
 
 
-  prepareEditForm: function (table, parentForm, editbyPopupMode, recKey, data, editBtn) {
+  prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
+    const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     if (editbyPopupMode) {
       const options = {
         id: 'pfy-popup-form',
@@ -218,7 +232,7 @@ const tableHelper = {
         contentFrom: parentForm,
         closeOnBgClick: false,
         onClose: function () {
-          tableHelper.unlockRecs();
+          tableHelper.unlockRecs(tableInx);
         },
         onOpen: function () {
           mylog('prepareEditForm - onOpen');
@@ -228,27 +242,45 @@ const tableHelper = {
             pfyFormsHelper.init(form);
             pfyFormsHelper.setupCancelButtonHandler(form);
             pfyFormsHelper.presetForm(form, data, recKey);
-            tableHelper.setupCancelButton(table);
+            tableHelper.setupCancelButton(table, tableInx);
           }
-          tableHelper.enableEditButtons(table);
         }
       };
-      pfyPopupPromise(options)
+      tableHelper.popupForm(options, editbyPopupMode, parentForm)
         .then(function (data) {
           tableHelper.enableEditButtons(table);
           editBtn.setAttribute('aria-expanded', 'false');
         })
         .then(function () {});
-    } else {
+   } else {
       pfyFormsHelper.presetForm(parentForm, data, recKey);
       tableHelper.enableEditButtons(table);
     }
-
   }, // prepareEditForm
 
 
+  popupForm: function(options, editbyPopupMode, parentForm) {
+    if (editbyPopupMode === true) {
+      if (parentForm.classList.contains('pfy-fully-hidden')) {
+        const id = parentForm.getAttribute('id');
+        const wrapperId = id + '-wrapper';
+        let html = parentForm.outerHTML;
+        html =  html.replace(/pfy-fully-hidden/, '');
+        const wrapperHtml = '<div id="' + wrapperId + '" class="pfy-fully-hidden"></div>';
+        let form = document.getElementById(id);
+        form.outerHTML = wrapperHtml;
+        let formWrapper = document.getElementById(wrapperId);
+        formWrapper.innerHTML = html;
+        parentForm = formWrapper.querySelector('.pfy-form');
+        options.contentFrom = parentForm;
+      }
+    }
+    return pfyPopupPromise(options);
+  }, // popupForm
+
+
   disableEditButtons: function (table) {
-    const editButtons = table.querySelectorAll('.pfy-table-edit-button');
+    const editButtons = document.querySelectorAll('.pfy-table-wrapper button');
     if (editButtons) {
       editButtons.forEach(function (editButton) {
         editButton.disabled = true;
@@ -258,7 +290,7 @@ const tableHelper = {
 
 
   enableEditButtons: function (table) {
-    const editButtons = table.querySelectorAll('.pfy-table-edit-button');
+    const editButtons = document.querySelectorAll('.pfy-table-wrapper button');
     if (editButtons) {
       editButtons.forEach(function (editButton) {
         editButton.disabled = false;
@@ -267,15 +299,29 @@ const tableHelper = {
   }, // enableEditButtons
 
 
-  unlockRecs: function () {
+  unlockRecs: function (tableInx) {
     mylog('unlocking locked records');
-    execAjaxPromise('unlockAll', {})
-      .then(function (data) {
-        mylog(data);
-      })
-      .then(function (msg) {
-      });
-
+    if (typeof tableInx === 'undefined') {
+      const tables = document.querySelectorAll('.pfy-table');
+      if (tables) {
+        tables.forEach(function (table) {
+          const tableInx = table.dataset.tableinx;
+          const args = 'unlockAll' + '&datasrcinx=' + tableInx;
+          execAjaxPromise(args, {})
+            .then(function (data) {
+              mylog(data);
+            })
+            .then(function (msg) {});
+        });
+      }
+    } else {
+      const args = 'unlockAll' + '&datasrcinx=' + tableInx;
+      execAjaxPromise(args, {})
+        .then(function (data) {
+          mylog(data);
+        })
+        .then(function (msg) {});
+    }
   }, // unlockRecs
 
 }; // tableHelper

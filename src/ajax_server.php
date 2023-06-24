@@ -7,38 +7,48 @@ use Usility\PageFactory\DataSet;
 require_once __DIR__ . "/../../pagefactory/src/helper.php";
 
 
+/**
+ * @param object $result
+ * @return void
+ */
 function ajaxHandler(object $result): void
 {
     $pageId = $result->id();
+    $dataSrcInx = get('datasrcinx', null);
+    if (!$dataSrcInx || ($dataSrcInx === 'undefined')) {
+        exit('"not ok: ajaxHandler didn\'t receive datasrcinx"');
+    }
 
     // handle lockRec:
     if (isset($_GET['lockRec'])) {
-        lockRec($_GET['lockRec'], $pageId);
+        lockRec($_GET['lockRec'], $pageId, $dataSrcInx);
         unset($_GET['lockRec']);
     }
 
     // handle unlockRec:
     if (isset($_GET['unlockRec'])) {
-        unlockRec($_GET['unlockRec'], $pageId);
+        unlockRec($_GET['unlockRec'], $pageId, $dataSrcInx);
         unset($_GET['unlockRec']);
     }
 
     // handle unlockAll:
     if (isset($_GET['unlockAll'])) {
-        unlockAll($pageId);
+        unlockAll($pageId, $dataSrcInx);
         unset($_GET['unlockAll']);
     }
 
     // handle getRec:
     if (isset($_GET['getRec'])) {
-        getRec($_GET['getRec'], $pageId);
+        getRec($_GET['getRec'], $pageId, $dataSrcInx);
         unset($_GET['getRec']);
     }
+    exit('"not ok: command unknown"');
 } // ajaxHandler
 
 
 /**
  * Intercepts HTTP requests '?log', sends them to log file and exits immediately.
+ *  Test: url?ajax&log=Text
  * @return void
  * @throws Exception
  */
@@ -67,10 +77,15 @@ function serverLog(): void
 } // serverLog
 
 
-
-function lockRec(string $recKey, string $pageId): void
+/**
+ * @param string $recKey
+ * @param string $pageId
+ * @param string $dataSrcInx
+ * @return void
+ */
+function lockRec(string $recKey, string $pageId, string $dataSrcInx): void
 {
-    $rec = findRec($recKey, $pageId);
+    $rec = findRec($recKey, $pageId, $dataSrcInx);
     if ($rec) {
         try {
             $rec->lock();
@@ -84,17 +99,28 @@ function lockRec(string $recKey, string $pageId): void
 } // lockRec
 
 
-function unlockAll(string $pageId): void
+/**
+ * @param string $pageId
+ * @param string $dataSrcInx
+ * @return void
+ */
+function unlockAll(string $pageId, string $dataSrcInx): void
 {
-    $db = openDb($pageId);
+    $db = openDb($pageId, $dataSrcInx);
     $db->unlockRecs();
      exit('"ok"');
 } // unlockRec
 
 
-function unlockRec(string $recKey, string $pageId): void
+/**
+ * @param string $recKey
+ * @param string $pageId
+ * @param string $dataSrcInx
+ * @return void
+ */
+function unlockRec(string $recKey, string $pageId, string $dataSrcInx): void
 {
-    $rec = findRec($recKey, $pageId);
+    $rec = findRec($recKey, $pageId, $dataSrcInx);
     if ($rec) {
         $rec->unlock();
         exit('"ok"');
@@ -104,10 +130,17 @@ function unlockRec(string $recKey, string $pageId): void
 } // unlockRec
 
 
-function getRec($recKey, $pageId): void
+/**
+ * Test: url?ajax&getRec=HASH&datasrcinx=1
+ * @param $recKey
+ * @param $pageId
+ * @param $dataSrcInx
+ * @return void
+ */
+function getRec($recKey, $pageId, $dataSrcInx): void
 {
     $recData = [];
-    $rec = findRec($recKey, $pageId);
+    $rec = findRec($recKey, $pageId, $dataSrcInx);
     if ($rec) {
         // lock record, if requested:
         if (isset($_GET['lock']) && !$rec->lock(blocking: true)) {
@@ -124,37 +157,55 @@ function getRec($recKey, $pageId): void
 } // getRec
 
 
-function findRec($recKey, $pageId)
+/**
+ * @param $recKey
+ * @param $pageId
+ * @param $dataSrcInx
+ * @return mixed|object|void
+ * @throws Exception
+ */
+function findRec($recKey, $pageId, $dataSrcInx)
 {
-    $recKey = deObfuscateRecKeys($recKey, $pageId);
     if (!$recKey) {
         exit('"recKey unknown"');
     }
 
-    $db = openDb($pageId);
+    $db = openDb($pageId, $dataSrcInx);
     return $db->find($recKey);
 } // findRec
 
 
-function openDb($pageId)
+/**
+ * @param $pageId
+ * @param $dataSrcInx
+ * @return DataSet|void
+ * @throws Exception
+ */
+function openDb($pageId, $dataSrcInx)
 {
     $session = kirby()->session();
-    $sessKey = "form:$pageId:file";
-    $file = $session->get($sessKey);
+    $fileSessKey = "db:$pageId:$dataSrcInx:file";
+    $file = $session->get($fileSessKey);
     if (!$file) {
         exit('"Error: file unknown"');
     }
     $db = new DataSet($file, [
         'masterFileRecKeyType' => 'index',
+        'obfuscateSessKey' => "obfuscate:$pageId:keys",
     ]);
     return $db;
 } // openDb
 
 
+/**
+ * @param string|array $data
+ * @param string|false $pageId
+ * @return string|array
+ */
 function deObfuscateRecKeys(string|array $data, string|false $pageId = false): string|array
 {
     $pageId = $pageId ?: PageFactory::$pageId;
-    $sessKey = "form:$pageId:tableRecKeyTab";
+    $sessKey = "obfuscate:$pageId:tableRecKeyTab";
     $session = kirby()->session();
     $tableRecKeyTab = $session->get($sessKey);
     if (is_string($data)) {
@@ -170,33 +221,3 @@ function deObfuscateRecKeys(string|array $data, string|false $pageId = false): s
     }
     return $data;
 } // deObfuscateRecKeys
-
-
-function obfuscateRecKey(string $key, string|false $pageId = false): string
-{
-    $pageId = $pageId ?: PageFactory::$pageId;
-    $sessKey = "pfy:$pageId:keys";
-    $session = kirby()->session();
-    $tableRecKeyTab = $session->get($sessKey);
-    if (!$tableRecKeyTab || !($obfuscatedKey = array_search($key, $tableRecKeyTab))) {
-        $obfuscatedKey = \Usility\PageFactory\createHash();
-    }
-    $tableRecKeyTab[$obfuscatedKey] = $key;
-    $session->set($sessKey, $tableRecKeyTab);
-    return $obfuscatedKey;
-} // deObfuscateRecKey
-
-
-function deObfuscateRecKey(string $key, string|false $pageId = false): string
-{
-    $pageId = $pageId ?: PageFactory::$pageId;
-    $sessKey = "pfy:$pageId:keys";
-    $session = kirby()->session();
-    $tableRecKeyTab = $session->get($sessKey);
-    if ($tableRecKeyTab && (isset($tableRecKeyTab[$key]))) {
-        $key = $tableRecKeyTab[$key];
-    }
-    return $key;
-} // deObfuscateRecKey
-
-

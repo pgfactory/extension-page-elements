@@ -149,9 +149,9 @@ const pfyFormsHelper = {
     const simpleTypes = 'hidden,submit,cancel,checkbox,radio,button';
     if (data) {
       if (typeof recId !== 'undefined') {
-        const formInx = form.querySelector('input[name=_formInx]');
-        if (formInx) {
-          formInx.setAttribute('value', recId);
+        const recKey = form.querySelector('input[name=_recKey]');
+        if (recKey) {
+          recKey.setAttribute('value', recId);
         }
       }
       for (let name in data) {

@@ -56,6 +56,7 @@ class DataTable extends Data2DSet
     private $editRecs;
     protected $markLocked;
     protected $isTableAdmin;
+    private bool $dialogInitialized = false;
 
     /**
      * @param string $file
@@ -65,12 +66,6 @@ class DataTable extends Data2DSet
     public function __construct(string $file, array $options = [])
     {
         parent::__construct($file, $options);
-        if (isset($_GET['delete'])) {
-            if ($_POST['pfy-reckey']??false) {
-                $this->handleTableRequests();
-            }
-        }
-
         if ($options['inx']??false) {
             $this->inx = $GLOBALS['tableInx'] = $options['inx'];
         } elseif (isset($GLOBALS['tableInx'])) {
@@ -79,6 +74,14 @@ class DataTable extends Data2DSet
         } else {
             $this->inx = $GLOBALS['tableInx'] = 1;
         }
+
+        if (isset($_GET['delete'])) {
+            // skip, if no recKeys supplied or recKeys belong to some other table:
+            if (($_POST['pfy-reckey']??false) && ($this->inx == ($_POST['tableinx']??false))) {
+                $this->handleTableRequests();
+            }
+        }
+
         $this->tableId = isset($options['tableId']) && $options['tableId'] ? $options['tableId'] : "pfy-table-$this->inx";
         $this->tableClass = isset($options['tableClass']) && $options['tableClass'] ? $options['tableClass'] : 'pfy-table';
         $this->tableWrapperClass = isset($options['tableWrapperClass']) && $options['tableWrapperClass'] ? $options['tableWrapperClass'] : 'pfy-table-wrapper';
@@ -88,7 +91,9 @@ class DataTable extends Data2DSet
         $this->caption = isset($options['caption']) && $options['caption'] ? $options['caption'] : false;
         $captionPosition = isset($options['captionPosition']) && $options['captionPosition'] ? $options['captionPosition'] : 'b';
         $this->captionAbove = $captionPosition[0] === 'a';
+        $this->obfuscateRecKeys = $options['obfuscateRecKeys'] ?? false;
         $this->interactive = $options['interactive'] ?? false;
+        $editData = $options['editTable'] ?? false;
         $this->tableButtons = $options['tableButtons'] ?? false;
         $this->downloadFilename = isset($options['downloadFilename']) && $options['downloadFilename'] ? $options['downloadFilename'] : base_name($file, false);
         $this->showRowNumbers = $options['showRowNumbers'] ?? false;
@@ -100,7 +105,19 @@ class DataTable extends Data2DSet
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
         $this->markLocked = $options['markLocked'] ?? false;
-        $editableBy = $options['editableBy'] ?? false;
+        $editableBy = $options['editableBy'] ?? true;
+
+        // { permission: localhost, mode: popup, tableButtons: 'delete,new,download,edit'}
+        if ($editData) {
+            if (is_array($editData)) {
+                $editableBy = ($editableBy !== true)? $editableBy: ($editData['permission']??true);
+                $this->editRecs = $this->editRecs?: ($editData['mode']??'inpage');
+                $this->tableButtons = $this->tableButtons?:  ($editData['tableButtons']??true);
+            } elseif ($editData === true) {
+                $this->tableButtons = $this->tableButtons?:  true;
+            }
+        }
+
         if ($editableBy === true) {
             $editableBy = 'localhost|loggedin';
         }
@@ -232,6 +249,9 @@ class DataTable extends Data2DSet
             $this->injectColumn('%row-selectors');
         }
     } // prependServiceRows
+
+
+
     /**
      * Injects a new column of data into the array.
      * Examples:
@@ -303,7 +323,7 @@ class DataTable extends Data2DSet
     private function renderTableHead(): string
     {
         $data = &$this->tableData;
-        $out = "<table id='$this->tableId' class='$this->tableClass'>\n";
+        $out = "<table id='$this->tableId' class='$this->tableClass' data-tableinx='$this->inx'>\n";
 
         // caption:
         if ($this->caption) {
@@ -455,6 +475,7 @@ class DataTable extends Data2DSet
         $out = '';
         if ($this->tableButtons) {
             $out .= "  <form method='post'>\n"; // form around table for selectors
+            $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
         }
         $buttons = '';
         if ($this->tableButtonDelete) {
@@ -570,7 +591,8 @@ pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}<br>{{ pfy-tabl
 EOT;
         }
 
-        if ($this->inx === 1) {
+        if (!$this->dialogInitialized) {
+            $this->dialogInitialized = true;
             $js = "var pfyDownloadDialog = [];\n" . $js;
         }
         $js = TransVars::translate($js);

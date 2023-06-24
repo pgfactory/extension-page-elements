@@ -29,6 +29,7 @@ class PfyForm extends Form
 {
     private array $formOptions;
     private array $elemOptions;
+    private array $tableOptions = [];
     private array $fieldNames = [];
     private array $formElements = [];
     private array $choiceOptions = [];
@@ -54,18 +55,27 @@ class PfyForm extends Form
     public function __construct($formOptions = [])
     {
         $this->formOptions = &$formOptions;
+        $tableOptions = [];
         $this->formIndex = $formOptions['formInx'] ?? 1;
+
+        $tableOptions['showData']           = $formOptions['showData']??false;
+        $tableOptions['editData']           = $formOptions['editData']??false;
+        $tableOptions['sort']               = $formOptions['sortData']??false;
+        $tableOptions['footers']            = $formOptions['tableFooters']??false;
+        $tableOptions['minRows']            = $formOptions['minRows']??false;
+        $tableOptions['interactive']        = $formOptions['interactiveTable']??false;
+        $tableOptions['includeSystemFields']= $formOptions['includeSystemFields']??false;
+        $this->tableOptions = $this->parseTableOptions($tableOptions);
+        unset($tableOptions);
+
         if (isset($_GET['delete'])) {
             if ($_POST['pfy-reckey']??false) {
-                $_POST['pfy-reckey'] = deObfuscateRecKeys($_POST['pfy-reckey']);
                 $this->openDataTable(); // triggers delete-handler
             }
         }
 
         // make sure essential options are instantiated:
         $formOptions['file']                = $formOptions['file']??false;
-        $formOptions['showData']            = $formOptions['showData']??false;
-        $formOptions['editData']            = $formOptions['editData']??false;
         $formOptions['confirmationText']    = $formOptions['confirmationText']??false;
         $formOptions['mailTo']              = $formOptions['mailTo']??false;
         $formOptions['maxCount']            = $formOptions['maxCount']??false;
@@ -79,54 +89,21 @@ class PfyForm extends Form
         $formOptions['class']               = $formOptions['class']??false;
         $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
 
+        if ($this->tableOptions['editTable']) {
+            $this->formWrapperClass .= ' pfy-form-and-table-wrapper';
+        }
+
         // open database:
         if ($formOptions['file']) {
             $this->openDB();
         }
-
-        // option 'editData':
-        if ($editData = $formOptions['editData']) {
-            $this->inhibitAntiSpam = true;
-            if ($editData === 'popup' && $this->db && ($this->db->getSize() > 0)) {
-                $this->formWrapperClass .= ' pfy-table-edit-popup';
-                $this->showDirektFeedback = false;
-            } elseif ($editData === true) {
-                $this->formOptions['editData'] = 'inpage';
-                if ($formOptions['showData'] === true) {
-                    $formOptions['showData'] = [];
-                }
-            }
-            if (!$formOptions['showData']) {
-                $formOptions['showData'] = [
-                    'permission' => 'loggedin|localhost',
-                    'tableButtons' => 'delete,new,download'
-                ];
-                $this->formOptions['showData'] = $formOptions['showData'];
-            }
-        }
-
-        // option 'showData':
-        if ($permissionQuery = $formOptions['showData']) {
-            if ($permissionQuery === true) {
-                $permissionQuery = 'loggedin|localhost';
-
-            } elseif (is_array($permissionQuery)) {
-                $this->tableButtons = $permissionQuery['tableButtons']??'';
-                $pq = $permissionQuery['permission']??true;
-                if ($pq === true) {
-                    $permissionQuery = 'loggedin|localhost';
-                } else {
-                    $permissionQuery = $pq;
-                }
-            }
-            $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
-        }
+        $permissionQuery = $this->tableOptions['editTable']['permission'];
+        $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
 
         parent::__construct();
 
-        PageFactory::$pg->addAssets('POPUPS');
         PageFactory::$pg->addAssets('FORMS');
-
+        PageFactory::$pg->addAssets('POPUPS');
     } // __construct
 
 
@@ -136,20 +113,20 @@ class PfyForm extends Form
         if ($this->isSuccess()) {
             $res = $this->handleReceivedData($this->formOptions['formInx']??1);
             if ($res !== false) { // false = data was for other form
-                if (!$res && $this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+                if (!$res && $this->formOptions['editData'] && $this->formOptions['file'] && $this->isFormAdmin) {
                     reloadAgent();
                 }
             }
         }
         if (!$res) {
             $html = $this->renderFormHtml();
-            if ($this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+            if ($this->tableOptions['editTable'] && $this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
             }
 
         } else {
             $html = $res;
-            if ($this->formOptions['showData'] && $this->formOptions['file'] && $this->isFormAdmin) {
+            if ($this->tableOptions['editTable'] && $this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
             }
         }
@@ -177,13 +154,10 @@ EOT;
         if ($formOptions !== null) {
             $this->options = $formOptions;
         }
-        // $formOptions['recId'] may contain a recId to use as _formInx, if not, we use formIndex:
-        if ($formOptions['recId']??false) {
-            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $formOptions['recId'], 'default' => '']);
-        } else {
-            $obfuscatedKey = obfuscateRecKey($this->formIndex);
-            $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $obfuscatedKey, 'default' => $obfuscatedKey]);
-        }
+
+        // add standard hidden fields to identify data: which form, which data-record:
+        $this->addElem(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'default' => '']);
+        $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
 
         foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
@@ -228,14 +202,20 @@ EOT;
 
         $html = $renderer->render($this);
 
-        $id = $formOptions['id']? " id='{$formOptions['id']}'" : '';
+        $id = $formOptions['id']? " id='{$formOptions['id']}'" : " id='pfy-form-$this->formIndex'";
         $formClass = $formOptions['class'] ? " {$formOptions['class']}" : '';
 
         if ($this->isFormAdmin) {
-            $formClass = " screen-only$formClass";
+            $formClass = " pfy-screen-only$formClass";
+        }
+        $aria = '';
+        if ((($this->tableOptions['editTable']['']??false) === 'popup') ||
+                (($this->tableOptions['editTable']['mode']??false) === 'popup')) {
+            $formClass .= " pfy-fully-hidden";
+            $aria = 'aria-hidden="true"';
         }
 
-        $html = "<form$id class='pfy-form pfy-form-$this->formIndex$formClass'" . substr($html, 5);
+        $html = "<form$id class='pfy-form pfy-form-$this->formIndex$formClass'$aria" . substr($html, 5);
 
         $html = $this->injectFormElemClasses($html);
         $html = $this->handleFormTop($html);
@@ -610,24 +590,18 @@ EOT;
             $this->showDirektFeedback = false;
         }
 
-        // check presence of $formToken:
-        $formToken = $dataRec['_formInx']??false;
-        if (!$formToken || isset($_POST['cancel'])) {
+        // check presence of $formInxReceived:
+        $formInxReceived = $dataRec['_formInx']??false;
+        if ($formInxReceived === false || isset($_POST['cancel'])) {
             return '';
         }
 
-        $formToken = deObfuscateRecKey($formToken);
-        if ($formToken != $formInx) {
-            return false;
+        // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
+        if ($formInxReceived != $formInx) {
+            return false; // signal 'processing skipped, continue processing'
         }
 
-        // _formInx either contains form-index (integer) or an recKey (hash string, valid only per session).
-        // So, figure out, which it is. If recKey -> replace it with real recId:
-        $recKey = false;
-        if (!intval($formToken)) {
-            // restore real recKey:
-            $recKey = deObfuscateRecKeys($formToken);
-        }
+        $recKey = $dataRec['_recKey']??false;;
 
         $dataRec = $this->normalizeData($dataRec);
 
@@ -653,7 +627,7 @@ EOT;
                 $html = "<div class='pfy-form-error'>$err</div>\n";
                 mylog($err, 'form-log.txt');
             } else {
-                $logMsg = 'Stored: '.PageFactory::$pageId."[$formToken] ";
+                $logMsg = 'Stored: '.PageFactory::$pageId."[$formInxReceived] ";
                 $logMsg .= var_r($dataRec);
                 mylog($logMsg, 'form-log.txt');
             }
@@ -798,8 +772,9 @@ EOT;
         }
         $this->db = new DataSet($this->formOptions['file'], [
             'masterFileRecKeyType' => 'index',
+            'obfuscateRecKeys' => true,
         ]);
-        $sessKey = 'form:'.PageFactory::$pageId.':file';
+        $sessKey = "db:".PageFactory::$pageId.":$this->formIndex:file";
         PageFactory::$session->set($sessKey, $this->formOptions['file']);
         return $this->db;
     } // openDB
@@ -885,6 +860,7 @@ EOT;
     } // notifyOwner
 
 
+
     /**
      * @return DataTable|false
      * @throws \Exception
@@ -894,39 +870,78 @@ EOT;
         if ($this->dataTable || !$this->formOptions['file']) {
             return $this->dataTable;
         }
+
+        $tableOptions = $this->tableOptions;
+
         $file = resolvePath($this->formOptions['file'], relativeToPage: true);
+
         $fieldNames = $this->fieldNames;
         if (isset($fieldNames['_formInx'])) {
             unset($fieldNames['_formInx']);
         }
-        $tableOptions = [
-            'tableHeaders'          => $fieldNames,
-            'interactive'           => $this->formOptions['interactiveTable']??false,
-            'footers'               => $this->formOptions['tableFooters']??false,
-            'minRows'               => $this->formOptions['minRows']??false,
-            'sort'                  => $this->formOptions['sortData']??false,
-
-            'masterFileRecKeyType'  => 'index',
-            'includeSystemElements' => $this->formOptions['includeSystemFields']??false,
-            'markLocked'            => true,
-            ];
-
-        if ($tableButtons = $this->tableButtons) {
-            if ($tableButtons === true || $tableButtons === '1') {
-                $tableButtons = 'delete,download';
-            }
-            if ($editData = $this->formOptions['editData']) {
-                $tableButtons .= ',edit';
-                $tableOptions['editRecs'] = str_contains($editData, 'inp') ? 'inpage' : 'popup';
-            }
-            $tableOptions['tableButtons'] = $tableButtons;
-        }
+        $tableOptions['tableHeaders']         = $fieldNames;
+        $tableOptions['masterFileRecKeyType'] = 'index';
+        $tableOptions['markLocked']           = true;
+        $tableOptions['obfuscateRecKeys']     = true;
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
         $this->dataTable = new DataTable($file, $tableOptions);
         return $this->dataTable;
     } // openDataTable
+
+
+    private function parseTableOptions($tableOptions)
+    {
+        $tableOptions['file'] = $this->formOptions['file'];
+
+        // option 'editData':
+        if ($editData = $tableOptions['editData']) {
+            if ($editData === true) {
+                $tableOptions['editTable'] = [
+                    'permission'    => 'loggedin|localhost',
+                    'tableButtons'  => 'delete,new,download',
+                    'mode'          => 'inpage',
+                ];
+
+            } elseif ($editData === 'popup') {
+                $tableOptions['editTable'] = [
+                    'permission'    => 'loggedin|localhost',
+                    'tableButtons'  => 'delete,new,edit,download',
+                    'mode'          => 'popup',
+                ];
+
+            } elseif (is_array($editData)) {
+                $tableOptions['editTable'] = [
+                    'permission'    => $editData['permission']??'loggedin|localhost',
+                    'tableButtons'  => $editData['tableButtons']??'delete,new,download',
+                    'mode'          => $editData['mode']??'inpage',
+                ];
+
+            } else {
+                throw new \Exception("Syntax error in option 'editData'");
+            }
+
+        } elseif ($showData = $tableOptions['showData']) {
+            $tableOptions['editTable'] = [
+                'permission'    => $showData['permission']?? 'loggedin|localhost',
+                'tableButtons'  => $showData['tableButtons']?? 'delete,download',
+                'mode'          => $showData['mode']?? 'inpage',
+            ];
+        }
+        unset($tableOptions['editData']);
+        unset($tableOptions['showData']);
+        if ($tableOptions['editTable']??false) {
+            $this->showDirektFeedback = false;
+        } else {
+            $tableOptions['editTable'] = [
+                'permission'    => 'nobody',
+                'tableButtons'  => '',
+                'mode'          => 'inpage',
+            ];
+        }
+        return $tableOptions;
+    } // parseTableOptions
 
 
     /**
