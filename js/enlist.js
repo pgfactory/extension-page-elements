@@ -80,17 +80,18 @@ const Enlist = {
       contentFrom: '#pfy-enlist-form .pfy-enlist-form-wrapper',
       header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
       autofocus: false,
+      closeOnBgClick: false,
     };
     if (typeof elem !== 'undefined') {
       const elemWrapper = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
-      const recId = elemWrapper.dataset.inx;
-      options.onOpen = function() { Enlist.preparePopupForm(mode, elemWrapper, recId); };
+      const elemId = elemWrapper.dataset.elemkey;
+      options.onOpen = function() { Enlist.preparePopupForm(mode, elemWrapper, elemId); };
     }
     Enlist.currentlyOpenPopup = pfyPopup(options);
   }, // openPopup
 
 
-  preparePopupForm: function(mode, elemWrapper, recId) {
+  preparePopupForm: function(mode, elemWrapper, elemId) {
     const name = elemWrapper.querySelector('.pfy-enlist-name').textContent;
     const setInx = elemWrapper.closest('.pfy-enlist-wrapper').dataset.setinx;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
@@ -99,6 +100,18 @@ const Enlist = {
     const form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
     const setinxElem = form.querySelector('[name=setinx]');
     setinxElem.setAttribute('value', setInx);
+
+    // inhibit submit by enter key while in textarea:
+    const textareaFields = form.querySelectorAll('textarea');
+    if (textareaFields.length) {
+      textareaFields.forEach(function (textareaField) {
+        textareaField.addEventListener('keyup', function (e) {
+          if (e.key === 13) {
+            e.stopPropagation();
+          }
+        });
+      });
+    }
 
     const nameField = form.querySelector('[name=Name]');
     if (mode === 'add') {
@@ -118,8 +131,8 @@ const Enlist = {
       submitBtn.setAttribute('value', `{{ pfy-enlist-delete }}`);
       submitBtn.setAttribute('name', 'delete');
 
-      const redIdField = form.querySelector('[name=recid]');
-      redIdField.setAttribute('value', recId);
+      const redIdField = form.querySelector('[name=elemId]');
+      redIdField.setAttribute('value', elemId);
 
       const emailField = form.querySelector('[name=Email]');
       if (this.isEnlistAdmin) {

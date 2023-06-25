@@ -8,6 +8,7 @@ use Usility\PageFactory\PfyForm;
 use Usility\PageFactory\Utils;
 use Usility\MarkdownPlus\Permission;
 use Usility\PageFactory\TransVars;
+use function Usility\PageFactory\createHash;
 use function Usility\PageFactory\explodeTrim;
 use function Usility\PageFactory\parseArgumentStr;
 use function Usility\PageFactory\reloadAgent;
@@ -42,6 +43,8 @@ class Enlist
     private $fieldNames = [];
     private $customFields = [];
     private $customFieldsEmpty = [];
+    protected static $session;
+    protected static $obfuscateSessKey;
 
     /**
      * @param $options
@@ -51,6 +54,10 @@ class Enlist
     {
         $this->pagePath = substr(page()->url(), strlen(site()->url()) + 1) ?: 'home';
         $this->pageId = str_replace('/', '_', $this->pagePath);
+
+        $pageId = page()->id();
+        self::$session = kirby()->session();
+        self::$obfuscateSessKey = "obfuscate:$pageId:elemKeys";
 
         if ($options['description']??false) {
             $options['info'] = $options['description'];
@@ -68,6 +75,7 @@ class Enlist
                     $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
                     $nCustFiels += sizeof($customOptions) - 1;
                 } else {
+                    $key = rtrim($customField['label']??$key, ':');
                     $this->fieldNames[] = $key;
                 }
             }
@@ -209,9 +217,10 @@ EOT;
     private function renderListEntry(int $i): string
     {
         $html = "      <td class='pfy-enlist-row-num'>".($i+1).":</td>\n";
+        $elemKey = '';
         // filled element:
         if ($i < $this->nEntries) {
-            list($icon, $class, $name, $customFields) = $this->renderFilledRow($i);
+            list($icon, $class, $name, $customFields, $elemKey) = $this->renderFilledRow($i);
 
         // add element:
         } elseif ($i === $this->nEntries && !$this->listFrozen) {
@@ -229,13 +238,14 @@ EOT;
         if (is_array($customFields)) {
             $j = 1;
             foreach ($customFields as $name => $value) {
-                if ($value['options']??false) {
+                if (($value['options']??false) && (is_array($value['options']))) {
                     foreach ($value['options'] as $elem) {
                         $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$elem</td>\n";
                         $j++;
                     }
                     $j++;
                 } else {
+                    $value = str_replace("\n", '<br>', $value);
                     $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$value</td>\n";
                 }
             }
@@ -243,7 +253,7 @@ EOT;
         $html .= "      <td class='pfy-enlist-icon-2'>$icon</td>\n";
 
         $html = <<<EOT
-    <tr class="$class" data-inx="$i">
+    <tr class="$class" data-elemkey="$elemKey">
 $html    </tr>
 
 
@@ -259,26 +269,14 @@ EOT;
     private function renderFilledRow(int $i): array
     {
         $class = 'pfy-enlist-delete';
-        $rec = $this->entries[$i];
+        $rec = $this->entries[array_keys($this->entries)[$i]];
         $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
         $text = $rec['Name']??'## unknown ##';
-        if ($obfuscate = ($this->options['obfuscate']??false)) {
-            $text0 = $text;
-            if ($obfuscate === true) {
-                $text = '*****';
-                $icon = '';
-            } else {
-                $t = explode(' ', $text);
-                $text = '';
-                foreach ($t as $s) {
-                    $text .= strtoupper($s[0]??'').' ';
-                }
-                $text = rtrim($text);
-            }
-            if ($this->isEnlistAdmin) { // in admin mode: show
-                $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
-            }
-        }
+
+        // handle obfuscate name:
+        list($text, $icon) = $this->obfuscateNameInRow($text, $icon);
+
+        // handle freezeTime:
         if ($this->freezeTime) {
             $time = $rec['_time']??PHP_INT_MAX;
             if ($time < $this->freezeTime) {
@@ -289,22 +287,28 @@ EOT;
             $icon = '';
         }
 
+        // append email if in admin mode:
         if ($this->isEnlistAdmin && ($email = ($rec['Email']??false))) {
             $text .= " <span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
         }
 
+        // handle custom fields:
         $customFields = [];
         foreach ($this->customFields as $key => $value) {
+            // element containing options:
             if ($value['options']??false) {
                 foreach ($value['options'] as $k => $v) {
                     $customFields[] = $rec[$key][$k]??'?';
                 }
 
+            // regular element:
             } else {
                 $customFields[] = $rec[$key]??'?';
             }
         }
-        return [$icon, $class, $text, $customFields];
+        $elemKey = $rec['_elemKey'];
+        $elemKey = $this->obfuscateKey($elemKey);
+        return [$icon, $class, $text, $customFields, $elemKey];
     } // renderFilledRow
 
 
@@ -340,7 +344,6 @@ EOT;
     {
         $this->entries = $this->datasets[$setName]??[];
         if (is_array($this->entries)) {
-            $this->entries = array_values($this->entries);
             $this->nEntries = sizeof($this->entries);
         }
         return $this->entries;
@@ -427,7 +430,7 @@ EOT;
         // standard form end fields:
         $formFields['cancel'] = [];
         $formFields['submit'] = [];
-        $formFields['recid'] = ['type' => 'hidden'];
+        $formFields['elemId'] = ['type' => 'hidden'];
         $formFields['setinx'] = ['type' => 'hidden'];
 
         $form = new PfyForm($formOptions);
@@ -455,12 +458,13 @@ EOT;
         $dataset = $this->getDataset($setName);
 
         $message = '';
-        $recId = $data['recid'];
+        $elemId = $data['elemId'];
+        $elemId = $this->deObfuscateKey($elemId);
         $data['_time'] = date('Y-m-d\TH:i');
 
         unset($data['_formInx']);
         unset($data['_cancel']);
-        unset($data['recid']);
+        unset($data['elemId']);
         unset($data['setinx']);
 
         $sess = kirby()->session();
@@ -475,7 +479,7 @@ EOT;
             }
         }
 
-        if ($recId === '') {
+        if ($elemId === '') {
             // new entry:
             $name = $data['Name']??'#####';
             $exists = array_filter($dataset, function ($e) use($name){
@@ -494,18 +498,18 @@ EOT;
             }
 
             if ($exists) {
-                $prevRecId = array_keys($exists)[0];
+                $prevElemId = array_keys($exists)[0];
                 $email = $data['Email']??'#####';
-                $email0 =  $dataset[$prevRecId]['Email'];
+                $email0 =  $dataset[$prevElemId]['Email'];
                 if ($email0 !== $email) {
                     mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
                     reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
                 }
-                $dataset[$prevRecId] = $data;
+                $dataset[$prevElemId] = $data;
             } else {
-                $dataset[] = $data;
+                $data['_elemKey'] = createHash();
+                $dataset[$data['_elemKey']] = $data;
             }
-            $dataset = array_values($dataset);
             if (sizeof($dataset) > $this->nTotalSlots) {
                 mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
                 reloadAgent();
@@ -521,7 +525,7 @@ EOT;
 
         // delete entry:
         } else {
-            $rec = $dataset[$recId]??false;
+            $rec = $dataset[$elemId]??false;
             if ($rec) {
                 $time = strtotime($rec['_time']??0);
                 if ($time < $this->freezeTime) {
@@ -539,8 +543,7 @@ EOT;
                     mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
                     reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
                 } else {
-                    unset($dataset[$recId]);
-                    $dataset = array_values($dataset);
+                    unset($dataset[$elemId]);
                     $this->db->addRec($dataset, recKeyToUse:$setName);
                     $this->notifyOwner($rec, 'del', $setName);
                     mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
@@ -703,5 +706,61 @@ EOT;
             $this->freezeTime = time() - ($this->freezeTime * 3600); // freezeTime is in hours
         }
     } // parseOptions
+
+
+    private function obfuscateNameInRow(mixed $text, string $icon): array
+    {
+        if ($obfuscate = ($this->options['obfuscate'] ?? false)) {
+            $text0 = $text;
+            if ($obfuscate === true) {
+                $text = '*****';
+                if (!$this->isEnlistAdmin) {
+                    $icon = '';
+                }
+            } else {
+                $t = explode(' ', $text);
+                $text = '';
+                foreach ($t as $s) {
+                    $text .= strtoupper($s[0] ?? '') . ' ';
+                }
+                $text = rtrim($text);
+            }
+            if ($this->isEnlistAdmin) { // in admin mode: show
+                $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
+            }
+        }
+        return array($text, $icon);
+    } // obfuscateNameInRow
+
+
+    /**
+     * @param string $key
+     * @return string
+     * @throws \Exception
+     */
+    private function obfuscateKey(string $key): string
+    {
+        $tableRecKeyTab = self::$session->get(self::$obfuscateSessKey);
+        if (!$tableRecKeyTab || !($obfuscatedKey = array_search($key, $tableRecKeyTab))) {
+            $obfuscatedKey = \Usility\PageFactory\createHash();
+        }
+        $tableRecKeyTab[$obfuscatedKey] = $key;
+        self::$session->set(self::$obfuscateSessKey, $tableRecKeyTab);
+        return $obfuscatedKey;
+    } // deObfuscateKey
+
+
+    /**
+     * @param string $key
+     * @return string
+     */
+    private function deObfuscateKey(string $key): string
+    {
+        $tableRecKeyTab = self::$session->get(self::$obfuscateSessKey);
+        if ($tableRecKeyTab && (isset($tableRecKeyTab[$key]))) {
+            $key = $tableRecKeyTab[$key];
+        }
+        return $key;
+    } // deObfuscateKey
 
 } // Enlist
