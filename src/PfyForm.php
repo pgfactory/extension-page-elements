@@ -891,9 +891,18 @@ EOT;
     } // openDataTable
 
 
-    private function parseTableOptions($tableOptions)
+    private function parseTableOptions(array $tableOptions): array
     {
-        $tableOptions['file'] = $this->formOptions['file'];
+        $tableOptions['file'] = $this->formOptions['file']??false;
+        if (!$tableOptions['file']) {
+            return [
+                'editTable' => [
+                    'permission'    => 'noone',
+                    'tableButtons'  => '',
+                    'mode'          => 'inpage',
+                ],
+            ];
+        }
 
         // option 'editData':
         if ($editData = $tableOptions['editData']) {
