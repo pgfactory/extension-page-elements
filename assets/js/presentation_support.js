@@ -133,7 +133,7 @@ function PfyPresentationSupport() {
                 return document.defaultAction;
             }
 
-            let keycode = e.which;
+            let keycode = e.key;
 
             if ((keycode === 39) || (keycode === 34)) {	// right or pgdown
               e.preventDefault();
@@ -161,7 +161,7 @@ function PfyPresentationSupport() {
 
         $('body').keyup( function (e) {
           // stop selectable when Option key is released:
-          if (e.which === 18) {
+          if (e.key === 18) {
             $('body').removeClass('selectable');
           }
         });

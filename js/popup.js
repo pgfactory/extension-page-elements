@@ -359,7 +359,7 @@ function pfyPopup( options ) {
     const $elem = document.querySelector('.pfy-popup-wrapper');
 
     $elem.addEventListener('keyup', function (e) {
-        const key = e.which;
+        const key = e.key;
         if (key === 27) {                // ESC
           if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
             parent.inihibitClosing = !executeCallback(parent.onCancel);
