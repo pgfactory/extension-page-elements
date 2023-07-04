@@ -191,7 +191,7 @@ function openDb($pageId, $dataSrcInx)
     }
     $db = new DataSet($file, [
         'masterFileRecKeyType' => 'index',
-        'obfuscateSessKey' => "obfuscate:$pageId:keys",
+        'obfuscateRecKeys' => true,
     ]);
     return $db;
 } // openDb
