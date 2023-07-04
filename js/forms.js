@@ -204,6 +204,11 @@ const pfyFormsHelper = {
             }
           } else if (tagName === 'TEXTAREA') {
             field.innerText = val;
+          } else if (tagName === 'SELECT') {
+            const selectedOption = field.querySelector('[value='+val+']');
+            if (selectedOption !== null) {
+              selectedOption.selected = true;
+            }
           } else {
             mylog(`Error: type "${type}" unknown.`);
           }
