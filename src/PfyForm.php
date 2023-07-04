@@ -60,7 +60,7 @@ class PfyForm extends Form
 
         $tableOptions['showData']           = $formOptions['showData']??false;
         $tableOptions['editData']           = $formOptions['editData']??false;
-        $tableOptions['serviceRows']        = $formOptions['serviceRows']??false;
+        $tableOptions['serviceColumns']     = $formOptions['serviceColumns']??false;
         $tableOptions['sort']               = $formOptions['sortData']??false;
         $tableOptions['footers']            = $formOptions['tableFooters']??false;
         $tableOptions['minRows']            = $formOptions['minRows']??false;

@@ -31,7 +31,7 @@ const tableHelper = {
 
 
   setupPropagateCheckbox: function (table) {
-    const hdrCheckbox = table.querySelector('thead .td-row-selector input[type=checkbox]');
+    const hdrCheckbox = table.querySelector('thead .row-selectors input[type=checkbox]');
     if (hdrCheckbox) {
       hdrCheckbox.addEventListener('change', function () {
         var isChecked = this.checked;
@@ -81,6 +81,39 @@ const tableHelper = {
         }
         currentlyOpenPopup = pfyPopup(options);
       });
+
+    } else {
+      const archiveButton = form.querySelector('.pfy-table-archive-recs-open-dialog');
+      if (archiveButton) {
+        archiveButton.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+          let options = {};
+          if (!selected.length) {
+            options = {
+              text: `{{ pfy-table-delete-nothing-selected }}`,
+              header: `{{ pfy-table-archive-recs-header }}`,
+              closeOnBgClick: true,
+              buttons: 'Ok'
+            };
+          } else {
+            options = {
+              text: `{{ pfy-data-archive-records }}`,
+              header: `{{ pfy-table-archive-recs-header }}`,
+              closeOnBgClick: true,
+              buttons: 'Cancel, Confirm',
+              wrapperClass: 'pfy-data-archive-records',
+              callbackArg: form,
+              onConfirm: function (that, form) {
+                form.setAttribute('action', pageUrl + '?archive');
+                form.submit();
+              }
+            };
+          }
+          currentlyOpenPopup = pfyPopup(options);
+        });
+
+      }
     }
   }, // setupOpenDeleteRecordsDialog
 
@@ -115,7 +148,7 @@ const tableHelper = {
     if (!tableForm) {
       return;
     }
-    const editBtns = table.querySelectorAll('td .pfy-table-edit-button');
+    const editBtns = table.querySelectorAll('td .pfy-row-edit-button');
     if (editBtns && editBtns.length) {
       editBtns.forEach(function (editBtn) {
         editBtn.addEventListener('click', function () {

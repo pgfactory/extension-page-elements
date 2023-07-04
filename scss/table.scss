@@ -38,7 +38,6 @@ $focus-color: orange;
   }
   .pfy-table-new-rec {
     width: 2em;
-    margin-right: 0.2em;
   }
   .pfy-rec-locked {
     background: repeating-linear-gradient(
@@ -67,9 +66,7 @@ $focus-color: orange;
         margin-bottom: 0;
       }
     }
-    .td-row-selector,
-    .td-row-number {
-      max-width: 1.1em;
+    .pfy-service-row {
       text-align: right;
       padding-right: 0.6em;
       &::before,

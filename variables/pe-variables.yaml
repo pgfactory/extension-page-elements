@@ -1,6 +1,26 @@
 
 # Tables
 
+pfy-opens-new-rec:
+  de: Neuen Datensatz eingeben
+  _:  Create new data record
+
+pfy-table-delete-recs-title:
+  de: Selektierte Datensätze löschen
+  _:  Delete selected data records
+
+pfy-table-archive-recs-title:
+  de: Selektierte Datensätze in Archiv auslagern
+  _:  Move selected data records to archive
+
+pfy-table-archive-recs-header:
+  de: Archivieren
+  _:  Archive
+
+pfy-data-archive-records:
+  de: Diese Datensätze archivieren?
+  _:  Archive these data records?
+
 pfy-table-delete-recs-header:
   de: Löschen
   _:  Delete
@@ -16,6 +36,11 @@ pfy-table-delete-nothing-selected:
 pfy-popup-download-header:
   de: Herunter laden
   _:  Download
+
+pfy-table-edit-rec-title:
+  de: 'Diesen Datensatz beareiten'
+  _:  'Edit this data record'
+
 
 pfy-table-download-title:
   de: 'Diese Tabelle herunter laden'

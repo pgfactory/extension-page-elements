@@ -48,9 +48,6 @@ class Data2DSet extends DataSet
     {
         $includeSystemElements = $this->options['includeSystemElements']??false;
         $data = $this->data($includeSystemElements);
-        if (!$data) {
-            return []; // nothing to do
-        }
         list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
 
         foreach ($data as $recKey => $rec) {
@@ -141,8 +138,6 @@ class Data2DSet extends DataSet
                         return ($e[0] !== '_');
                     });
                     $elementKeys = array_values($elementKeys);
-                }
-                if ($this->markLocked) {
                 }
                 $headerElems = array_combine($elementKeys, $elementKeys);
 
