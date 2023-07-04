@@ -587,7 +587,7 @@ EOT;
 
         $jq = <<<EOT
 
-let pfyDatatable = new DataTable('#$this->tableId', {
+new DataTable('#$this->tableId', {
   language: {
     search: '$searchButtonLabel:',
     info: '_TOTAL_ $pfyDatatablesRecords'

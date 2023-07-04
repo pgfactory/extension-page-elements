@@ -112,6 +112,9 @@ pfy-alert-header:
 
 # Forms
 
+pfy-form-select-empty-option:
+  de: '&lt; auswählen &gt;'
+  _:  '&lt; select &gt;'
 pfy-noscript-warning:
   de: Ihr Browser lässt die Auführung von JavaScripts nicht zu. Deshalb wird dieses Formular nicht funktionieren.
   _:  Your browser does not permit javascripts. Thus, this form will not work.

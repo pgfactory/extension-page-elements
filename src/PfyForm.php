@@ -463,6 +463,11 @@ EOT;
     private function addSelectElem(string $name, string $label, array $elemOptions, string $type): object
     {
         $selectionElems = parseArgumentStr($elemOptions['options']);
+        foreach ($selectionElems as $key => $value) {
+            if (!$value) {
+                $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
+            }
+        }
         if ($type === 'multiselect') {
             $elem = $this->addMultiSelect($name, $label, $selectionElems);
             $this->formElements[$name]['isArray'] = true;
