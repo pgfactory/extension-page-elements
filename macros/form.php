@@ -64,6 +64,8 @@ function form($args = '')
             'editData' =>	['[true,popup,inpage] Defines, whether data records can be edited. '.
                 'Injects a service column with edit buttons per row.', false],
 
+            'serviceRows' =>	['[num,select,edit,...] Defines, ', false],
+
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
 
             'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.

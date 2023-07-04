@@ -12,7 +12,7 @@ use function Usility\PageFactory\var_r as var_r;
 
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
-    ',text,password,email,textarea,hidden,readonly,'.
+    ',text,password,email,textarea,hidden,readonly,div,'.
     'url,date,datetime-local,time,datetime,month,integer,number,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'button,reset,submit,cancel,';
@@ -60,6 +60,7 @@ class PfyForm extends Form
 
         $tableOptions['showData']           = $formOptions['showData']??false;
         $tableOptions['editData']           = $formOptions['editData']??false;
+        $tableOptions['serviceRows']        = $formOptions['serviceRows']??false;
         $tableOptions['sort']               = $formOptions['sortData']??false;
         $tableOptions['footers']            = $formOptions['tableFooters']??false;
         $tableOptions['minRows']            = $formOptions['minRows']??false;
@@ -67,12 +68,6 @@ class PfyForm extends Form
         $tableOptions['includeSystemFields']= $formOptions['includeSystemFields']??false;
         $this->tableOptions = $this->parseTableOptions($tableOptions);
         unset($tableOptions);
-
-        if (isset($_GET['delete'])) {
-            if ($_POST['pfy-reckey']??false) {
-                $this->openDataTable(); // triggers delete-handler
-            }
-        }
 
         // make sure essential options are instantiated:
         $formOptions['file']                = $formOptions['file']??false;
@@ -110,6 +105,7 @@ class PfyForm extends Form
     public function renderForm(): string
     {
         $res = false;
+        $this->removeNonDataFields();
         if ($this->isSuccess()) {
             $res = $this->handleReceivedData($this->formOptions['formInx']??1);
             if ($res !== false) { // false = data was for other form
@@ -172,6 +168,13 @@ EOT;
         } else {
             $this->setAction(PageFactory::$pageUrl);
         }
+
+        if (isset($_GET['delete']) || isset($_GET['archive'])) {
+            if ($_POST['pfy-reckey']??false) {
+                $this->openDataTable(); // triggers delete-handler
+            }
+        }
+
     } // createForm
 
 
@@ -259,6 +262,10 @@ EOT;
             case 'readonly':
                 $elem = $this->addText($name, $label);
                 $elem->setHtmlAttribute('readonly', '');
+                break;
+            case 'div':
+                $elem = $this->addText("_skip$this->index", $label);
+                $elem->setHtmlAttribute('div', '');
                 break;
             case 'search':
             case 'tel':
@@ -867,7 +874,7 @@ EOT;
      */
     private function openDataTable(): DataTable|false
     {
-        if ($this->dataTable || !$this->formOptions['file']) {
+        if (($this->dataTable && !isset($_GET['delete'])) || !$this->formOptions['file']) {
             return $this->dataTable;
         }
 
@@ -881,6 +888,7 @@ EOT;
         }
         $tableOptions['tableHeaders']         = $fieldNames;
         $tableOptions['masterFileRecKeyType'] = 'index';
+        $tableOptions['tdClass']              = 'pfy-scroll-hints';
         $tableOptions['markLocked']           = true;
         $tableOptions['obfuscateRecKeys']     = true;
 
@@ -1110,6 +1118,17 @@ EOT;
     } // parseMainOptions
 
 
+    private function removeNonDataFields(): void
+    {
+        foreach ($this->formElements as $key => $rec) {
+            if ($rec['type'] === 'div') {
+                unset($this->formElements[$key]);
+                unset($this->fieldNames[$key]);
+            }
+        }
+    } // removeNonDataFields
+
+
     /**
      * @param string $html
      * @return string
@@ -1169,6 +1188,13 @@ EOT;
                 $aria = $e->findOneOrFalse('[aria-hidden]');
                 if ($aria) {
                     $e->setAttribute('aria-hidden', $aria);
+                }
+
+                // skip div:
+                $div = $e->findOneOrFalse('[div]');
+                if ($div) {
+                    $outerHtml = $input->getAttribute('value');
+                    $e->outerhtml = $outerHtml;
                 }
 
                 // reveal:
