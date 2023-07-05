@@ -152,15 +152,15 @@ EOT;
         }
 
         // add standard hidden fields to identify data: which form, which data-record:
-        $this->addElem(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'default' => '']);
-        $this->addElem(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
+        $this->addElement(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'default' => '']);
+        $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
 
         foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
                 throw new \Exception("Syntax error in Forms option '$name'");
             }
             $rec['name'] = $name;
-            $this->addElem($rec);
+            $this->addElement($rec);
         }
 
         if ($formOptions['action']??false) {
@@ -234,7 +234,7 @@ EOT;
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    public function addElem(array $elemOptions): void
+    public function addElement(array $elemOptions): void
     {
         $this->index++;
         // determine $label, $name, $type and $subType:
@@ -248,16 +248,10 @@ EOT;
         switch ($type) {
             case 'hidden':
                 $elem = $this->addHidden($name, $elemOptions['value']??'');
-                if ($id = $elemOptions['id']??false) {
-                    $elem->setHtmlId($id);
-                }
                 break;
             case 'bypassed':
                 $this->bypassedElements[$name] = $elemOptions['value']??'';
                 $elem = $this->addHidden($name, '');
-                if ($id = $elemOptions['id']??false) {
-                    $elem->setHtmlId($id);
-                }
                 break;
             case 'readonly':
                 $elem = $this->addText($name, $label);
@@ -265,6 +259,7 @@ EOT;
                 break;
             case 'div':
                 $elem = $this->addText("_skip$this->index", $label);
+                // apply pseudo attrib to intercept output later on:
                 $elem->setHtmlAttribute('div', '');
                 break;
             case 'search':
@@ -289,7 +284,7 @@ EOT;
                 break;
             case 'integer':
             case 'number':
-            $elem = $this->addIntegerElem($name, $label);
+                $elem = $this->addIntegerElem($name, $label);
                 break;
             case 'email':
                 $elem = $this->addEmail($name, $label);
@@ -334,6 +329,14 @@ EOT;
                 break;
             default:
                 throw new \Exception("PfyForm: field type '$type' not supported");
+        }
+
+        // make sure each elem get unique id:
+        if ($id = $elemOptions['id']??false) {
+            $elem->setHtmlId($id);
+        } elseif ($this->formIndex > 1) {
+            $id = "frm-$type-$this->formIndex-$this->index";
+            $elem->setHtmlId($id);
         }
 
         $class = "pfy-$type";
@@ -405,7 +408,7 @@ EOT;
         }
 
         // note: 'info' option handled in parseMainOptions()
-    } // addElem
+    } // addElement
 
 
     /**
@@ -476,15 +479,6 @@ EOT;
             $elem = $this->addSelect($name, $label, $selectionElems);
         }
         if ($preset = ($elemOptions['preset']??false)) {
-            // only single preset possible due to Nette Forms:
-            //            if (str_contains($preset, ',')) {
-            //                $presets = explodeTrim(',', $preset);
-            //                foreach ($presets as $preset) {
-            //                    $elem->setDefaultValue($preset);
-            //                }
-            //            } else {
-            //                $elem->setDefaultValue($preset);
-            //            }
             $elem->setHtmlAttribute('data-preset', $preset);
         }
         if ($elemOptions['prompt']??false) {
@@ -1187,7 +1181,6 @@ EOT;
                     $class = $select->getAttribute('class');
                     $e->setAttribute('class', trim("$wrapperClass $class"));
                 }
-
 
                 // aria-hidden:
                 $aria = $e->findOneOrFalse('[aria-hidden]');
