@@ -57,14 +57,15 @@ function form($args = '')
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
 
-            'showData' =>	['[false, true, loggedIn, anybody, etc.] '.
-                'Defines, to whom previously received data is presented. (true = ``loggedin|localhost``). '.
-                '**Note:** When printing the page, only the table will be shown, not the form.', false],
+            'showData' =>	['[true] Shows received data. Short-hand for:<br>'.
+                '``{tableButtons: download, serviceColumns: num, permission:\'loggedin,localhost\'}`` '.
+                '(see editData for reference.)', false],
 
-            'editData' =>	['[true,popup,inpage] Defines, whether data records can be edited. '.
-                'Injects a service column with edit buttons per row.', false],
-
-            'serviceRows' =>	['[num,select,edit,...] Defines, ', false],
+            'editData' =>	['[true|{options}] Shows received data and defines, whether data records can be edited. '.
+                'Available options:<br>``tableButtons:\'delete,archive,new,download\'``,<br>'.
+                '``serviceColumns:\'select,num,edit\'``,<br>'.
+                '``permission:\'loggedin,group,localhost\'``,<br>``mode:popup<br>``'.
+                '("editData:true" is shorthand for typical set of options.)', false],
 
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
 
@@ -131,10 +132,17 @@ Syntax: ``field-name: { field arguments, \... }``
 date, datetime-local, time, datetime, month,
 number, integer, range, tel, file,
 radio, checkbox, dropdown, select, multiselect, upload, multiupload, bypassed, 
-button, reset, submit, cancel`
+button, reset, submit, cancel, div`
 
 Default type: **text**  
 Types automatically derived from field *field-names*: `email`, `passwor*`, `submit`, `cancel`
+
+#### Interspersed HTML:
+
+``div`` is a pseudo-type. It injects given `value` into the form. Thus, it can be used 
+to insert subtitles and the like. Example:
+
+    div1: {type:div, value:'<h2>Details</h2>'}
 
 #### Field Arguments
 

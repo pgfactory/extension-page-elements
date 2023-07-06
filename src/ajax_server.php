@@ -139,19 +139,19 @@ function unlockRec(string $recKey, string $pageId, string $dataSrcInx): void
  */
 function getRec($recKey, $pageId, $dataSrcInx): void
 {
-    $recData = [];
     $rec = findRec($recKey, $pageId, $dataSrcInx);
-    if ($rec) {
-        // lock record, if requested:
-        if (isset($_GET['lock']) && !$rec->lock(blocking: true)) {
-            exit('"locked"');
-        }
+    if (!$rec) {
+        exit('"rec not found"');
+    }
+    // lock record, if requested:
+    if (isset($_GET['lock']) && !$rec->lock(blocking: true)) {
+        exit('"locked"');
+    }
 
-        // get data rec:
-        $recData = $rec->data();
-        if ($rec->isLocked()) {
-            $recData['_state'] = 'locked';
-        }
+    // get data rec:
+    $recData = $rec->data();
+    if ($rec->isLocked()) {
+        $recData['_state'] = 'locked';
     }
     exit(json_encode($recData));
 } // getRec

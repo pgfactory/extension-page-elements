@@ -31,11 +31,11 @@ const tableHelper = {
 
 
   setupPropagateCheckbox: function (table) {
-    const hdrCheckbox = table.querySelector('thead .row-selectors input[type=checkbox]');
+    const hdrCheckbox = table.querySelector('thead .pfy-row-selector input[type=checkbox]');
     if (hdrCheckbox) {
       hdrCheckbox.addEventListener('change', function () {
         var isChecked = this.checked;
-        const checkboxes = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]');
+        const checkboxes = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]');
         if (checkboxes.length) {
           checkboxes.forEach(function(rowCheckbox) {
             rowCheckbox.checked = isChecked;
@@ -56,7 +56,7 @@ const tableHelper = {
     if (deleteButton) {
       deleteButton.addEventListener('click', function (e) {
         e.stopPropagation();
-        const selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+        const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
         let options = {};
         if (!selected.length) {
           options = {
@@ -87,7 +87,7 @@ const tableHelper = {
       if (archiveButton) {
         archiveButton.addEventListener('click', function (e) {
           e.stopPropagation();
-          const selected = table.querySelectorAll('tbody .td-row-selector input[type=checkbox]:checked');
+          const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
           let options = {};
           if (!selected.length) {
             options = {

@@ -38,10 +38,6 @@ class DataTable extends Data2DSet
     private $tableWrapperClass;
     private $dataReference;
     private $tableButtons;
-    private mixed $tableButtonDelete = false;
-    private bool $tableButtonDownload = false;
-    private bool $tableButtonEdit = false;
-    private bool $tableButtonNew = false;
     private int $inx;
     private string $tableId;
     private $footers;
@@ -49,14 +45,15 @@ class DataTable extends Data2DSet
     private string $captionAbove;
     private string $interactive;
     private string $showRowNumbers;
-    private string $showRowSelectors;
-    private mixed $serviceColumns;
+    private mixed $showRowSelectors;
+    private string $serviceColumns;
+    private array $serviceColArray = [];
+    private mixed $editMode;
     private string $sort;
     private $minRows;
     private string $export;
     private bool $includeSystemElements;
     private $elementLabels;
-    private $editRecs;
     protected $markLocked;
     protected $isTableAdmin;
     private bool $dialogInitialized = false;
@@ -88,51 +85,57 @@ class DataTable extends Data2DSet
             }
         }
 
-        $this->tableId = isset($options['tableId']) && $options['tableId'] ? $options['tableId'] : "pfy-table-$this->inx";
-        $this->tableClass = isset($options['tableClass']) && $options['tableClass'] ? $options['tableClass'] : 'pfy-table';
-        $this->tdClass = isset($options['tdClass']) && $options['tdClass'] ? $options['tdClass'] : '';
-        $this->tableWrapperClass = isset($options['tableWrapperClass']) && $options['tableWrapperClass'] ? $options['tableWrapperClass'] : 'pfy-table-wrapper';
-        $this->dataReference = isset($options['dataReference']) && $options['dataReference'] ? $options['dataReference'] : '';
-        $this->footers = isset($options['footers']) && $options['footers'] ? $options['footers'] :
-                        (isset($options['footer']) && $options['footer'] ? $options['footer'] : false);
-        $this->caption = isset($options['caption']) && $options['caption'] ? $options['caption'] : false;
-        $captionPosition = isset($options['captionPosition']) && $options['captionPosition'] ? $options['captionPosition'] : 'b';
-        $this->captionAbove = $captionPosition[0] === 'a';
+        $this->tableId = ($options['tableId']??false) ?: "pfy-table-$this->inx";
+        $this->tableClass = ($options['tableClass']??false) ?: 'pfy-table';
+        $this->tdClass = $options['tdClass']??'';
+        $this->tableWrapperClass = ($options['tableWrapperClass']??false) ?: 'pfy-table-wrapper';
+        $this->dataReference = $options['dataReference']??false; // whether to include data-elemkey and data-reckey
+        $this->footers = ($options['footers']??false) ?: ($options['footer']??false);
+        $this->caption = $options['caption']??false;
+        $this->captionAbove = (($options['captionPosition']??false) ?: 'b')[0] === 'a';
         $this->obfuscateRecKeys = $options['obfuscateRecKeys'] ?? false;
         $this->interactive = $options['interactive'] ?? false;
-        $editData = $options['editTable'] ?? false;
-        $this->tableButtons = $options['tableButtons'] ?? false;
-        $this->downloadFilename = isset($options['downloadFilename']) && $options['downloadFilename'] ? $options['downloadFilename'] : base_name($file, false);
+        $tableButtons = $options['tableButtons'] ?? false;
+        $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
+        $this->downloadFilename = ($options['downloadFilename']??false) ?: base_name($file, false);
         $this->showRowNumbers = $options['showRowNumbers'] ?? false;
-        $this->showRowSelectors = isset($options['showRowSelectors']) && $options['showRowSelectors'] ? $options['showRowSelectors'] : false;
-        $this->editRecs = $options['editRecs'] ?? false;
-        $this->serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
+        $this->showRowSelectors = $options['showRowSelectors'] ?? false;
+
+        $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
+        $this->editMode = ($options['editMode']??false) ?: 'inpage';
+        $this->announceEmptyTable = $options['announceEmptyTable'] ?? false;
+        if ($this->editMode === 'popup') {
+            $this->announceEmptyTable = false;
+            $this->tableClass .= ' pfy-table-edit-popup';
+        }
+        $permission = $options['permission'] ?? false;
+
         $this->sort = $options['sort'] ?? false;
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
-        $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
         $this->markLocked = $options['markLocked'] ?? false;
-        $this->announceEmptyTable = $options['announceEmptyTable'] ?? ($editData && ($editData['mode']??false) !== 'popup');
-        $editableBy = $options['editableBy'] ?? true;
 
-        // { permission: localhost, mode: popup, tableButtons: 'delete,new,download,edit'}
-        if ($editData) {
-            if (is_array($editData)) {
-                $editableBy = ($editableBy !== true)? $editableBy: ($editData['permission']??true);
-                $this->editRecs = $this->editRecs?: ($editData['mode']??'inpage');
-                $this->tableButtons = $this->tableButtons?:  ($editData['tableButtons']??true);
-            } elseif ($editData === true) {
-                $this->tableButtons = $this->tableButtons?:  true;
-            }
+        if ($permission === true) {
+            $permission = 'localhost|loggedin';
+        }
+        $this->isTableAdmin = Permission::evaluate($permission);
+        // precautions for non-privileged access: only allow download and num:
+        if (!$this->isTableAdmin) {
+            $tableButtons = str_contains($tableButtons, 'download') ? 'download' : '';
+            $serviceColumns = str_replace(['edit', 'select'],'', $serviceColumns);
+        } else {
+            $this->dataReference = true;
         }
 
-        if ($editableBy === true) {
-            $editableBy = 'localhost|loggedin';
+        if ((str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive'))
+            && !str_contains($serviceColumns, 'select')) {
+            $serviceColumns = "select,$serviceColumns";
         }
-        $this->isTableAdmin = Permission::evaluate($editableBy);
+        $this->serviceColumns = $serviceColumns;
+        $this->tableButtons = $tableButtons;
 
-
+        // table headers:
         if ($this->tableHeaders) {
             if (!is_array($this->tableHeaders)) {
                 $this->parseArrayArg('tableHeaders');
@@ -142,56 +145,9 @@ class DataTable extends Data2DSet
                 $this->tableHeaders['_reckey'] = '_reckey';
             }
         }
+        // table footers:
         if ($this->footers && !is_array($this->footers)) {
             $this->parseArrayArg('footers');
-        }
-
-        if (!$this->isTableAdmin) {
-            $this->tableButtons = false;
-        }
-        $this->tableButtonDelete = false;
-        if ($this->tableButtons === true) {
-            $this->tableButtonDelete = true;
-            $this->tableButtonDownload = true;
-            $this->dataReference = true;
-
-        } elseif ($this->tableButtons) {
-            if (str_contains($this->tableButtons, 'delete')) {
-                $this->tableButtonDelete = true;
-            } elseif (str_contains($this->tableButtons, 'archive')) {
-                $this->tableButtonDelete = 'archive';
-            }
-            $this->tableButtonDownload = (str_contains($this->tableButtons, 'download'));
-            $this->tableButtonEdit = (str_contains($this->tableButtons, 'edit'));
-            $this->tableButtonNew = (str_contains($this->tableButtons, 'new'));
-            $this->tableButtons = str_replace(['delete','archive','download','edit','new'], '', $this->tableButtons);
-            $this->dataReference = true;
-        }
-
-        if ($this->editRecs === 'popup') {
-            $this->tableClass .= ' pfy-table-edit-popup';
-        }
-
-        if ($this->tableButtonDelete) {
-            $this->showRowSelectors = true;
-        }
-
-        // service rows:
-        if (!$this->serviceColumns) {
-            $this->serviceColumns = [];
-            if ($this->showRowNumbers ) {
-                $this->serviceColumns[] = 'num';
-            }
-            if ($this->showRowSelectors ) {
-                $this->serviceColumns[] = 'select';
-            }
-            if ($this->editRecs ) {
-                $this->serviceColumns[] = 'edit';
-            }
-        }
-
-        if ($this->sort) {
-            $this->sort($this->sort);
         }
 
         $this->prepareTableData();
@@ -225,7 +181,7 @@ class DataTable extends Data2DSet
         }
 
         // inject service rows: select(delete), row-numbers, edit-buttons
-        $this->prependserviceColumns();
+        $this->prependServiceColumns();
 
         if ($this->interactive) {
             $this->activateInteractiveTable();
@@ -261,45 +217,49 @@ class DataTable extends Data2DSet
      * Injects rows into data and header for delete,edit,row-numbers.
      * @return void
      */
-    private function prependserviceColumns(): void
+    private function prependServiceColumns(): void
     {
         if (!$this->serviceColumns) {
             return;
         }
+        $servCols = explodeTrim(',', $this->serviceColumns, true);
         $serviceColumns = [];
-        $i = sizeof($this->serviceColumns);
-        foreach (array_reverse($this->serviceColumns) as $elem) {
+        $i = sizeof($servCols);
+        foreach (array_reverse($servCols) as $elem) {
             if (str_starts_with($elem, 'num')) {
                 $hdrCell = TransVars::getVariable('pfy-row-number-header');
-                $this->injectColumn('row-numbers', $hdrCell, isServiceCol: true);
-                $serviceColumns[$i] = 'row-numbers';
+                $this->injectColumn('pfy-row-number', $hdrCell, isServiceCol: true);
+                $serviceColumns[$i] = 'pfy-row-number';
             } elseif (str_starts_with($elem, 'select')) {
-                $this->injectColumn('row-selectors', isServiceCol: true);
-                $serviceColumns[$i] = 'row-selectors';
+                $this->injectColumn('pfy-row-selector', isServiceCol: true);
+                $serviceColumns[$i] = 'pfy-row-selector';
 
             } elseif (str_starts_with($elem, 'edit')) {
                 $cell = "<button class='pfy-button pfy-button-lean pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>✎</button>";
                 $hdrCell = TransVars::getVariable('pfy-row-edit-header');
                 $this->injectColumn($cell, $hdrCell, isServiceCol: true);
-                $serviceColumns[$i] = 'row-edit';
+                $serviceColumns[$i] = 'pfy-row-edit';
 
             } else {
                 if (preg_match('/^([\w\s]+):(.*)/', $elem, $m)) {
                     $hdr = $m[1];
                     $elem = $m[2];
-                    $serviceColumns[$i] = strtolower("row-$hdr");
+                    $serviceColumns[$i] = strtolower("pfy-row-$hdr");
                 } else {
                     $hdr = false;
-                    $serviceColumns[$i] = 'row-'.translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                    $serviceColumns[$i] = 'pfy-row-'.translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                }
+                if (!str_contains($elem, '<')) {
+                    $class = translateToIdentifier($elem, false, true, true);
+                    $elem = "<button class='pfy-button pfy-button-lean $class' type='button'>$elem</button>";
                 }
                 $this->injectColumn($elem, $hdr, isServiceCol: true);
             }
             $i--;
         }
 
-        $this->serviceColumns = $serviceColumns;
-    } // prependserviceColumns
-
+        $this->serviceColArray = $serviceColumns;
+    } // prependServiceColumns
 
 
     /**
@@ -326,15 +286,15 @@ class DataTable extends Data2DSet
         $newElemName = $headElement ?: "col-$col";
 
         if ($isServiceCol) {
-            // case row-numbers:
-            if ($newElement === 'row-numbers') {
+            // case row-number:
+            if ($newElement === 'pfy-row-number') {
                 $newCol = range(0, $this->nRows - 1);
 
-            // case row-selectors:
-            } elseif ($newElement === 'row-selectors') {
+            // case row-selector:
+            } elseif ($newElement === 'pfy-row-selector') {
                 $fillWith = '<input type="checkbox"%nameAttr>';
                 $headElement = '';
-                $newElemName = 'row-selector';
+                $newElemName = 'pfy-row-selector';
 
             // case other content:
             } elseif (is_string($newElement)) {
@@ -390,8 +350,8 @@ class DataTable extends Data2DSet
                 continue;
             }
             $i++;
-            if (isset($this->serviceColumns[$i])) {
-                $class = "pfy-service-row {$this->serviceColumns[$i]}";
+            if (isset($this->serviceColArray[$i])) {
+                $class = "pfy-service-row {$this->serviceColArray[$i]}";
             } else {
                 $class = translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
             }
@@ -441,15 +401,17 @@ class DataTable extends Data2DSet
                 $i++;
                 $v = $rec[$k]??'';
                 if (!preg_match('/^\{\{.*}}$/', $k)) {
-                    $class = translateToIdentifier($k, removeNonAlpha: true);
+                    $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
                 } else {
-                    $class = false;
+                    $class = '';
                 }
-                $serviceRow = in_array($k, $this->serviceColumns);
-                if (!$serviceRow) {
+                $serviceRow = $this->serviceColArray[$i]??'';
+                if ($serviceRow) {
+                    $class .= ' pfy-service-row';
+                } else {
                     $v = "<div$tdClass>$v</div>";
                 }
-                $class = $class? "td-$class": "td-$c";
+                $class = $class? "$class $serviceRow": $serviceRow;
                 if ($this->dataReference && ($kk = array_search($k, $this->columnKeys))) {
                     $elemid = " data-elemkey='$kk'";
                 } else {
@@ -527,32 +489,51 @@ class DataTable extends Data2DSet
     private function renderTableButtons()
     {
         $out = '';
-        if ($this->tableButtons) {
-            $out .= "  <form method='post'>\n"; // form around table for selectors
-            $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
+        if (!$this->tableButtons) {
+            return '';
         }
+
+        $out .= "  <form method='post'>\n"; // form around table for selectors
+        $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
+
+        $tableButtons = $this->tableButtons;
         $buttons = '';
-        if ($this->tableButtonDelete === 'archive') {
+        if (str_contains($tableButtons, 'archive')) {
             $icon = renderIcon('database');
             $buttons = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
                 "type='button' title='{{ pfy-table-archive-recs-title }}'>$icon</button>\n";
             PageFactory::$pg->addAssets('POPUPS');
 
-        } elseif ($this->tableButtonDelete) {
+        } elseif (str_contains($tableButtons, 'delete')) {
             $icon = renderIcon('trash');
             $buttons = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
                 "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
             PageFactory::$pg->addAssets('POPUPS');
         }
 
-        if ($this->tableButtonNew) {
+        if (str_contains($tableButtons, 'new') || str_contains($tableButtons, 'add')) {
             $icon = '+';
             $buttons .= "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
                 "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>\n";
         }
 
-        if ($this->tableButtonDownload) {
+        if (str_contains($tableButtons, 'download')) {
             $buttons .= $this->renderTableDownloadButton();
+        }
+        $tableButtons = str_replace(['archive', 'delete', 'add', 'new', 'download'],'', $tableButtons);
+
+        // handle custom table buttons:
+        $customTableButtons = explodeTrim(',', $tableButtons, true);
+        if ($customTableButtons) {
+            foreach ($customTableButtons as $button) {
+                // determine whether we need to wrap it in an HTML button:
+                if (str_contains($button, '<')) {
+                    $buttons .= $button;
+                } else {
+                    $class = translateToIdentifier($button, false, true, true);
+                    $buttons .= "<button class='pfy-button pfy-button-lean $class' type='button'>$button</button>";
+                }
+            }
         }
 
         if ($buttons) {

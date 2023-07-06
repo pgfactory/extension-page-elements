@@ -67,25 +67,25 @@ $focus-color: orange;
       }
     }
     .pfy-service-row {
-      text-align: right;
-      padding-right: 0.6em;
+      text-align: center;
+      padding: 3px 0 0 0;
       &::before,
       &::before,
       &::after,
       &::after {
         display: none;
+      }
+      &.pfy-row-selector,
+      &.pfy-row-number {
+        padding: 3px 0.2em 0 0.2em;
       }
     }
-    .td-edit {
-      max-width: 1.7em;
+    th.pfy-service-row {
+      vertical-align: middle;
+      text-align: center;
+    }
+    td.pfy-row-number {
       text-align: right;
-      padding-right: 0.6em;
-      &::before,
-      &::before,
-      &::after,
-      &::after {
-        display: none;
-      }
     }
   }
 

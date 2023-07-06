@@ -42,7 +42,7 @@ class PfyForm extends Form
     private int $revealInx = 0;
     protected bool $isFormAdmin = false;
     protected bool $inhibitAntiSpam = false;
-    protected bool $showDirektFeedback = true;
+    protected bool $showDirectFeedback = true;
     private string $name;
     private string $formWrapperClass = '';
     private string $tableButtons = '';
@@ -59,14 +59,15 @@ class PfyForm extends Form
         $this->formIndex = $formOptions['formInx'] ?? 1;
 
         $tableOptions['showData']           = $formOptions['showData']??false;
-        $tableOptions['editData']           = $formOptions['editData']??false;
+        $tableOptions['editTable']          = $formOptions['editData']??false;
+        $tableOptions['tableButtons']       = $formOptions['tableButtons']??false;
         $tableOptions['serviceColumns']     = $formOptions['serviceColumns']??false;
         $tableOptions['sort']               = $formOptions['sortData']??false;
         $tableOptions['footers']            = $formOptions['tableFooters']??false;
         $tableOptions['minRows']            = $formOptions['minRows']??false;
         $tableOptions['interactive']        = $formOptions['interactiveTable']??false;
         $tableOptions['includeSystemFields']= $formOptions['includeSystemFields']??false;
-        $this->tableOptions = $this->parseTableOptions($tableOptions);
+        $this->tableOptions                 = $this->parseTableOptions($tableOptions);
         unset($tableOptions);
 
         // make sure essential options are instantiated:
@@ -84,21 +85,27 @@ class PfyForm extends Form
         $formOptions['class']               = $formOptions['class']??false;
         $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
 
-        if ($this->tableOptions['editTable']) {
+        if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns']) {
             $this->formWrapperClass .= ' pfy-form-and-table-wrapper';
+            $permissionQuery = $this->tableOptions['permission'];
+            $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
 
         // open database:
         if ($formOptions['file']) {
             $this->openDB();
         }
-        $permissionQuery = $this->tableOptions['editTable']['permission'];
-        $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
 
+        if ($this->tableOptions['editMode'] === 'popup') {
+            $this->formWrapperClass .= ' pfy-table-edit-popup';
+            $this->showDirectFeedback = false;
+        }
         parent::__construct();
 
         PageFactory::$pg->addAssets('FORMS');
-        PageFactory::$pg->addAssets('POPUPS');
+        if ($this->tableOptions['editMode']) {
+            PageFactory::$pg->addAssets('POPUPS');
+        }
     } // __construct
 
 
@@ -116,13 +123,13 @@ class PfyForm extends Form
         }
         if (!$res) {
             $html = $this->renderFormHtml();
-            if ($this->tableOptions['editTable'] && $this->formOptions['file'] && $this->isFormAdmin) {
+            if ($this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
             }
 
         } else {
             $html = $res;
-            if ($this->tableOptions['editTable'] && $this->formOptions['file'] && $this->isFormAdmin) {
+            if ($this->tableOptions['editMode'] && $this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
             }
         }
@@ -212,8 +219,7 @@ EOT;
             $formClass = " pfy-screen-only$formClass";
         }
         $aria = '';
-        if ((($this->tableOptions['editTable']['']??false) === 'popup') ||
-                (($this->tableOptions['editTable']['mode']??false) === 'popup')) {
+        if (($this->tableOptions['editMode']??false) === 'popup') {
             $formClass .= " pfy-fully-hidden";
             $aria = 'aria-hidden="true"';
         }
@@ -593,7 +599,7 @@ EOT;
         }
 
         if (($this->formOptions['confirmationText'] === '') || (isset($_GET['quiet']))) {
-            $this->showDirektFeedback = false;
+            $this->showDirectFeedback = false;
         }
 
         // check presence of $formInxReceived:
@@ -661,7 +667,7 @@ EOT;
         $html .= $this->handleConfirmationMail($dataRec);
 
         // add 'continue...' if direct feedback is active:
-        if ($this->showDirektFeedback) {
+        if ($this->showDirectFeedback) {
             $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
         }
 
@@ -670,7 +676,7 @@ EOT;
         mylog($logText, 'form-log.txt');
 
         // handle indirect feedback -> via message:
-        if ($html && !$this->showDirektFeedback) {
+        if ($html && !$this->showDirectFeedback) {
             reloadAgent(message: $logText);
         }
 
@@ -901,61 +907,46 @@ EOT;
     private function parseTableOptions(array $tableOptions): array
     {
         $tableOptions['file'] = $this->formOptions['file']??false;
-        if (!$tableOptions['file']) {
-            return [
-                'editTable' => [
-                    'permission'    => 'noone',
-                    'tableButtons'  => '',
-                    'mode'          => 'inpage',
-                ],
-            ];
+        $tableOptions['permission'] = false;
+        $tableOptions['tableButtons'] = false;
+        $tableOptions['serviceColumns'] = false;
+        $tableOptions['editMode'] = false;
+        $showData = $tableOptions['showData'];
+        $editTable = $tableOptions['editTable'];
+        if (!$tableOptions['file'] || (!$showData && !$editTable)) {
+            return $tableOptions;
         }
 
-        // option 'editData':
-        if ($editData = $tableOptions['editData']) {
-            if ($editData === true) {
-                $tableOptions['editTable'] = [
-                    'permission'    => 'loggedin|localhost',
-                    'tableButtons'  => 'delete,new,download',
-                    'mode'          => 'inpage',
-                ];
-
-            } elseif ($editData === 'popup') {
-                $tableOptions['editTable'] = [
-                    'permission'    => 'loggedin|localhost',
-                    'tableButtons'  => 'delete,new,edit,download',
-                    'mode'          => 'popup',
-                ];
-
-            } elseif (is_array($editData)) {
-                $tableOptions['editTable'] = [
-                    'permission'    => $editData['permission']??'loggedin|localhost',
-                    'tableButtons'  => $editData['tableButtons']??'delete,new,download',
-                    'mode'          => $editData['mode']??'inpage',
-                ];
-
+        // handle showData:
+        if ($showData) {
+            if ($showData === true) {
+                $tableOptions['permission'] = 'localhost,loggedin';
+                $tableOptions['tableButtons'] = 'download';
+                $tableOptions['serviceColumns'] = 'num';
             } else {
-                throw new \Exception("Syntax error in option 'editData'");
+                $tableOptions['permission'] = $showData['permission']??'localhost,loggedin';
+                $tableOptions['tableButtons'] = $showData['tableButtons']??'download';
+                $tableOptions['serviceColumns'] = $showData['serviceColumns']??'';
             }
+        }
 
-        } elseif ($showData = $tableOptions['showData']) {
-            $tableOptions['editTable'] = [
-                'permission'    => $showData['permission']?? 'loggedin|localhost',
-                'tableButtons'  => $showData['tableButtons']?? 'delete,download',
-                'mode'          => $showData['mode']?? 'inpage',
-            ];
+        // handle editTable:
+        if ($editTable) {
+            if ($editTable === true) {
+                $tableOptions['permission'] = 'localhost,loggedin';
+                $tableOptions['tableButtons'] = 'delete,download';
+                $tableOptions['serviceColumns'] = 'select,num';
+            } else {
+                $tableOptions['permission'] = $editTable['permission']??'localhost,loggedin';
+                $tableOptions['tableButtons'] = $editTable['tableButtons']??'download';
+                $tableOptions['serviceColumns'] = $editTable['serviceColumns']??'select,num';
+                $tableOptions['editMode'] = $editTable['mode']??'inpage';
+            }
         }
-        unset($tableOptions['editData']);
+
         unset($tableOptions['showData']);
-        if ($tableOptions['editTable']??false) {
-            $this->showDirektFeedback = false;
-        } else {
-            $tableOptions['editTable'] = [
-                'permission'    => 'nobody',
-                'tableButtons'  => '',
-                'mode'          => 'inpage',
-            ];
-        }
+        unset($tableOptions['editTable']);
+
         return $tableOptions;
     } // parseTableOptions
 
