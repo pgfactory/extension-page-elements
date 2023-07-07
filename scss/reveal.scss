@@ -1,6 +1,14 @@
-/* === Reveal block ================== */
+/* === Reveal block ==================
+ * CSS Variables:
+    --pfy-reveal-controller-height: 3em;
+    --pfy-reveal-bg: #eef;
+    --pfy-reveal-border: 1px dashed blue;
+    --pfy-reveal-container-border: 1px dotted red;
+    --pfy-reveal-container-padding: 2em;
+*/
 
 $revealControllerHeight: 2em;
+$revealArrowSize: 1em;
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
@@ -9,22 +17,21 @@ $revealControllerHeight: 2em;
   .pfy-reveal-controller {
     &,
     &::before {
-      height: 2em;
-      line-height: 2em;
       vertical-align: middle;
       padding: 0;
       color: inherit;
     }
     &::before {
       position: absolute;
-      top: calc(var(--pfy-reveal-controller-height, #{$revealControllerHeight}) / 2 - 1.05em);
       left: 0;
-      width: 2em;
-      height: 2em;
+      top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
+      width: $revealArrowSize;
+      height: $revealArrowSize;
       text-align: center;
       margin: 0;
       content: attr(data-icon-closed);
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 1em;
       transition: transform 0.3s;
       transform-origin: 50% 50%;
     }
@@ -54,22 +61,31 @@ $revealControllerHeight: 2em;
   } // .pfy-reveal-controller
 
   .pfy-reveal-controller-wrapper {
+    position: relative;
     background: var(--pfy-reveal-bg);
-    border: 1px solid var(--pfy-reveal-border);
+    border: var(--pfy-reveal-border);
     &.pfy-target-revealed.pfy-target-shadow {
       box-shadow: 0 5px 5px -5px rgb(0 0 0 / 75%);
     }
-
-  }
-  .pfy-reveal-frame {
-    border: 1px solid #ddd;
-    + .pfy-reveal-container > .pfy-reveal-container-inner {
-      padding: 1em;
-      border: 1px solid #ddd;
-      border-top: none;
+    label {
+      display: block;
+      padding-left: calc(#{$revealArrowSize} + 0.5em);
+      min-height: var(--pfy-reveal-controller-height, #{$revealControllerHeight});
+      padding-top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
+      padding-bottom: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 2em) / 2);
     }
-    &.pfy-target-revealed {
-      border-bottom: none;
+    &.pfy-reveal-frame {
+      border: 1px solid #ddd;
+
+      + .pfy-reveal-container > .pfy-reveal-container-inner {
+        padding: 1em;
+        border: 1px solid #ddd;
+        border-top: none;
+      }
+
+      &.pfy-target-revealed {
+        border-bottom: none;
+      }
     }
   } // .pfy-reveal-controller-wrapper
 

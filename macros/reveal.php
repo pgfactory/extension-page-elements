@@ -27,12 +27,12 @@ Displays a clickable label. When clicked, opens and closes the target element sp
 ### Styling Variables:
 #### Controller:
 - ``\--pfy-reveal-bg``
-- ``\--pfy-reveal-border``
+- ``\--pfy-reveal-border``  (e.g. ``\--pfy-reveal-border: 1px solid gray;``)
 - ``\--pfy-reveal-controller-height``
 
 #### Target-Container:
-- ``\--pfy-reveal-container-border``
-- ``\--pfy-reveal-container-padding``
+- ``\--pfy-reveal-container-border``  (e.g. ``\--pfy-reveal-container-border: 1px solid gray;``)
+- ``\--pfy-reveal-container-padding`` (e.g. ``\--pfy-reveal-container-padding: 1em;``)
 
 EOT,
     ];
