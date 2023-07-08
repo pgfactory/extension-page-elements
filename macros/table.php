@@ -28,10 +28,15 @@ function table($argStr = '')
             'dataReference' => ["If true, rec-keys (as 'data-reckey') and element-names (as 'data-elemkey') are included in table. ".
                 "If dataReference is a string, it is added to the table-wrapper div as 'data-ref'.", false],
             'interactive' => ['If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.', false],
-            'tableButtons' => ['(true|list of buttons) If set, includes a row of buttons above the table to perform '.
-                'various actions. Available buttons: \'delete\', \'download\'.', false],
-            'edit' => ['[true|delete,add,download].', false],
-            'editableBy' => ['[none,anyone,localhost,loggedin etc.].', null],
+            'edit' => ['[true|{options}] Shorthand for defining table-buttons, service-columns, permissions and mode.<br>'.
+                'E.g. ``edit:{tableButtons:"delete,download,custom", serviceColumns:"select,num,custom", '.
+                'permission:"admin"}``. <br>``edit:true`` activates default options.', false],
+            'tableButtons' => ['[list of buttons] If set, includes a row of buttons above the table to perform '.
+                'various actions.<br>Available buttons: ``delete`` or ``archive``, ``download`` or `custom`.', false],
+            'serviceColumns' => ['[list of service columns] Injects service columns for various purposes: '.
+                '``select``, ``num``, or `custom`.', false],
+            'permission' => ['[none,anyone,localhost,loggedin etc.].', null],
+            'editableBy' => ['Synonyme for "permission".', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
@@ -61,11 +66,21 @@ EOT,
     // assemble output:
     $file = $args['file'];
     if ($edit = $args['edit']) {
-        $args['tableButtons'] = $edit;
-        unset($args['edit']);
-        if ($args['editableBy'] === null) {
-            $args['editableBy'] = true;
+        if ($edit === true) {
+            $args['permission'] = 'localhost,loggedin';
+            $args['tableButtons'] = 'delete,download';
+            $args['serviceColumns'] = 'select,num';
+        } else {
+            $args['permission'] = $edit['permission'];
+            $args['tableButtons'] = $edit['tableButtons'];
+            $args['serviceColumns'] = $edit['serviceColumns'];
         }
+    }
+    if ($args['editableBy']) {
+        $args['permission'] = $args['editableBy'];
+    }
+    if ($args['showRowNumbers']) {
+        $args['permission'] .= 'num';
     }
 
     $file = resolvePath($file, relativeToPage: true);
