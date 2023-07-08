@@ -118,6 +118,10 @@ class Data2DSet extends DataSet
      */
     private function prepare(array|bool $headerElems, bool $includeSystemElements): array
     {
+        if (!$this->data) {
+            return [[[]], [], []];
+        }
+
         $data2D = [];
         $elementKeys = [];
         if ($headerElems) {
@@ -135,7 +139,7 @@ class Data2DSet extends DataSet
                     }
                 } else {
                     $elementKeys = array_filter($elementKeys, function ($e) {
-                        return ($e[0] !== '_');
+                        return (($e[0]??'') !== '_');
                     });
                     $elementKeys = array_values($elementKeys);
                 }
