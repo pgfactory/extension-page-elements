@@ -96,9 +96,15 @@ class PfyForm extends Form
             $this->openDB();
         }
 
+        // in popup-mode prevent announceEmptyTable:
         if ($this->tableOptions['editMode'] === 'popup') {
             $this->formWrapperClass .= ' pfy-table-edit-popup';
             $this->showDirectFeedback = false;
+        }
+        
+        // prevent announceEmptyTable by default in case minRows is active:
+        if ($this->tableOptions['minRows']) {
+            $this->tableOptions['announceEmptyTable'] = false;
         }
         parent::__construct();
 
@@ -879,7 +885,7 @@ EOT;
      */
     private function openDataTable(): DataTable|false
     {
-        if (($this->dataTable && !isset($_GET['delete'])) || !$this->formOptions['file']) {
+        if ($this->dataTable && ($this->formIndex === $this->dataTable->inx)) {
             return $this->dataTable;
         }
 
@@ -958,6 +964,26 @@ EOT;
     private function renderDataTable(): string
     {
         $ds = $this->openDataTable();
+        $noData = !$ds->getSize();
+        if (!$ds->announceEmptyTable && $noData) {
+            $emptyRec = [];
+            foreach ($this->formElements as $key => $element) {
+                if ($key[0] === '_') {
+                    continue;
+                }
+                if ($element['isArray']) {
+                    $emptyRec[$key] = [];
+                    $emptyRec[$key]['_'] = '';
+                    foreach ($element['subKeys'] as $subKey) {
+                        $emptyRec[$key][$subKey] = '';
+                    }
+
+                } else {
+                    $emptyRec[$key] = '';
+                }
+            }
+            $ds->addRec($emptyRec);
+        }
         $html = $ds ? $ds->render() : '';
         if ($html) {
             $html = <<<EOT
@@ -966,6 +992,10 @@ EOT;
 $html
 </div>
 EOT;
+        }
+		// if data was empty and we added an empty rec, remove it now:
+        if ($noData) {
+            $ds->purge();
         }
 
         return $html;
@@ -1134,12 +1164,14 @@ EOT;
                 $errorStr = strip_tags($error);
                 $parent = $error->parentNode();
                 $input = $parent->findOneOrFalse('input, textarea');
-                $name = $input->getAttribute('name');
-                $ip = $_SERVER['REMOTE_ADDR'];
-                if (option('pgfactory.pagefactory-elements.options.log-ip', false)) {
-                    $errorStr = "[$ip]  $name: $errorStr";
+                if ($input) {
+                    $name = $input->getAttribute('name');
+                    $ip = $_SERVER['REMOTE_ADDR'];
+                    if (option('pgfactory.pagefactory-elements.options.log-ip', false)) {
+                        $errorStr = "[$ip]  $name: $errorStr";
+                    }
+                    mylog($errorStr, 'form-log.txt');
                 }
-                mylog($errorStr, 'form-log.txt');
             }
         }
 

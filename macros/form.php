@@ -223,7 +223,6 @@ EOT,
         PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
     }
 
-    $html = TransVars::translate($html);
     return [$html];
 } // form
 
