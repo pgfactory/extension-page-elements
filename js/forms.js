@@ -251,6 +251,12 @@ const pfyFormsHelper = {
       onClose: function() {
         pfyResponseValue = document.querySelector('#pfy-check-input').value;
       },
+      opOpen: function () {
+        setTimeout(function () {
+          const input = document.querySelector('#pfy-check-input');
+          input.focus();
+        }, 50);
+      },
     }).then(
       function() {
         if (referenceValue.charAt(0).toLowerCase() === pfyResponseValue.toLowerCase()) {

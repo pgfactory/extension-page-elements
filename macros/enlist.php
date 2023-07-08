@@ -45,7 +45,7 @@ function enlist($args = '')
             'admin' =>	['[bool|permissionQuery] Defines who may administrate the enlistment.', true],
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people.', false],
-            'adminMail' =>	['[string] Synonyme for adminEmail.', true],
+            'adminMail' =>	['[string] Synonyme for adminEmail.', false],
         ],
         'summary' => <<<EOT
 
@@ -77,6 +77,7 @@ EOT,
     if ($inx === 1) {
         $html .= $enlist->renderForm();
         PageFactory::$pg->addAssets('ENLIST');
+        PageFactory::$pg->addAssets('POPUPS');
     }
 
     return [$html];

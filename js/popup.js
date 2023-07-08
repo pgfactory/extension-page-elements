@@ -509,7 +509,7 @@ function pfyPopup( options ) {
     }
 
     if (this.onOpen) {
-      executeCallback(parent.onOpen);
+      executeCallback(this.onOpen);
     }
     return this;
   }; // open
