@@ -31,8 +31,11 @@ var pfyReveal = {
         }
         revealContainer.classList.add('pfy-reveal-container', 'pfy-reveal-container-' + inx);
         var revealContent = revealContainer.innerHTML;
-        revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-        revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+
+        if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
+          revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
+          revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+        }
         revealContainer.style.display = 'block';
         pfyReveal.disableFocus(revealContainer);
       });
