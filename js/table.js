@@ -13,10 +13,10 @@ const tableHelper = {
         const tableInx = table.dataset.tableinx;
         tableHelper.setupPropagateCheckbox(table);
         tableHelper.setupOpenDeleteRecordsDialog(table);
-        tableHelper.setupDownloadButton(table);
+        tableHelper.setupDownloadButton(table, tableInx);
         tableHelper.setupEditButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
-        tableHelper.setupUnloadEvent(table);
+        tableHelper.setupUnloadEvent(table, tableInx);
       });
     }
   }, // init
@@ -142,7 +142,7 @@ const tableHelper = {
   setupEditButtons: function (table, tableInx) {
     const tableFormWrapper = table.closest('.pfy-form-and-table-wrapper');
     if (!tableFormWrapper) {
-      mylog('Error: .pfy-form-and-table-wrapper not present');
+      return;
     }
     const tableForm = tableFormWrapper.querySelector('.pfy-form');
     if (!tableForm) {
