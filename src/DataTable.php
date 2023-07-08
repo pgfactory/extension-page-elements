@@ -38,7 +38,7 @@ class DataTable extends Data2DSet
     private $tableWrapperClass;
     private $dataReference;
     private $tableButtons;
-    private int $inx;
+    public int $inx;
     private string $tableId;
     private $footers;
     private string $caption;
@@ -57,7 +57,7 @@ class DataTable extends Data2DSet
     protected $markLocked;
     protected $isTableAdmin;
     private bool $dialogInitialized = false;
-    private bool $announceEmptyTable;
+    public bool $announceEmptyTable;
     private $archiveDb;
 
     /**
@@ -67,20 +67,18 @@ class DataTable extends Data2DSet
      */
     public function __construct(string $file, array $options = [])
     {
-        parent::__construct($file, $options);
-        if ($options['inx']??false) {
-            $this->inx = $GLOBALS['tableInx'] = $options['inx'];
-        } elseif (isset($GLOBALS['tableInx'])) {
+        if (isset($GLOBALS['tableInx'])) {
             $GLOBALS['tableInx']++;
             $this->inx = $GLOBALS['tableInx'];
         } else {
             $this->inx = $GLOBALS['tableInx'] = 1;
         }
+        parent::__construct($file, $options);
 
         if (isset($_GET['delete']) || isset($_GET['archive'])) {
             // skip, if no recKeys supplied or recKeys belong to some other table:
             if (($_POST['pfy-reckey']??false) && ($this->inx == ($_POST['tableinx']??false))) {
-                $mode = ($_GET['delete']??false) ? 'delete' : 'archive';
+                $mode = isset($_GET['delete']) ? 'delete' : 'archive';
                 $this->handleTableRequests($mode);
             }
         }
@@ -103,7 +101,7 @@ class DataTable extends Data2DSet
 
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
         $this->editMode = ($options['editMode']??false) ?: 'inpage';
-        $this->announceEmptyTable = $options['announceEmptyTable'] ?? false;
+        $this->announceEmptyTable = $options['announceEmptyTable'] ?? true;
         if ($this->editMode === 'popup') {
             $this->announceEmptyTable = false;
             $this->tableClass .= ' pfy-table-edit-popup';
@@ -131,6 +129,7 @@ class DataTable extends Data2DSet
         if ((str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive'))
             && !str_contains($serviceColumns, 'select')) {
             $serviceColumns = "select,$serviceColumns";
+            PageFactory::$assets->addAssets('POPUPS, TABLES');
         }
         $this->serviceColumns = $serviceColumns;
         $this->tableButtons = $tableButtons;
@@ -149,8 +148,6 @@ class DataTable extends Data2DSet
         if ($this->footers && !is_array($this->footers)) {
             $this->parseArrayArg('footers');
         }
-
-        $this->prepareTableData();
     } // __construct
 
 
@@ -172,13 +169,15 @@ class DataTable extends Data2DSet
      */
     public function render(): string
     {
-        if ((sizeof($this->tableData) <= 1) || sizeof($this->tableData['_hdr']??[]) === 0) {
+        if (!$this->data) {
             if ($this->announceEmptyTable) {
                 return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
             } else {
-                $this->tableData[0] = array_pad([], sizeof($this->tableHeaders), '');
+                $rec = array_combine(array_values($this->tableHeaders), array_pad([], sizeof($this->tableHeaders), ''));
+                $this->addRec($rec, flush:false);
             }
         }
+        $this->prepareTableData();
 
         // inject service rows: select(delete), row-numbers, edit-buttons
         $this->prependServiceColumns();
@@ -356,7 +355,12 @@ class DataTable extends Data2DSet
                 $class = translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
             }
             $this->elementLabels[] = $c;
-            $out .= "      <th class='pfy-col-$i $class'>{{ $elem }}</th>\n";
+            if (!preg_match('/[^-\w\s]/', $elem)) {
+                if ($e = TransVars::getVariable($elem)) {
+                    $elem = $e;
+                }
+            }
+            $out .= "      <th class='pfy-col-$i $class'>$elem</th>\n";
         }
         $out .= "    </tr>\n  </thead>\n";
         return $out;
@@ -438,7 +442,7 @@ class DataTable extends Data2DSet
         if ($this->footers) {
             $footer = $this->footers;
             $nCols = sizeof($this->elementLabels);
-            $counts = $sums = array_combine(array_keys($this->elementLabels), array_fill(0, $nCols, 0));
+            $counts = $sums = array_combine($this->elementLabels, array_fill(0, $nCols, 0));
             foreach ($data as $rec) {
                 $i = 0;
                 foreach ($rec as $key => $value) {
@@ -458,7 +462,7 @@ class DataTable extends Data2DSet
             $out .= "  <tfoot>\n";
             $out .= "    <tr>\n";
             $c = 1;
-            foreach (array_keys($this->elementLabels) as $key) {
+            foreach ($this->elementLabels as $key) {
                 if ($key === '_locked') {
                     continue;
                 }
@@ -469,7 +473,7 @@ class DataTable extends Data2DSet
                         $val = $footer[$key];
                     }
                 } else {
-                    $val = '';
+                    $val = '&nbsp;';
                 }
                 $out .= "      <td class='pfy-col-$c'>$val</td>\n";
                 $c++;
@@ -668,9 +672,12 @@ EOT;
 
     private function archive($key) {
         $dataRec = $this->find($key);
-        $rec = $dataRec->data();
-        $dataRec->remove();
-        $this->archiveDb->addRec($rec);
+        // in case data was empty and we added an empty rec, remove it again here:
+        if ($dataRec) {
+            $rec = $dataRec->data();
+            $dataRec->remove();
+            $this->archiveDb->addRec($rec);
+        }
     } // archive
 
 
