@@ -13,7 +13,7 @@ const TRANSLATIONS = [
     'Saturday' => ['en' => 'Saturday', 'de' => 'Samstag',],
     'Sunday' => ['en' => 'Sunday', 'de' => 'Sonntag',],
     'January' => ['en' => 'January', 'de' => 'Januar',],
-    'Febrary' => ['en' => 'Febrary', 'de' => 'Februar',],
+    'February' => ['en' => 'Febrary', 'de' => 'Februar',],
     'March' => ['en' => 'March', 'de' => 'März',],
     'April' => ['en' => 'April', 'de' => 'April',],
     'May' => ['en' => 'May', 'de' => 'Mai',],
