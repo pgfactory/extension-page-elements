@@ -19,6 +19,7 @@ const pfyFormsHelper = {
         pfyFormsHelper.setupCancelButtonHandler(form);
         pfyFormsHelper.setupSubmitHandler(form);
         pfyFormsHelper.setupModifiedMonitor(form);
+        pfyFormsHelper.resetForm(form);
       });
     }
   }, // init
@@ -63,7 +64,7 @@ const pfyFormsHelper = {
             e.stopPropagation();
             e.stopImmediatePropagation();
             form.dataset.changed = false;
-            pfyFormsHelper.clearForm(form);
+            pfyFormsHelper.resetForm(form);
             pfyFormsHelper.unlockRecs();
             form.reset();
           }
@@ -90,16 +91,15 @@ const pfyFormsHelper = {
 
 
 
-  clearForm(form) {
+  resetForm(form) {
     let fields = form.querySelectorAll('input');
     if (fields.length) {
-      const types = 'hidden,submit,cancel,checkbox,radio,button';
+      const complexTypes = 'submit,cancel,checkbox,radio,button';
       fields.forEach(function (field) {
         const type = field.getAttribute('type');
         const readonly = field.getAttribute('readonly') !== null;
-        if (!readonly && !types.includes(type)) {
-          const val = field.dataset.default ?? '';
-          field.setAttribute('value', val);
+        if (!readonly && !complexTypes.includes(type)) {
+          field.value = field.dataset.default ?? '';
         }
       });
 
@@ -124,11 +124,11 @@ const pfyFormsHelper = {
         });
       }
     }
+
     // reset _formInx hidden field:
     const formInxField = form.querySelector('input[name=_formInx]');
     if (formInxField) {
-      const defaultVal = formInxField.dataset.default;
-      formInxField.setAttribute('value', defaultVal);
+      formInxField.value = formInxField.dataset.default ?? '';
     }
 
     const errors = form.querySelectorAll('.error');
@@ -137,21 +137,25 @@ const pfyFormsHelper = {
         field.remove();
       });
     }
-  }, // clearForm
+  }, // resetForm
 
 
 
   presetForm(form, data, recId) {
+    if (typeof data === 'string') {
+      mylog('no data received');
+      return;
+    }
     if (typeof form === 'string') {
       form = document.querySelector(form);
     }
-    this.clearForm(form);
-    const simpleTypes = 'hidden,submit,cancel,checkbox,radio,button';
+    this.resetForm(form);
+    const complexTypes = 'submit,cancel,checkbox,radio,button';
     if (data) {
       if (typeof recId !== 'undefined') {
         const recKey = form.querySelector('input[name=_recKey]');
         if (recKey) {
-          recKey.setAttribute('value', recId);
+          recKey.value = recId;
         }
       }
       for (let name in data) {
@@ -185,8 +189,8 @@ const pfyFormsHelper = {
           const type = field.getAttribute('type');
           if (type !== null) {
             mylog(`name: ${name}  type: ${type}  val: ${val}`);
-            if (!simpleTypes.includes(type)) {
-              field.setAttribute('value', val);
+            if (!complexTypes.includes(type)) {
+              field.value = val;
 
             } else if (type === 'radio') {
               const inputWrapper = field.closest('.pfy-input-wrapper');
@@ -215,9 +219,32 @@ const pfyFormsHelper = {
         }
       }
     }
+    this.prefillComputedFields(form);
     form.dataset.changed = true;
   }, // presetForm
 
+
+  prefillComputedFields(form) {
+    let fields = form.querySelectorAll('input');
+    if (fields.length) {
+      const types = 'hidden,submit,cancel,checkbox,radio,button';
+      fields.forEach(function (field) {
+        const type = field.getAttribute('type');
+        const readonly = field.getAttribute('readonly') !== null;
+        if (!readonly && !types.includes(type)) {
+          let val = field.dataset.preset ?? '';
+          const ch1 = val.charAt(0);
+          if (ch1 === '=') {
+            val = val.substring(1);
+            val = pfyFormsHelper.evalExpr(form, val);
+            const name = field.getAttribute('name');
+            mylog(`computed name: ${name}  type: ${type}  val: ${val}`);
+            field.value = val;
+          }
+        }
+      });
+    }
+  }, // prefillComputedFields
 
 
   checkHoneypot(form) {
@@ -284,6 +311,7 @@ const pfyFormsHelper = {
     passwordInputs.forEach(function(input) {
       input.value = '******';
     });
+
     const data = new FormData(clone);
     const dataStr = JSON.stringify(Array.from(data.entries()));
     serverLog('Browser submits: ' + dataStr, 'form-log.txt');
@@ -303,6 +331,20 @@ const pfyFormsHelper = {
   isFormChanged(form) {
     const changed = form.dataset.changed??'false';
     return (changed !== 'false');
+  }, // isFormChanged
+
+  evalExpr(form, str) {
+    let m;
+    while (m = str.match(/\$([\w-]+)/)) {
+      const src = m[1];
+      let v = str;
+      const elem = form.querySelector('[name='+src+']');
+      if (elem) {
+        v = elem.value;
+      }
+      str = str.replace(m[0], `'${v}'`);
+    }
+    return new Function('return ' + str)();
   }, // isFormChanged
 
 }; // pfyFormsHelper

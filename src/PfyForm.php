@@ -381,11 +381,20 @@ EOT;
 
         // handle presets (resp. value / default):
         if ($preset = ($elemOptions['preset']??($elemOptions['value']??($elemOptions['default']??false)))) {
-            $elem->setDefaultValue($preset);
-            if (($elemOptions['default']??false) !== '') {
-                // $elemOptions['default'] === ''  means don't provide default:
-                $elem->setHtmlAttribute('data-default', $preset);
+            if (($preset[0]??false) === '=') {
+                $elem->setHtmlAttribute('data-preset', $preset);
+            } else {
+                $elem->setDefaultValue($preset);
+                if (($elemOptions['default']??false) !== '') {
+                    // $elemOptions['default'] === ''  means don't provide default:
+                    $elem->setHtmlAttribute('data-default', $preset);
+                }
             }
+        }
+
+        // handle compute-saveAs:
+        if ($saveAs = ($elemOptions['saveAs']??false)) {
+            $this->formElements[$name]['saveAs'] = $saveAs;
         }
 
         // handle min:
@@ -730,13 +739,33 @@ EOT;
     {
         $bypassedElements = array_keys($this->bypassedElements);
         foreach ($dataRec as $name => $value) {
-            if ($this->formElements[$name]['args']['antiSpam']??false) {
+            // handle anti-spam field:
+            if ($this->formElements[$name]['args']['antiSpam'] ?? false) {
                 if ($value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
                     return 'pfy-anti-spam-warning';
                 }
                 unset($dataRec[$name]);
             }
+
+            // handle 'saveAs' attrib to manipulate data before storing:
+            if ($saveAs = ($this->formElements[$name]['saveAs'] ?? false)) {
+                while (preg_match('/\$([\w-]+)/', $saveAs, $m)) {
+                    $varName = $m[1];
+                    $v = $dataRec[$varName] ?? '';
+                    $saveAs = str_replace($m[0], "'$v'", $saveAs);
+                }
+                try {
+                    $value = eval("return $saveAs;");
+                    $dataRec[$name] = $value;
+                } catch (\Exception $e) {
+                    exit($e);
+                }
+            }
+        }
+
+        // sanitize data:
+        foreach ($dataRec as $name => $value) {
             // filter out any fields starting with '_':
             if ($name[0] === '_') {
                 unset($dataRec[$name]);

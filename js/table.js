@@ -268,8 +268,8 @@ const tableHelper = {
           tableHelper.unlockRecs(tableInx);
         },
         onOpen: function () {
-          mylog('prepareEditForm - onOpen');
-          mylog(data);
+          // mylog('prepareEditForm - onOpen');
+          // mylog(data);
           const form = document.querySelector('#pfy-popup-form .pfy-form');
           if (form) {
             pfyFormsHelper.init(form);
