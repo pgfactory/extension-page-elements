@@ -304,7 +304,6 @@ class DataTable extends Data2DSet
 
         $newCol[0] = $headElement ?: $fillWith;
         $newCol = array_pad($newCol, $this->nRows, $fillWith);
-        $i = 0;
 
         // fix $this->elementLabels accordingly:
         $name = translateToIdentifier($headElement, removeNonAlpha: true);
@@ -313,8 +312,15 @@ class DataTable extends Data2DSet
             array_splice_assoc($this->tableHeaders, $col, $col, [$name => $headElement]);
         }
 
+        $i = 0;
         foreach ($data as $key => $rec) {
             $newElem = str_replace('%nameAttr'," name='pfy-reckey[]' value='$key'", $newCol[$i]);
+
+            // prevent injection for empty rows:
+            if (is_numeric($key) && ($newElement !== 'pfy-row-number')) {
+                $newElem = '&nbsp;';
+            }
+
             $newElem = [$newElemName => $newElem];
             array_splice_assoc($rec, $col, 0, $newElem);
             $data[$key] = $rec;
