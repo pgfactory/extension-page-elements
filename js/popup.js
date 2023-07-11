@@ -360,7 +360,7 @@ function pfyPopup( options ) {
 
     $elem.addEventListener('keyup', function (e) {
         const key = e.key;
-        if (key === 27) {                // ESC
+        if (key === 'Escape') {                // ESC
           if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
             parent.inihibitClosing = !executeCallback(parent.onCancel);
 
@@ -370,7 +370,7 @@ function pfyPopup( options ) {
           parent.close();
           e.preventDefault();
         }
-        if (key === 13) {         // Return
+        if (key === 'Enter') {         // Return
           if (parent.onConfirm && document.querySelectorAll('.pfy-popup-btn-confirm').length) {
             parent.inihibitClosing = !executeCallback(parent.onConfirm);
 
