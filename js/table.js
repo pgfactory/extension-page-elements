@@ -6,7 +6,12 @@
 "use strict";
 
 const tableHelper = {
+  formRecLocking: false,
+  recLocked: false,
+
   init: function () {
+    this.formRecLocking = (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking;
+
     const tables = document.querySelectorAll('.pfy-table');
     if ((typeof tables !== 'undefined') && tables.length) {
       tables.forEach(function (table) {
@@ -16,15 +21,39 @@ const tableHelper = {
         tableHelper.setupDownloadButton(table, tableInx);
         tableHelper.setupEditButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
-        tableHelper.setupUnloadEvent(table, tableInx);
+        tableHelper.setupModifiedMonitor(table, tableInx);
       });
     }
   }, // init
 
 
+  setupModifiedMonitor(table, tableInx) {
+    if (!tableHelper.formRecLocking) {
+      return;
+    }
+    const wrapper = table.closest('.pfy-form-and-table-wrapper');
+    const form = wrapper.querySelector('.pfy-form');
+    const formInputs = form.querySelectorAll('input, textarea, select');
+    if (formInputs) {
+      formInputs.forEach(function (input) {
+        if (input.classList.contains('button')) {
+          return;
+        }
+        input.addEventListener('change', function () {
+          tableHelper.setupUnloadEvent(table, tableInx);
+        });
+      });
+    }
+  }, // setupModifiedMonitor
+
+
   setupUnloadEvent: function(table, tableInx) {
+    if (table.dataset.unloadEventActivated??false) {
+      return;
+    }
+    table.dataset.unloadEventActivated = true;
+    mylog('unload handler activeted (' + tableInx + ')');
     window.addEventListener('beforeunload', (event) => {
-      mylog('unlocking locked records');
       tableHelper.unlockRecs(tableInx);
     });
   }, // setupUnloadEvent
@@ -158,7 +187,12 @@ const tableHelper = {
           const recKey = tr.dataset.reckey ?? '';
 
           // get latest data for this record:
-          const args = 'getRec='+recKey+'&datasrcinx='+tableInx+'&lock';
+          // const args = 'getRec='+recKey+'&datasrcinx='+tableInx+'&lock';
+          let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
+          if (tableHelper.formRecLocking) {
+            args += '&lock';
+            tableHelper.recLocked = true;
+          }
           mylog('fetching data record '+recKey);
           execAjaxPromise(args, {})
             .then(function (data) {
@@ -227,11 +261,10 @@ const tableHelper = {
             },
           };
           tableHelper.popupForm(options, editbyPopupMode, parentForm);
+          pfyFormsHelper.init('.pfy-popup-container .pfy-form', true);
+
         } else {
-          const input1 = parentForm.querySelector('.pfy-input-wrapper input');
-          if (input1) {
-            input1.focus();
-          }
+          pfyFormsHelper.init(parentForm, true);
         }
         newRecBtn.setAttribute('aria-expanded', 'true');
       });
@@ -268,8 +301,6 @@ const tableHelper = {
           tableHelper.unlockRecs(tableInx);
         },
         onOpen: function () {
-          // mylog('prepareEditForm - onOpen');
-          // mylog(data);
           const form = document.querySelector('#pfy-popup-form .pfy-form');
           if (form) {
             pfyFormsHelper.init(form);
@@ -333,11 +364,20 @@ const tableHelper = {
 
 
   unlockRecs: function (tableInx) {
-    mylog('unlocking locked records');
+    if (!tableHelper.formRecLocking) {
+      return;
+    }
+
     if (typeof tableInx === 'undefined') {
       const tables = document.querySelectorAll('.pfy-table');
       if (tables) {
         tables.forEach(function (table) {
+          if (table.dataset.unlockExecuted??false) {
+            return;
+          }
+          table.dataset.unlockExecuted = true;
+          mylog('unlocking locked recordsn (' + tableInx + ')');
+
           const tableInx = table.dataset.tableinx;
           const args = 'unlockAll' + '&datasrcinx=' + tableInx;
           execAjaxPromise(args, {})
@@ -348,6 +388,14 @@ const tableHelper = {
         });
       }
     } else {
+      const patt = 'table[data-tableinx="'+tableInx+'"]';
+      const table = document.querySelector(patt);
+      if (table.dataset.unlockExecuted??false) {
+        return;
+      }
+      table.dataset.unlockExecuted = true;
+      mylog('unlocking locked records (' + tableInx + ')');
+
       const args = 'unlockAll' + '&datasrcinx=' + tableInx;
       execAjaxPromise(args, {})
         .then(function (data) {
