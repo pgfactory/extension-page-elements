@@ -44,6 +44,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'css/-enlist.css',
         PAGE_ELEMENTS_URL.'js/-enlist.js',
     ],
+    'EVENTS' => [
+        //PAGE_ELEMENTS_URL.'css/-events.css',
+        PAGE_ELEMENTS_URL.'js/-events.js',
+    ],
     'TOOLTIPSTER' => [
         PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
         PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',

@@ -76,6 +76,14 @@ EOT,
         $str = $sourceCode;
     }
 
+    if ($inx === 1) {
+        PageFactory::$pg->addAssets('EVENTS');
+    }
+
+    if (!$options['file']) {
+        return '';
+    }
+
     // assemble output:
     $str .= '';
 

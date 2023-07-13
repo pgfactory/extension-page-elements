@@ -18,33 +18,12 @@ use Usility\PageFactory\TransVars;
  // Optional support for propre localization of dates -> requires twig/intl-extra
  //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
 
-const TRANSLATIONS = [
-   'Monday' => ['en' => 'Monday', 'de' => 'Montag',],
-   'Tuesday' => ['en' => 'Tuesday', 'de' => 'Dienstag',],
-   'Wednesday' => ['en' => 'Wednesday', 'de' => 'Mittwoch',],
-   'Thursday' => ['en' => 'Thursday', 'de' => 'Donnerstag',],
-   'Friday' => ['en' => 'Friday', 'de' => 'Freitag',],
-   'Saturday' => ['en' => 'Saturday', 'de' => 'Samstag',],
-   'Sunday' => ['en' => 'Sunday', 'de' => 'Sonntag',],
-   'January' => ['en' => 'January', 'de' => 'Januar',],
-   'Febrary' => ['en' => 'Febrary', 'de' => 'Februar',],
-   'March' => ['en' => 'March', 'de' => 'März',],
-   'April' => ['en' => 'April', 'de' => 'April',],
-   'May' => ['en' => 'May', 'de' => 'Mai',],
-   'June' => ['en' => 'June', 'de' => 'Juni',],
-   'July' => ['en' => 'July', 'de' => 'Juli',],
-   'September' => ['en' => 'September', 'de' => 'September',],
-   'October' => ['en' => 'October', 'de' => 'Oktober',],
-   'November' => ['en' => 'November', 'de' => 'November',],
-   'December' => ['en' => 'December', 'de' => 'Dezember',],
-//            '' => '',
-];
-const YEAR_THRESHOLD = 10;
 
 class Events extends DataSet
 {
     public $filetime;
     private array $timePatterns;
+    private array|null $templates = null;
 
     public function __construct(string $file, array $options = [])
     {
@@ -78,13 +57,14 @@ class Events extends DataSet
         }
 
         // find the appropriate template taking into account category and language:
-        $template = $this->getTemplate();
-        if (!$template) {
-            return '{{ pfy-no-event-template-found }}';
-        }
-
-        // compile the template using Twig:
-        $mdStr = $this->compile($template, $events);
+//        $template = $this->getTemplate();
+//        if (!$template) {
+//            return '{{ pfy-no-event-template-found }}';
+//        }
+//
+//        // compile the template using Twig:
+//        $mdStr = $this->compile($template, $events);
+        $mdStr = $this->compile($events);
 
         // finalize:
         $mdStr = $this->cleanup($mdStr);
@@ -185,17 +165,29 @@ class Events extends DataSet
     } // selectEvents
     
     
-    private function getTemplate(): mixed
+    private function getTemplate($category): mixed
+//    private function getTemplate(): mixed
     {
+//        if (isset($this->templates[$category])) {
+//            return $this->templates[$category];
+//        }
+        if ($this->templates === null) {
+            $templatesFile = $this->options['templatesFile'];
+            if ($templatesFile) {
+                $this->templates = loadFile($templatesFile);
+            }
+        }
+        $templates = $this->templates;
+
         $templateName = $this->options['template'];
-        $category = $this->options['category'];
+//        $category = $this->options['category'];
         $language = PageFactory::$langCode;
 
-        $templatesFile = $this->options['templatesFile'];
-        $templates = false;
-        if ($templatesFile) {
-            $templates = loadFile($templatesFile);
-        }
+//        $templatesFile = $this->options['templatesFile'];
+//        $templates = false;
+//        if ($templatesFile) {
+//            $templates = loadFile($templatesFile);
+//        }
 
         if ($templates) { // Templates from file found:
             if ($category) {
@@ -239,20 +231,28 @@ class Events extends DataSet
                 $template = TransVars::getVariable($templateName);
             }
         }
+//        $this->templates[$category] = $template;
         return $template;
     } // getTemplate
 
 
-    private function compile($template, $events)
+    private function compile($events)
+//    private function compile($template, $events)
     {
-        $category = $this->options['category'];
+//        $category = $this->options['category'];
         $wrap1 = $wrap2 = "\n";
-        if ($this->options['wrap']) {
-            $wrap1 = "\n@@@ .event-$category\n\n";
-            $wrap2 = "\n\n@@@\n\n";
-        }
+//        if ($this->options['wrap']) {
+//            $wrap1 = "\n@@@ .event-$category\n\n";
+//            $wrap2 = "\n\n@@@\n\n";
+//        }
         $mdStr = '';
         foreach ($events as $eventRec) {
+            $category = $eventRec['category']??false;
+            if ($this->options['wrap']) {
+                $wrap1 = "\n@@@ .pfy-event-wrapper.event-$category\n\n";
+                $wrap2 = "\n\n@@@\n\n";
+            }
+            $template = $this->getTemplate($category);
             $mdStr .= $wrap1;
             $mdStr .= $this->compileTemplate($template, $eventRec);
             $mdStr .= $wrap2;
