@@ -142,6 +142,7 @@ $focus-color: orange;
 
   .pfy-form {
     max-width: var(--form-width, 28em);
+    textarea::placeholder,
     input::placeholder {
       text-align: right;
       font-style: italic;

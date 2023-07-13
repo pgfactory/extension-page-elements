@@ -54,6 +54,9 @@ function form($args = '')
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
 
+            'showDirectFeedback' =>	['[bool] If true, a confiration text is presented upon successful completion of a '.
+                'form entry. Otherwise, only an information banner is shown.', true],
+
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
 
@@ -66,6 +69,8 @@ function form($args = '')
                 '``serviceColumns:\'select,num,edit\'``,<br>'.
                 '``permission:\'loggedin,group,localhost\'``,<br>``mode:popup<br>``'.
                 '("editData:true" is shorthand for typical set of options.)', false],
+
+            'recLocking' =>	['[bool] Defines, whether record-locking shall be activated while editing a record.', false],
 
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
 

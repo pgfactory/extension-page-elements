@@ -83,8 +83,13 @@ class PfyForm extends Form
         $formOptions['deadline']            = $formOptions['deadline']??false;
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
+        $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
+        $recLocking                         = $formOptions['recLocking']??false;
         $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
 
+        if ($recLocking) {
+            PageFactory::$pg->addJs('const pfyFormRecLocking = true;');
+        }
         if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns']) {
             $this->formWrapperClass .= ' pfy-form-and-table-wrapper';
             $permissionQuery = $this->tableOptions['permission'];
@@ -108,10 +113,11 @@ class PfyForm extends Form
         }
         parent::__construct();
 
-        PageFactory::$pg->addAssets('FORMS');
         if ($this->tableOptions['editMode']) {
             PageFactory::$pg->addAssets('POPUPS');
+            PageFactory::$pg->addAssets('REVEAL');
         }
+        PageFactory::$pg->addAssets('FORMS');
     } // __construct
 
 
@@ -165,8 +171,8 @@ EOT;
         }
 
         // add standard hidden fields to identify data: which form, which data-record:
-        $this->addElement(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'default' => '']);
-        $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'default' => $this->formIndex]);
+        $this->addElement(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'preset' => '']);
+        $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
 
         foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
@@ -380,16 +386,8 @@ EOT;
         }
 
         // handle presets (resp. value / default):
-        if ($preset = ($elemOptions['preset']??($elemOptions['value']??($elemOptions['default']??false)))) {
-            if (($preset[0]??false) === '=') {
-                $elem->setHtmlAttribute('data-preset', $preset);
-            } else {
-                $elem->setDefaultValue($preset);
-                if (($elemOptions['default']??false) !== '') {
-                    // $elemOptions['default'] === ''  means don't provide default:
-                    $elem->setHtmlAttribute('data-default', $preset);
-                }
-            }
+        if ($preset = ($elemOptions['preset']??($elemOptions['value']??false))) {
+            $elem->setHtmlAttribute('data-preset', $preset);
         }
 
         // handle compute-saveAs:
