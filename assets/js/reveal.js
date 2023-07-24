@@ -1,7 +1,6 @@
 /*
  * reveal.js
  *
- * requires jq-focusable.js
  */
 
 var pfyReveal = {

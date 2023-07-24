@@ -1,32 +1,48 @@
 // === Message Box =================================
+
+
 var pfyMsgInitialized = null;
-function setupMessageHandler( delay) {
-    setTimeout(function () {
-        $('.pfy-msgbox').addClass('pfy-msg-show');
+
+function setupMessageHandler(delay) {
+    setTimeout(function() {
+        var msgbox = document.querySelector('.pfy-msgbox');
+        msgbox.classList.add('pfy-msg-show');
     }, delay);
-    setTimeout(function () {
-        $('.pfy-msgbox').removeClass('pfy-msg-show');
+
+    setTimeout(function() {
+        var msgbox = document.querySelector('.pfy-msgbox');
+        msgbox.classList.remove('pfy-msg-show');
     }, 5000);
-    $('.pfy-msgbox').click(function () {
-        $(this).toggleClass('pfy-msg-show');
-    }).dblclick(function () {
-        $(this).hide();
+
+    var msgbox = document.querySelector('.pfy-msgbox');
+    msgbox.addEventListener('click', function() {
+        this.classList.toggle('pfy-msg-show');
     });
+
+    msgbox.addEventListener('dblclick', function() {
+        this.style.display = 'none';
+    });
+
     pfyMsgInitialized = true;
-} // setupMessageHandler
+}
 
+function showMessage(txt) {
+    var msgbox = document.querySelector('.pfy-msgbox');
+    if (msgbox) {
+        msgbox.parentNode.removeChild(msgbox);
+    }
 
+    var newMsgbox = document.createElement('div');
+    newMsgbox.className = 'pfy-msgbox';
+    newMsgbox.innerHTML = '<p>' + txt + '</p>';
 
-function showMessage( txt ) {
-    $('.pfy-msgbox').remove();
-    $('body').prepend( '<div class="pfy-msgbox"><p>' + txt + '</p></div>' );
+    document.body.insertBefore(newMsgbox, document.body.firstChild);
     setupMessageHandler(500);
-} // showMessage
+}
 
-
-
-$( document ).ready(function() {
-    if ($('.pfy-msgbox').length) {
+document.addEventListener('DOMContentLoaded', function() {
+    var msgbox = document.querySelector('.pfy-msgbox');
+    if (msgbox) {
         setupMessageHandler(500);
     }
 });

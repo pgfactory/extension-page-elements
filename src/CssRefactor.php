@@ -34,7 +34,7 @@ class CssRefactor
         });
 
         $scss = self::toScss($array);
-        $toFile = fileExt($file, true).'.scss';
+        $toFile = fileExt($file, true).'_refactored.scss';
         file_put_contents($toFile, $scss);
 
         if (self::check($array, $scss)) {

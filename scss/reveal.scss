@@ -7,6 +7,8 @@
     --pfy-reveal-container-padding: 2em;
 */
 
+@import '~/site/plugins/pagefactory/scss/_scss-variables.scss';
+
 $revealControllerHeight: 2em;
 $revealArrowSize: 1em;
 
@@ -73,6 +75,9 @@ $revealArrowSize: 1em;
       min-height: var(--pfy-reveal-controller-height, #{$revealControllerHeight});
       padding-top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
       padding-bottom: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 2em) / 2);
+    }
+    input:focus-visible + label {
+      @include _focus;
     }
     &.pfy-reveal-frame {
       border: 1px solid #ddd;

@@ -375,10 +375,10 @@ const tableHelper = {
           if (table.dataset.unlockExecuted??false) {
             return;
           }
-          table.dataset.unlockExecuted = true;
-          mylog('unlocking locked recordsn (' + tableInx + ')');
-
           const tableInx = table.dataset.tableinx;
+          table.dataset.unlockExecuted = true;
+          mylog('unlocking locked records (' + tableInx + ')');
+
           const args = 'unlockAll' + '&datasrcinx=' + tableInx;
           execAjaxPromise(args, {})
             .then(function (data) {

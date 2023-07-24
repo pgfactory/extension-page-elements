@@ -11,20 +11,8 @@
     --form-field-error-color:
  */
 
-$focus-color: orange;
+@import '~/site/plugins/pagefactory/scss/_scss-variables.scss';
 
-@mixin _pfy-button {
-  color: #666;
-  font-family: helvetica, arial, sans-serif;
-  border-radius: 4px;
-  border: 1px solid #bcbcbc;
-  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  background: -webkit-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
-  background: -ms-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
-  background: linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
-  padding: 0.3em 1.5em;
-}
 
 
 #pfy .pfy-encapsulated.pfy-default-styling,
@@ -35,10 +23,6 @@ $focus-color: orange;
   input[type=button],
   button {
     cursor: pointer;
-    &:focus,
-    &:focus-visible {
-      box-shadow: 0 0 0 1px black, 0 0 0 2px white, 0 0 0 3px  var(--pfy-focus-color, #{$focus-color}) !important;
-    }
   }
 
   .pfy-label-wrapper, .pfy-input-wrapper {

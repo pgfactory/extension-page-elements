@@ -2,19 +2,6 @@
 
 #pfy.pfy-default-styling .pfy-encapsulated,
 .pfy-default-styling {
-  .pfy-popup-bg {
-    //background: rgba(0, 0, 0, .4);
-    //position: fixed;
-    //top: 0;
-    //left: 0;
-    //bottom: 0;
-    //right: 0;
-    //z-index: 10000;
-    //display: flex;
-    //align-items: center;
-    //justify-content: center;
-    //opacity: 1;
-  }
   &.pfy-modal .pfy-popup-bg {
     background: rgba(0, 0, 0, .4);
     position: fixed;
@@ -33,7 +20,6 @@
     top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
-    //margin:30% auto;
     .pfy-popup-wrapper {
       outline: 2px dashed red;
       background: yellow !important;

@@ -88,7 +88,8 @@ const pfyFormsHelper = {
           form.dataset.changed = false;
           pfyFormsHelper.presetForm(form);
           pfyFormsHelper.unlockRecs();
-          if (!wasModified) {
+          const openInPopup = form.closest('.pfy-popup-bg');
+          if (!wasModified && openInPopup) {
             mylog('close popup');
             pfyPopupClose();
           }

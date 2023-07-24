@@ -21,10 +21,6 @@ const PE_ASSET_GROUPS = [
 
 const PE_URL_DEFINITIONS = [
     'POPUPS' => [
-        PAGE_ELEMENTS_URL.'js/jquery.event.ue.min.js',
-        PAGE_ELEMENTS_URL.'js/md5.min.js',
-        PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
-        PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
         PAGE_ELEMENTS_URL.'css/-popup.css',
         PAGE_ELEMENTS_URL.'js/-popup.js',
     ],
@@ -48,16 +44,11 @@ const PE_URL_DEFINITIONS = [
         //PAGE_ELEMENTS_URL.'css/-events.css',
         PAGE_ELEMENTS_URL.'js/-events.js',
     ],
-    'TOOLTIPSTER' => [
-        PAGE_ELEMENTS_URL.'css/tooltipster.bundle.min.css',
-        PAGE_ELEMENTS_URL.'js/tooltipster.bundle.min.js',
-    ],
     'DATATABLES' => [
         PAGE_ELEMENTS_URL.'css/datatables.min.css',
         PAGE_ELEMENTS_URL.'js/datatables.min.js',
     ],
     'REVEAL' => [
-        PAGE_ELEMENTS_URL.'js/jq-focusable.js',
         PAGE_ELEMENTS_URL.'js/reveal.js',
         PAGE_ELEMENTS_URL.'css/-reveal.css',
     ],
