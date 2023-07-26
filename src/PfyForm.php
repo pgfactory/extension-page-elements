@@ -83,6 +83,9 @@ class PfyForm extends Form
         $formOptions['deadline']            = $formOptions['deadline']??false;
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
+        $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
+        $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
+
         $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
         $recLocking                         = $formOptions['recLocking']??false;
         $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
@@ -115,8 +118,9 @@ class PfyForm extends Form
 
         if ($this->tableOptions['editMode']) {
             PageFactory::$pg->addAssets('POPUPS');
-            PageFactory::$pg->addAssets('REVEAL');
         }
+        PageFactory::$pg->addAssets('POPUPS');
+        PageFactory::$pg->addAssets('REVEAL');
         PageFactory::$pg->addAssets('FORMS');
     } // __construct
 
@@ -416,6 +420,11 @@ EOT;
         if ($str = ($elemOptions['description']??false)) {
             $str = Html::el('span')->setHtml($str);
             $elem->setOption('description', $str);
+        }
+
+        // handle 'wrapperId' option:
+        if ($wrapperId = ($elemOptions['wrapperId']??false)) {
+            $elem->setHtmlAttribute('data-wrapper-id', $wrapperId);
         }
 
         // handle 'antiSpam' option:
@@ -815,10 +824,8 @@ EOT;
         if (!$this->formOptions['file']) {
             return false;
         }
-        $this->db = new DataSet($this->formOptions['file'], [
-            'masterFileRecKeyType' => 'index',
-            'obfuscateRecKeys' => true,
-        ]);
+        $this->db = new DataSet($this->formOptions['file'], $this->formOptions['dbOptions']);
+
         $sessKey = "db:".PageFactory::$pageId.":$this->formIndex:file";
         PageFactory::$session->set($sessKey, $this->formOptions['file']);
         return $this->db;
@@ -1223,6 +1230,13 @@ EOT;
 
                     $class = implode(' ', $cl);
                     $e->setAttribute('class', trim("$wrapperClass $class"));
+                }
+
+                // data-wrapperId:
+                $inpElem = $e->findOneOrFalse('[data-wrapper-id]');
+                if ($inpElem) {
+                    $id = $inpElem->getAttribute('data-wrapper-id');
+                    $e->setAttribute('id', trim($id));
                 }
 
                 // select:
