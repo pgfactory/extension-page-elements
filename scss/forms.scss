@@ -228,7 +228,8 @@
       width: calc(100% - 2em);
     }
     .pfy-input-wrapper label {
-      margin-left: 1.3em;
+      margin-left: 0.8em;
+      //margin-left: 1.3em;
     }
     &::before {
       left: -0.7em !important;
@@ -279,9 +280,10 @@
   }
 
   #pfy-check-input {
-    width: 4em;
+    width: 2em;
     margin-bottom: 3px;
     border-width: 1px;
+    padding: 4px 5px;
   }
 
   input[readonly],

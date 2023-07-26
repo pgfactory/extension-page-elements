@@ -96,6 +96,8 @@ function form($args = '')
                 , false],
 
             'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
+
+            'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
         ],
         'summary' => <<<EOT
 
