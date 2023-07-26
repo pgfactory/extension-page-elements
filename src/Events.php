@@ -57,13 +57,6 @@ class Events extends DataSet
         }
 
         // find the appropriate template taking into account category and language:
-//        $template = $this->getTemplate();
-//        if (!$template) {
-//            return '{{ pfy-no-event-template-found }}';
-//        }
-//
-//        // compile the template using Twig:
-//        $mdStr = $this->compile($template, $events);
         $mdStr = $this->compile($events);
 
         // finalize:
@@ -84,9 +77,18 @@ class Events extends DataSet
 
         $sortedData = [];
         foreach ($data as $rec) {
+            $inx = 1;
             $start = $rec['start'] ?? '';
             if ($start) {
-                $sortedData[$start] = $rec;
+                if (str_contains($start, 'T')) {
+                    $start = str_replace('T', ' ',$start);
+                }
+                if (!isset($sortedData[$start])) {
+                    $sortedData[$start] = $rec;
+                } else {
+                    $sortedData[$start.$inx] = $rec;
+                    $inx++;
+                }
             }
         }
         ksort($sortedData);
@@ -166,11 +168,7 @@ class Events extends DataSet
     
     
     private function getTemplate($category): mixed
-//    private function getTemplate(): mixed
     {
-//        if (isset($this->templates[$category])) {
-//            return $this->templates[$category];
-//        }
         if ($this->templates === null) {
             $templatesFile = $this->options['templatesFile'];
             if ($templatesFile) {
@@ -179,78 +177,73 @@ class Events extends DataSet
         }
         $templates = $this->templates;
 
-        $templateName = $this->options['template'];
-//        $category = $this->options['category'];
+        $templateName = $this->options['templateBasename'];
+        if ($templateName) {
+            $templateName .= '-';
+        }
         $language = PageFactory::$langCode;
-
-//        $templatesFile = $this->options['templatesFile'];
-//        $templates = false;
-//        if ($templatesFile) {
-//            $templates = loadFile($templatesFile);
-//        }
 
         if ($templates) { // Templates from file found:
             if ($category) {
-                $templateCand = "$templateName-$category";
+                $templateCand = "$templateName$category";
                 $template = $templates[$templateCand]??false;
 
             } else { //  try language:
-                $templateCand = "$templateName-$language";
+                $templateCand = "$templateName$language";
                 $template = $templates[$templateCand]??false;
             }
             if (!$template) { // try category-language
-                $templateCand = "$templateName-$category-$language";
+                $templateCand = "$templateName$category-$language";
                 $template = $templates[$templateCand]??false;
             }
             if (!$template) { // try -language-category
-                $templateCand = "$templateName-$language-$category";
+                $templateCand = "$templateName$language-$category";
                 $template = $templates[$templateCand]??false;
             }
             if (!$template) { // try default template:
                 $template = $templates[$templateName]??false;
             }
+            if (!$template) { // try default template:
+                $template = $templates['_']??false;
+            }
 
         } else { // Templates from variables:
             if ($category) {
-                $templateCand = "$templateName-$category";
+                $templateCand = "$templateName$category";
                 $template = TransVars::getVariable($templateCand);
 
             } else { //  try language:
-                $templateCand = "$templateName-$language";
+                $templateCand = "$templateName$language";
                 $template = TransVars::getVariable($templateCand);
             }
             if (!$template) { // try category-language
-                $templateCand = "$templateName-$category-$language";
+                $templateCand = "$templateName$category-$language";
                 $template = TransVars::getVariable($templateCand);
             }
             if (!$template) { // try -language-category
-                $templateCand = "$templateName-$language-$category";
+                $templateCand = "$templateName$language-$category";
                 $template = TransVars::getVariable($templateCand);
             }
             if (!$template) { // try default template:
                 $template = TransVars::getVariable($templateName);
             }
+            if (!$template) { // try default template:
+                $template = $templates['_']??false;
+            }
         }
-//        $this->templates[$category] = $template;
         return $template;
     } // getTemplate
 
 
     private function compile($events)
-//    private function compile($template, $events)
     {
-//        $category = $this->options['category'];
         $wrap1 = $wrap2 = "\n";
-//        if ($this->options['wrap']) {
-//            $wrap1 = "\n@@@ .event-$category\n\n";
-//            $wrap2 = "\n\n@@@\n\n";
-//        }
         $mdStr = '';
         foreach ($events as $eventRec) {
             $category = $eventRec['category']??false;
             if ($this->options['wrap']) {
-                $wrap1 = "\n@@@ .pfy-event-wrapper.event-$category\n\n";
-                $wrap2 = "\n\n@@@\n\n";
+                $wrap1 = "\n@@@@@@ .pfy-event-wrapper.event-$category\n\n";
+                $wrap2 = "\n\n@@@@@@\n\n";
             }
             $template = $this->getTemplate($category);
             $mdStr .= $wrap1;

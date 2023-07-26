@@ -78,13 +78,13 @@ function pfyPopup( options ) {
     if ((typeof options.closeButton === 'undefined') && (this.buttons.length) && !this.header) {
         this.closeButton = false;
     }
-    this.callbackArg = (typeof options.callbackArg !== 'undefined' && options.callbackArg) ? options.callbackArg : '';
-    this.onConfirm = (typeof options.onConfirm !== 'undefined' && options.onConfirm) ? options.onConfirm : '';
-    this.onCancel = (typeof options.onCancel !== 'undefined' && options.onCancel) ? options.onCancel : '';
-    this.onOk = (typeof options.onOk !== 'undefined' && options.onOk) ? options.onOk : '';
-    this.onContinue = (typeof options.onContinue !== 'undefined' && options.onContinue) ? options.onContinue : '';
-    this.onClose = (typeof options.onClose !== 'undefined' && options.onClose) ? options.onClose : '';
-    this.onOpen = (typeof options.onOpen !== 'undefined' && options.onOpen) ? options.onOpen : '';
+    this.callbackArg  = (typeof options.callbackArg !== 'undefined' && options.callbackArg) ? options.callbackArg : '';
+    this.onConfirm    = (typeof options.onConfirm !== 'undefined' && options.onConfirm) ? options.onConfirm : '';
+    this.onCancel     = (typeof options.onCancel !== 'undefined' && options.onCancel) ? options.onCancel : '';
+    this.onOk         = (typeof options.onOk !== 'undefined' && options.onOk) ? options.onOk : '';
+    this.onContinue   = (typeof options.onContinue !== 'undefined' && options.onContinue) ? options.onContinue : '';
+    this.onClose      = (typeof options.onClose !== 'undefined' && options.onClose) ? options.onClose : '';
+    this.onOpen       = (typeof options.onOpen !== 'undefined' && options.onOpen) ? options.onOpen : '';
 
     this.autofocus = (typeof options.autofocus !== 'undefined' && options.autofocus) ? options.autofocus : false;
 

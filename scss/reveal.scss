@@ -26,7 +26,7 @@ $revealArrowSize: 1em;
     &::before {
       position: absolute;
       left: 0;
-      top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
+      top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2 - 2px);
       width: $revealArrowSize;
       height: $revealArrowSize;
       text-align: center;

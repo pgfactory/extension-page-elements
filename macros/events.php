@@ -23,9 +23,9 @@ function events($args = '')
                 '(If not set, "unlimited" will be assumed)', false],
             'count' => ['[int] Defines the number of events to be rendered at most.', 1],
             'offset' => ['[int] Selects events relative to "from". "0" means current, "1" means next event etc. ', 1],
-            'template' => ['[string] Name (resp. base-name) of template variable(s).<br>'.
+            'templateBasename' => ['[string] Name (resp. base-name) of template variable(s).<br>'.
                 'If no template is found in variables like this, alternatives including *category* and/or '.
-                '*language-code* will be used, e.g. "template-en" or "template-games-de".', 'EventTemplate'],
+                '*language-code* will be used, e.g. "template-en" or "template-games-de".', ''],
             'templatesFile' => ['[file-name] If set, this file is read. It must contain key:value tuples '.
                 '(e.g. in YAML format). These values will be used instead of (PageFactory-)variables.', false],
             'markdown' => ['[bool] If true, result will be md-compiled.', true],
