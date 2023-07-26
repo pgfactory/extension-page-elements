@@ -59,6 +59,17 @@ const pfyFormsHelper = {
         });
       });
     }
+
+    const categorySelector = form.querySelector('select[name="category"]');
+    if (categorySelector) {
+      categorySelector.addEventListener('change', function (ev) {
+        const activeCategory = ev.target.value;
+        let wrapperClasses = form.getAttribute('class');
+        wrapperClasses = wrapperClasses.replace(/\s*category-\w+/, '');
+        wrapperClasses += ' category-' + activeCategory;
+        form.setAttribute('class', wrapperClasses);
+      });
+    }
   }, // setupModifiedMonitor
 
 
@@ -332,7 +343,7 @@ const pfyFormsHelper = {
       onClose: function() {
         pfyResponseValue = document.querySelector('#pfy-check-input').value;
       },
-      opOpen: function () {
+      onOpen: function () {
         setTimeout(function () {
           const input = document.querySelector('#pfy-check-input');
           input.focus();
