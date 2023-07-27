@@ -431,6 +431,7 @@ EOT;
         if ($antiSpam = ($elemOptions['antiSpam']??false)) {
             $elem->setHtmlAttribute('data-check', $antiSpam);
             $elem->setHtmlAttribute('aria-hidden', 'true');
+            $elem->setHtmlAttribute('tabindex', '-1');
             unset($this->fieldNames[$name]);
             unset($this->formElements[$name]);
         }
@@ -1249,7 +1250,9 @@ EOT;
                 // aria-hidden:
                 $aria = $e->findOneOrFalse('[aria-hidden]');
                 if ($aria) {
-                    $e->setAttribute('aria-hidden', $aria);
+                    $val = $aria->getAttribute('aria-hidden');
+                    $aria->removeAttribute('aria-hidden');
+                    $e->setAttribute('aria-hidden', $val);
                 }
 
                 // skip div:
