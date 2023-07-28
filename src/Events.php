@@ -15,7 +15,9 @@ use function Usility\PageFactory\fileTime;
 use function Usility\PageFactory\resolvePath;
 use function Usility\PageFactory\loadFile;
 use Usility\PageFactory\TransVars;
- // Optional support for propre localization of dates -> requires twig/intl-extra
+use function Usility\PageFactory\translateToIdentifier;
+
+// Optional support for propre localization of dates -> requires twig/intl-extra
  //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
 
 
@@ -241,8 +243,9 @@ class Events extends DataSet
         $mdStr = '';
         foreach ($events as $eventRec) {
             $category = $eventRec['category']??false;
+            $catClass = translateToIdentifier($category);
             if ($this->options['wrap']) {
-                $wrap1 = "\n@@@@@@ .pfy-event-wrapper.event-$category\n\n";
+                $wrap1 = "\n@@@@@@ .pfy-event-wrapper.event-$catClass\n\n";
                 $wrap2 = "\n\n@@@@@@\n\n";
             }
             $template = $this->getTemplate($category);
