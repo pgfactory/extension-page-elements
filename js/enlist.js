@@ -80,7 +80,7 @@ const Enlist = {
       contentFrom: '#pfy-enlist-form .pfy-enlist-form-wrapper',
       header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
       autofocus: false,
-      closeOnBgClick: false,
+      closeOnBgClick: true,
     };
     if (typeof elem !== 'undefined') {
       const elemWrapper = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
@@ -115,6 +115,9 @@ const Enlist = {
 
     const nameField = form.querySelector('[name=Name]');
     if (mode === 'add') {
+      const submitBtn = form.querySelector('[name=_submit]');
+      submitBtn.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
+      submitBtn.setAttribute('name', 'add');
       setTimeout(function() {
         nameField.focus();
       }, 60);
@@ -128,7 +131,7 @@ const Enlist = {
       nameLabel.classList.remove('required');
 
       const submitBtn = form.querySelector('[name=_submit]');
-      submitBtn.setAttribute('value', `{{ pfy-enlist-delete }}`);
+      submitBtn.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
       submitBtn.setAttribute('name', 'delete');
 
       const redIdField = form.querySelector('[name=elemId]');

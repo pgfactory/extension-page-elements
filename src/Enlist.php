@@ -101,7 +101,7 @@ class Enlist
         }
 
         // isEnlistAdmin overrides listFrozen:
-        if ($this->isEnlistAdmin) {
+        if ($this->listFrozen && $this->isEnlistAdmin) {
             $this->listFrozen = null; // -> null signifies frozen, but class still added to wrapper
         }
     } // __construct
@@ -704,6 +704,11 @@ EOT;
         $this->freezeTime = $this->options['freezeTime']??false;
         if ($this->freezeTime) {
             $this->freezeTime = time() - ($this->freezeTime * 3600); // freezeTime is in hours
+        } else {
+            $config = kirby()->option('pgfactory.pagefactory-pageelements.options');
+            if ($freezeTime = ($config['enlistFreezeTime']??false)) {
+                $this->freezeTime = time() - ($freezeTime * 3600); // freezeTime is in hours
+            }
         }
     } // parseOptions
 

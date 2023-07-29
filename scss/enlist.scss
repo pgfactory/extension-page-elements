@@ -7,6 +7,16 @@
  --pfy-enlist-title-bg
  */
 
+ @mixin _pfy-enlist-button {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  text-align: center;
+  padding: 0;
+  background: none;
+}
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
@@ -66,14 +76,7 @@
   .pfy-enlist-icon-1,
   .pfy-enlist-icon-2 {
     button {
-      display: inline-block;
-      width: 1.4em;
-      height: 1.4em;
-      border: 1px solid #aaa;
-      border-radius: 3px;
-      text-align: center;
-      padding: 0;
-      background: none;
+      @include _pfy-enlist-button;
     }
 
     button:empty {
@@ -175,5 +178,18 @@
       content: ">";
     }
   }
+  
+  button.pfy-enlist-delete,
+  button.pfy-enlist-add {
+    @include _pfy-enlist-button;
+  }
+  button.pfy-enlist-delete {
+    color: red;
+    border-color: red
+}
+  button.pfy-enlist-add {
+    color: green;
+    border-color: #4d4;
+}
 
 } // .pfy-default-styling

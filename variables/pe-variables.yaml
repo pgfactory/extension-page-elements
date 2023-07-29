@@ -241,9 +241,13 @@ pfy-enlist-del-popup-header:
   de: 'Löschen'
   _:  'Delete entry'
 
-pfy-enlist-delete:
-  de: Löschen
-  _:  Delete
+pfy-enlist-add-btn:
+  de: Jetzt eintragen
+  _:  Enlist now
+
+pfy-enlist-delete-btn:
+  de: Jetzt löschen
+  _:  Delete now
 
 
 pfy-enlist-deadline-expired-alert:
