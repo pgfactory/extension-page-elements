@@ -113,7 +113,7 @@ class Events extends DataSet
         if ($from) {
             $targetDate = $this->parseTime($from);
         } else {
-            $targetDate = time();
+            $targetDate = intval(time() / 86400) * 86400; // round down to last midnight
         }
 
         // find the record
