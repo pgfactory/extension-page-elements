@@ -11,9 +11,9 @@ var pfyReveal = {
     if (revealControllers) {
       revealControllers.forEach(function (revealController) {
         var inx = 0;
-        const revealControllerId = revealController.dataset.revealTarget;
-        if (revealControllerId) {
-          inx = revealControllerId.replace(/\D*/, '');
+        const revealContainerId = revealController.dataset.revealTarget;
+        if (revealContainerId) {
+          inx = revealContainerId.replace(/\D*/, '');
         } else {
           inx = revealController.parentNode.className.replace(/\D*/, '');
           if (!inx) {
@@ -23,8 +23,8 @@ var pfyReveal = {
 
         revealController.setAttribute('aria-expanded', 'false');
         var revealContainer = null;
-        if (typeof revealControllerId !== 'undefined') {
-          revealContainer = document.querySelector(revealControllerId);
+        if (typeof revealContainerId !== 'undefined') {
+          revealContainer = document.querySelector(revealContainerId);
         } else {
           revealContainer = revealController.parentNode.querySelector('> .pfy-reveal-container');
         }
