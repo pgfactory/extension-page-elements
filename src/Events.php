@@ -241,7 +241,7 @@ class Events extends DataSet
     {
         $wrap1 = $wrap2 = "\n";
         $mdStr = '';
-        foreach ($events as $eventRec) {
+        foreach ($events as $i => $eventRec) {
             $category = $eventRec['category']??false;
             $catClass = translateToIdentifier($category);
             if ($this->options['wrap']) {
@@ -249,6 +249,7 @@ class Events extends DataSet
                 $wrap2 = "\n\n@@@@@@\n\n";
             }
             $template = $this->getTemplate($category);
+            $template = str_replace('%%', $i, $template);
             $mdStr .= $wrap1;
             $mdStr .= $this->compileTemplate($template, $eventRec);
             $mdStr .= $wrap2;
@@ -259,12 +260,14 @@ class Events extends DataSet
     
     private function compileTemplate(string $template, array $eventRec): string
     {
+        // translate PageFactory Macros first:
+        $template = TransVars::executeMacros($template, onlyMacros:true);
+
         $eventRec['filetime'] = $this->filetime;
         $loader = new \Twig\Loader\ArrayLoader([
             'index' => $template,
         ]);
         $twig = new \Twig\Environment($loader);
-        // $twig->addExtension(new IntlExtension());
         return $twig->render('index', $eventRec);
     } // compileTemplate
 
