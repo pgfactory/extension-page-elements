@@ -143,7 +143,11 @@ class PfyForm extends Form
             }
 
         } else {
+            // render result of (successful) data reception:
             $html = $res;
+            $css = ".pfy-show-unless-form-data-received,\n".
+                   ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
+            PageFactory::$pg->addCss($css);
             if ($this->tableOptions['editMode'] && $this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
             }
