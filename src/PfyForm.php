@@ -23,7 +23,6 @@ const MEGABYTE = 1048576;
 
 mb_internal_encoding("utf-8");
 
-require_once __DIR__ . '/ajax_server.php';
 
 class PfyForm extends Form
 {
@@ -827,8 +826,11 @@ EOT;
         }
         $this->db = new DataSet($this->formOptions['file'], $this->formOptions['dbOptions']);
 
-        $sessKey = "db:".PageFactory::$pageId.":$this->formIndex:file";
-        PageFactory::$session->set($sessKey, $this->formOptions['file']);
+        // remember db-file for use by ajax_server.php, if user is form-admin:
+        if ($this->isFormAdmin) {
+            $sessKey = "db:" . PageFactory::$pageId . ":$this->formIndex:file";
+            kirby()->session()->set($sessKey, $this->formOptions['file']);
+        }
         return $this->db;
     } // openDB
 

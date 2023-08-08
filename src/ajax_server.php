@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * Handler for ajax-requests originating from PfyForm client.
+ * Requires session-variable defining the data-source, which is only defined if user is FormAdmin.
+ */
+
 use Usility\PageFactory\PageFactory;
 use Usility\PageFactory\DataSet;
 
@@ -185,7 +190,7 @@ function openDb($pageId, $dataSrcInx)
 {
     $session = kirby()->session();
     $fileSessKey = "db:$pageId:$dataSrcInx:file";
-    $file = $session->get($fileSessKey);
+    $file = $session->get($fileSessKey, false);
     if (!$file) {
         exit('"Error: file unknown"');
     }

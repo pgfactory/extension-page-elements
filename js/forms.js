@@ -346,7 +346,9 @@ const pfyFormsHelper = {
       onOpen: function () {
         setTimeout(function () {
           const input = document.querySelector('#pfy-check-input');
-          input.focus();
+          if (input) {
+            input.focus();
+          }
         }, 50);
       },
     }).then(
