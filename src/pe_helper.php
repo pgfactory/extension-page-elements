@@ -24,7 +24,7 @@ const TRANSLATIONS = [
     'October' => ['en' => 'October', 'de' => 'Oktober', 'fr'=> 'octobre' ,'it'=> 'ottobre',],
     'November' => ['en' => 'November', 'de' => 'November', 'fr'=> 'novembre' ,'it'=> 'novembre',],
     'December' => ['en' => 'December', 'de' => 'Dezember', 'fr'=> 'décembre' ,'it'=> 'dicembre',],
-    '%%' => ['en' => 'h', 'de' => 'Uhr', 'fr'=> 'heures' ,'it'=> 'ore',],
+    'OCLOCK' => ['en' => 'h', 'de' => 'Uhr', 'fr'=> 'heures' ,'it'=> 'ore',],
 ];
 const YEAR_THRESHOLD = 10;
 
