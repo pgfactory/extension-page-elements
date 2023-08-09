@@ -29,6 +29,7 @@ class Events extends DataSet
 
     public function __construct(string $file, array $options = [])
     {
+        $options['masterFileRecKeyType'] = 'index';
         parent::__construct($file, $options);
 
         if (($ftime = fileTime(resolvePath($file)))) {
@@ -41,6 +42,10 @@ class Events extends DataSet
     } // __construct
 
 
+    /**
+     * @param array|null $options
+     * @return string
+     */
     public function render(array $options = null): string
     {
         if ($options) {
@@ -73,13 +78,18 @@ class Events extends DataSet
     } // render
 
 
+    /**
+     * @param string $category
+     * @return array
+     * @throws \Exception
+     */
     private function getData(string $category): array
     {
         $data = $this->data();
 
         $sortedData = [];
+        $inx = 1;
         foreach ($data as $rec) {
-            $inx = 1;
             $start = $rec['start'] ?? '';
             if ($start) {
                 if (str_contains($start, 'T')) {
@@ -103,7 +113,11 @@ class Events extends DataSet
         return array_values($sortedData);
     } // getData
 
-    
+
+    /**
+     * @param array $sortedData
+     * @return int|false
+     */
     private function findEvent(array $sortedData): int|false
     {
         $options = $this->options;
@@ -133,8 +147,12 @@ class Events extends DataSet
             return false;
         }
     } // findEvent
-    
 
+
+    /**
+     * @param $sortedData
+     * @return array
+     */
     private function selectEvents($sortedData): array
     {
         $first = $this->findEvent($sortedData);
@@ -167,8 +185,13 @@ class Events extends DataSet
         }
         return $events;
     } // selectEvents
-    
-    
+
+
+    /**
+     * @param $category
+     * @return mixed
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private function getTemplate($category): mixed
     {
         if ($this->templates === null) {
@@ -237,6 +260,11 @@ class Events extends DataSet
     } // getTemplate
 
 
+    /**
+     * @param $events
+     * @return string
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private function compile($events)
     {
         $wrap1 = $wrap2 = "\n";
@@ -245,8 +273,8 @@ class Events extends DataSet
             $category = $eventRec['category']??false;
             $catClass = translateToIdentifier($category);
             if ($this->options['wrap']) {
-                $wrap1 = "\n@@@@@@ .pfy-event-wrapper.event-$catClass\n\n";
-                $wrap2 = "\n\n@@@@@@\n\n";
+                $wrap1 = "\n%%%%%% .pfy-event-wrapper.event-$catClass\n\n";
+                $wrap2 = "\n\n%%%%%%\n\n";
             }
             $template = $this->getTemplate($category);
             $template = str_replace('%%', $i, $template);
@@ -256,11 +284,20 @@ class Events extends DataSet
         }
         return $mdStr;
     } // compile
-    
-    
+
+
+    /**
+     * @param string $template
+     * @param array $eventRec
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
+     */
     private function compileTemplate(string $template, array $eventRec): string
     {
         // translate PageFactory Macros first:
+        $template = $this->resolveVariables($template, $eventRec);
         $template = TransVars::executeMacros($template, onlyMacros:true);
 
         $eventRec['filetime'] = $this->filetime;
@@ -272,12 +309,20 @@ class Events extends DataSet
     } // compileTemplate
 
 
+    /**
+     * @param $str
+     * @return false|int
+     */
     private function parseTime($str) {
 
         $str = str_replace($this->timePatterns['patterns'], $this->timePatterns['values'], $str);
         return strtotime($str);
     } // parseTime
 
+    /**
+     * @param string $str
+     * @return string
+     */
     private function cleanup(string $str): string
     {
         $str = translateDateTimes($str);
@@ -287,6 +332,9 @@ class Events extends DataSet
     } // cleanup
 
 
+    /**
+     * @return void
+     */
     private function prepareTimePatterns(): void
     {
         $patterns = [
@@ -305,6 +353,19 @@ class Events extends DataSet
 
         $this->timePatterns = ['patterns' => $patterns, 'values' => $values];
     }
+
+    /**
+     * @param string $template
+     * @param array $variables
+     * @return string
+     */
+    private function resolveVariables(string $template, array $variables): string
+    {
+        foreach ($variables as $key => $value) {
+            $template = str_replace("%$key%", "$value", $template);
+        }
+        return $template;
+    } // resolveVariables
 
 } // Events
 
