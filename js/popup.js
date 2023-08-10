@@ -359,8 +359,14 @@ function pfyPopup( options ) {
     const $elem = document.querySelector('.pfy-popup-wrapper');
 
     $elem.addEventListener('keyup', function (e) {
-        const key = e.key;
-        if (key === 'Escape') {                // ESC
+      const key = e.key;
+
+      // avoid popup's default action while within form fields:
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (key === 'Escape') {                // ESC
           if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
             parent.inihibitClosing = !executeCallback(parent.onCancel);
 
