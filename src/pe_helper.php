@@ -45,6 +45,7 @@ function translateDateTimes(string $str):string
         return $e[$lang]??'???';
     }, array_values(TRANSLATIONS));
     $str = str_replace(array_keys($translations), $to, $str);
+    $str = preg_replace('/([–-]) 00([.:])00/', "$1 24$2&#48;&#48;", $str);
     return $str;
 } // translateDateTimes
 

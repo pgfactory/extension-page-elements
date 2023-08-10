@@ -319,6 +319,7 @@ class Events extends DataSet
         return strtotime($str);
     } // parseTime
 
+
     /**
      * @param string $str
      * @return string
