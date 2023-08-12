@@ -54,6 +54,13 @@ function form($args = '')
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
 
+            'schedule' => ['{options} If defined, Events class is invoked to determine the next event and .'.
+                'based on that, presets "file", "maxCount" and "minRows". '.
+                'The event\'s rendered output becomes available as "%eventBanner%" to form banners.'.
+                '(E.g. formTop: "\<div>%eventBanner%\</div>").<br>'.
+                'Moreover, all values of found event are made available to form banners as "%key%". '.
+                '(For ref see macro *events()*).', false],
+
             'showDirectFeedback' =>	['[bool] If true, a confiration text is presented upon successful completion of a '.
                 'form entry. Otherwise, only an information banner is shown.', true],
 

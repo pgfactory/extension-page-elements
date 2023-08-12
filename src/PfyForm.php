@@ -7,6 +7,7 @@ use Nette\Utils\Html;
 use voku\helper\HtmlDomParser;
 use Kirby\Email\PHPMailer;
 use Usility\MarkdownPlus\Permission;
+use Usility\PageFactoryElements\Events as Events;
 use Usility\PageFactoryElements\DataTable as DataTable;
 use function Usility\PageFactory\var_r as var_r;
 
@@ -46,6 +47,7 @@ class PfyForm extends Form
     private string $formWrapperClass = '';
     private string $tableButtons = '';
     private $callback;
+    private array $auxBannerValues = [];
 
     /**
      * @param $formOptions
@@ -98,6 +100,8 @@ class PfyForm extends Form
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
 
+        $this->handleScheduleOption();
+
         // open database:
         if ($formOptions['file']) {
             $this->openDB();
@@ -124,6 +128,10 @@ class PfyForm extends Form
     } // __construct
 
 
+    /**
+     * @return string
+     * @throws \Exception
+     */
     public function renderForm(): string
     {
         $res = false;
@@ -454,13 +462,13 @@ EOT;
     {
         if ($revealLabel = ($elemOptions['reveal']??false)) {
             $this->revealInx++;
-            $targetId = "#pfy-reveal-container-$this->revealInx";
+            $targetId = "pfy-reveal-container-{$this->formIndex}_$this->revealInx";
             PageFactory::$pg->addAssets('REVEAL');
 
-            $elem1 = $this->addCheckbox("CommentController$this->revealInx", $revealLabel);
+            $elem1 = $this->addCheckbox("CommentController{$this->formIndex}_$this->revealInx", $revealLabel);
             $elem1->setHtmlAttribute('class', 'pfy-reveal-controller');
             $elem1->setHtmlAttribute('aria-controls', $targetId);
-            $elem1->setHtmlAttribute('data-reveal-target', $targetId);
+            $elem1->setHtmlAttribute('data-reveal-target', "#$targetId");
             $elem1->setHtmlAttribute('data-icon-closed', '+');
             $elem1->setHtmlAttribute('data-icon-open', '∣');
             $label = $elemOptions['label']??'';
@@ -468,7 +476,7 @@ EOT;
         $elem = $this->addTextarea($name, $label);
         if ($revealLabel) {
             $this->elemOptions['class'] = ($elemOptions['class']??'') ? $elemOptions['class'].' pfy-reveal-target':'pfy-reveal-target';
-            $elem->setHtmlAttribute('data-revealed-by', $targetId);
+            $elem->setHtmlAttribute('data-reveal-target-id', $targetId);
         }
         return $elem;
     } // addTextareaElem
@@ -594,6 +602,11 @@ EOT;
     } // addCheckboxElem
 
 
+    /**
+     * @param string $name
+     * @param array $array
+     * @return void
+     */
     private function addFieldNames(string $name, array $array): void
     {
         array_pop($this->fieldNames); // remove mother elem and replace it with children
@@ -710,6 +723,10 @@ EOT;
     } // handleReceivedData
 
 
+    /**
+     * @param mixed $recs
+     * @return void
+     */
     private function handleUploads(mixed $recs): void
     {
         foreach ($recs as $key => $rec) {
@@ -729,6 +746,12 @@ EOT;
     } // handleUploads
 
 
+    /**
+     * @param $key
+     * @param $rec
+     * @return void
+     * @throws \Exception
+     */
     private function handleUploadedFile($key, $rec)
     {
         $path = $this->formElements[$key]['args']['path']??false;
@@ -951,6 +974,10 @@ EOT;
     } // openDataTable
 
 
+    /**
+     * @param array $tableOptions
+     * @return array
+     */
     private function parseTableOptions(array $tableOptions): array
     {
         $tableOptions['file'] = $this->formOptions['file']??false;
@@ -1179,6 +1206,9 @@ EOT;
     } // parseMainOptions
 
 
+    /**
+     * @return void
+     */
     private function removeNonDataFields(): void
     {
         foreach ($this->formElements as $key => $rec) {
@@ -1217,55 +1247,76 @@ EOT;
         }
 
         $revealController = false;
-        $elements = $dom->findMultiOrFalse('.pfy-elem-wrapper');
-        if ($elements) {
-            foreach ($elements as $e) {
-                $wrapperClass = $e->getAttribute('class');
-                // input, textarea:
-                $inputs = $e->findMultiOrFalse('input, textarea');
-                if ($inputs) {
-                    $cl = [];
-                    foreach ($inputs as $input) {
-                        $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
+        $revealTargetId = false;
+        $wrapperElements = $dom->findMultiOrFalse('div.pfy-elem-wrapper');
+        if ($wrapperElements) {
+            foreach ($wrapperElements as $wrapperElem) {
+                $wrapperClass = $wrapperElem->getAttribute('class');
+                // textarea to be revealed by previous element:
+                if ($revealTargetId) {
+                    $inx = preg_replace('/[^\d_]/', '', $revealTargetId);
+                    $input = $wrapperElem->findOneOrFalse('input, textarea');
+                    if ($input) {
+                        $class = $input->getAttribute('class');
+                        $wrapperElem->setAttribute('class', trim("$wrapperClass $class"));
                     }
-                    $cl = array_combine($cl, $cl);
+                    $innerHtml = (string)$wrapperElem;
+                    $outerHtml = <<<EOT
+<div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
+$innerHtml
+</div>
+EOT;
+                    $wrapperElem->outerhtml = str_replace("'", '"', $outerHtml);
+                    $revealTargetId = false;
 
-                    // special case: general button -> avoid propagating class 'pfy-button':
-                    if (in_array('pfy-button', $cl)) {
-                        unset($cl['pfy-button']);
+                } else {
+
+                    // input, textarea:
+                    $inputs = $wrapperElem->findMultiOrFalse('input, textarea');
+                    if ($inputs) {
+                        $cl = [];
+                        foreach ($inputs as $input) {
+                            $cl = array_merge($cl, explode(' ', $input->getAttribute('class')));
+                        }
+                        $cl = array_combine($cl, $cl);
+
+                        // special case: general button -> avoid propagating class 'pfy-button':
+                        if (in_array('pfy-button', $cl)) {
+                            unset($cl['pfy-button']);
+                        }
+
+                        $class = implode(' ', $cl);
+                        $wrapperElem->setAttribute('class', trim("$wrapperClass $class"));
                     }
-
-                    $class = implode(' ', $cl);
-                    $e->setAttribute('class', trim("$wrapperClass $class"));
                 }
 
                 // data-wrapperId:
-                $inpElem = $e->findOneOrFalse('[data-wrapper-id]');
+                $inpElem = $wrapperElem->findOneOrFalse('[data-wrapper-id]');
                 if ($inpElem) {
                     $id = $inpElem->getAttribute('data-wrapper-id');
-                    $e->setAttribute('id', trim($id));
+                    $wrapperElem->setAttribute('id', trim($id));
                 }
 
                 // select:
-                $select = $e->findOneOrFalse('select');
+                $select = $wrapperElem->findOneOrFalse('select');
                 if ($select) {
                     $class = $select->getAttribute('class');
-                    $e->setAttribute('class', trim("$wrapperClass $class"));
+                    $wrapperElem->setAttribute('class', trim("$wrapperClass $class"));
                 }
 
                 // aria-hidden:
-                $aria = $e->findOneOrFalse('[aria-hidden]');
+                $aria = $wrapperElem->findOneOrFalse('[aria-hidden]');
                 if ($aria) {
                     $val = $aria->getAttribute('aria-hidden');
                     $aria->removeAttribute('aria-hidden');
-                    $e->setAttribute('aria-hidden', $val);
+                    $wrapperElem->setAttribute('aria-hidden', $val);
                 }
 
                 // skip div:
-                $div = $e->findOneOrFalse('[div]');
+                $div = $wrapperElem->findOneOrFalse('[div]');
                 if ($div) {
                     $outerHtml = $input->getAttribute('value');
-                    $e->outerhtml = $outerHtml;
+                    $wrapperElem->outerhtml = $outerHtml;
                 }
 
                 // reveal:
@@ -1273,27 +1324,12 @@ EOT;
                     $revealController = false;
                     continue;
                 } else {
-                    $revealController = $e->findOneOrFalse('[data-reveal-target]');
+                    $revealController = $wrapperElem->findOneOrFalse('[data-reveal-target]');
                     if ($revealController) {
                         $revealController->setAttribute('aria-expanded', 'false');
-                        $id = $revealController->getAttribute('data-reveal-target');
-                        if ($id) {
-                            $inx = preg_replace('/\D/', '', $id);
-                            $target = $e->nextNonWhitespaceSibling();
-                            if ($target) {
-                                $input = $target->findOneOrFalse('input, textarea');
-                                if ($input) {
-                                    $class = $input->getAttribute('class');
-                                    $target->setAttribute('class', trim("$wrapperClass $class"));
-                                }
-                                $innerHtml = (string)$target;
-                                $outerHtml = <<<EOT
-<div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
-$innerHtml
-</div>
-EOT;
-                                $target->outerhtml = str_replace("'", '"', $outerHtml);
-                            }
+                        $revealTargetId = $revealController->getAttribute('data-reveal-target');
+                        if ($revealTargetId) {
+                            continue;
                         }
                     }
                 } // reveal
@@ -1436,6 +1472,10 @@ EOT;
             $max = $this->formOptions['maxCount']?:'{{ pfy-unlimited }}';
             $str = str_replace(['%max','%total'], $max, $str);
         }
+
+        foreach ($this->auxBannerValues as $key => $value) {
+            $str = str_replace("%$key%", $value, $str);
+        }
         return $str;
     } // handleFormBannerValues
 
@@ -1467,6 +1507,46 @@ EOT;
         }
         return false;
     } // handleDeadline
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function handleScheduleOption(): void
+    {
+        if (!($eventOptions = $this->formOptions['schedule']??false)) {
+            return;
+        }
+        if (!($src = $eventOptions['src']??false)) {
+            return;
+        }
+
+        unset($eventOptions['file']);
+        $sched = new Events($src, $eventOptions);
+        $nextEvent = $sched->getNextEvent();
+
+        if ($nextEvent === false) {
+            return;
+        }
+
+        $nextT = date('_Y-m-d', strtotime($nextEvent['start']));
+        $file = $this->formOptions['file'];
+        $file = fileExt($file, true).$nextT.'.'.fileExt($file);
+        $this->formOptions['file'] = $file;
+
+        foreach ($nextEvent as $key => $value) {
+            if (!is_scalar($value)) {
+                $value = json_encode($value);
+            }
+            $this->auxBannerValues[$key] = $value;
+        }
+
+        if ($maxCount = ($nextEvent['maxCount']??false)) {
+            $this->formOptions['maxCount'] = $maxCount;
+            $this->tableOptions['minRows'] = $maxCount;
+        }
+    } // handleScheduleOption
 
 
     /**
@@ -1502,6 +1582,10 @@ EOT;
     } // handleMaxCount
 
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     private function getAvailableAndMaxCount(): array
     {
         $available = PHP_INT_MAX - 10;
@@ -1518,7 +1602,11 @@ EOT;
         return [$available, $maxCount, $currCount];
     } // getAvailableAndMaxCount
 
-    
+
+    /**
+     * @param array $tableOptions
+     * @return array
+     */
     private function setObfuscatePassword(array $tableOptions): array
     {
         $obfuscateRows = [];
@@ -1534,6 +1622,11 @@ EOT;
     } // setObfuscatePassword
 
 
+    /**
+     * @param array $dataRec
+     * @return mixed
+     * @throws \Exception
+     */
     private function handleConfirmationMail(array $dataRec): mixed
     {
         if (!$this->formOptions['confirmationEmail']) {
@@ -1552,6 +1645,10 @@ EOT;
     } // sendConfirmationMail
 
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     private function getEmailComponents(): array
     {
         $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
@@ -1576,6 +1673,10 @@ EOT;
     } // getEmailComponents
 
 
+    /**
+     * @param array $dataRec
+     * @return string
+     */
     private function propagateDataToVariables(array $dataRec): string
     {
         $to = false;
@@ -1595,6 +1696,13 @@ EOT;
     } // propagateDataToVariables
 
 
+    /**
+     * @param string $to
+     * @param string $subject
+     * @param string $body
+     * @param string $debugInfo
+     * @return void
+     */
     private function sendMail(string $to, string $subject, string $body, string $debugInfo = ''): void
     {
         $props = [
