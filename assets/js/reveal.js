@@ -7,15 +7,21 @@ var pfyReveal = {
   transitionTime: 300,
 
   initialize: function() {
-    const revealControllers = document.querySelectorAll('.pfy-reveal-controller');
+    const revealControllers = document.querySelectorAll('input.pfy-reveal-controller');
     if (revealControllers) {
       revealControllers.forEach(function (revealController) {
         var inx = 0;
         const revealContainerId = revealController.dataset.revealTarget;
         if (revealContainerId) {
-          inx = revealContainerId.replace(/\D*/, '');
+          const m = revealContainerId.match(/[\d_]*$/);
+          inx = m[0];
         } else {
-          inx = revealController.parentNode.className.replace(/\D*/, '');
+          const par = revealController.parentNode;
+          if (par) {
+            const className = par.className;
+            const m = className.match(/[\d_]*$/);
+            inx = m[0];
+          }
           if (!inx) {
             return;
           }
@@ -68,8 +74,7 @@ var pfyReveal = {
     target.style.display = 'block';
 
     const boundingBox = target.getBoundingClientRect();
-    const marginTop = (-0 - Math.round(boundingBox.height)) + 'px';
-    target.style.marginTop = marginTop;
+    target.style.marginTop = (0 - Math.round(boundingBox.height)) + 'px';
 
     setTimeout(function () {
       revealContainer.classList.add('pfy-elem-revealed');
