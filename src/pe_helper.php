@@ -4,6 +4,7 @@ namespace Usility\PageFactoryElements;
 
 use Usility\PageFactory\PageFactory;
 
+// ToDo: option to import translations table from a file
 const TRANSLATIONS = [
     'Monday' => ['en' => 'Monday', 'de' => 'Montag', 'fr'=> 'Lundi', 'it'=> 'Lunedì',],
     'Tuesday' => ['en' => 'Tuesday', 'de' => 'Dienstag', 'fr'=> 'Mardi' ,'it'=> 'Martedì',],
@@ -12,6 +13,7 @@ const TRANSLATIONS = [
     'Friday' => ['en' => 'Friday', 'de' => 'Freitag', 'fr'=> 'Vendredi' ,'it'=> 'Venerdì',],
     'Saturday' => ['en' => 'Saturday', 'de' => 'Samstag', 'fr'=> 'Samedi' ,'it'=> 'Sabato',],
     'Sunday' => ['en' => 'Sunday', 'de' => 'Sonntag', 'fr'=> 'Dimanche' ,'it'=> 'Domenica',],
+
     'January' => ['en' => 'January', 'de' => 'Januar', 'fr'=> 'janvier ' ,'it'=> 'gennaio',],
     'February' => ['en' => 'February', 'de' => 'Februar', 'fr'=> 'février' ,'it'=> 'febbraio',],
     'March' => ['en' => 'March', 'de' => 'März', 'fr'=> 'mars' ,'it'=> 'marzo',],
@@ -24,8 +26,10 @@ const TRANSLATIONS = [
     'October' => ['en' => 'October', 'de' => 'Oktober', 'fr'=> 'octobre' ,'it'=> 'ottobre',],
     'November' => ['en' => 'November', 'de' => 'November', 'fr'=> 'novembre' ,'it'=> 'novembre',],
     'December' => ['en' => 'December', 'de' => 'Dezember', 'fr'=> 'décembre' ,'it'=> 'dicembre',],
+
     'OCLOCK' => ['en' => 'h', 'de' => 'Uhr', 'fr'=> 'heures' ,'it'=> 'ore',],
 ];
+
 const YEAR_THRESHOLD = 10;
 
 

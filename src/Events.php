@@ -11,6 +11,8 @@ namespace Usility\PageFactoryElements;
 
 use Usility\PageFactory\DataSet as DataSet;
 use Usility\PageFactory\PageFactory;
+use function Usility\PageFactory\fileExt;
+use function Usility\PageFactory\fileGetContents;
 use function Usility\PageFactory\fileTime;
 use function Usility\PageFactory\resolvePath;
 use function Usility\PageFactory\loadFile;
@@ -121,8 +123,8 @@ class Events extends DataSet
     private function findEvent(array $sortedData): int|false
     {
         $options = $this->options;
-        $offset = $options['offset'];
-        $from = $options['from'];
+        $offset = $options['offset']??0;
+        $from = $options['from']??0;
 
         if ($from) {
             $targetDate = $this->parseTime($from);
@@ -142,7 +144,8 @@ class Events extends DataSet
         }
 
         if ($found !== false) {
-            return $found + $offset - 1;
+            return $found + $offset;
+//            return $found + $offset - 1; // ToDo: check!
         } else {
             return false;
         }
@@ -195,14 +198,11 @@ class Events extends DataSet
     private function getTemplate($category): mixed
     {
         if ($this->templates === null) {
-            $templatesFile = $this->options['templatesFile'];
-            if ($templatesFile) {
-                $this->templates = loadFile($templatesFile);
-            }
+            $this->loadTemplates();
         }
         $templates = $this->templates;
 
-        $templateName = $this->options['templateBasename'];
+        $templateName = $this->options['templateBasename'] ?? '';
         if ($templateName) {
             $templateName .= '-';
         }
@@ -367,6 +367,62 @@ class Events extends DataSet
         }
         return $template;
     } // resolveVariables
+
+
+    /**
+     * @param $category
+     * @return false|mixed
+     * @throws \Kirby\Exception\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
+     */
+    public function getNextEvent(string|false $category = false): array
+    {
+        $category = $category?: $this->options['category']??false;
+        $templatesFile = $this->options['templatesFile']??false;
+        $sortedData = $this->getData($category);
+        $nextEventInx = $this->findEvent($sortedData);
+        if ($nextEventInx === false) {
+            return false;
+        }
+        $nextEventRec = $sortedData[$nextEventInx];
+
+        // prepare event banner:
+        if ($templatesFile) {
+            $this->loadTemplates($templatesFile);
+            $template = $this->getTemplate($category);
+            $eventBanner = $this->compileTemplate($template, $nextEventRec);
+            $eventBanner = markdown($eventBanner);
+            $eventBanner = $this->cleanup($eventBanner);
+        }
+        $nextEventRec['eventBanner'] = $eventBanner;
+
+        return $nextEventRec;
+    } // getNextEvent
+
+
+    /**
+     * @param $file
+     * @return void
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
+    private function loadTemplates(string|false $file = false): void
+    {
+        $file = $file ?: $this->options['templatesFile'];
+        if (!$file) {
+            return;
+        }
+        $ext = fileExt($file);
+        switch ($ext) {
+            case 'txt':
+                $this->templates['_'] = loadFile($file);
+                break;
+            case 'yaml':
+                $this->templates = loadFile($file);
+                break;
+        }
+    } // loadTemplates
 
 } // Events
 
