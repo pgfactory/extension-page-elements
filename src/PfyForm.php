@@ -991,8 +991,22 @@ EOT;
             return $tableOptions;
         }
 
+        // handle editTable:
+        if ($editTable) {
+            if ($editTable === true) {
+                $tableOptions['permission'] = 'localhost,loggedin';
+                $tableOptions['tableButtons'] = 'delete,download';
+                $tableOptions['serviceColumns'] = 'select,num';
+            } else {
+                $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
+                $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
+                $tableOptions['serviceColumns'] = $editTable['serviceColumns'] ?? 'select,num';
+                $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
+            }
+            PageFactory::$pg->applyRobotsAttrib();
+
         // handle showData:
-        if ($showData) {
+        } elseif ($showData) {
             if ($showData === true) {
                 $tableOptions['permission'] = 'localhost,loggedin';
                 $tableOptions['tableButtons'] = 'download';
@@ -1002,20 +1016,7 @@ EOT;
                 $tableOptions['tableButtons'] = $showData['tableButtons']??'download';
                 $tableOptions['serviceColumns'] = $showData['serviceColumns']??'';
             }
-        }
-
-        // handle editTable:
-        if ($editTable) {
-            if ($editTable === true) {
-                $tableOptions['permission'] = 'localhost,loggedin';
-                $tableOptions['tableButtons'] = 'delete,download';
-                $tableOptions['serviceColumns'] = 'select,num';
-            } else {
-                $tableOptions['permission'] = $editTable['permission']??'localhost,loggedin';
-                $tableOptions['tableButtons'] = $editTable['tableButtons']??'download';
-                $tableOptions['serviceColumns'] = $editTable['serviceColumns']??'select,num';
-                $tableOptions['editMode'] = $editTable['mode']??'inpage';
-            }
+            PageFactory::$pg->applyRobotsAttrib();
         }
 
         unset($tableOptions['showData']);
