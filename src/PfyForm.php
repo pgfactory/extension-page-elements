@@ -186,7 +186,7 @@ EOT;
         }
 
         // add standard hidden fields to identify data: which form, which data-record:
-        $this->addElement(['type' => 'hidden', 'name' => '_recKey', 'value' => $formOptions['recId']??'', 'preset' => '']);
+        $this->addElement(['type' => 'hidden', 'name' => '_reckey', 'value' => $formOptions['recId']??'', 'preset' => '']);
         $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
 
         foreach ($formElements as $name => $rec) {
@@ -652,7 +652,7 @@ EOT;
             return false; // signal 'processing skipped, continue processing'
         }
 
-        $recKey = $dataRec['_recKey']??false;;
+        $recKey = $dataRec['_reckey']??false;
 
         $dataRec = $this->normalizeData($dataRec);
 
