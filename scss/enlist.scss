@@ -156,7 +156,13 @@
   }
 
   .pfy-enlist-frozen {
-    box-shadow: inset 0 0 5px #aaa;
+    .pfy-enlist-table td {
+      cursor: not-allowed;
+      filter: brightness(95%);
+    }
+  }
+  .pfy-enlist-elem-frozen {
+    cursor: not-allowed;
   }
 
   .pfy-enlist-wrapper:not(.pfy-enlist-admin) {
@@ -178,7 +184,7 @@
       content: ">";
     }
   }
-  
+
   button.pfy-enlist-delete,
   button.pfy-enlist-add {
     @include _pfy-enlist-button;

@@ -93,13 +93,13 @@ const Enlist = {
 
   preparePopupForm: function(mode, elemWrapper, elemId) {
     const name = elemWrapper.querySelector('.pfy-enlist-name').textContent;
-    const setInx = elemWrapper.closest('.pfy-enlist-wrapper').dataset.setinx;
+    const setname = elemWrapper.closest('.pfy-enlist-wrapper').dataset.setname;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
     popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
 
     const form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
-    const setinxElem = form.querySelector('[name=setinx]');
-    setinxElem.setAttribute('value', setInx);
+    const setnameElem = form.querySelector('[name=setname]');
+    setnameElem.setAttribute('value', setname);
 
     // inhibit submit by enter key while in textarea:
     const textareaFields = form.querySelectorAll('textarea');

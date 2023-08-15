@@ -27,7 +27,7 @@ class Enlist
     private $options;
     private $inx;
     private $title;
-    private $entries;
+    private $dataset;
     private $nEntries = 0;
     private $nSlots = 0;
     private $nReserveSlots = 0;
@@ -35,8 +35,7 @@ class Enlist
     private $db;
     private $datasets;
     private $datasetName;
-    private $freezeTime;
-    private $listFrozen = false;
+    private $deadlineExpired = false;
     private $isEnlistAdmin = false;
     private $pagePath;
     private $pageId;
@@ -44,6 +43,28 @@ class Enlist
     private $customFields = [];
     private $customFieldsEmpty = [];
     protected static $session;
+
+    private $freezeTime;
+    private static $_freezeTime = null;
+
+    private $deadline;
+    private static $_deadline = null;
+    private $sendConfirmation;
+    private static $_sendConfirmation = null;
+    private $notifyOwner;
+    private static $_notifyOwner = null;
+    private $obfuscate;
+    private static $_obfuscate = null;
+    private $admin;
+    private static $_admin = null;
+    private $adminEmail;
+    private static $_adminEmail = null;
+    private $class;
+    private static $_class = null;
+
+    /**
+     * @var string
+     */
     protected static $obfuscateSessKey;
 
     /**
@@ -90,7 +111,7 @@ class Enlist
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
 
-        if ($permissionQuery = ($this->options['admin'] ?? false)) {
+        if ($permissionQuery = $this->admin) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'localhost|loggedin';
             }
@@ -100,9 +121,9 @@ class Enlist
             }
         }
 
-        // isEnlistAdmin overrides listFrozen:
-        if ($this->listFrozen && $this->isEnlistAdmin) {
-            $this->listFrozen = null; // -> null signifies frozen, but class still added to wrapper
+        // isEnlistAdmin overrides deadlineExpired:
+        if ($this->deadlineExpired && $this->isEnlistAdmin) {
+            $this->deadlineExpired = null; // -> null signifies frozen, but class still added to wrapper
         }
     } // __construct
 
@@ -112,15 +133,19 @@ class Enlist
      */
     public function render(): string
     {
-        $this->entries = $this->getDataset($this->datasetName);
+        // get access to the current dataset:
+        $this->dataset = $this->getDataset();
+
+        // obtain current count of entries:
+        $this->nEntries = $this->countEntries();
 
         $id = ($this->options['id']??false)?: "pfy-enlist-wrapper-$this->inx";
-        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . ($this->options['class']??false)?: '');
+        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . $this->class);
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
 
             if ($this->inx === 1) {
-                if ($adminEmail = ($this->options['adminEmail'] ?? false)) {
+                if ($adminEmail = $this->adminEmail) {
                     PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
                 } else {
                     $adminEmail = PageFactory::$webmasterEmail;
@@ -130,13 +155,9 @@ class Enlist
         }
 
         // add class to show that list is frozen (even if isEnlistAdmin):
-        if ($this->listFrozen || ($this->listFrozen === null)) {
+        if ($this->deadlineExpired || ($this->deadlineExpired === null)) {
             $class .= ' pfy-enlist-frozen';
         }
-
-        $this->nReserveSlots = $this->options['nReserveSlots'];
-        $this->nSlots = $this->options['nSlots'];
-        $nTotal = $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
 
         $this->renderInfoButton();
 
@@ -145,13 +166,70 @@ class Enlist
         $html = $this->renderEntryTable();
 
         $html = <<<EOT
-<div id='$id' class='$class' data-setInx="$this->inx">
+<div id='$id' class='$class' data-setname="$this->datasetName">
 <div class='pfy-enlist-title'><span>$this->title</span>$headButtons</div>
 $html
 </div>
 EOT;
         return $html;
     } // render
+
+
+    /**
+     * @param array $options
+     * @return void
+     */
+    private function parseOptions(array $options): void
+    {
+        $this->options = $options;
+        if (($this->inx = $options['inx'] ?? false) === false) {
+            if (isset($GLOBALS['pfyEnlistInx'])) {
+                $this->inx = $GLOBALS['pfyEnlistInx']++;
+            } else {
+                $this->inx = $GLOBALS['pfyEnlistInx'] = 1;
+            }
+        }
+
+        $title = $title0 = $this->options['title'] ?? '';
+
+        $this->prepStaticOption('freezeTime');
+        $this->prepStaticOption('sendConfirmation');
+        $this->prepStaticOption('notifyOwner');
+        $this->prepStaticOption('obfuscate');
+        $this->prepStaticOption('admin');
+        $this->prepStaticOption('adminEmail');
+        $this->prepStaticOption('class');
+        $deadlineStr = $this->prepStaticOption('deadline');
+        $deadline = false;
+        if ($deadlineStr) {
+            $deadline = strtotime($deadlineStr);
+            $deadlineStr = date('l, d.F Y', $deadline);
+            $title0 = str_replace('%deadline%', $deadlineStr, $title);
+            $title = translateDateTimes($title0);
+        }
+
+        $this->title = $title;
+
+        if (!($this->datasetName = ($this->options['listName']??false))) {
+            if ($title0) {
+                $this->datasetName = translateToFilename(strip_tags($title0), false);
+            } else {
+                $this->datasetName = "List-$this->inx";
+            }
+        }
+
+        // determine whether list is past deadline:
+        if ($deadline) {
+            $this->deadlineExpired = ($deadline < time());
+        }
+        $this->nReserveSlots = $this->options['nReserveSlots']??0;
+        $this->nSlots        = $this->options['nSlots']??1;
+        $this->nTotalSlots   = $this->nSlots + $this->nReserveSlots;
+
+        if ($this->freezeTime) {
+            $this->freezeTime = $this->freezeTime * 3600; // freezeTime is in hours
+        }
+    } // parseOptions
 
 
     /**
@@ -205,7 +283,6 @@ EOT;
     <tr>
 $thead    </tr>
 EOT;
-
         return $header;
     } // renderEntryTableHeader
 
@@ -223,7 +300,7 @@ EOT;
             list($icon, $class, $name, $customFields, $elemKey) = $this->renderFilledRow($i);
 
         // add element:
-        } elseif ($i === $this->nEntries && !$this->listFrozen) {
+        } elseif ($i === $this->nEntries && !$this->deadlineExpired) {
             $icon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
             list($class, $name, $customFields) = ['pfy-enlist-add', '{{ pfy-enlist-add-text }}', $this->customFieldsEmpty];
 
@@ -269,7 +346,7 @@ EOT;
     private function renderFilledRow(int $i): array
     {
         $class = 'pfy-enlist-delete';
-        $rec = $this->entries[array_keys($this->entries)[$i]];
+        $rec = $this->dataset[$i];
         $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
         $text = $rec['Name']??'## unknown ##';
 
@@ -279,11 +356,15 @@ EOT;
         // handle freezeTime:
         if ($this->freezeTime) {
             $time = $rec['_time']??PHP_INT_MAX;
-            if ($time < $this->freezeTime) {
+            if (is_string($time)) {
+                $time = strtotime($time);
+            }
+            if ($time < (time() - $this->freezeTime)) {
                 $icon = '';
+                $class = 'pfy-enlist-elem-frozen';
             }
         }
-        if ($this->listFrozen) {
+        if ($this->deadlineExpired) {
             $icon = '';
         }
 
@@ -306,7 +387,7 @@ EOT;
                 $customFields[] = $rec[$key]??'?';
             }
         }
-        $elemKey = $rec['_elemKey'];
+        $elemKey = $rec['_elemKey']??'';
         $elemKey = $this->obfuscateKey($elemKey);
         return [$icon, $class, $text, $customFields, $elemKey];
     } // renderFilledRow
@@ -340,26 +421,65 @@ EOT;
      * @param string $setName
      * @return array
      */
-    private function getDataset(string $setName): array
+    private function getDataset(string|false $setName = false): array
     {
-        $this->entries = $this->datasets[$setName]??[];
-        if (is_array($this->entries)) {
-            $this->nEntries = sizeof($this->entries);
+        $nTotalSlots = false;
+        if (!$setName) {
+            $setName = $this->datasetName;
+            $nTotalSlots = $this->nTotalSlots;
         }
-        return $this->entries;
+
+        if (!isset($this->datasets[$setName])) {
+            // create new dataset:
+            $dataset = [
+                'nSlots' => $nTotalSlots,
+                'freezeTime' => $this->freezeTime,
+                'title' => $this->title,
+                ];
+            if ($this->deadlineExpired) {
+                $dataset['deadlineExpired'] = true;
+            }
+            $this->db->addRec($dataset, recKeyToUse:$setName);
+            $data = $this->db->data();
+            $this->dataset = $data[$setName];
+
+        } else {
+            // access existing dataset:
+            $this->dataset = $dataset = $this->datasets[$setName];
+
+            // if called during initial run, check whether 'nSlots' still up-to-date:
+            $needUpdate = false;
+            if ($nTotalSlots && ($dataset['nSlots'] !== $nTotalSlots)) {
+                // 'nSlots' not up-to-date, so update it:
+                $dataset['nSlots'] = $nTotalSlots;
+                $needUpdate = true;
+            }
+            if ($dataset['freezeTime'] !== $this->freezeTime) {
+                // 'freezeTime' not up-to-date, so update it:
+                $dataset['freezeTime'] = $this->freezeTime;
+                $needUpdate = true;
+            }
+            if ($this->deadlineExpired) {
+                if (!isset($dataset['deadlineExpired']) || !$dataset['deadlineExpired']) {
+                    $dataset['deadlineExpired'] = true;
+                    $needUpdate = true;
+                }
+            } else {
+                if (isset($dataset['deadlineExpired']) && $dataset['deadlineExpired']) {
+                    $dataset['deadlineExpired'] = false;
+                    $needUpdate = true;
+                }
+            }
+
+            if ($needUpdate) {
+                $this->db->addRec($dataset, recKeyToUse:$setName);
+                $data = $this->db->data();
+                $this->dataset = $data[$setName];
+            }
+        }
+
+        return $this->dataset;
     } // getDataset
-
-
-    /**
-     * @param int $setInx
-     * @return string
-     */
-    private function getSetName(int $setInx): string
-    {
-        $sess = kirby()->session();
-        $setnames = $sess->get('pfy.enlist-setnames')?: [];
-        return $setnames[$this->pageId][$setInx]??false;
-    } // getSetName
 
 
     /**
@@ -431,7 +551,7 @@ EOT;
         $formFields['cancel'] = [];
         $formFields['submit'] = [];
         $formFields['elemId'] = ['type' => 'hidden'];
-        $formFields['setinx'] = ['type' => 'hidden'];
+        $formFields['setname'] = ['type' => 'hidden'];
 
         $form = new PfyForm($formOptions);
         $form->createForm(null, $formFields); // $auxOptions = form-elements
@@ -446,278 +566,15 @@ EOT;
 
 
     /**
-     * @param array $data
-     * @return string
-     * @throws \Exception
+     * @param mixed $text
+     * @param string $icon
+     * @return array
      */
-    private function callback(array $data): string
-    {
-        $setInx = (int)$data['setinx'];
-        $setName = $this->getSetName((int)$data['setinx']);
-        $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
-        $dataset = $this->getDataset($setName);
-
-        $message = '';
-        $elemId = $data['elemId'];
-        $elemId = $this->deObfuscateKey($elemId);
-        $data['_time'] = date('Y-m-d\TH:i');
-
-        unset($data['_formInx']);
-        unset($data['_cancel']);
-        unset($data['elemId']);
-        unset($data['setinx']);
-
-        $sess = kirby()->session();
-        $listsFrozen = $sess->get('pfy.listsFrozen', []);
-        $deadlineExpired = $listsFrozen[$this->pageId][$setInx]??true;
-        if ($deadlineExpired) {
-            if ($this->isEnlistAdmin) {
-                $message = '{{ pfy-enlist-error-deadline-was-expired }}';
-            } else {
-                mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
-            }
-        }
-
-        if ($elemId === '') {
-            // new entry:
-            $name = $data['Name']??'#####';
-            $exists = array_filter($dataset, function ($e) use($name){
-                return ($e['Name']??'') === $name;
-            });
-            if ($this->customFields) {
-                foreach ($this->customFields as $key => $args) {
-                    if (is_array($args['options']??false)) {
-                        $o = [];
-                        foreach ($args['options'] as $k => $v) {
-                            $o[$k] = in_array($k, $data[$key]);
-                        }
-                        $data[$key] = $o;
-                    }
-                }
-            }
-
-            if ($exists) {
-                $prevElemId = array_keys($exists)[0];
-                $email = $data['Email']??'#####';
-                $email0 =  $dataset[$prevElemId]['Email'];
-                if ($email0 !== $email) {
-                    mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                    reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
-                }
-                $dataset[$prevElemId] = $data;
-            } else {
-                $data['_elemKey'] = createHash();
-                $dataset[$data['_elemKey']] = $data;
-            }
-            if (sizeof($dataset) > $this->nTotalSlots) {
-                mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
-                reloadAgent();
-            }
-            $this->db->addRec($dataset, recKeyToUse:$setName);
-            $this->notifyOwner($data, 'add', $setName);
-            if ($this->sendConfirmation($data, $setName)) {
-                mylog("EnList new entry & confirmation sent: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
-            }
-            mylog("EnList new entry: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-            reloadAgent(message: $message);
-
-        // delete entry:
-        } else {
-            $rec = $dataset[$elemId]??false;
-            if ($rec) {
-                $time = strtotime($rec['_time']??0);
-                if ($time < $this->freezeTime) {
-                    if ($this->isEnlistAdmin) {
-                        $message = '{{ pfy-enlist-del-freeze-time-expired }}';
-                    } else {
-                        mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                        reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
-                    }
-                }
-
-                $email = $data['Email']??'#####';
-                $email0 =  $rec['Email']??'@@@@@@@';
-                if ($email0 !== $email) {
-                    mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                    reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
-                } else {
-                    unset($dataset[$elemId]);
-                    $this->db->addRec($dataset, recKeyToUse:$setName);
-                    $this->notifyOwner($rec, 'del', $setName);
-                    mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-                    $message = $message?"<br>$message":'';
-                    reloadAgent(message: '{{ pfy-enlist-deleted }}'.$message);
-                }
-            }
-        }
-        return '';
-    } // callback
-
-
-    /**
-     * @param array $data
-     * @param string $mode
-     * @param string $setName
-     * @return void
-     */
-    private function notifyOwner(array $data, string $mode, string $setName): void
-    {
-        if (!($to = ($this->options['notifyOwner']??false))) {
-            return;
-        }
-
-        if ($mode === 'add') {
-            $subject = '{{ pfy-enlist-add-notification-subject }}';
-            $body = '{{ pfy-enlist-add-notification-body }}';
-        } else {
-            $subject = '{{ pfy-enlist-del-notification-body }}';
-            $body = '{{ pfy-enlist-del-notification-body }}';
-        }
-        $replace = [
-            '%name' => $data['Name'],
-            '%email' => $data['Email'],
-            '%topic' => $setName,
-            '%host' => PageFactory::$hostUrl,
-            '%page' => $this->pagePath,
-        ];
-        $subject = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($subject, PageFactory::$defaultLanguage));
-        $body = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($body, PageFactory::$defaultLanguage));
-
-        Utils::sendMail($to, $subject, $body );
-    } // notifyOwner
-
-
-    /**
-     * @param array $data
-     * @param string $setName
-     * @return bool
-     */
-    private function sendConfirmation(array $data, string $setName): bool
-    {
-        if (!($this->options['sendConfirmation']??false)) {
-            return false;
-        }
-
-        $subject = '{{ pfy-enlist-visitor-confirmation-subject }}';
-        $body = '{{ pfy-enlist-visitor-confirmation-body }}';
-        $replace = [
-            '%name' => $data['Name'],
-            '%email' => $data['Email'],
-            '%topic' => $setName,
-            '%host' => PageFactory::$hostUrl,
-            '%page' => $this->pagePath,
-        ];
-        $subject = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($subject, PageFactory::$defaultLanguage));
-        $body = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($body, PageFactory::$defaultLanguage));
-
-        Utils::sendMail($data['Email'], $subject, $body );
-        return true;
-    } // sendConfirmation
-
-
-    /**
-     * @param array $options
-     * @return void
-     */
-    private function parseOptions(array $options): void
-    {
-        $this->options = $options;
-        if (($this->inx = $options['inx'] ?? false) === false) {
-            if (isset($GLOBALS['pfyEnlistInx'])) {
-                $this->inx = $GLOBALS['pfyEnlistInx']++;
-            } else {
-                $this->inx = $GLOBALS['pfyEnlistInx'] = 1;
-            }
-        }
-
-        $title = $title0 = $this->options['title'] ?? '';
-        $dateTime = strtotime($this->options['datetime']??'');
-        $deadline = false;
-        if ($dateTime) {
-            if ($deadlineStr = ($this->options['deadline'] ?? '')) {
-                if (preg_match('/-\d+\s*\w+/', $deadlineStr, $m)) {
-                    $deadline = strtotime($deadlineStr, $dateTime);
-                } else {
-                    $deadline = strtotime($deadlineStr);
-                }
-                $deadline = intval($deadline / 86400) * 86400 + 86400; // round up to end of day
-                $deadlineStr = date('l, d.F Y', $deadline - 86400);
-            }
-            if ($dateTime % 86400) {
-                $dateTimeStr = date('l, d.F Y, H:i %%', $dateTime);
-            } else {
-                $dateTimeStr = date('l, d.F Y', $dateTime);
-            }
-            $pattern = ['%datetime' => $dateTimeStr, '%deadline' => $deadlineStr?:''];
-            $title0 = str_replace(array_keys($pattern), array_values($pattern), $title);
-            $title = translateDateTimes($title0);
-            $title0 = trim(str_replace('%%', '', $title0));
-
-        } elseif ($deadlineStr = ($this->options['deadline'] ?? '')) {
-            $deadline = strtotime($deadlineStr);
-            $deadline = intval($deadline / 86400) * 86400 + 86400; // round up to end of day
-            $deadlineStr = date('l, d.F Y', $deadline - 86400);
-            $title0 = str_replace('%deadline', $deadlineStr, $title);
-            $title = translateDateTimes($title0);
-            $title0 = trim(str_replace('%%', '', $title0));
-        }
-
-        $this->title = $title;
-
-        if (!($this->datasetName = ($this->options['listName']??false))) {
-            if ($title0) {
-                $this->datasetName = translateToFilename(strip_tags($title0), false);
-            } else {
-                $this->datasetName = "List-$this->inx";
-            }
-        }
-
-        $sess = kirby()->session();
-        $setnames = $sess->get('pfy.enlist-setnames')?: [];
-        $setnames[$this->pageId][$this->inx] = $this->datasetName;
-        $sess->set('pfy.enlist-setnames', $setnames);
-
-        // determine whether list is past deadline:
-        if ($deadline) {
-            $this->listFrozen = ($deadline < time());
-        }
-        // record frozenList state in $sess for callback():
-        $listsFrozen = $sess->get('pfy.listsFrozen', []);
-        $listsFrozen[$this->pageId][$this->inx] = $this->listFrozen;
-        $sess->set('pfy.listsFrozen', $listsFrozen);
-
-        // prepare freezeTime threshold to apply to individual entries:
-        $this->freezeTime = $this->options['freezeTime']??false;
-        if ($this->freezeTime) {
-            $this->freezeTime = time() - ($this->freezeTime * 3600); // freezeTime is in hours
-        } else {
-            $config = kirby()->option('pgfactory.pagefactory-pageelements.options');
-            if ($freezeTime = ($config['enlistFreezeTime']??false)) {
-                $this->freezeTime = time() - ($freezeTime * 3600); // freezeTime is in hours
-            }
-        }
-    } // parseOptions
-
-
     private function obfuscateNameInRow(mixed $text, string $icon): array
     {
-        if ($obfuscate = ($this->options['obfuscate'] ?? false)) {
+        if ($this->notifyOwner) {
             $text0 = $text;
-            if ($obfuscate === true) {
+            if ($this->notifyOwner === true) {
                 $text = '*****';
                 if (!$this->isEnlistAdmin) {
                     $icon = '';
@@ -767,5 +624,255 @@ EOT;
         }
         return $key;
     } // deObfuscateKey
+
+
+    private function countEntries(array|false $dataset = false): int
+    {
+        if (!$dataset) {
+            $dataset = $this->dataset;
+        }
+        $nEntries = 0;
+        array_walk($dataset, function ($value, $key) use(&$nEntries) {
+            if (is_numeric($key)) {
+                $nEntries++;
+            }
+        });
+        return $nEntries;
+    } // countEntries
+
+
+
+    // === Callback: handle user response ==========================
+    /**
+     * @param array $data
+     * @return string
+     * @throws \Exception
+     */
+    private function callback(array $data): string
+    {
+        $setName = $data['setname'];
+        $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
+        $dataset = $this->getDataset($setName);
+
+        $message = '';
+        $elemId = $data['elemId'];
+        $elemId = $this->deObfuscateKey($elemId);
+        $data['_time'] = date('Y-m-d\TH:i');
+
+        unset($data['_formInx']);
+        unset($data['_cancel']);
+        unset($data['_reckey']);
+        unset($data['elemId']);
+        unset($data['setname']);
+
+        if ($dataset['deadlineExpired']??false) {
+            if ($this->isEnlistAdmin) {
+                $message = '{{ pfy-enlist-error-deadline-was-expired }}';
+            } else {
+                mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
+            }
+        }
+
+        if ($elemId === '') {
+            // new entry:
+            $this->handleNewEntry($data, $dataset, $context, $setName, $message);
+
+        } else {
+            // delete entry:
+            $this->handleExistingEntry($dataset, $elemId, $message, $data, $context, $setName);
+        }
+        return '';
+    } // callback
+
+
+    private function handleNewEntry(array $data, array $dataset, string $context, mixed $setName, string $message): void
+    {
+        $name = $data['Name'] ?? '#####';
+        $exists = array_filter($dataset, function ($e) use ($name) {
+            return ($e['Name'] ?? '') === $name;
+        });
+        if ($this->customFields) {
+            foreach ($this->customFields as $key => $args) {
+                if (is_array($args['options'] ?? false)) {
+                    $o = [];
+                    foreach ($args['options'] as $k => $v) {
+                        $o[$k] = in_array($k, $data[$key]);
+                    }
+                    $data[$key] = $o;
+                }
+            }
+        }
+
+        if ($exists) {
+            $prevElemId = array_keys($exists)[0];
+            $email = $data['Email'] ?? '#####';
+            $email0 = $dataset[$prevElemId]['Email'];
+            if ($email0 !== $email) {
+                mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
+            }
+            $dataset[$prevElemId] = $data;
+        } else {
+            $data['_elemKey'] = createHash();
+            $dataset[] = $data;
+        }
+
+        // double-check against max number of entries:
+        $nEntries = $this->countEntries($dataset);
+        if ($nEntries > $dataset['nSlots']) {
+            mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
+            reloadAgent();
+        }
+
+        // add new entry:
+        $this->db->addRec($dataset, recKeyToUse: $setName);
+
+        $this->handleNotifyOwner($data, 'add', $dataset['title']);
+        if ($this->handleSendConfirmation($data, $dataset['title'])) {
+            mylog("EnList new entry & confirmation sent: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
+        }
+        mylog("EnList new entry: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+        reloadAgent(message: $message);
+    } // handleNewEntry
+
+
+    private function handleExistingEntry(array $dataset, string $elemId, string $message, array $data, string $context, mixed $setName): array
+    {
+        $found = array_filter($dataset, function ($e) use ($elemId) {
+            return ($e['_elemKey'] ?? '') === $elemId;
+        });
+        if (!$found) {
+            mylog('Delete request ignored, element not found - probably outdated');
+            reloadAgent(message: '{{ pfy-enlist-data-outdated }}');
+        }
+
+        $elemKey = array_keys($found)[0];
+        $rec = array_shift($found);
+        $time = strtotime($rec['_time'] ?? 0);
+        if ($time < (time() - $dataset['freezeTime'] ?? 0)) {
+            if ($this->isEnlistAdmin) {
+                $message = '{{ pfy-enlist-del-freeze-time-expired }}';
+            } else {
+                mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
+            }
+        }
+
+        $email = $data['Email'] ?? '#####';
+        $email0 = $rec['Email'] ?? '@@@@@@@';
+        if ($email0 !== $email) {
+            mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
+        } else {
+            $nSlots = $dataset['nSlots'];
+            unset($dataset['nSlots']);
+            $freezeTime = $dataset['freezeTime'];
+            unset($dataset['freezeTime']);
+            $title = $dataset['title'];
+            unset($dataset['title']);
+            if ($deadlineExpired = ($dataset['deadlineExpired'] ?? false)) {
+                unset($dataset['deadlineExpired']);
+            }
+
+            unset($dataset[$elemKey]);
+            $dataset = array_values($dataset);
+            $dataset['nSlots'] = $nSlots;
+            $dataset['freezeTime'] = $freezeTime;
+            $dataset['title'] = $title;
+            if ($deadlineExpired) {
+                $dataset['deadlineExpired'] = true;
+            }
+            $this->db->addRec($dataset, recKeyToUse: $setName);
+            $this->handleNotifyOwner($rec, 'del', $setName);
+            mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            $message = $message ? "<br>$message" : '';
+            reloadAgent(message: '{{ pfy-enlist-deleted }}' . $message);
+        }
+    } // handleExistingEntry
+
+
+    /**
+     * @param array $data
+     * @param string $mode
+     * @param string $setName
+     * @return void
+     */
+    private function handleNotifyOwner(array $data, string $mode, string $setName): void
+    {
+        if (!($to = $this->notifyOwner)) {
+            return;
+        }
+
+        if ($mode === 'add') {
+            $subject = '{{ pfy-enlist-add-notification-subject }}';
+            $body = '{{ pfy-enlist-add-notification-body }}';
+        } else {
+            $subject = '{{ pfy-enlist-del-notification-body }}';
+            $body = '{{ pfy-enlist-del-notification-body }}';
+        }
+        $replace = [
+            '%name' => $data['Name'],
+            '%email' => $data['Email'],
+            '%topic' => $setName,
+            '%host' => PageFactory::$hostUrl,
+            '%page' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            TransVars::resolveVariables($subject, PageFactory::$defaultLanguage));
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            TransVars::resolveVariables($body, PageFactory::$defaultLanguage));
+
+        Utils::sendMail($to, $subject, $body );
+    } // handleNotifyOwner
+
+
+    /**
+     * @param array $data
+     * @param string $title
+     * @return bool
+     */
+    private function handleSendConfirmation(array $data, string $title): bool
+    {
+        if (!$this->sendConfirmation) {
+            return false;
+        }
+
+        $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
+        $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
+        $replace = [
+            '%name%' => $data['Name'],
+            '%email%' => $data['Email'],
+            '%topic%' => $title,
+            '%host%' => PageFactory::$hostUrl,
+            '%page%' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $subject);
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $body);
+
+        Utils::sendMail($data['Email'], $subject, $body );
+        return true;
+    } // handleSendConfirmation
+
+    private function prepStaticOption(string $key): mixed
+    {
+        $this->$key = ($this->options[$key] ?? false) ?: self::${"_$key"};
+        if ($this->$key && self::${"_$key"} === null) {
+            self::${"_$key"} = $this->$key;
+        }
+        return $this->$key;
+    } // prepStaticOption
+
 
 } // Enlist

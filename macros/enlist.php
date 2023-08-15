@@ -20,25 +20,27 @@ function enlist($args = '')
     $config =  [
         'options' => [
             'title' =>	['[string] Title of enlistment table.', false],
-            'listName' =>	['[string] Defines how the dataset will be named within the data-file. '.
-                'If not set, listName will be derived from title. If that\'s not set, a default name is used.', false],
+            'nSlots' =>	['[integer] Number of slots to show in the enlistment table.', 1],
+            'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table.', 0],
+
+            'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry.', false],
+            'deadline' =>	['[ISO-datetime|relative] The time until when people can enlist.', false],
 
             'id' =>	['Id applied to the form element.', false],
 
             'class' =>	['Class applied to the form element.', false],
 
+            'listName' =>	['[string] Defines how the dataset will be named within the data-file. '.
+                'If not set, listName will be derived from title. If that\'s not set, a default name is used.', false],
+
             'info' =>	['[string] Content of info-tooltip next to title.', false],
             'description' =>	['[string] synonyme for "info".', false],
-            'datetime' =>	['[ISO-datetime] When the task for enlisted people starts.', false],
-            'deadline' =>	['[ISO-datetime|relative] The time until when people can enlist.<br>'.
-                'Can be an ISO-datetime (e.g. 2023-06-12T1159) or an expression relative to "datetime" (e.g. "-1day").', false],
-            'nSlots' =>	['[integer] Number of slots to show in the enlistment table.', 1],
-            'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table.', 0],
+
             'sendConfirmation' =>	['[bool] If true, a confirmation mail is sent to the address stated when '.
                 'somebody enlists.', false],
-            'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry.', false],
             'notifyOwner' =>	['[email] If set, a notification mail will be sent to this address when '.
                 'somebody makes a an entry/modification to the list.', false],
+
             'obfuscate' =>	['[false|placeholder|initials] If true, placeholders are shown for existing entries '.
                 'instead of the names. If "initials", the names initials are shown.', false],
             'file' =>	['[filename] Name of the data file in which to store entries.', false],
@@ -72,12 +74,16 @@ EOT,
     unset($options['adminMail']);
 
     $enlist = new Enlist($options, $auxOptions);
-    $html .= $enlist->render();
+    if ($options['title']) {
+        $html .= $enlist->render();
+    }
 
     if ($inx === 1) {
         $html .= $enlist->renderForm();
         PageFactory::$pg->addAssets('ENLIST');
         PageFactory::$pg->addAssets('POPUPS');
+
+        PageFactory::$pg->applyRobotsAttrib();
     }
 
     return [$html];
