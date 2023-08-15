@@ -129,19 +129,19 @@ pfy-form-success-continue:
   _:  '<p><a href="~page/">Continue...</a></p>'
 
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
-  de: Neue Anmeldung auf %host
-  _:  New sign-up on %host
+  de: Neue Anmeldung auf %host%
+  _:  New sign-up on %host%
 
 pfy-form-owner-notification-body:
   de: |
     Guten Tag\n
     Es gibt eine neue Anmeldung:\n
-    %data\n
+    %data%\n
     Beste Grüsse, der Webmaster
   _:  |
     Hello\n
     We received a new sign-up:\n
-    %data\n
+    %data%\n
     Best regards, the webmaster
 
 pfy-form-required-info:
@@ -170,9 +170,9 @@ pfy-anti-spam-warning:
     We apologize for the inconvenience.
 
 pfy-form-override-honeypot:
-  de: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte geben Sie den <strong> ersten Buchstaben</strong> aus Feld <strong>«%refName»</strong> ein:</p>'
-  de2: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte gib den <strong>ersten Buchstaben</strong> aus Feld <strong>«%refName»</strong> ein:</p>'
-  _:  '<h3>As a measure of precaution against spam:</h3><p>Please enter the <strong>first letter</strong> of field <strong>"%refName"</strong>:</p>'
+  de: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte geben Sie den <strong> ersten Buchstaben</strong> aus Feld <strong>«%refName%»</strong> ein:</p>'
+  de2: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte gib den <strong>ersten Buchstaben</strong> aus Feld <strong>«%refName%»</strong> ein:</p>'
+  _:  '<h3>As a measure of precaution against spam:</h3><p>Please enter the <strong>first letter</strong> of field <strong>"%refName%"</strong>:</p>'
 
 pfy-form-honeypot-failed:
   de: 'Das klappte nicht, Ihre Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuchen Sie es erneut.'
@@ -294,43 +294,43 @@ pfy-enlist-deleted:
   _:  'Your entry has been deleted.'
 
 pfy-enlist-add-notification-subject:
-  de: 'Neue Anmeldung für %topic auf %host'
-  _:  'Newly enlisted for %topic on %host'
+  de: 'Neue Anmeldung für %topic% auf %host%'
+  _:  'Newly enlisted for %topic% on %host%'
 
 pfy-enlist-del-notification-subject:
-  de: 'Neue Abmeldung für %topic auf %host'
-  _:  'Deleted entry from %topic on %host'
+  de: 'Neue Abmeldung für %topic% auf %host%'
+  _:  'Deleted entry from %topic% on %host%'
 
 pfy-enlist-add-notification-body:
   de: |
     Hallo
-    %name hat sich angemeldet für %topic.
+    %name% hat sich angemeldet für %topic%.
 
-    -> %host/%page
+    -> %host%/%page%
 
     Der Webmaster
   _:  |
     Hello
-    %name enlisted for %topic.
+    %name% enlisted for %topic%.
 
-    -> %host/%page
+    -> %host%/%page%
 
     The webmaster
 
 pfy-enlist-del-notification-body:
   de: |
     Hallo
-    %name hat sich abgemeldet von %topic.
+    %name% hat sich abgemeldet von %topic%.
 
-    -> %host/%page
+    -> %host%/%page%
 
     Der Webmaster
 
   _:  |
     Hello
-    %name withdrew from %topic.
+    %name% withdrew from %topic%.
 
-    -> %host/%page
+    -> %host%/%page%
 
     The webmaster
 
@@ -343,23 +343,23 @@ pfy-enlist-visitor-confirmation-subject:
 
 pfy-enlist-visitor-confirmation-body:
   de: |
-    Guten Tat %name
+    Guten Tag %name%
 
-    Wir haben Ihre Anmeldung auf %host erhalten. 
+    Wir haben Ihre Anmeldung auf %host% erhalten. 
 
     Besten Dank.
     
   de2: |
-    Hallo %name
+    Hallo %name%
 
-    Wir haben deine Anmeldung auf %host erhalten.
+    Wir haben deine Anmeldung auf %host% erhalten.
 
     Besten Dank.
 
   _:  |
-    Hello %name
+    Hello %name%
 
-    We have received your registration on %host.
+    We have received your registration on %host%.
 
     Thank you.
 
