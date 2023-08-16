@@ -44,7 +44,7 @@ class Enlist
     private $customFieldsEmpty = [];
     protected static $session;
 
-    private $freezeTime;
+    private $freezeTime = false;
     private static $_freezeTime = null;
 
     private $deadline;
@@ -145,11 +145,11 @@ class Enlist
             $class .= ' pfy-enlist-admin';
 
             if ($this->inx === 1) {
-                if ($adminEmail = $this->adminEmail) {
-                    PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
-                } else {
+                if ($this->adminEmail === true) {
                     $adminEmail = PageFactory::$webmasterEmail;
                     PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+                } elseif($this->adminEmail) {
+                    PageFactory::$pg->addJs("const adminEmail = '$this->adminEmail';");
                 }
             }
         }
@@ -360,8 +360,12 @@ EOT;
                 $time = strtotime($time);
             }
             if ($time < (time() - $this->freezeTime)) {
-                $icon = '';
-                $class = 'pfy-enlist-elem-frozen';
+                if (!$this->isEnlistAdmin) {
+                    $icon = '';
+                    $class = 'pfy-enlist-elem-frozen';
+                } else {
+                    $class = 'pfy-enlist-delete pfy-enlist-elem-pseudo-frozen';
+                }
             }
         }
         if ($this->deadlineExpired) {
@@ -432,10 +436,12 @@ EOT;
         if (!isset($this->datasets[$setName])) {
             // create new dataset:
             $dataset = [
-                'nSlots' => $nTotalSlots,
-                'freezeTime' => $this->freezeTime,
                 'title' => $this->title,
+                'nSlots' => $nTotalSlots,
                 ];
+            if ($this->freezeTime) {
+                $dataset['freezeTime'] = $this->freezeTime;
+            }
             if ($this->deadlineExpired) {
                 $dataset['deadlineExpired'] = true;
             }
@@ -454,7 +460,7 @@ EOT;
                 $dataset['nSlots'] = $nTotalSlots;
                 $needUpdate = true;
             }
-            if ($dataset['freezeTime'] !== $this->freezeTime) {
+            if (($dataset['freezeTime']??false) !== $this->freezeTime) {
                 // 'freezeTime' not up-to-date, so update it:
                 $dataset['freezeTime'] = $this->freezeTime;
                 $needUpdate = true;
@@ -572,9 +578,9 @@ EOT;
      */
     private function obfuscateNameInRow(mixed $text, string $icon): array
     {
-        if ($this->notifyOwner) {
+        if ($this->obfuscate) {
             $text0 = $text;
-            if ($this->notifyOwner === true) {
+            if ($this->obfuscate === true) {
                 $text = '*****';
                 if (!$this->isEnlistAdmin) {
                     $icon = '';
@@ -652,6 +658,9 @@ EOT;
     {
         $setName = $data['setname'];
         $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
+        if ($this->isEnlistAdmin) {
+            $context = rtrim($context, ']').' (as admin)]';
+        }
         $dataset = $this->getDataset($setName);
 
         $message = '';
@@ -714,8 +723,29 @@ EOT;
             }
             $dataset[$prevElemId] = $data;
         } else {
+            $nSlots = $dataset['nSlots'];
+            unset($dataset['nSlots']);
+            if ($freezeTime = ($dataset['freezeTime']??false)) {
+                unset($dataset['freezeTime']);
+            }
+            $title = $dataset['title'];
+            unset($dataset['title']);
+            if ($deadlineExpired = ($dataset['deadlineExpired'] ?? false)) {
+                unset($dataset['deadlineExpired']);
+            }
+
             $data['_elemKey'] = createHash();
             $dataset[] = $data;
+            $dataset = array_values($dataset);
+
+            $dataset['title'] = $title;
+            $dataset['nSlots'] = $nSlots;
+            if ($freezeTime) {
+                $dataset['freezeTime'] = $freezeTime;
+            }
+            if ($deadlineExpired) {
+                $dataset['deadlineExpired'] = true;
+            }
         }
 
         // double-check against max number of entries:
@@ -751,7 +781,7 @@ EOT;
         $elemKey = array_keys($found)[0];
         $rec = array_shift($found);
         $time = strtotime($rec['_time'] ?? 0);
-        if ($time < (time() - $dataset['freezeTime'] ?? 0)) {
+        if ($time < (time() - ($dataset['freezeTime']??PHP_INT_MAX))) {
             if ($this->isEnlistAdmin) {
                 $message = '{{ pfy-enlist-del-freeze-time-expired }}';
             } else {
@@ -768,8 +798,9 @@ EOT;
         } else {
             $nSlots = $dataset['nSlots'];
             unset($dataset['nSlots']);
-            $freezeTime = $dataset['freezeTime'];
-            unset($dataset['freezeTime']);
+            if ($freezeTime = ($dataset['freezeTime']??false)) {
+                unset($dataset['freezeTime']);
+            }
             $title = $dataset['title'];
             unset($dataset['title']);
             if ($deadlineExpired = ($dataset['deadlineExpired'] ?? false)) {
@@ -778,9 +809,11 @@ EOT;
 
             unset($dataset[$elemKey]);
             $dataset = array_values($dataset);
-            $dataset['nSlots'] = $nSlots;
-            $dataset['freezeTime'] = $freezeTime;
             $dataset['title'] = $title;
+            $dataset['nSlots'] = $nSlots;
+            if ($freezeTime) {
+                $dataset['freezeTime'] = $freezeTime;
+            }
             if ($deadlineExpired) {
                 $dataset['deadlineExpired'] = true;
             }
@@ -803,6 +836,9 @@ EOT;
     {
         if (!($to = $this->notifyOwner)) {
             return;
+        }
+        if ($to === true) {
+            $to = PageFactory::$webmasterEmail;
         }
 
         if ($mode === 'add') {
@@ -865,11 +901,16 @@ EOT;
         return true;
     } // handleSendConfirmation
 
+
     private function prepStaticOption(string $key): mixed
     {
-        $this->$key = ($this->options[$key] ?? false) ?: self::${"_$key"};
-        if ($this->$key && self::${"_$key"} === null) {
-            self::${"_$key"} = $this->$key;
+        $val = ($this->options[$key] ?? false) ?: self::${"_$key"};
+        if ($val && self::${"_$key"} === null) {
+            // set global default first time a value is defined:
+            self::${"_$key"} = $val;
+        }
+        if ($val) {
+            $this->$key = $val;
         }
         return $this->$key;
     } // prepStaticOption

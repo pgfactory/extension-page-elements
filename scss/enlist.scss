@@ -56,10 +56,13 @@
     }
   }
 
+  .pfy-enlist-empty,
+  .pfy-enlist-add,
+  .pfy-enlist-delete,
+  .pfy-enlist-elem-frozen,
+  .pfy-enlist-elem-pseudo-frozen,
   .pfy-enlist-field {
     background: var(--pfy-enlist-field-bg, #fffff6);
-    display: flex;
-    justify-content: space-between;
   }
 
   .pfy-enlist-table:not(.pfy-enlist-custom-fields) {
@@ -160,6 +163,9 @@
       cursor: not-allowed;
       filter: brightness(95%);
     }
+  }
+  .pfy-enlist-elem-pseudo-frozen {
+    filter: brightness(95%);
   }
   .pfy-enlist-elem-frozen {
     cursor: not-allowed;

@@ -27,7 +27,9 @@ function pfyPopup( options ) {
         currentlyOpenPopup.close();
         currentlyOpenPopup = false;
       } else {
-        popupElem.remove();
+        try {
+          popupElem.remove();
+        } catch (error) {}
       }
     }
   }

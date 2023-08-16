@@ -76,6 +76,15 @@ const Enlist = {
 
 
   openPopup: function(elem, mode) {
+    // check whether page timed out:
+    if (pageLoaded < (Math.floor(Date.now()/1000) - 3600)) {
+      pfyConfirm({text: `{{ pfy-form-timed-out }}`})
+        .then(function () {
+          reloadAgent();
+        });
+      return;
+    }
+
     let options = {
       contentFrom: '#pfy-enlist-form .pfy-enlist-form-wrapper',
       header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
@@ -88,6 +97,11 @@ const Enlist = {
       options.onOpen = function() { Enlist.preparePopupForm(mode, elemWrapper, elemId); };
     }
     Enlist.currentlyOpenPopup = pfyPopup(options);
+
+    const form = document.querySelector('.pfy-popup-container .pfy-form');
+    if (form) {
+      pfyFormsHelper.setupModifiedMonitor(form);
+    }
   }, // openPopup
 
 
