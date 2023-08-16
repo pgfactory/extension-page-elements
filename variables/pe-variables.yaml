@@ -158,6 +158,9 @@ pfy-no-data-available:
   de: '-- Noch keine Daten vorhanden --'
   _:  '-- No data yet --'
 
+pfy-form-timed-out:
+  de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
+  _:  Page timed out.<br>Click Ok to reload and try again.
 
 pfy-anti-spam-warning:
   de: |
@@ -376,3 +379,9 @@ pfy-enlist-del-freeze-time-expired:
   de: 'Die Zeit ist abgelaufen, in der Sie den Eintrag noch löschen konnten.'
   de2: 'Die Zeit ist abgelaufen, in der du den Eintrag noch löschen konntest.'
   _:  'Time expired during which you could delete your entry.'
+
+pfy-enlist-data-outdated:
+  de: Die Seite musste erst neu geladen werden. Bitte noch einmal versuchen.
+  _:  Page was outdated and had to be reloaded first. Please try again.
+
+

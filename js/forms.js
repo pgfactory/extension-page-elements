@@ -54,8 +54,22 @@ const pfyFormsHelper = {
         if (input.classList.contains('button')) {
           return;
         }
+        // monitor changes:
         input.addEventListener('change', function () {
           form.dataset.changed = true;
+        });
+
+        // monitor form-timeout:
+        input.addEventListener('keydown', function () {
+          // check whether page timed out:
+          if (pageLoaded < (Math.floor(Date.now()/1000) - 3600)) {
+            pfyConfirm({
+              text: `{{ pfy-form-timed-out }}`
+            })
+            .then(function () {
+              reloadAgent();
+            });
+          }
         });
       });
     }
