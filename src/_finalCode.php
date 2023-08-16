@@ -31,9 +31,9 @@ compileJs();
 function compileJs(): void
 {
     $transVars =    TransVars::$transVars;
-    $translated = [];
     $files = getDir(PAGE_ELEMENTS_PATH.'js/*.js');
     foreach ($files as $file) {
+        $translated = [];
         $filename = basename($file);
         $out = "/* === Automatically created from $filename - do not modify! === */\n";
         $target = PAGE_ELEMENTS_PATH."assets/js/-$filename";
