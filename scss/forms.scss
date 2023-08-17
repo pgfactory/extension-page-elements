@@ -7,6 +7,7 @@
     --form-required-marker-color: gray;
     --form-tooltip-anker-color: gray;
     --form-field-background-color:
+    --form-field-border-color:
     --form-field-description-color:
     --form-field-error-color:
  */
@@ -50,7 +51,7 @@
       padding: 0.4em;
       color: inherit;
       background-color: var(--form-field-background-color, #fffff6);
-      border-width: 1px;
+      border: 1px solid var(--form-field-border-color, gray);
       border-radius: 4px;
     }
   }
@@ -290,6 +291,11 @@
   input.pfy-readonly {
     background: var(--pfy-form-readonly-field-bg, #eee);
     border-color: #ddd;
+  }
+
+  input[disabled] {
+    cursor: not-allowed;
+    filter: brightness(95%);
   }
 } // .pfy-default-styling
 

@@ -135,6 +135,8 @@ const pfyFormsHelper = {
         e.stopPropagation();
         return;
       }
+
+      pfyFormsHelper.disableForm(form);
       pfyFormsHelper.doSubmitForm(form);
     });
   }, // setupSubmitHandler
@@ -155,7 +157,20 @@ const pfyFormsHelper = {
     this.setRecId(form, recId);
     this.resetErrorStates(form);
     this.prefillComputedFields(form);
+    this.disableForm(form,false);
   }, // presetForm
+
+
+  disableForm(form, value = true)
+  {
+    // disable form buttons:
+    const frmButtons = form.querySelectorAll('[name="_submit"]');
+    if (frmButtons) {
+      frmButtons.forEach(function (frmButton) {
+        frmButton.disabled = value;
+      });
+    }
+  }, // disableForm
 
 
   presetScalarFields(form, data) {
