@@ -62,6 +62,14 @@ $revealArrowSize: 1em;
     }
   } // .pfy-reveal-controller
 
+  input.pfy-reveal-controller {
+    margin: -1px;
+    padding: 0;
+    white-space: nowrap;
+    border: none!important;
+    max-width: 0!important;
+  }
+
   .pfy-reveal-controller-wrapper {
     position: relative;
     background: var(--pfy-reveal-bg);
