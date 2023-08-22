@@ -19,7 +19,7 @@ use function Usility\PageFactory\loadFile;
 use Usility\PageFactory\TransVars;
 use function Usility\PageFactory\translateToIdentifier;
 
-// Optional support for propre localization of dates -> requires twig/intl-extra
+ // Optional support for propre localization of dates -> requires twig/intl-extra
  //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
 
 
@@ -120,32 +120,36 @@ class Events extends DataSet
      * @param array $sortedData
      * @return int|false
      */
-    private function findEvent(array $sortedData): int|false
+    private function findEvent(array $sortedData, int|false $offset = false): int|false
     {
         $options = $this->options;
-        $offset = $options['offset']??0;
+        $offset = ($offset !== false) ? $offset : ($options['offset']??0);
         $from = $options['from']??0;
 
         if ($from) {
-            $targetDate = $this->parseTime($from);
+            $targetDateT = $this->parseTime($from);
         } else {
-            $targetDate = intval(time() / 86400) * 86400; // round down to last midnight
+            $targetDateT = strtotime(date('Y-m-d ')); // round down to last midnight
         }
+        //$targetDateStr = date('Y-m-d H:i', $targetDateT);
 
         // find the record
         $found = false;
         foreach ($sortedData as $i => $rec) {
             $start = $rec['start'] ?? '';
             $startT = strtotime($start);
-            if ($startT > $targetDate) {
+            if ($startT > $targetDateT) {
                 $found = $i;
                 break;
             }
         }
 
         if ($found !== false) {
-            return $found + $offset;
-//            return $found + $offset - 1; // ToDo: check!
+            $found = $found + $offset;
+            if ($found < 0 || $found >= sizeof($sortedData)) {
+                return false;
+            }
+            return $found;
         } else {
             return false;
         }
@@ -377,12 +381,12 @@ class Events extends DataSet
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
      */
-    public function getNextEvent(string|false $category = false): array
+    public function getNextEvent(string|false $category = false, int $offset = 0): array|false
     {
         $category = $category?: $this->options['category']??false;
         $templatesFile = $this->options['templatesFile']??false;
         $sortedData = $this->getData($category);
-        $nextEventInx = $this->findEvent($sortedData);
+        $nextEventInx = $this->findEvent($sortedData, $offset);
         if ($nextEventInx === false) {
             return false;
         }

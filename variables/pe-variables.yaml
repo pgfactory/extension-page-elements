@@ -217,7 +217,9 @@ pfy-form-maxcount-reached-warning:
     <strong>Notice</strong>: The max number of sign-ups has been reached. Response to regular visitors:
     <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
 
-
+pfy-form-no-event-found:
+  de: Derzeit sind keine Veranstaltungsdaten bekannt.
+  _:  Currently no event dates available.
 
 
 # Enlist

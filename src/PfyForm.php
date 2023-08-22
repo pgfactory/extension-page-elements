@@ -48,6 +48,7 @@ class PfyForm extends Form
     private string $tableButtons = '';
     private $callback;
     private array $auxBannerValues = [];
+    private $matchingEventAvailable = null;
 
     /**
      * @param $formOptions
@@ -134,6 +135,11 @@ class PfyForm extends Form
      */
     public function renderForm(): string
     {
+        // schedule option may have found no matching event, in this case show message:
+        if ($this->matchingEventAvailable === false) {
+            return '{{ pfy-form-no-event-found }}';
+        }
+
         $res = false;
         $this->removeNonDataFields();
         if ($this->isSuccess()) {
@@ -1520,8 +1526,9 @@ EOT;
             return;
         }
         if (!($src = $eventOptions['src']??false)) {
-            return;
+            throw new \Exception("Form: option 'schedule' without option 'file'.");
         }
+        $this->matchingEventAvailable = false;
 
         unset($eventOptions['file']);
         $sched = new Events($src, $eventOptions);
@@ -1547,6 +1554,7 @@ EOT;
             $this->formOptions['maxCount'] = $maxCount;
             $this->tableOptions['minRows'] = $maxCount;
         }
+        $this->matchingEventAvailable = true;
     } // handleScheduleOption
 
 

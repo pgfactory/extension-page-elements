@@ -22,7 +22,7 @@ function events($args = '')
                 'Use letters for rolling values, e.g. "Y" for the current year.<br>'.
                 '(If not set, "unlimited" will be assumed)', false],
             'count' => ['[int] Defines the number of events to be rendered at most.', 1],
-            'offset' => ['[int] Selects events relative to "from". "0" means current, "1" means next event etc. ', 1],
+            'offset' => ['[int] Selects events relative to "from". "0" means next event etc. ', 0],
             'templateBasename' => ['[string] Name (resp. base-name) of template variable(s).<br>'.
                 'If no template is found in variables like this, alternatives including *category* and/or '.
                 '*language-code* will be used, e.g. "template-en" or "template-games-de".', ''],
