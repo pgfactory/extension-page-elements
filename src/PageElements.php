@@ -31,6 +31,7 @@ class PageElements
         $this->updateScss();
         $this->initPresentationSupport();
         $this->handleCssRefactor();
+        $this->handleUrlRequests();
     } // __construct
 
 
@@ -145,4 +146,17 @@ class PageElements
             exit($hash);
         }
     } // handleCreateHashRequest
+
+
+    public function handleUrlRequests(): void
+    {
+//        if (isset($_GET['login'])) {
+//            Login::init();
+//            $html = Login::render();
+//            if ($html) {
+//                PageFactory::$pg->overrideContent($html);
+//            }
+//        }
+    } // handleUrlRequests
+
 } // PageElements
