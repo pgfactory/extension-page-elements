@@ -85,6 +85,7 @@ class PfyForm extends Form
         $formOptions['deadline']            = $formOptions['deadline']??false;
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
+        $formOptions['callback']            = $formOptions['callback']??false;
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
         $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
 
@@ -133,7 +134,7 @@ class PfyForm extends Form
      * @return string
      * @throws \Exception
      */
-    public function renderForm(): string
+    public function renderForm($override = false): string
     {
         // schedule option may have found no matching event, in this case show message:
         if ($this->matchingEventAvailable === false) {
@@ -142,7 +143,7 @@ class PfyForm extends Form
 
         $res = false;
         $this->removeNonDataFields();
-        if ($this->isSuccess()) {
+        if (!$override && $this->isSuccess()) {
             $res = $this->handleReceivedData($this->formOptions['formInx']??1);
             if ($res !== false) { // false = data was for other form
                 if (!$res && $this->formOptions['editData'] && $this->formOptions['file'] && $this->isFormAdmin) {
@@ -185,15 +186,12 @@ EOT;
      * @param array $formElements
      * @return void
      */
-    public function createForm(array|null $formOptions, array $formElements): void
+    public function createForm(array $formElements): void
     {
-        if ($formOptions !== null) {
-            $this->options = $formOptions;
-        }
-
         // add standard hidden fields to identify data: which form, which data-record:
         $this->addElement(['type' => 'hidden', 'name' => '_reckey', 'value' => $formOptions['recId']??'', 'preset' => '']);
         $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
+        $this->addElement(['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
 
         foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
@@ -635,8 +633,13 @@ EOT;
             reloadAgent();
         }
 
+        $csrf = $csrf = $_POST['_csrf']??false;
+        if (!$csrf || !csrf($csrf)) {
+            reloadAgent(null, '{{ pfy-form-session-expired }}');
+        }
+
         // handle 'callback' on data received:
-        if ($this->formOptions['callback']??false) {
+        if ($this->formOptions['callback']) {
             $res = $this->formOptions['callback']($dataRec);
             if ($res !== false) {
                 return $res;

@@ -230,7 +230,7 @@ EOT,
         $options['minRows'] = $options['maxCount'];
     }
     $form = new PfyForm($options);
-    $form->createForm(null, $auxOptions); // $auxOptions = form-elements
+    $form->createForm($auxOptions); // $auxOptions = form-elements
     $html .= $form->renderForm();
 
     if ($lWidth = $options['labelWidth']) {

@@ -560,7 +560,7 @@ EOT;
         $formFields['setname'] = ['type' => 'hidden'];
 
         $form = new PfyForm($formOptions);
-        $form->createForm(null, $formFields); // $auxOptions = form-elements
+        $form->createForm($formFields); // $auxOptions = form-elements
         $html = $form->renderForm();
         if (str_contains($html, 'class="error"')) {
             $jq = "Enlist.openPopup()";
