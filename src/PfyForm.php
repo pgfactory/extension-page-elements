@@ -49,6 +49,8 @@ class PfyForm extends Form
     private $callback;
     private array $auxBannerValues = [];
     private $matchingEventAvailable = null;
+    private $requiredInputFound = false;
+    private static $formInx = 0;
 
     /**
      * @param $formOptions
@@ -56,9 +58,10 @@ class PfyForm extends Form
      */
     public function __construct($formOptions = [])
     {
+        self::$formInx++;
         $this->formOptions = &$formOptions;
         $tableOptions = [];
-        $this->formIndex = $formOptions['formInx'] ?? 1;
+        $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
 
         $tableOptions['showData']           = $formOptions['showData']??false;
         $tableOptions['editTable']          = $formOptions['editData']??false;
@@ -79,12 +82,15 @@ class PfyForm extends Form
         $formOptions['maxCount']            = $formOptions['maxCount']??false;
         $formOptions['maxCountOn']          = $formOptions['maxCountOn']??false;
         $formOptions['formTop']             = $formOptions['formTop']??false;
+        $formOptions['formHint']            = $formOptions['formHint']??false;
+        $formOptions['formBottom']          = $formOptions['formBottom']??false;
         $formOptions['confirmationEmail']   = $formOptions['confirmationEmail']??false;
         $formOptions['mailFrom']            = $formOptions['mailFrom']??false;
         $formOptions['mailFromName']        = $formOptions['mailFromName']??false;
         $formOptions['deadline']            = $formOptions['deadline']??false;
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
+        $formOptions['action']              = $formOptions['action']??false;
         $formOptions['callback']            = $formOptions['callback']??false;
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
         $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
@@ -134,24 +140,25 @@ class PfyForm extends Form
      * @return string
      * @throws \Exception
      */
-    public function renderForm($override = false): string
+    public function renderForm($skipReceivedDataEval = false): string
     {
+        // apply action if defined:
+        if ($this->formOptions['action']) {
+            $this->setAction($this->formOptions['action']);
+        }
+
         // schedule option may have found no matching event, in this case show message:
         if ($this->matchingEventAvailable === false) {
             return '{{ pfy-form-no-event-found }}';
         }
 
-        $res = false;
+        $res = null;
         $this->removeNonDataFields();
-        if (!$override && $this->isSuccess()) {
-            $res = $this->handleReceivedData($this->formOptions['formInx']??1);
-            if ($res !== false) { // false = data was for other form
-                if (!$res && $this->formOptions['editData'] && $this->formOptions['file'] && $this->isFormAdmin) {
-                    reloadAgent();
-                }
-            }
+        if (!$skipReceivedDataEval && $this->isSuccess()) {
+            $res = $this->handleReceivedData();
         }
-        if (!$res) {
+        if ($res === null) {
+//ToDo: case callback evaluated and stops further processing
             $html = $this->renderFormHtml();
             if ($this->formOptions['file'] && $this->isFormAdmin) {
                 $html .= $this->renderDataTable();
@@ -360,7 +367,10 @@ EOT;
             case 'cancel':
             case 'reset':
                 $elem = $this->addButton('_cancel', $label);
-                break;
+                if ($next = ($elemOptions['next']??false)) {
+                    $elem->setHtmlAttribute('data-next', $next);
+                }
+            break;
             case 'submit':
                 $elem = $this->addSubmit($name, $label);
                 break;
@@ -381,6 +391,7 @@ EOT;
         // handle 'required' option:
         if (($elemOptions['required']??false) !== false) {
             $elem->setRequired($elemOptions['required']);
+            $this->requiredInputFound = true;
         }
 
         // handle 'disabled' option:
@@ -623,7 +634,7 @@ EOT;
     /**
      * @return string
      */
-    public function handleReceivedData(int $formInx): string|false
+    public function handleReceivedData(): mixed
     {
         $html = '';
         $dataRec = $this->getValues(true);
@@ -631,19 +642,6 @@ EOT;
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
             reloadAgent();
-        }
-
-        $csrf = $csrf = $_POST['_csrf']??false;
-        if (!$csrf || !csrf($csrf)) {
-            reloadAgent(null, '{{ pfy-form-session-expired }}');
-        }
-
-        // handle 'callback' on data received:
-        if ($this->formOptions['callback']) {
-            $res = $this->formOptions['callback']($dataRec);
-            if ($res !== false) {
-                return $res;
-            }
         }
 
         if (($this->formOptions['confirmationText'] === '') || (isset($_GET['quiet']))) {
@@ -657,8 +655,21 @@ EOT;
         }
 
         // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
-        if ($formInxReceived != $formInx) {
-            return false; // signal 'processing skipped, continue processing'
+        if (intval($formInxReceived) !== $this->formIndex) {
+            return null; // signal 'processing skipped, continue processing'
+        }
+
+        $csrf = $_POST['_csrf']??false;
+        if (!$csrf || !csrf($csrf)) {
+            reloadAgent(null, '{{ pfy-form-session-expired }}');
+        }
+
+        // handle 'callback' on data received:
+        if ($this->formOptions['callback']) {
+            $res = $this->formOptions['callback']($dataRec);
+            if ($res !== false) {
+                return $res;
+            }
         }
 
         $recKey = $dataRec['_reckey']??false;
@@ -726,6 +737,10 @@ EOT;
         // handle indirect feedback -> via message:
         if ($html && !$this->showDirectFeedback) {
             reloadAgent(message: $logText);
+        }
+
+        if (isset($_POST)) {
+            unset($_POST);
         }
 
         return $html;
@@ -1128,7 +1143,9 @@ EOT;
             $label = Html::el('span')->setHtml($label);
         }
 
-        $type = isset($elemOptions['type']) ? ($elemOptions['type']?:'text'): 'text';
+        $type = isset($elemOptions['type']) ? ($elemOptions['type']?:false): false;
+
+        // shorthand:
         if ($type === 'required') {
             $elemOptions['required'] = true;
             $type = 'text';
@@ -1136,9 +1153,9 @@ EOT;
 
         $_name = strtolower($name);
         // for convenience: check for specific names and automatically apply default type:
-        if ($type === 'text') {
+        if ($type === false) {
             if (str_starts_with($_name, 'email')) {
-                $type = 'email';
+                $type = ($type === false) ? 'email' : $type;
             } elseif (str_starts_with($_name, 'passwor')) {
                 $type = 'password';
             } elseif ($_name === 'submit') {
@@ -1146,6 +1163,9 @@ EOT;
             } elseif (str_contains(',cancel,_cancel,reset,_reset,', ",$_name,")) {
                 $type = 'cancel';
             }
+        }
+        if ($type === false) {
+            $type = 'text';
         }
 
         if (!isset($elemOptions['class'])) {
@@ -1391,7 +1411,7 @@ EOT;
      */
     private function handleFormHint(string $html): string
     {
-        if (!($str = ($this->formOptions['formHint']??false))) {
+        if (!($str = ($this->formOptions['formHint']??false)) && $this->requiredInputFound) {
             $str = '{{ pfy-form-required-info }}';
         }
         $str = $this->compileFormBanner($str);
@@ -1416,7 +1436,7 @@ EOT;
      */
     private function compileFormBanner(string $str): string
     {
-        if ($str[0] !== '<') {
+        if (($str[0]??'') !== '<') {
             $str = markdown($str);
         }
         if (str_contains($str, '{{')) {
