@@ -25,6 +25,11 @@ function reloadAgent( arg, url, confirmMsg ) {
     let newUrl = window.location.pathname.replace(/\?.*/, '');
     if (typeof url !== 'undefined') {
         newUrl = url.trim();
+        if (!newUrl || newUrl === '/') {
+          newUrl = hostUrl;
+        } else if (newUrl.substring(0,2) === './') {
+          newUrl = pageUrl + newUrl.substring(2);
+        }
     }
     if (typeof arg !== 'undefined') {
         newUrl = appendToUrl(newUrl, arg);
