@@ -23,7 +23,7 @@ function form($args = '')
 
             'class' =>	['Class applied to the form element.', false],
 
-            'action' =>	['Argument applied to the form element\'s "action"-attribute.', 'post'],
+            'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
             'mailTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
 
@@ -224,7 +224,6 @@ EOT,
         list($options, $sourceCode, $inx, $macroName, $auxOptions) = $res;
         $html = $sourceCode;
     }
-    $options['formInx'] = $inx;
 
     if ($options['maxCount'] && !$options['minRows']) {
         $options['minRows'] = $options['maxCount'];
