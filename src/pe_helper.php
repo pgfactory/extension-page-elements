@@ -57,13 +57,13 @@ function translateDateTimes(string $str):string
 
 /**
  * Entry point for handling UrlTokens, in particular for access-code-login:
- * @return void
+ * @return bool
  */
-function handleUrlToken()
+function handleUrlToken(): bool
 {
     $urlToken = PageFactory::$urlToken;
     if (!$urlToken) {
-        return;
+        return false;
     }
 
     // do something with $urlToken...
@@ -84,4 +84,21 @@ function handleUrlToken()
     // remove the urlToken:
     $target = PageFactory::$appUrl . PageFactory::$pageId;
     \Usility\PageFactory\reloadAgent($target);
+    return false;
 } // handleUrlToken
+
+
+/**
+ * @param string $url
+ * @param string $arg
+ * @return string
+ */
+function urlAppendArg(string $url, string $arg): string
+{
+    if (str_contains($url, '?')) {
+        $url .= '&'.$arg;
+    } else {
+        $url .= '?'.$arg;
+    }
+    return $url;
+} // urlAppendArg
