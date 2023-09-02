@@ -387,3 +387,99 @@ pfy-enlist-data-outdated:
   _:  Page was outdated and had to be reloaded first. Please try again.
 
 
+#--- Login ------------------------------
+pfy-login:
+  de: 'Anmelden'
+  _:  Login
+
+pfy-logout:
+  de: 'Abmelden'
+  _:  Logout
+
+pfy-logged-in-label:
+  de: 'Angemeldet als '
+  _:  'Logged in as '
+
+pfy-not-logged-in-label:
+  de: 'Nicht angemeldet'
+  _:  'Not logged in'
+
+pfy-login-default:
+  de: 'Anmelden mit Passwort'
+  _:  Login with password
+
+pfy-login-with-otc:
+  de: 'Anmelden mit Zugangs-Code'
+  _:  Login with one-time-code
+
+pfy-login-reset-pw:
+  de: 'Passwort neu setzen'
+  _:  Reset password
+
+pfy-login-header:
+  de: |
+    <h2>Anmelden</h2>
+  _:  |
+    <h2>Login</h2>
+
+pfy-login-passwordless-header:
+  de: |
+    <h2>Anmelden ohne Passwort</h2>
+  _:  |
+    <h2>Passwordless Login</h2>
+
+pfy-login-success:
+  de: 'Sie sind jetzt angemeldet als {{ username }}.'
+  de2: 'Du bist jetzt angemeldet als {{ username }}.'
+  _:  'You are logged in as {{ username }} now.'
+
+pfy-login-failed:
+  de: 'Anmeldung gescheitert.'
+  _:  'Login failed.'
+
+pfy-logged-in-as:
+  de: 'Sie sind angemeldet als '
+  de2: 'Du bist angemeldet als '
+  _:  'You are logged in as '
+
+pfy-login-otc-info:
+  de: 'Sie können dieses Feld leer lassen. Dann senden wir Ihnen per E-Mail einen Zugangs-Code.'
+  de2: 'Du kannst dieses Feld leer lassen. Dann senden wir dir per E-Mail einen Zugangs-Code.'
+  _:  'You may leave this field empty. Then we will send you an e-mail containing an access code.'
+
+pfy-login-passwordless-info:
+  de: |
+    Wir werden Ihnen einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
+    &rarr; Wechseln Sie zu Ihrer E-Mail App und kopieren Sie den zugesandten Code ins Eingabefeld auf der 
+    folgenden Seite.<br><br>
+    <em>Achtung:Ihre E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
+  de2: |
+    Wir werden dir einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
+    &rarr; Wechsele zu deiner E-Mail App und kopiere den zugesandten Code ins Eingabefeld auf der 
+    folgenden Seite.<br><br>
+    <em>Achtung:Deine E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
+  _:  |
+    We will send an <strong>access code</strong> to this e-mail address.<br>
+    &rarr; switch to your e-mail app and copy that code to the input field opening up in this page next.<br><br>
+    <em>Note: use your e-mail address that has been registered with this website previously.</em>
+
+
+pfy-login-username-info:
+  de: Ihre E-Mail Adresse oder Ihr Benutzername
+  de2: Deine E-Mail Adresse oder dein Benutzername
+  _:  Your e-mail or username
+
+pfy-login-button:
+  de: Jetzt anmelden
+  _:  Login now
+
+pfy-login-enter-code-header:
+  de: <h2>Zugangs-Code</h2>
+  _: <h2>Access Code</h2>
+
+pfy-login-enter-code-explanation:
+  de: 'Zugangs-Code, den Sie demnächst per E-Mail erhalten werden:'
+  de2: 'Zugangs-Code, den du demnächst per E-Mail erhalten wirst:'
+  _:  'Access Code which you should receive any moment by e-mail:'
+
+

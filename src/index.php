@@ -52,6 +52,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'js/reveal.js',
         PAGE_ELEMENTS_URL.'css/-reveal.css',
     ],
+    'LOGIN' => [
+        PAGE_ELEMENTS_URL.'js/login.js',
+        PAGE_ELEMENTS_URL.'css/-login.css',
+    ],
 ];
 
 
