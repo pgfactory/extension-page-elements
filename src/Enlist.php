@@ -84,6 +84,7 @@ class Enlist
             $options['info'] = $options['description'];
         }
         $this->fieldNames = ['#', '&nbsp;', 'Name'];
+//???
         if ($customFields) {
             $nCustFiels = sizeof($customFields);
             foreach ($customFields as $key => $customField) {
@@ -348,7 +349,7 @@ EOT;
         $class = 'pfy-enlist-delete';
         $rec = $this->dataset[$i];
         $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
-        $text = $rec['Name']??'## unknown ##';
+        $text = $rec['EnlistName']??'## unknown ##';
 
         // handle obfuscate name:
         list($text, $icon) = $this->obfuscateNameInRow($text, $icon);
@@ -373,7 +374,7 @@ EOT;
         }
 
         // append email if in admin mode:
-        if ($this->isEnlistAdmin && ($email = ($rec['Email']??false))) {
+        if ($this->isEnlistAdmin && ($email = ($rec['EnlistEmail']??false))) {
             $text .= " <span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
         }
 
@@ -540,8 +541,8 @@ EOT;
         ];
         // minimum required fields:
         $formFields = [
-            'Name' => ['label' => 'Name:', 'required' => true],
-            'Email' => ['label' => 'E-Mail:', 'required' => true],
+            'EnlistName' => ['label' => 'Name:', 'required' => true],
+            'EnlistEmail' => ['label' => 'E-Mail:', 'required' => true],
         ];
         // optional custom fields:
         $i = 1;
@@ -678,7 +679,7 @@ EOT;
             if ($this->isEnlistAdmin) {
                 $message = '{{ pfy-enlist-error-deadline-was-expired }}';
             } else {
-                mylog("EnList error deadline exeeded: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                mylog("EnList error deadline exeeded: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
             }
         }
@@ -697,9 +698,9 @@ EOT;
 
     private function handleNewEntry(array $data, array $dataset, string $context, mixed $setName, string $message): void
     {
-        $name = $data['Name'] ?? '#####';
+        $name = $data['EnlistName'] ?? '#####';
         $exists = array_filter($dataset, function ($e) use ($name) {
-            return ($e['Name'] ?? '') === $name;
+            return ($e['EnlistName'] ?? '') === $name;
         });
         if ($this->customFields) {
             foreach ($this->customFields as $key => $args) {
@@ -715,10 +716,10 @@ EOT;
 
         if ($exists) {
             $prevElemId = array_keys($exists)[0];
-            $email = $data['Email'] ?? '#####';
-            $email0 = $dataset[$prevElemId]['Email'];
+            $email = $data['EnlistEmail'] ?? '#####';
+            $email0 = $dataset[$prevElemId]['EnlistEmail'];
             if ($email0 !== $email) {
-                mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                mylog("EnList error Rec exists: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
             }
             $dataset[$prevElemId] = $data;
@@ -760,10 +761,10 @@ EOT;
 
         $this->handleNotifyOwner($data, 'add', $dataset['title']);
         if ($this->handleSendConfirmation($data, $dataset['title'])) {
-            mylog("EnList new entry & confirmation sent: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            mylog("EnList new entry & confirmation sent: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
         }
-        mylog("EnList new entry: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+        mylog("EnList new entry: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
         reloadAgent(message: $message);
     } // handleNewEntry
 
@@ -785,15 +786,15 @@ EOT;
             if ($this->isEnlistAdmin) {
                 $message = '{{ pfy-enlist-del-freeze-time-expired }}';
             } else {
-                mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+                mylog("EnList freezeTime expired: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
             }
         }
 
-        $email = $data['Email'] ?? '#####';
-        $email0 = $rec['Email'] ?? '@@@@@@@';
+        $email = $data['EnlistEmail'] ?? '#####';
+        $email0 = $rec['EnlistEmail'] ?? '@@@@@@@';
         if ($email0 !== $email) {
-            mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            mylog("EnList wrong email for delete: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
         } else {
             $nSlots = $dataset['nSlots'];
@@ -819,7 +820,7 @@ EOT;
             }
             $this->db->addRec($dataset, recKeyToUse: $setName);
             $this->handleNotifyOwner($rec, 'del', $setName);
-            mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            mylog("EnList entry deleted: {$data['EnlistName']} {$data['EnlistEmail']} $context", 'enlist-log.txt');
             $message = $message ? "<br>$message" : '';
             reloadAgent(message: '{{ pfy-enlist-deleted }}' . $message);
         }
@@ -849,8 +850,8 @@ EOT;
             $body = '{{ pfy-enlist-del-notification-body }}';
         }
         $replace = [
-            '%name' => $data['Name'],
-            '%email' => $data['Email'],
+            '%name' => $data['EnlistName'],
+            '%email' => $data['EnlistEmail'],
             '%topic' => $setName,
             '%host' => PageFactory::$hostUrl,
             '%page' => $this->pagePath,
@@ -882,8 +883,8 @@ EOT;
         $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
         $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
         $replace = [
-            '%name%' => $data['Name'],
-            '%email%' => $data['Email'],
+            '%name%' => $data['EnlistName'],
+            '%email%' => $data['EnlistEmail'],
             '%topic%' => $title,
             '%host%' => PageFactory::$hostUrl,
             '%page%' => $this->pagePath,
@@ -897,7 +898,7 @@ EOT;
             array_values($replace),
             $body);
 
-        Utils::sendMail($data['Email'], $subject, $body );
+        Utils::sendMail($data['EnlistEmail'], $subject, $body );
         return true;
     } // handleSendConfirmation
 

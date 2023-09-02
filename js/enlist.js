@@ -127,7 +127,7 @@ const Enlist = {
       });
     }
 
-    const nameField = form.querySelector('[name=Name]');
+    const nameField = form.querySelector('[name=EnlistName]');
     if (mode === 'add') {
       const submitBtn = form.querySelector('[name=_submit]');
       submitBtn.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
@@ -151,7 +151,7 @@ const Enlist = {
       const redIdField = form.querySelector('[name=elemId]');
       redIdField.setAttribute('value', elemId);
 
-      const emailField = form.querySelector('[name=Email]');
+      const emailField = form.querySelector('[name=EnlistEmail]');
       if (this.isEnlistAdmin) {
         const email = elemWrapper.querySelector('.pfy-enlist-email').textContent;
         emailField.setAttribute('value', email);
