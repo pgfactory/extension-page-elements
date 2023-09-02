@@ -102,13 +102,17 @@ const pfyFormsHelper = {
 
 
   setupCancelButtonHandler(form) {
-    const cancelInputs = form.querySelectorAll('input.pfy-cancel');
+    const cancelInputs = form.querySelectorAll('[name="_cancel"]');
     if (cancelInputs.length) {
       cancelInputs.forEach(function(input) {
         input.addEventListener('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
+          const next = input.dataset.next ?? false;
+          if (next) {
+            reloadAgent('', next);
+          }
           const wasModified = (form.dataset.changed ?? 'false') !== 'false';
           form.dataset.changed = false;
           pfyFormsHelper.presetForm(form);
