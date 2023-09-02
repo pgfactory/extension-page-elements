@@ -31,7 +31,6 @@ class PageElements
         $this->updateScss();
         $this->initPresentationSupport();
         $this->handleCssRefactor();
-        $this->handleUrlRequests();
     } // __construct
 
 
@@ -150,13 +149,14 @@ class PageElements
 
     public function handleUrlRequests(): void
     {
-//        if (isset($_GET['login'])) {
-//            Login::init();
-//            $html = Login::render();
-//            if ($html) {
-//                PageFactory::$pg->overrideContent($html);
-//            }
-//        }
+        // handle ?login:
+        if (isset($_GET['login'])) {
+            Login::init(['as-popup' => true]);
+            $html = Login::render();
+            if ($html) {
+                PageFactory::$pg->overrideContent($html);
+            }
+        }
     } // handleUrlRequests
 
 } // PageElements
