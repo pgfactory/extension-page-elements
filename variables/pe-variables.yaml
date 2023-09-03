@@ -125,8 +125,8 @@ pfy-form-submit-success:
   _:  '<p>We recived your data and stored it successfully.<br>Thanks a lot</p>'
 
 pfy-form-success-continue:
-  de: '<p><a href="~page/">Weiter...</a></p>'
-  _:  '<p><a href="~page/">Continue...</a></p>'
+  de: 'Weiter...'
+  _:  'Continue...'
 
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
   de: Neue Anmeldung auf %host%

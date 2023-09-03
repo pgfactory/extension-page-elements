@@ -91,6 +91,7 @@ class PfyForm extends Form
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
         $formOptions['action']              = $formOptions['action']??false;
+        $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
         $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
@@ -666,9 +667,26 @@ EOT;
 
         // handle 'callback' on data received:
         if ($this->formOptions['callback']) {
+            // Callback function may return:
+            //      true   -> continue with default processing
+            //      string|false -> return immediately (string)$res;
+            //      array -> [$html, $showDirectFeedback, $data] and continue
+
             $res = $this->formOptions['callback']($dataRec);
-            if ($res !== false) {
-                return $res;
+            // true -> just continue with default processing
+            if ($res !== true) {
+                // case array -> interpret as [$html, $showDirectFeedback, $data], each one optional:
+                if (is_array($res)) {
+                    $this->showDirectFeedback = $res[1]??true;
+                    if (isset($res[2])) {
+                        $dataRec = $res[2];
+                    }
+                    $html .= (string)($res[0]??'');
+
+                // otherwise -> skip default processing
+                } else {
+                    return (string)$res;
+                }
             }
         }
 
@@ -727,7 +745,9 @@ EOT;
 
         // add 'continue...' if direct feedback is active:
         if ($this->showDirectFeedback) {
-            $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
+            $html .= "<div class='pfy-form-success-continue'><a href='{$this->formOptions['next']}'>{{ pfy-form-success-continue }}</a></div>\n";
+//            $html .= "<div class='pfy-form-success-continue'><a href='~page/'>{{ pfy-form-success-continue }}</a></div>\n";
+//            $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
         }
 
         // write log:
