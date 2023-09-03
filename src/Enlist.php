@@ -692,7 +692,7 @@ EOT;
             // delete entry:
             $this->handleExistingEntry($dataset, $elemId, $message, $data, $context, $setName);
         }
-        return '';
+        return ''; // don't continue with default processing
     } // callback
 
 

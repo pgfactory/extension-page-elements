@@ -89,7 +89,7 @@ EOT;
         $formOptions = [
             'action' => self::$selfLink,
             'showDirectFeedback' => false,
-            'callback'           => function($data) { self::loginCallback($data); return null; },
+            'callback'           => function($data) { return self::loginCallback($data); },
         ];
         if ($message) {
             $formOptions['formTop']  = $message;
@@ -152,7 +152,7 @@ EOT;
      * @param array $data
      * @return string|false
      */
-    private static function loginCallback(array $data): string|false
+    private static function loginCallback(array $data): string|bool
     {
         $email = self::getUsersEmail($data);
         $password = $data['password']??false;

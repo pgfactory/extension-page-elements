@@ -43,6 +43,7 @@ class PfyForm extends Form
     protected bool $isFormAdmin = false;
     protected bool $inhibitAntiSpam = false;
     protected bool $showDirectFeedback = true;
+    protected bool $showForm = true;
     private string $name;
     private string $formWrapperClass = '';
     private string $tableButtons = '';
@@ -153,28 +154,26 @@ class PfyForm extends Form
             return '{{ pfy-form-no-event-found }}';
         }
 
-        $res = null;
         $this->removeNonDataFields();
+
+        $html = '';
         if (!$skipReceivedDataEval && $this->isSuccess()) {
-            $res = $this->handleReceivedData();
+            $html = $this->handleReceivedData();
         }
-        if ($res === null) {
-//ToDo: case callback evaluated and stops further processing
-            $html = $this->renderFormHtml();
-            if ($this->formOptions['file'] && $this->isFormAdmin) {
-                $html .= $this->renderDataTable();
-            }
+        if ($this->showForm) {
+            $html .= $this->renderFormHtml();
 
         } else {
             // render result of (successful) data reception:
-            $html = $res;
             $css = ".pfy-show-unless-form-data-received,\n".
                    ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
             PageFactory::$pg->addCss($css);
-            if ($this->tableOptions['editMode'] && $this->formOptions['file'] && $this->isFormAdmin) {
-                $html .= $this->renderDataTable();
-            }
         }
+
+        if ($this->tableOptions['editMode'] && $this->formOptions['file'] && $this->isFormAdmin) {
+            $html .= $this->renderDataTable();
+        }
+
         $wrapperId = ($this->formOptions['wrapperId']??false)? " id='{$this->formOptions['wrapperId']}'": '';
         $html = <<<EOT
 
@@ -637,7 +636,7 @@ EOT;
      */
     public function handleReceivedData(): mixed
     {
-        $html = '';
+        $html = false;
         $dataRec = $this->getValues(true);
 
         // handle 'cancel' button:
@@ -667,26 +666,9 @@ EOT;
 
         // handle 'callback' on data received:
         if ($this->formOptions['callback']) {
-            // Callback function may return:
-            //      true   -> continue with default processing
-            //      string|false -> return immediately (string)$res;
-            //      array -> [$html, $showDirectFeedback, $data] and continue
-
-            $res = $this->formOptions['callback']($dataRec);
-            // true -> just continue with default processing
-            if ($res !== true) {
-                // case array -> interpret as [$html, $showDirectFeedback, $data], each one optional:
-                if (is_array($res)) {
-                    $this->showDirectFeedback = $res[1]??true;
-                    if (isset($res[2])) {
-                        $dataRec = $res[2];
-                    }
-                    $html .= (string)($res[0]??'');
-
-                // otherwise -> skip default processing
-                } else {
-                    return (string)$res;
-                }
+            list($html, $continueEval) = $this->handleCallback($dataRec);
+            if (!$continueEval) {
+                return $html;
             }
         }
 
@@ -746,8 +728,6 @@ EOT;
         // add 'continue...' if direct feedback is active:
         if ($this->showDirectFeedback) {
             $html .= "<div class='pfy-form-success-continue'><a href='{$this->formOptions['next']}'>{{ pfy-form-success-continue }}</a></div>\n";
-//            $html .= "<div class='pfy-form-success-continue'><a href='~page/'>{{ pfy-form-success-continue }}</a></div>\n";
-//            $html .= "<div class='pfy-form-success-continue'>{{ pfy-form-success-continue }}</div>\n";
         }
 
         // write log:
@@ -762,7 +742,7 @@ EOT;
         if (isset($_POST)) {
             unset($_POST);
         }
-
+        $this->showForm = false;
         return $html;
     } // handleReceivedData
 
@@ -1041,6 +1021,7 @@ EOT;
                 $tableOptions['permission'] = 'localhost,loggedin';
                 $tableOptions['tableButtons'] = 'delete,download';
                 $tableOptions['serviceColumns'] = 'select,num';
+                $tableOptions['editMode'] = 'inpage';
             } else {
                 $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
                 $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
@@ -1774,5 +1755,31 @@ EOT;
             new PHPMailer($props);
         }
     } // sendMail
+
+
+    /**
+     * @param array $dataRec
+     * @return array
+     */
+    private function handleCallback(array &$dataRec): array
+    {
+        $callback = $this->formOptions['callback'];
+        $res = $callback($dataRec);
+
+        if (is_array($res)) {
+            $html         = ($res['html']?? ($res[0]??''));
+            $continueEval = $res['continueEval']?? ($res[1]??true);
+            $this->showForm   = $res['showForm']?? ($res[2]??true);
+            $this->showDirectFeedback = $res['showDirectFeedback']?? ($res[3]??true);
+            if (isset($res[4]) || isset($res['dataRec'])) {
+                $dataRec   = $res['dataRec'] ?? $res[4];
+            }
+
+        } else {
+            $html = '';
+            $continueEval = (bool)$res;
+        }
+        return [$html, $continueEval];
+    } // handleCallback
 
 } // PfyForm
