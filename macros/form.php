@@ -49,9 +49,10 @@ function form($args = '')
 
             'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
 
-            //'customResponseEvaluation' =>	['Name of a PHP function to be called when user submitted form data.', false],
+            'next' =>	['[URL] If set, defines the link target (href) of the "Continue..." response.', false],
 
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
+                'Which is followed by a "Continue..." link.'.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
 
             'schedule' => ['{options} If defined, Events class is invoked to determine the next event and .'.
