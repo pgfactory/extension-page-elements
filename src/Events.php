@@ -413,7 +413,7 @@ class Events extends DataSet
      */
     private function loadTemplates(string|false $file = false): void
     {
-        $file = $file ?: $this->options['templatesFile'];
+        $file = $file ?: ($this->options['templatesFile']??false);
         if (!$file) {
             return;
         }

@@ -314,6 +314,10 @@ function pfyPopup( options ) {
           } else if (btnClasses.contains('pfy-popup-btn-confirm') && parent.onConfirm) {
             parent.inihibitClosing = !executeCallback(parent.onConfirm);
 
+          // if none of the above triggered, try the second button:
+          } else if (btnClasses.contains('pfy-popup-btn-2') && parent.onOk) {
+            parent.inihibitClosing = !executeCallback(parent.onOk);
+
           } else {
             parent.inihibitClosing = false;
           }
@@ -704,7 +708,7 @@ function pfyConfirm( options ) {
       if (typeof options.buttons === 'undefined') {
         options.buttons = 'Cancel,Ok';
       }
-    currentlyOpenPopup = pfyPopup( options );
+      currentlyOpenPopup = pfyPopup( options );
     });
 } // pfyConfirm
 

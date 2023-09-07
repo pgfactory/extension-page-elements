@@ -205,8 +205,6 @@ pfy-form-deadline-expired-warning:
 pfy-form-maxcount-reached:
   de: 'Die Veranstaltung ist ausgebucht.'
   _:  'The event is fully booked.'
-#  de: 'Die maximale Anzahl Anmeldungen ist bereits erreicht.'
-#  _:  'Sorry, the max number of sign-ups has been reached.'
 
 pfy-form-maxcount-reached-warning:
   de: |
@@ -220,6 +218,26 @@ pfy-form-maxcount-reached-warning:
 pfy-form-no-event-found:
   de: Derzeit sind keine Veranstaltungsdaten bekannt.
   _:  Currently no event dates available.
+
+
+pfy-form-timeout-alert:
+  de: |
+    <h2>Zeitüberschreitung</h2>
+    <p>Dieses Formular war zu lange offen.<br>Sie riskieren Datenverlust, wenn Sie es jetzt absenden.</p>
+    <p>Bitte laden Sie die Seite neu, bevor du das Formular verwenden.</p>
+  de2: |
+    <h2>Zeitüberschreitung</h2>
+    <p>Dieses Formular war zu lange offen.<br>Du riskierst Datenverlust, wenn du es jetzt absendest.</p>
+    <p>Bitte lade die Seite neu, bevor du das Formular verwendest.</p>
+  _:  |
+    <h2>Timeout</h2>
+    <p>This form has been open for too long.<br>You risk loosing data if you submit it now.</p>
+    <p>Please, reload the page now</p>
+
+pfy-form-reload-btn:
+  de: Seite neu laden
+  _:  Reload page
+
 
 
 # Enlist
@@ -483,3 +501,8 @@ pfy-login-enter-code-explanation:
   _:  'Access Code which you should receive any moment by e-mail:'
 
 
+# === Events ==========================================
+
+pfy-no-event-found:
+  de: -- Derzeit sind keine Veranstaltungen geplant --
+  _:  -- No events are currently scheduled --

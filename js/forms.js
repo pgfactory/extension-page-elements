@@ -7,6 +7,8 @@
 
 const pfyFormsHelper = {
 
+  windowTimeout: false,
+
   init(forms, setFocus) {
     // forms defined as query string:
     if (typeof forms === 'string') {
@@ -28,6 +30,9 @@ const pfyFormsHelper = {
         pfyFormsHelper.initForm(form, setFocus);
       });
     }
+
+    // initialize freeze timer:
+    this.freezeWindowAfter('1 hour');
   }, // init
 
 
@@ -268,7 +273,7 @@ const pfyFormsHelper = {
 
   setRecId(form, recId) {
     if (typeof recId !== 'undefined') {
-      const recKey = form.querySelector('input[name=_recKey]');
+      const recKey = form.querySelector('input[name=_reckey]');
       if (recKey) {
         recKey.value = recId;
       }
@@ -366,7 +371,7 @@ const pfyFormsHelper = {
 
   openCheckPopup(form, referenceValue, referenceName) {
     let text = `<label>{{ pfy-form-override-honeypot }} <input type="text" id="pfy-check-input"></label>`;
-    text = text.replace(/%refName/, referenceName);
+    text = text.replace(/%refName%/, referenceName);
     let pfyResponseValue;
     pfyResponseValue = '?';
     pfyPopupPromise({
@@ -447,6 +452,72 @@ const pfyFormsHelper = {
     }
     return new Function('return ' + str)();
   }, // isFormChanged
+
+
+  freezeWindowAfter(delay, onClick = false, retrigger = false) {
+    let t = 0;
+    if (typeof delay === 'number') {
+      t = delay;
+    } else if (typeof delay === 'string') {
+      let m = delay.match(/(\d+)\s*(\w+)/);
+      if (m) {
+        let unit = m[2];
+        switch (unit.charAt(0).toLowerCase()) {
+          case 's':
+            t = m[1] * 1000;
+            break;
+          case 'm':
+            t = m[1] * 60000;
+            break;
+          case 'h':
+            t = m[1] * 3600000;
+            break;
+          case 'd':
+            t = m[1] * 86400000;
+            break;
+        }
+      }
+    }
+    const img = hostUrl + 'media/plugins/pgfactory/pagefactory-pageelements/icons/sleeping.png';
+    const overlay = '<div class="pfy-overlay-background pfy-v-h-centered"><div><img src="' + img + '" alt="Sleeping..." class="pfy-timeout-img" /></div></div>';
+
+    if (this.windowTimeout) {
+      clearTimeout(this.windowTimeout);
+    }
+
+    this.windowTimeout = setTimeout(function () {
+      var body = document.body;
+      body.insertAdjacentHTML('beforeend', overlay);
+      body.classList.add('pfy-overlay-background-frozen');
+
+      var overlayElement = document.querySelector('.pfy-overlay-background');
+      overlayElement.addEventListener('click', function () {
+        body.classList.remove('pfy-overlay-background-frozen');
+
+        if (typeof onClick === 'function') {
+          overlayElement.remove();
+          var res = onClick();
+          if (res || retrigger) {
+            freezeWindowAfter(delay, onClick, retrigger);
+          }
+        } else {
+          pfyConfirm({
+            text: `{{ pfy-form-timeout-alert }}`,
+            buttons: `Cancel,{{ pfy-form-reload-btn }}`,
+          })
+          .then(
+              function () {
+                reloadAgent();
+              },
+              function () {
+                overlayElement.remove();
+                pfyPopupClose();
+                pfyFormsHelper.freezeWindowAfter('1 minute');
+              });
+        }
+      });
+    }, t);
+  }, // freezeWindowAfter
 
 }; // pfyFormsHelper
 

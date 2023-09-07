@@ -18,8 +18,8 @@ function table($argStr = '')
             'headers' => ['[Comma-separated-list] List of column labels to define order and selection of columns.'.
                 'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', true],
             'footers' => ['[Comma-separated-list] If set, a footer row is added. For selected columns cell content '.
-                'can be specified as "%sum" or "%count" (any other values rendered as text). '.
-                'E.g. footers: "name:%count, amount:%sum"', false],
+                'can be specified as "%sum%" or "%count%" (any other values rendered as text). '.
+                'E.g. footers: "name:%count%, amount:%sum%"', false],
             'showRowNumbers' => ['(optional) Prepends a column showing row numbers. Use variable "pfy-row-number-header" '.
                 'to define the row header', false],
             'caption' => ['(optional) If set, a caption tag is added to the table. The caption text may contain the '.

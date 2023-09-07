@@ -56,7 +56,11 @@ $revealArrowSize: 1em;
     outline: none;
     box-shadow: none;
 
-    padding: 0.5em 0;
+    //padding: 0.5em 0;
+
+    label:has(:focus-visible) {
+      @include _focus;
+    }
     input:focus-visible {
       outline: unset !important;
     }
@@ -68,6 +72,7 @@ $revealArrowSize: 1em;
     white-space: nowrap;
     border: none!important;
     max-width: 0!important;
+    box-shadow: none!important;
   }
 
   .pfy-reveal-controller-wrapper {

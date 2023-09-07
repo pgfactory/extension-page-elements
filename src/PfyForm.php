@@ -170,7 +170,7 @@ class PfyForm extends Form
             PageFactory::$pg->addCss($css);
         }
 
-        if ($this->tableOptions['editMode'] && $this->formOptions['file'] && $this->isFormAdmin) {
+        if (($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->formOptions['file'] && $this->isFormAdmin) {
             $html .= $this->renderDataTable();
         }
 
@@ -707,11 +707,7 @@ EOT;
         // if no error (i.e. error-message in $html) -> notify owner & create feedback:
         if (!$html) {
             if ($this->formOptions['mailTo']) {
-                if (!isAdminOrLocalhost()) {
-                    $this->notifyOwner($dataRec);
-                } else {
-                    PageFactory::$pg->setMessage('Admin: notifyOwner skipped.');
-                }
+                $this->notifyOwner($dataRec);
             }
 
             if ($this->formOptions['confirmationText']) {
@@ -954,12 +950,12 @@ EOT;
         }
 
         $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
-        if (str_contains($subject, '%host')) {
-            $subject = str_replace('%host', PageFactory::$hostUrl, $subject);
+        if (str_contains($subject, '%host%')) {
+            $subject = str_replace('%host%', PageFactory::$hostUrl, $subject);
         }
 
         $body = TransVars::getVariable('pfy-form-owner-notification-body');
-        $body = str_replace(['%data', '%host', '\n'], [$out, PageFactory::$hostUrl, "\n"], $body);
+        $body = str_replace(['%data%', '%host%', '\n'], [$out, PageFactory::$hostUrl, "\n"], $body);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
         $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
@@ -1044,7 +1040,6 @@ EOT;
             PageFactory::$pg->applyRobotsAttrib();
         }
 
-        unset($tableOptions['showData']);
         unset($tableOptions['editTable']);
 
         return $tableOptions;
@@ -1455,25 +1450,25 @@ EOT;
      */
     private function handleFormBannerValues(string $str): string
     {
-        // %deadline:
-        if (str_contains($str, '%deadline') && ($deadline = $this->formOptions['deadline'])) {
+        // %deadline%:
+        if (str_contains($str, '%deadline%') && ($deadline = $this->formOptions['deadline'])) {
             $deadlineStr = Utils::timeToString($deadline);
-            $str = str_replace('%deadline', $deadlineStr, $str);
+            $str = str_replace('%deadline%', $deadlineStr, $str);
         }
 
-        // %count:
-        if (str_contains($str, '%count')) {
+        // %count%:
+        if (str_contains($str, '%count%')) {
             $count = 0;
             $this->openDB();
             if ($this->db) {
                 $count = $this->db->count();
             }
-            $str = str_replace('%count', $count, $str);
+            $str = str_replace('%count%', $count, $str);
 
         }
 
-        // %sum:
-        if (str_contains($str, '%sum')) {
+        // %sum%:
+        if (str_contains($str, '%sum%')) {
             $sum = 0;
             $this->openDB();
             if ($this->db) {
@@ -1483,11 +1478,11 @@ EOT;
                     $sum = $this->db->count();
                 }
             }
-            $str = str_replace('%sum', $sum, $str);
+            $str = str_replace('%sum%', $sum, $str);
         }
 
-        // %available:
-        if (str_contains($str, '%available') && ($maxCount = $this->formOptions['maxCount'])) {
+        // %available%:
+        if (str_contains($str, '%available%') && ($maxCount = $this->formOptions['maxCount'])) {
             $this->openDB();
             if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $currCount = $this->db->sum($maxCountOn);
@@ -1495,13 +1490,13 @@ EOT;
                 $currCount = $this->db->count();
             }
             $available = $maxCount - $currCount;
-            $str = str_replace('%available', $available, $str);
+            $str = str_replace('%available%', $available, $str);
         }
 
-        // %max or %total:
-        if (str_contains($str, '%max') || str_contains($str, '%total')) {
+        // %max% or %total%:
+        if (str_contains($str, '%max%') || str_contains($str, '%total%')) {
             $max = $this->formOptions['maxCount']?:'{{ pfy-unlimited }}';
-            $str = str_replace(['%max','%total'], $max, $str);
+            $str = str_replace(['%max%','%total%'], $max, $str);
         }
 
         foreach ($this->auxBannerValues as $key => $value) {
@@ -1668,6 +1663,7 @@ EOT;
 
         list($subject, $message) = $this->getEmailComponents();
         $to = $this->propagateDataToVariables($dataRec);
+//ToDo: Twig instead of TransVars?
         $subject = TransVars::translate($subject);
         $message = TransVars::translate($message);
         if ($to) {
@@ -1723,7 +1719,8 @@ EOT;
                 $to = $value;
             }
             $value = $value?: '{{ pfy-confirmation-response-element-empty }}';
-            TransVars::setVariable("__{$key}__", $value);
+            TransVars::setVariable("_{$key}_", $value);
+//            TransVars::setVariable("__{$key}__", $value);
         }
         return $to;
     } // propagateDataToVariables
@@ -1746,14 +1743,15 @@ EOT;
             'body' => $body,
         ];
 
-        if (PageFactory::$isLocalhost) {
-            $props['body'] = "\n\n" . $props['body'];
-            $text = var_r($props);
-            $html = "<pre>$debugInfo:\n$text</pre>";
-            PageFactory::$pg->setOverlay($html);
-        } else {
-            new PHPMailer($props);
-        }
+        new PHPMailer($props);
+//        if (PageFactory::$isLocalhost) {
+//            $props['body'] = "\n\n" . $props['body'];
+//            $text = var_r($props);
+//            $html = "<pre>$debugInfo:\n$text</pre>";
+//            PageFactory::$pg->setOverlay($html);
+//        } else {
+//            new PHPMailer($props);
+//        }
     } // sendMail
 
 

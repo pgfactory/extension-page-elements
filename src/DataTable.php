@@ -18,8 +18,8 @@ use function \Usility\PageFactory\fileExt;
 use function \Usility\PageFactory\reloadAgent;
 
 
-const TABLE_SUM_SYMBOL = '%sum';
-const TABLE_COUNT_SYMBOL = '%count';
+const TABLE_SUM_SYMBOL = '%sum%';
+const TABLE_COUNT_SYMBOL = '%count%';
 
 if (!function_exists('array_is_list')) {
     function array_is_list($array) {

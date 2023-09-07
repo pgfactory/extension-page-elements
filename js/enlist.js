@@ -34,8 +34,8 @@ const Enlist = {
       delButtons.forEach(function(delButton) {
         delButton.addEventListener('click', function(e) {
           e.stopPropagation();
-          const hasFrozenClass = this.closest('.pfy-enlist-frozen');
-          if (hasFrozenClass && !Enlist.isEnlistAdmin) {
+          const hasExpiredClass = this.closest('.pfy-enlist-expired');
+          if (hasExpiredClass && !Enlist.isEnlistAdmin) {
             pfyAlert(`{{ pfy-enlist-deadline-expired-alert }}`);
           } else {
             Enlist.openPopup(this, 'del');
@@ -127,7 +127,7 @@ const Enlist = {
       });
     }
 
-    const nameField = form.querySelector('[name=EnlistName]');
+    const nameField = form.querySelector('[name=Name]');
     if (mode === 'add') {
       const submitBtn = form.querySelector('[name=_submit]');
       submitBtn.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
@@ -151,7 +151,7 @@ const Enlist = {
       const redIdField = form.querySelector('[name=elemId]');
       redIdField.setAttribute('value', elemId);
 
-      const emailField = form.querySelector('[name=EnlistEmail]');
+      const emailField = form.querySelector('[name=Email]');
       if (this.isEnlistAdmin) {
         const email = elemWrapper.querySelector('.pfy-enlist-email').textContent;
         emailField.setAttribute('value', email);

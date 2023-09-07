@@ -90,6 +90,7 @@ EOT;
             'action' => self::$selfLink,
             'showDirectFeedback' => false,
             'callback'           => function($data) { return self::loginCallback($data); },
+            'wrapperClass'       => 'pfy-login-box',
         ];
         if ($message) {
             $formOptions['formTop']  = $message;

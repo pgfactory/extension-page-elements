@@ -32,8 +32,8 @@ function form($args = '')
 
             'formTop' =>	['Text rendered above the form. BR Note: formTop/formHint/formBottom will not show up in '.
                 'form response following form submission. BR '.
-                'These fields may contain placeholders ``%deadline``, ``%count``, ``%sum``, ``%available``, ``%max`` '.
-                '(or ``%total``).', false],
+                'These fields may contain placeholders ``%deadline%``, ``%count%``, ``%sum%``, ``%available%``, ``%max%`` '.
+                '(or ``%total%``).', false],
 
             'formHint' =>	['Text rendered above the form buttons. (Default: ``\{\{ pfy-form-required-info }}``)', false],
 
@@ -85,7 +85,7 @@ function form($args = '')
             'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
                 'in output table.', false],
 
-            'tableFooters' =>	['(recId:\'%sum\' or \'%count\' or \'string\') '.
+            'tableFooters' =>	['(recId:\'%sum%\' or \'%count%\' or \'string\') '.
                 'Adds a footer row to the table showing counts and sums for specified columns..', false],
 
             'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
@@ -100,7 +100,7 @@ function form($args = '')
             'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
                 'what to put into the mail. If true, standard variables will be used: ``&#123;&#123;pfy-confirmation-response-subject }}`` '.
                 'and ``&#123;&#123;pfy-confirmation-response-message }}``.<br>Alternatively, you can specify the name of a template file. <br>'.
-                'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;&#95;fieldName&#95;&#95;</strong> }}`` '
+                'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;fieldName&#95;</strong> }}`` '
                 , false],
 
             'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],

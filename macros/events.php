@@ -23,19 +23,23 @@ function events($args = '')
                 '(If not set, "unlimited" will be assumed)', false],
             'count' => ['[int] Defines the number of events to be rendered at most.', 1],
             'offset' => ['[int] Selects events relative to "from". "0" means next event etc. ', 0],
-            'templateBasename' => ['[string] Name (resp. base-name) of template variable(s).<br>'.
-                'If no template is found in variables like this, alternatives including *category* and/or '.
-                '*language-code* will be used, e.g. "template-en" or "template-games-de".', ''],
-            'templatesFile' => ['[file-name] If set, this file is read. It must contain key:value tuples '.
-                '(e.g. in YAML format). These values will be used instead of (PageFactory-)variables.', false],
+            'template' => ['[.txt file-name] File should contain MarkdownPlus defining how data records will '.
+                'be presented.<br>Inject values as \{{ key }}, where key is the name of a data element in the data record.', true],
+            'templatesFile' => ['[.yaml file-name] For category specific templates. '.
+                'Syntax:<br>``category: |``<br>&nbsp;&nbsp;``markdown ...`` (like above, but with leading blanks)<br>'.
+                'If no template is found that directly matches the *category* name, alternatives are tried:<br> '.
+                '\<language> (e.g. ``en:``), \<category-language> (e.g. ``sports-de:``),<br>'.
+                'If that still doesn\'t lead to a hit, the default template identified as  ``_:`` is selected.', false],
+            'templateBasename' => ['[string] If defined, ``templateBasename-`` will be prepended to the *category* name '.
+                'before selecting the template.', ''],
             'markdown' => ['[bool] If true, result will be md-compiled.', true],
-            'wrap' => ['[bool] If true, each event is wrapped in a DIV with a class applied.', true],
+            'wrap' => ['[bool] If false, omits the normally applied DIV wrapper, i.e. renders just as stated in the template.', true],
         ],
         'summary' => <<<EOT
 
 # $funcName()
 
-Access an event database, retrieves event records based on configurable criteria (e.g. category, time etc.)
+Accesses an event database, retrieves event records based on configurable criteria (e.g. category, time etc.)
 and renders found data based on templates.
 
 ## Data Source
@@ -53,11 +57,11 @@ as variables, e.g. ``\{{ start }}``.
 
 Variable replacement is performed by the Twig library, which
 offers a variety of filters and more, see 
-{{ link('https://twig.symfony.com/doc', 'Twig Documentation', target:newwin) }} for reference.
+<a href='https://twig.symfony.com/doc' target="_blank">Twig Documentation</a> for reference.
 
 ## Rolling Dates
 In arguments ``from`` and ``till`` you can use letters for rolling values, e.g. "Y" for the current year.  
-See {{ link('https://www.php.net/manual/de/datetime.format.php', 'PHP date()', target:newwin) }} for reference.
+See <a href='https://www.php.net/manual/en/datetime.format.php' target="_blank">PHP date()</a> for reference.
 
 ## Variables: {:.h3}
 - \{{ pfy-no-event-found }}
@@ -82,6 +86,10 @@ EOT,
 
     if (!$options['file']) {
         return '';
+    }
+
+    if (isset($options['template'])) {
+        $options['templatesFile'] = $options['template'];
     }
 
     // assemble output:
