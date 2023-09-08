@@ -1018,6 +1018,11 @@ EOT;
                 $tableOptions['tableButtons'] = 'delete,download';
                 $tableOptions['serviceColumns'] = 'select,num';
                 $tableOptions['editMode'] = 'inpage';
+            } elseif ($editTable === 'popup') {
+                $tableOptions['permission'] = 'localhost,loggedin';
+                $tableOptions['tableButtons'] = 'delete,download,add';
+                $tableOptions['serviceColumns'] = 'select,num,edit';
+                $tableOptions['editMode'] = 'popup';
             } else {
                 $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
                 $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
