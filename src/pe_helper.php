@@ -102,3 +102,27 @@ function urlAppendArg(string $url, string $arg): string
     }
     return $url;
 } // urlAppendArg
+
+
+/**
+ * array_splice_assoc
+ * Splice an associative array
+ * Removes the elements designated by offset & length and replaces them
+ * with the elements of replacement array
+ * @param $input array
+ * @param $key string
+ * @param $length int
+ * @param $replacement array
+ */
+function array_splice_associative($input, $key, $length, $replacement=array()) {
+    $index = array_search($key, array_keys($input));
+
+    if($index === false) {
+        return $input;
+    }
+
+    $before_slice = array_slice($input, 0, $index);
+    $after_slice = array_slice($input, $index+$length);
+
+    return array_merge($before_slice, $replacement, $after_slice);
+} // array_splice_associative
