@@ -10,13 +10,14 @@ use Usility\MarkdownPlus\Permission;
 use Usility\PageFactoryElements\Events as Events;
 use Usility\PageFactoryElements\DataTable as DataTable;
 use function Usility\PageFactory\var_r as var_r;
+use function Usility\PageFactoryElements\array_splice_associative as array_splice_associative;
 
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,div,'.
     'url,date,datetime-local,time,datetime,month,integer,number,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
-    'button,reset,submit,cancel,';
+    'button,reset,submit,cancel,@import,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
 const INFO_ICON = 'ⓘ';
@@ -200,6 +201,23 @@ EOT;
         $this->addElement(['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
         $this->addElement(['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
 
+        // handle '@import' => import form element defs from file:
+        foreach ($formElements as $name => $rec) {
+            $file = $rec;
+            if ($name === '@import') {
+                if ($file[0] === '~') {
+                    $file = resolvePath($file);
+                }
+                $newFields = loadFile($file, useCaching:true);
+                if (!is_array($newFields)) {
+                    throw new \Exception("Syntax error in '$rec'.");
+                }
+                $formElements = array_splice_associative($formElements, $name, 1, $newFields);
+                break;
+            }
+        }
+
+        // add fields:
         foreach ($formElements as $name => $rec) {
             if (!is_array($rec)) {
                 throw new \Exception("Syntax error in Forms option '$name'");
@@ -1079,10 +1097,14 @@ EOT;
             $ds->addRec($emptyRec);
         }
         $html = $ds ? $ds->render() : '';
+        $header = '';
+        if ($this->tableOptions['editMode'] !== 'popup') {
+            $header = '<h2>{{ pfy-table-data-output-header }}</h2>';
+        }
         if ($html) {
             $html = <<<EOT
 <div class='pfy-table-data-output-wrapper'>
-<h2>{{ pfy-table-data-output-header }}</h2>
+$header
 $html
 </div>
 EOT;
@@ -1106,6 +1128,13 @@ EOT;
         $args = [];
         $label = $elemOptions['label'] ?? false;
         $name = $elemOptions['name'] ?? false;
+
+        if (isset($elemOptions['options'])) {
+            $options = $elemOptions['options'];
+            if ($options[0] === '$') {
+                $elemOptions['options'] = handleDataImportPattern($options);
+            }
+        }
 
         // case: only label given:
         if ($label && !$name) {
