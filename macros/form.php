@@ -105,7 +105,7 @@ function form($args = '')
                 'what to put into the mail. If true, standard variables will be used: ``&#123;&#123;pfy-confirmation-response-subject }}`` '.
                 'and ``&#123;&#123;pfy-confirmation-response-message }}``.<br>Alternatively, you can specify the name of a template file. <br>'.
                 'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;fieldName&#95;</strong> }}`` '
-                , false],
+                , true],
 
             'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
 

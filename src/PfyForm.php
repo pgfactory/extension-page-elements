@@ -1397,7 +1397,7 @@ EOT;
     private function setObfuscatePassword(array $tableOptions): array
     {
         $obfuscateRows = [];
-        foreach ($this->formElements as $key => $rec) {
+        foreach ($this->formElements as $rec) {
             if (($rec['type']??'') === 'password') {
                 $obfuscateRows[] = $rec['name'];
             }
@@ -1426,6 +1426,7 @@ EOT;
         $subject = TransVars::translate($subject);
         $message = TransVars::translate($message);
         if ($to) {
+            mylog("$subject\n\n$message", 'mail-log.txt');
             $this->sendMail($to, $subject, $message, 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
         }
@@ -1445,11 +1446,11 @@ EOT;
             $template = '{{ pfy-confirmation-response-message }}';
 
         } else {
-            $confirmationEmailTemplate = resolvePath($confirmationEmailTemplate, relativeToPage: true);
-            if (!file_exists($confirmationEmailTemplate)) {
-                throw new \Exception("Forms confirmationEmail: confirmationEmailTemplate not found");
+            $confirmationEmailTemplate1 = resolvePath($confirmationEmailTemplate, relativeToPage: true);
+            if (!is_file($confirmationEmailTemplate1)) {
+                throw new \Exception("Forms confirmationEmail: template  '$confirmationEmailTemplate' not found");
             }
-            $template = fileGetContents($confirmationEmailTemplate);
+            $template = fileGetContents($confirmationEmailTemplate1);
             if (preg_match("/^subject:(.*?)\n/i", $template, $m)) {
                 $subject = trim($m[1]);
                 $template = trim(str_replace($m[0], '', $template));
@@ -1477,7 +1478,7 @@ EOT;
             if ($key === $emailFieldName) {
                 $to = $value;
             }
-            $value = $value?: '{{ pfy-confirmation-response-element-empty }}';
+            $value = $value?: TransVars::getVariable('pfy-confirmation-response-element-empty');
             TransVars::setVariable("_{$key}_", $value);
         }
         return $to;

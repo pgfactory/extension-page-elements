@@ -192,6 +192,50 @@ pfy-form-confirmation-email-sent:
   de2: 'Wir haben dir eine Bestätigung per E-Mail geschickt.'
   _:  'We have sent a confirmation to your e-mail address.'
 
+pfy-confirmation-response-element-empty:
+  de: '&lt; leer &gt;'
+  _:  '&lt; empty &gt;'
+
+pfy-confirmation-response-subject:
+  de: 'Anmeldebestätigung von {{ hostUrl }}'
+  _:  'Sign-up confirmation from {{ hostUrl }}'
+
+pfy-confirmation-response-message:
+  de: |
+    Guten Tag {{ _First_Name_ }} {{ _Last_Name_ }}
+    
+    Vielen Dank für Ihre Anmeldung.
+    
+    Details:
+    Datum:	      {{ _date_ }}
+    Zeit:	      {{ _time_ }}
+    Ort:	      {{ _location_ }}
+    
+    Wir freuen uns, sie bald zu sehen.
+    
+    Im Verhinderungsfalle bitten wir um frühzeitige Benachrichtigung.
+    
+    Beste Grüsse
+    Das Organisationsteam
+
+  _:  |
+    Hello {{ _First_Name_ }} {{ _Last_Name_ }}
+  
+    Thanks a lot for your registration.
+  
+    Details:
+    Date:	      {{ _date_ }}
+    Time:	      {{ _time_ }}
+    Location:	  {{ _location_ }}
+  
+    We are looking forward to seeing you soon.
+    
+    Please send us a note in case you cannot participate.
+    
+    Best Regards
+    The organisation team
+
+
 # Deadline:
 pfy-form-deadline-expired:
   de: 'Die Anmeldefrist ist vorbei.'
