@@ -19,6 +19,10 @@ function form($args = '')
         'options' => [
             'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
 
+            'part' =>	['[head,fields,tail] If set, defines which part of a form is constructed. '.
+                '"head" accepts form-options. "fields" defines form fields and can be invoked multiple times. '.
+                '"tail" terminates form assembly and renders final the HTML.', false],
+
             'id' =>	['Id applied to the form element.', false],
 
             'class' =>	['Class applied to the form element.', false],
@@ -147,17 +151,10 @@ Syntax: ``field-name: { field arguments, \... }``
 date, datetime-local, time, datetime, month,
 number, integer, range, tel, file,
 radio, checkbox, dropdown, select, multiselect, upload, multiupload, bypassed, 
-button, reset, submit, cancel, div`
+button, reset, submit, cancel`
 
 Default type: **text**  
 Types automatically derived from field *field-names*: `email`, `passwor*`, `submit`, `cancel`
-
-#### Interspersed HTML:
-
-``div`` is a pseudo-type. It injects given `value` into the form. Thus, it can be used 
-to insert subtitles and the like. Example:
-
-    div1: {type:div, value:'<h2>Details</h2>'}
 
 #### Field Arguments
 
@@ -229,15 +226,36 @@ EOT,
     if ($options['maxCount'] && !$options['minRows']) {
         $options['minRows'] = $options['maxCount'];
     }
-    $form = new PfyForm($options);
-    $form->createForm($auxOptions); // $auxOptions = form-elements
-    $html .= $form->renderForm();
 
     if ($lWidth = $options['labelWidth']) {
         PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
     }
 
-    return [$html];
+    $part = $options['part']??false;
+    if (!$part && !isset($GLOBALS['pfy.form'])) {
+        $form = new PfyForm($options);
+        $html .= $form->renderForm($auxOptions);
+
+    } else {
+        if ($part === 'head') {
+            $form = new PfyForm($options);
+            $GLOBALS['pfy.form'] = $form;
+            $form->fireRenderEvents();
+            $html .= $form->renderFormHead();
+
+        } elseif ($part === 'fields') {
+            $form = $GLOBALS['pfy.form'];
+            $html .= $form->renderFormFields($auxOptions);
+
+        } elseif ($part === 'tail') {
+            $form = $GLOBALS['pfy.form'];
+            unset($GLOBALS['pfy.form']);
+            $html .= $form->renderFormTail();
+        }
+    }
+
+    $html = shieldStr($html);
+    return $html;
 } // form
 
 

@@ -158,6 +158,12 @@ function getRec($recKey, $pageId, $dataSrcInx): void
     if ($rec->isLocked()) {
         $recData['_state'] = 'locked';
     }
+
+    // avoid sending values for password fields (even though they are only a hash):
+    // Note: at this point we only have the field name, not the actual type, so it's a best guess.
+    array_walk($recData, function (&$v, $k){
+        $v = str_contains($k, 'passwor') ? '' : $v;
+    });
     exit(json_encode($recData));
 } // getRec
 

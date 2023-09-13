@@ -187,7 +187,6 @@ const tableHelper = {
           const recKey = tr.dataset.reckey ?? '';
 
           // get latest data for this record:
-          // const args = 'getRec='+recKey+'&datasrcinx='+tableInx+'&lock';
           let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
           if (tableHelper.formRecLocking) {
             args += '&lock';
@@ -222,7 +221,7 @@ const tableHelper = {
 
 
   setupNewRecButton: function (table, tableInx) {
-    const formWrapper = table.closest('.pfy-form-wrapper');
+    const formWrapper = table.closest('.pfy-form-and-table-wrapper');
     if (!formWrapper) {
       return;
     }

@@ -31,6 +31,7 @@ const pfyFormsHelper = {
       });
     }
 
+
     // initialize freeze timer:
     this.freezeWindowAfter('1 hour');
   }, // init
@@ -41,6 +42,7 @@ const pfyFormsHelper = {
     pfyFormsHelper.setupCancelButtonHandler(form);
     pfyFormsHelper.setupSubmitHandler(form);
     pfyFormsHelper.setupModifiedMonitor(form);
+    pfyFormsHelper.setupPwTrigger(form);
     pfyFormsHelper.presetForm(form);
 
     if (typeof setFocus !== 'undefined') {
@@ -50,6 +52,35 @@ const pfyFormsHelper = {
       }
     }
   }, // initForm
+
+
+  setupPwTrigger(form) {
+    const pwButtons = form.querySelectorAll('.pfy-form-show-pw ');
+    if (pwButtons) {
+      pwButtons.forEach(function (pwButton) {
+        mylog(pwButton);
+        pwButton.addEventListener('click', function (e) {
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          const btn = e.currentTarget;
+          const wrapper = btn.closest('.pfy-input-wrapper');
+          const pwInput = wrapper.querySelector('input');
+          if (btn.classList.contains('show')) {
+            mylog('hide password');
+            btn.classList.remove('show');
+            btn.setAttribute('aria-pressed', false);
+            pwInput.setAttribute('type', 'password');
+          } else {
+            mylog('show password');
+            btn.classList.add('show');
+            btn.setAttribute('aria-pressed', true);
+            pwInput.setAttribute('type', 'text');
+          }
+        });
+      })
+    }
+  }, // setupPwTrigger
 
 
   setupModifiedMonitor(form) {
@@ -213,7 +244,7 @@ const pfyFormsHelper = {
 
   presetChoiceFields(form, data) {
     // reset choice elements 'radio':
-    let fields = form.querySelectorAll('input[type=radio]');
+    let fields = form.querySelectorAll('.pfy-elem-wrapper input[type=radio]');
     if (fields.length) {
       fields.forEach(function (field) {
         const name = field.getAttribute('name');
@@ -224,7 +255,7 @@ const pfyFormsHelper = {
     }
 
     // reset choice elements 'checkbox':
-    fields = form.querySelectorAll('input[type=checkbox]');
+    fields = form.querySelectorAll('.pfy-elem-wrapper input[type=checkbox]');
     if (fields.length) {
       fields.forEach(function (field) {
         const name = field.getAttribute('name');

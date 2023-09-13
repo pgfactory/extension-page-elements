@@ -110,6 +110,7 @@ pfy-alert-header:
   _:  Attention
 
 
+
 # Forms
 
 pfy-form-select-empty-option:
@@ -160,7 +161,11 @@ pfy-no-data-available:
 
 pfy-form-timed-out:
   de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
-  _:  Page timed out.<br>Click Ok to reload and try again.
+  _:  The Page timed out.<br>Click Ok to reload and try again.
+
+pfy-form-session-expired:
+  de: Die Seite wurde vor zu langer Zeit geladen, Ihre Eingaben konnten nicht mehr verarbeitet werden.<br>Bitte versuchen Sie es erneut.
+  _:  The Page timed out, your data entries couldn't be processed.<br>Please try again.
 
 pfy-anti-spam-warning:
   de: |

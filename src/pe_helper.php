@@ -109,6 +109,7 @@ function urlAppendArg(string $url, string $arg): string
  * Splice an associative array
  * Removes the elements designated by offset & length and replaces them
  * with the elements of replacement array
+ * https://nimblewebdeveloper.com/blog/php-splice-associative-keyed-array
  * @param $input array
  * @param $key string
  * @param $length int

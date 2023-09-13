@@ -140,9 +140,9 @@ EOT;
 
 EOT;
         }
+        // now render the form:
         $form = new PfyForm($formOptions);
-        $form->createForm($formElements);
-        $html = $form->renderForm();
+        $html = $form->renderForm($formElements);
         $html = self::$loginHeader."\n$html";
         return $html;
     } // renderLoginForm

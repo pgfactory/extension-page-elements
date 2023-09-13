@@ -4,6 +4,7 @@
     --form-row-gap-height: 1em;
     --form-label-width: 7em;
     --form-input-width: 15em;
+    --form-input-height: 2em;
     --form-required-marker-color: gray;
     --form-tooltip-anker-color: gray;
     --form-field-background-color:
@@ -40,6 +41,45 @@
     }
   }
 
+  .pfy-password .pfy-input-wrapper {
+    position: relative;
+    input {
+      padding-right: 2em;
+    }
+  }
+  .pfy-form-show-pw {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: none;
+    background: none;
+    width: 2em;
+    height: var(--form-input-height, 2em);
+    opacity: 0.5;
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+    }
+
+    svg {
+      position: absolute;
+      top: calc((var(--form-input-height, 2em) - 1em) / 2 - 0.1em);
+      right: 0.3em;
+      width: 1.4em;
+      height: 1.4em;
+    }
+    .pfy-icon-close {
+      display: none;
+    }
+    &.show {
+      .pfy-icon-close {
+        display: block;
+      }
+      .pfy-icon-show {
+        display: none;
+      }
+    }
+  }
   .pfy-input-wrapper {
     width: calc(100% - var(--form-label-width, 6em) - 6px);
     max-width: var(--form-input-width, 22em);
@@ -48,7 +88,8 @@
       width: 100%;
     }
     input, textarea, select {
-      padding: 0.4em;
+      padding: calc((var(--form-input-height, 2em) - 1em) / 2);
+      line-height: 1em;
       color: inherit;
       background-color: var(--form-field-background-color, #fffff6);
       border: 1px solid var(--form-field-border-color, gray);
@@ -68,6 +109,7 @@
     padding-bottom: calc(var(--form-row-gap-height, 1em) / 2);
   }
 
+  .pfy-elem-wrapper.required label::after,
   label.required::after {
     content: '*';
     color: var(--form-required-marker-color, orange);
@@ -152,6 +194,11 @@
       color: var(--form-field-error-color, red);
     }
   }
+  .pfy-form-field-description {
+    padding: 0.4em 0 0.2em 0.5em;
+    display: inline-block;
+    //font-style: italic;
+  }
 
   .pfy-elem-wrapper.button {
     text-align: right;
@@ -231,13 +278,12 @@
     .pfy-input-wrapper  {
       width: calc(100% - 2em);
     }
-    .pfy-input-wrapper label {
+    .pfy-reveal-controller-label {
       margin-left: 0.8em;
-      //margin-left: 1.3em;
     }
-    &::before {
-      left: -0.7em !important;
-    }
+  }
+  .pfy-reveal-controller::before {
+    transform-origin: 50% 64% !important;
   }
 
   .pfy-elem-wrapper.pfy-submit {
@@ -257,7 +303,7 @@
     }
   }
   .pfy-elem-wrapper input.pfy-reveal-controller::before {
-    left: -0.7em !important;
+    left: -0.2em !important;
   }
 
   .pfy-form-wrapper {
@@ -303,7 +349,7 @@
   }
 
   input[disabled] {
-    cursor: not-allowed;
+    cursor: wait;
     filter: brightness(95%);
   }
 

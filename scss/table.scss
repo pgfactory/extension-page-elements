@@ -78,6 +78,10 @@ $focus-color: orange;
       &.pfy-row-selector,
       &.pfy-row-number {
         padding: 3px 0.2em 0 0.2em;
+        max-width: 2em;
+      }
+      &.pfy-row-edit {
+        max-width: 4em;
       }
     }
     th.pfy-service-row {
