@@ -368,11 +368,11 @@ function pfyPopup( options ) {
       const key = e.key;
 
       // avoid popup's default action while within form fields:
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (e.target.tagName === 'TEXTAREA') {
         return;
       }
 
-      if (key === 'Escape') {                // ESC
+      if (key === 'Escape' && (e.target.tagName !== 'INPUT')) {    // ESC
           if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
             parent.inihibitClosing = !executeCallback(parent.onCancel);
 
