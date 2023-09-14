@@ -567,7 +567,7 @@ EOT;
             $jq = "Enlist.openPopup()";
             PageFactory::$pg->addJsReady($jq);
         }
-        $html = "<div id='pfy-enlist-form'>\n$html</div>\n";
+        $html = "\n\n<div id='pfy-enlist-form'>\n$html</div>\n<!-- /pfy-enlist-form -->\n\n";
         return $html;
     } // renderForm
 
@@ -590,7 +590,7 @@ EOT;
                 $t = explode(' ', $text);
                 $text = '';
                 foreach ($t as $s) {
-                    $text .= strtoupper($s[0] ?? '') . ' ';
+                    $text .= strtoupper($s[0] ?? '');
                 }
                 $text = rtrim($text);
             }

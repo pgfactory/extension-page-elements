@@ -6,6 +6,7 @@ use Usility\PageFactory\Scss as Scss;
 use function Usility\PageFactory\createHash;
 use function \Usility\PageFactory\getDir;
 use function \Usility\PageFactory\getStaticUrlArg;
+use function \Usility\PageFactory\rrmdir;
 
 
 
@@ -31,6 +32,7 @@ class PageElements
         $this->updateScss();
         $this->initPresentationSupport();
         $this->handleCssRefactor();
+        $this->cleanDownloadFolder();
     } // __construct
 
 
@@ -126,6 +128,19 @@ class PageElements
                }
         exit("Done <br>\n");
     } // handleCssRefactor
+
+
+    private function cleanDownloadFolder()
+    {
+        $dir = glob(DOWNLOAD_PATH.'*');
+        if ($dir) {
+            foreach ($dir as $folder) {
+                if (@filemtime($folder) < (time() - 600)) { // max file age: 10 min
+                    rrmdir(dirname($folder));
+                }
+            }
+        }
+    } // cleanDownloadFolder
 
 
     /**
