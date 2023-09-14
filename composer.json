@@ -1,7 +1,6 @@
 {
     "require": {
         "nette/forms": "^3.1",
-        "phpoffice/phpspreadsheet": "^1.28",
-        "voku/simple_html_dom": "^4.8"
+        "phpoffice/phpspreadsheet": "^1.28"
     }
 }
