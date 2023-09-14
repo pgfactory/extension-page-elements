@@ -136,7 +136,7 @@ class PageElements
         if ($dir) {
             foreach ($dir as $folder) {
                 if (@filemtime($folder) < (time() - 600)) { // max file age: 10 min
-                    rrmdir(dirname($folder));
+                    rrmdir($folder);
                 }
             }
         }
