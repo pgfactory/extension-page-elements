@@ -72,6 +72,7 @@ class DataTable extends Data2DSet
             $this->inx = $GLOBALS['tableInx'];
         } else {
             $this->inx = $GLOBALS['tableInx'] = 1;
+            PageFactory::$pg->addAssets('TABLES');
         }
         parent::__construct($file, $options);
 
@@ -158,7 +159,6 @@ class DataTable extends Data2DSet
     private function prepareTableData(): void
     {
         $this->tableData = $this->getNormalized2D_Data($this->tableHeaders);
-        PageFactory::$pg->addAssets('TABLES');
     } // prepareTableData
 
 
@@ -629,38 +629,15 @@ EOT;
      */
     private function renderTableDownloadButton(): string
     {
-        $file = $this->exportDownloadDocs();
-        $icon = renderIcon('cloud_download_alt');
-        $buttons = "  <button class='pfy-button pfy-button-lean pfy-table-download-start' " .
-            "type='button' data-file='$file' title='{{ pfy-opens-download }}'>$icon</button>\n";
-
+        $button = '';
         $appUrl = PageFactory::$appUrl;
         if ($this->officeFormatAvailable) {
-            $file = fileExt($file, true);
-            $js = <<<EOT
-pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}</p><ul><li>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}.xlsx" download target="_blank">{{ pfy-table-download-excel }}</a>'
-        +'{{ pfy-table-download-postfix }}:</li><li>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}.ods" download target="_blank">{{ pfy-table-download-ods }}</a>'
-        +'{{ pfy-table-download-postfix }}</li></ul>';
-EOT;
-
-        } else {
-            $js = <<<EOT
-pfyDownloadDialog[$this->inx] = '<p>{{ pfy-table-download-text }}<br>{{ pfy-table-download-prefix }}'
-        +'<a href="$appUrl{$file}" download target="_blank">{{ pfy-table-download-csv }}</a>'
-        +'{{ pfy-table-download-postfix }}</p>';
-EOT;
+            $file = $this->exportDownloadDocs();
+            $filename = basename($file);
+            $icon = renderIcon('cloud_download_alt');
+            $button = "<a class='pfy-button pfy-button-lean pfy-table-download-start' href='$appUrl$file' title='Download $filename' download>$icon</a>";
         }
-
-        if (!$this->dialogInitialized) {
-            $this->dialogInitialized = true;
-            $js = "var pfyDownloadDialog = [];\n" . $js;
-        }
-        $js = TransVars::translate($js);
-        PageFactory::$pg->addJs($js);
-        PageFactory::$assets->addAssets('POPUPS, TABLES');
-        return $buttons;
+        return $button;
     } // renderTableDownloadButton
 
 

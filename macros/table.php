@@ -14,6 +14,7 @@ function table($argStr = '')
             'file' => ['File to be used as data-source.', false],
             'tableId' => ['(optional) Applies an ID to the table tag.', false],
             'tableClass' => ['(optional) Applies an CLASS to the table tag.', false],
+            'tdClass' => ['(optional) Applies an CLASS to TD tags.', false],
             'tableWrapperClass' => ['(optional) Applies an CLASS to the table-wrapper div.', false],
             'headers' => ['[Comma-separated-list] List of column labels to define order and selection of columns.'.
                 'E.g. "name,street,zip" or "name:Name,street:Strasse,zip:PLZ"', true],
