@@ -358,7 +358,6 @@ class PfyForm extends Form
             $elem->setHtmlAttribute('tabindex', '-1');
             $elem->setOmitted();
             unset($this->fieldNames[$name]);
-            unset($this->formElements[$name]);
         }
 
         // note: 'info' option handled in parseMainOptions()
@@ -587,7 +586,9 @@ class PfyForm extends Form
 
         // handle optional 'deadline' and 'maxCount':
         if ($this->handleDeadline() || $this->handleMaxCount($dataRec)) {
-            return '';
+            if (!$this->isFormAdmin) {
+                return '';
+            }
         }
 
         // handle uploads
@@ -1023,7 +1024,7 @@ EOT;
 
         if (isset($elemOptions['options'])) {
             $options = $elemOptions['options'];
-            if ($options && $options[0] === '$') {
+            if ($options && is_string($options) && $options[0] === '$') {
                 $elemOptions['options'] = handleDataImportPattern($options);
             }
         }
@@ -1426,7 +1427,6 @@ EOT;
         $subject = TransVars::translate($subject);
         $message = TransVars::translate($message);
         if ($to) {
-            mylog("$subject\n\n$message", 'mail-log.txt');
             $this->sendMail($to, $subject, $message, 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
         }
@@ -1503,6 +1503,7 @@ EOT;
         ];
 
         new PHPMailer($props);
+        mylog("$subject\n\n$body", 'mail-log.txt');
     } // sendMail
 
 
@@ -1644,7 +1645,11 @@ EOT;
         $html .= "<!-- pfy-form-wrapper -->\n";
         $formInx = self::$formInx;
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
-        $html .= "<div class='pfy-form-and-table-wrapper'>\n";
+
+        if ($this->addFormTableWrapper) {
+            $html .= "<div class='pfy-form-and-table-wrapper'>\n";
+        }
+
         $html .= "<div class='$wrapperClass'>\n";
 
         list($id, $formClass, $aria) = $this->getHeadAttributes();
@@ -1783,13 +1788,13 @@ EOT;
         if (!$msg) {
             // handle deadline option:
             if ($msg = $this->handleDeadline()) {
-                $this->showForm = false;
+                $this->showForm = $this->isFormAdmin;
                 $html .= $msg;
             }
 
             // handle maxCount option:
             if ($msg = $this->handleMaxCount()) {
-                $this->showForm = false;
+                $this->showForm = $this->isFormAdmin;
                 $html .= $msg;
             }
         }
