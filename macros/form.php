@@ -189,7 +189,7 @@ radio/checkbox/dropdown/select/multiselect:
 upload/multiupload: (currently only image files supported)
 : - maxMegaByte     10em>> [integer] allowed file size in MB
 
-{{ vgap }}
+<div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
 #### AntiSpam
 
@@ -210,7 +210,7 @@ where *Name* is the field-name of another field in your form. This will insert a
 - -\-form-field-description-color:
 - -\-form-field-error-color:
 
-{{ vgap }}
+<div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
 EOT,
     ];

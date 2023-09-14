@@ -1669,8 +1669,11 @@ EOT;
      * @return string
      * @throws InvalidArgumentException
      */
-    public function renderFormFields(): string
+    public function renderFormFields(array|null $formElements = null): string
     {
+        if ($formElements !== null) {
+            $this->formElements = $formElements;
+        }
         $this->createForm();
 
         foreach ($this->formElements as $key => $rec) {

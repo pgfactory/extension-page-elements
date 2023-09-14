@@ -26,7 +26,7 @@ $revealArrowSize: 1em;
     &::before {
       position: absolute;
       left: 0;
-      top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2 - 2px);
+      top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
       width: $revealArrowSize;
       height: $revealArrowSize;
       text-align: center;
@@ -84,7 +84,7 @@ $revealArrowSize: 1em;
     }
     label {
       display: block;
-      padding-left: calc(#{$revealArrowSize} + 0.5em);
+      padding-left: calc(#{$revealArrowSize} + 0.4em);
       min-height: var(--pfy-reveal-controller-height, #{$revealControllerHeight});
       padding-top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
       padding-bottom: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 2em) / 2);
