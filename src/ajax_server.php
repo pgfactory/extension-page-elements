@@ -73,7 +73,7 @@ function serverLog(): void
         define('PFY_LOGS_PATH', 'site/logs/');
     }
     $ip = $_SERVER['REMOTE_ADDR'];
-    if (option('pgfactory.pagefactory-elements.options.log-ip', false)) {
+    if (option('pgfactory.pagefactory-elements.options.debug_logIP', false)) {
         $text = "[$ip]  $text";
     }
     require_once 'site/plugins/pagefactory/src/helper.php';
