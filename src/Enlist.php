@@ -1,20 +1,20 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
-use Usility\PageFactory\PageFactory;
-use Usility\PageFactory\DataSet;
-use Usility\PageFactory\PfyForm;
-use Usility\PageFactory\Utils;
-use Usility\MarkdownPlus\Permission;
-use Usility\PageFactory\TransVars;
-use function Usility\PageFactory\createHash;
-use function Usility\PageFactory\explodeTrim;
-use function Usility\PageFactory\parseArgumentStr;
-use function Usility\PageFactory\reloadAgent;
-use function Usility\PageFactory\resolvePath;
-use function Usility\PageFactory\translateToFilename;
-use function Usility\PageFactory\mylog;
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\PfyForm;
+use PgFactory\PageFactory\Utils;
+use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\createHash;
+use function PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\parseArgumentStr;
+use function PgFactory\PageFactory\reloadAgent;
+use function PgFactory\PageFactory\resolvePath;
+use function PgFactory\PageFactory\translateToFilename;
+use function PgFactory\PageFactory\mylog;
 
 const ENLIST_INFO_ICON = 'ⓘ';
 const ENLIST_MAIL_ICON = '✉';
@@ -611,7 +611,7 @@ EOT;
     {
         $tableRecKeyTab = self::$session->get(self::$obfuscateSessKey);
         if (!$tableRecKeyTab || !($obfuscatedKey = array_search($key, $tableRecKeyTab))) {
-            $obfuscatedKey = \Usility\PageFactory\createHash();
+            $obfuscatedKey = \PgFactory\PageFactory\createHash();
         }
         $tableRecKeyTab[$obfuscatedKey] = $key;
         self::$session->set(self::$obfuscateSessKey, $tableRecKeyTab);

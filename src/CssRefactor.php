@@ -6,12 +6,12 @@
  *    or  ?cssrefactor=path/
  */
 
-namespace Usility\PageFactoryElements;
-use Usility\PageFactory\Scss;
-use function Usility\PageFactory\explodeTrim;
-use function Usility\PageFactory\fileExt;
-use function \Usility\PageFactory\getFile;
-use function \Usility\PageFactory\strPosMatching;
+namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\Scss;
+use function PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\fileExt;
+use function \PgFactory\PageFactory\getFile;
+use function \PgFactory\PageFactory\strPosMatching;
 
 const CSS_UNARY_KEYWORDS = ",@charset,@import,@layer,@namespace,";
 const CSS_OTHER_KEYWORDS =

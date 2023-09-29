@@ -5,8 +5,8 @@
  * Requires session-variable defining the data-source, which is only defined if user is FormAdmin.
  */
 
-use Usility\PageFactory\PageFactory;
-use Usility\PageFactory\DataSet;
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\DataSet;
 
 
 require_once __DIR__ . "/../../pagefactory/src/helper.php";
@@ -77,7 +77,7 @@ function serverLog(): void
         $text = "[$ip]  $text";
     }
     require_once 'site/plugins/pagefactory/src/helper.php';
-    Usility\PageFactory\mylog($text, $logFile);
+    PgFactory\PageFactory\mylog($text, $logFile);
     exit('"ok"');
 } // serverLog
 

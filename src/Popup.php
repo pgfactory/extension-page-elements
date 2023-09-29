@@ -1,6 +1,6 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
 
 class Popup extends PageElements
@@ -15,7 +15,7 @@ class Popup extends PageElements
                 $msg = $this->trans->translate($msg);
             }
             if ($mdCompile) {
-                $msg = \Usility\PageFactory\compileMarkdown($msg);
+                $msg = \PgFactory\PageFactory\compileMarkdown($msg);
             }
 
             $inx = self::$inx++;

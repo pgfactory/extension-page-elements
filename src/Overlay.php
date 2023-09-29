@@ -1,7 +1,7 @@
 <?php
 
-namespace Usility\PageFactoryElements;
-use Usility\PageFactory\PageFactory as PageFactory;
+namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\PageFactory as PageFactory;
 
 
 class Overlay extends PageElements
@@ -14,7 +14,7 @@ class Overlay extends PageElements
 
         if (is_string($content)) {
             if ($mdCompile) {
-                $content = \Usility\PageFactory\compileMarkdown($content);
+                $content = \PgFactory\PageFactory\compileMarkdown($content);
             }
             $content = <<<EOT
     <div id='pfy-overlay-$inx' class='pfy-overlay' style="display: none;">

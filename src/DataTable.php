@@ -1,21 +1,21 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
 require_once __DIR__ . '/Data2DSet.php';
 
-use Usility\MarkdownPlus\Permission;
-use Usility\PageFactory\DataSet;
-use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\Data2DSet as Data2DSet;
-use Usility\PageFactory\TransVars;
-use function \Usility\PageFactory\base_name;
-use function \Usility\PageFactory\explodeTrim;
-use function \Usility\PageFactory\translateToIdentifier;
-use function \Usility\PageFactory\array_splice_assoc;
-use function \Usility\PageFactory\renderIcon;
-use function \Usility\PageFactory\fileExt;
-use function \Usility\PageFactory\reloadAgent;
+use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\Data2DSet as Data2DSet;
+use PgFactory\PageFactory\TransVars;
+use function \PgFactory\PageFactory\base_name;
+use function \PgFactory\PageFactory\explodeTrim;
+use function \PgFactory\PageFactory\translateToIdentifier;
+use function \PgFactory\PageFactory\array_splice_assoc;
+use function \PgFactory\PageFactory\renderIcon;
+use function \PgFactory\PageFactory\fileExt;
+use function \PgFactory\PageFactory\reloadAgent;
 
 
 const TABLE_SUM_SYMBOL = '%sum%';

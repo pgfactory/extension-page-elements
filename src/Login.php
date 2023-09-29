@@ -1,13 +1,13 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
-use Usility\PageFactory\PageFactory;
-use Usility\PageFactory\PfyForm;
-use Usility\PageFactory\TransVars;
-use function Usility\PageFactory\reloadAgent;
-use function Usility\PageFactory\shieldStr;
-use function Usility\PageFactory\mylog;
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\PfyForm;
+use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\reloadAgent;
+use function PgFactory\PageFactory\shieldStr;
+use function PgFactory\PageFactory\mylog;
 
 class Login
 {

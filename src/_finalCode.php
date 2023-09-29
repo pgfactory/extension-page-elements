@@ -7,15 +7,15 @@
  */
 
 
-namespace Usility\PageFactoryElements;
-use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\TransVars as TransVars;
+namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\TransVars as TransVars;
 
-use function \Usility\PageFactory\writeFile;
-use function \Usility\PageFactory\translateToIdentifier;
-use function \Usility\PageFactory\getDir;
-use function \Usility\PageFactory\fileTime;
-use function \Usility\PageFactory\getFile;
+use function \PgFactory\PageFactory\writeFile;
+use function \PgFactory\PageFactory\translateToIdentifier;
+use function \PgFactory\PageFactory\getDir;
+use function \PgFactory\PageFactory\fileTime;
+use function \PgFactory\PageFactory\getFile;
 
 compileJs();
 

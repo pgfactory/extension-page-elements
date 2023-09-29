@@ -1,18 +1,18 @@
 <?php
 
-namespace Usility\PageFactoryElements;
-use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\Utils as Utils;
-use function \Usility\PageFactory\fileTime;
-use function \Usility\PageFactory\getFile;
-use function \Usility\PageFactory\getDir;
-use function \Usility\PageFactory\getDirDeep;
-use function \Usility\PageFactory\mylog;
-use function \Usility\PageFactory\decodeStr;
-use function \Usility\PageFactory\translateToFilename;
-use function \Usility\PageFactory\preparePath;
-use function \Usility\PageFactory\reloadAgent;
-use function \Usility\PageFactory\rrmdir;
+namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\Utils as Utils;
+use function \PgFactory\PageFactory\fileTime;
+use function \PgFactory\PageFactory\getFile;
+use function \PgFactory\PageFactory\getDir;
+use function \PgFactory\PageFactory\getDirDeep;
+use function \PgFactory\PageFactory\mylog;
+use function \PgFactory\PageFactory\decodeStr;
+use function \PgFactory\PageFactory\translateToFilename;
+use function \PgFactory\PageFactory\preparePath;
+use function \PgFactory\PageFactory\reloadAgent;
+use function \PgFactory\PageFactory\rrmdir;
 
 
 const SITEMAP_FILE          = 'site/config/sitemap.txt';

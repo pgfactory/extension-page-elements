@@ -1,7 +1,7 @@
 <?php
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
-use Usility\PageFactoryElements\Events as Events;
+use PgFactory\PageFactoryElements\Events as Events;
 
 /*
  * PageFactory Macro (and Twig Function)

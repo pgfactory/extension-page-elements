@@ -8,7 +8,7 @@
  */
 
 use Kirby\Cms\App as Kirby;
-use Usility\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\PageFactory as PageFactory;
 
 const LOG_FOLDER = 'site/logs/';
 const LOG_FILENAME = 'pagefactory.txt';

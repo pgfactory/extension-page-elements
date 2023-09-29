@@ -1,8 +1,8 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
-use Usility\PageFactory\PageFactory;
+use PgFactory\PageFactory\PageFactory;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
 define('PAGE_ELEMENTS_PATH', 'site/plugins/'.PE_FOLDER_NAME);

@@ -7,17 +7,17 @@
  */
 
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
-use Usility\PageFactory\DataSet as DataSet;
-use Usility\PageFactory\PageFactory;
-use function Usility\PageFactory\fileExt;
-use function Usility\PageFactory\fileGetContents;
-use function Usility\PageFactory\fileTime;
-use function Usility\PageFactory\resolvePath;
-use function Usility\PageFactory\loadFile;
-use Usility\PageFactory\TransVars;
-use function Usility\PageFactory\translateToIdentifier;
+use PgFactory\PageFactory\DataSet as DataSet;
+use PgFactory\PageFactory\PageFactory;
+use function PgFactory\PageFactory\fileExt;
+use function PgFactory\PageFactory\fileGetContents;
+use function PgFactory\PageFactory\fileTime;
+use function PgFactory\PageFactory\resolvePath;
+use function PgFactory\PageFactory\loadFile;
+use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\translateToIdentifier;
 
  // Optional support for propre localization of dates -> requires twig/intl-extra
  //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra

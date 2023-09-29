@@ -1,7 +1,7 @@
 <?php
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
-use Usility\PageFactoryElements\Enlist;
+use PgFactory\PageFactoryElements\Enlist;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/PfyForm.php';

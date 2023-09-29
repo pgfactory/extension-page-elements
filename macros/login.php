@@ -1,7 +1,7 @@
 <?php
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
-use Usility\PageFactoryElements\Login;
+use PgFactory\PageFactoryElements\Login;
 
 /*
  * PageFactory Macro (and Twig Function)

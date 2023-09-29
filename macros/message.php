@@ -1,11 +1,11 @@
 <?php
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
 /*
  * Twig function
  */
 
-use Usility\MarkdownPlus\MarkdownPlus;
+use PgFactory\MarkdownPlus\MarkdownPlus;
 
 function message($argStr = '')
 {

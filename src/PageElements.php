@@ -1,12 +1,12 @@
 <?php
 
-namespace Usility\PageFactoryElements;
-use Usility\PageFactory\PageFactory as PageFactory;
-use Usility\PageFactory\Scss as Scss;
-use function Usility\PageFactory\createHash;
-use function \Usility\PageFactory\getDir;
-use function \Usility\PageFactory\getStaticUrlArg;
-use function \Usility\PageFactory\rrmdir;
+namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\Scss as Scss;
+use function PgFactory\PageFactory\createHash;
+use function \PgFactory\PageFactory\getDir;
+use function \PgFactory\PageFactory\getStaticUrlArg;
+use function \PgFactory\PageFactory\rrmdir;
 
 
 

@@ -11,7 +11,7 @@
  *      ]
  */
 
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
 if (!defined('ARRAY_SUMMARY_NAME')) {
     define('ARRAY_SUMMARY_NAME', '_');

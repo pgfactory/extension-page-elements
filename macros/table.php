@@ -1,6 +1,6 @@
 <?php
-namespace Usility\PageFactory;
-use Usility\PageFactoryElements\DataTable as DataTable;
+namespace PgFactory\PageFactory;
+use PgFactory\PageFactoryElements\DataTable as DataTable;
 
 /*
  * Twig function

@@ -1,17 +1,17 @@
 <?php
 
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
 use Kirby\Exception\InvalidArgumentException;
 use Nette\Forms\Form;
 use Nette\Utils\Html;
 use voku\helper\HtmlDomParser;
 use Kirby\Email\PHPMailer;
-use Usility\MarkdownPlus\Permission;
-use Usility\PageFactoryElements\Events as Events;
-use Usility\PageFactoryElements\DataTable as DataTable;
-use function Usility\PageFactory\var_r as var_r;
-use function Usility\PageFactoryElements\array_splice_associative as array_splice_associative;
+use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactoryElements\Events as Events;
+use PgFactory\PageFactoryElements\DataTable as DataTable;
+use function PgFactory\PageFactory\var_r as var_r;
+use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
 
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =

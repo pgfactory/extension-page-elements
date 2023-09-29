@@ -1,8 +1,8 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
-use Usility\PageFactory\PageFactory;
+use PgFactory\PageFactory\PageFactory;
 
 // ToDo: option to import translations table from a file
 const TRANSLATIONS = [
@@ -83,7 +83,7 @@ function handleUrlToken(): bool
 
     // remove the urlToken:
     $target = PageFactory::$appUrl . PageFactory::$pageId;
-    \Usility\PageFactory\reloadAgent($target);
+    \PgFactory\PageFactory\reloadAgent($target);
     return false;
 } // handleUrlToken
 

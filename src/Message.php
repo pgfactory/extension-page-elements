@@ -1,10 +1,10 @@
 <?php
 
-namespace Usility\PageFactoryElements;
+namespace PgFactory\PageFactoryElements;
 
 
-use Usility\PageFactory\PageFactory;
-use Usility\PageFactory\TransVars;
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\TransVars;
 
 class Message extends PageElements
 {
@@ -16,7 +16,7 @@ class Message extends PageElements
                 $msg = TransVars::translate($msg);
             }
             if ($mdCompile) {
-                $msg = \Usility\PageFactory\compileMarkdown($msg);
+                $msg = \PgFactory\PageFactory\compileMarkdown($msg);
             }
 
             $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";

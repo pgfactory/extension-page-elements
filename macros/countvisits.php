@@ -1,5 +1,5 @@
 <?php
-namespace Usility\PageFactory;
+namespace PgFactory\PageFactory;
 
 
 const VISITS_FILE       = 'site/logs/visits.yaml';
