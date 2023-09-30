@@ -109,6 +109,7 @@ return array(
     'Nette\\Utils\\IHtmlString' => $vendorDir . '/nette/utils/src/compatibility.php',
     'Nette\\Utils\\Image' => $vendorDir . '/nette/utils/src/Utils/Image.php',
     'Nette\\Utils\\ImageException' => $vendorDir . '/nette/utils/src/Utils/exceptions.php',
+    'Nette\\Utils\\ImageType' => $vendorDir . '/nette/utils/src/Utils/ImageType.php',
     'Nette\\Utils\\Json' => $vendorDir . '/nette/utils/src/Utils/Json.php',
     'Nette\\Utils\\JsonException' => $vendorDir . '/nette/utils/src/Utils/exceptions.php',
     'Nette\\Utils\\ObjectHelpers' => $vendorDir . '/nette/utils/src/Utils/ObjectHelpers.php',
@@ -120,5 +121,4 @@ return array(
     'Nette\\Utils\\Type' => $vendorDir . '/nette/utils/src/Utils/Type.php',
     'Nette\\Utils\\UnknownImageFileException' => $vendorDir . '/nette/utils/src/Utils/exceptions.php',
     'Nette\\Utils\\Validators' => $vendorDir . '/nette/utils/src/Utils/Validators.php',
-    'Stringable' => $vendorDir . '/myclabs/php-enum/stubs/Stringable.php',
 );
