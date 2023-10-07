@@ -171,7 +171,7 @@ pfy-anti-spam-warning:
   de: |
     Ihre Eingaben konnten nicht verarbeitet werden weil serverseitig ein Fehler aufgetreten ist.<br>
     Bitte senden Sie Ihr Angaben per E-Mail an den {{ webmaster_link }}.<br>
-    Wir entschuldigen uns für die Unannahmlichkeiten.
+    Wir entschuldigen uns für die Unannehmlichkeiten.
   _:  |
     Your input could not be processed due to an error condition on the server.<br>
     Please send your request by e-mail to the {{ webmaster_link }}<br>
