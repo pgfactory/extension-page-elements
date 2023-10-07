@@ -149,6 +149,7 @@ class PfyForm extends Form
     {
         $this->formElements = $formElements;
         $this->fireRenderEvents();
+
         $html = $this->renderFormHead();
         $html .= $this->renderFormFields();
         $html .= $this->renderFormTail();
@@ -356,7 +357,6 @@ class PfyForm extends Form
             $elem->setHtmlAttribute('data-check', $antiSpam);
             $elem->setHtmlAttribute('aria-hidden', 'true');
             $elem->setHtmlAttribute('tabindex', '-1');
-            $elem->setOmitted();
             unset($this->fieldNames[$name]);
         }
 
@@ -581,6 +581,7 @@ class PfyForm extends Form
 
         if (is_string($dataRec)) {
             // string means spam detected:
+            $this->showForm = false;
             return "<div class='pfy-form-error'>$dataRec</div>\n";
         }
 
@@ -699,10 +700,10 @@ class PfyForm extends Form
         $bypassedElements = array_keys($this->bypassedElements);
         foreach ($dataRec as $name => $value) {
             // handle anti-spam field:
-            if ($this->formElements[$name]['args']['antiSpam'] ?? false) {
+            if ($this->formElements[$name]['antiSpam'] ?? false) {
                 if ($value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
-                    return 'pfy-anti-spam-warning';
+                    return TransVars::resolveVariables('{{ pfy-anti-spam-warning }}');
                 }
                 unset($dataRec[$name]);
             }
@@ -1628,6 +1629,7 @@ EOT;
     public function renderFormHead(): string
     {
         $html = '';
+
         // schedule option may have found no matching event, in this case show message:
         if ($this->matchingEventAvailable === false) {
             $this->showForm = false;
@@ -1781,7 +1783,6 @@ EOT;
     {
         // add standard hidden fields to identify data: which form, which data-record:
         $html = $this->_renderFormTail();
-
         $msg = '';
         if ($this->isSuccess()) {
             $msg = $this->handleReceivedData();

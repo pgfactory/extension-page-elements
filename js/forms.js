@@ -170,7 +170,7 @@ const pfyFormsHelper = {
         return;
       }
       e.preventDefault();
-      const check = pfyFormsHelper.checkHoneypot(form);
+      const check = pfyFormsHelper.checkHonigtopf(form);
       if (!check) {
         e.stopPropagation();
         return;
@@ -381,7 +381,7 @@ const pfyFormsHelper = {
   }, // prefillComputedFields
 
 
-  checkHoneypot(form) {
+  checkHonigtopf(form) {
     let check = true;
     const checkElement = form.querySelector('[data-check]');
     if (checkElement) {
@@ -397,7 +397,7 @@ const pfyFormsHelper = {
       }
     }
     return check;
-  }, // checkHoneypot
+  }, // checkHonigtopf
 
 
   openCheckPopup(form, referenceValue, referenceName) {
@@ -423,6 +423,10 @@ const pfyFormsHelper = {
     }).then(
       function() {
         if (referenceValue.charAt(0).toLowerCase() === pfyResponseValue.toLowerCase()) {
+          const honigtopf = form.querySelector('[tabindex="-1"]');
+          if (honigtopf) {
+            honigtopf.value = '';
+          }
           pfyFormsHelper.doSubmitForm(form);
         } else {
           pfyAlert({
