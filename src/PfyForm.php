@@ -1735,7 +1735,7 @@ EOT;
                 $html .= <<<EOT
 <div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
 <!-- pfy-elem-wrapper -->
-<div class="pfy-elem-wrapper pfy-$type$class">
+<div class="pfy-elem-wrapper pfy-$type $class">
 <span class="pfy-input-wrapper">
 $input
 </span>
@@ -1753,7 +1753,7 @@ EOT;
                 $input = "<span class='pfy-input-wrapper'>$input</span>";
                 $html .= <<<EOT
 <!-- pfy-elem-wrapper -->
-<div class="pfy-elem-wrapper pfy-$type$class">
+<div class="pfy-elem-wrapper pfy-$type $class">
 $label
 $input
 </div><!-- /pfy-elem-wrapper -->
