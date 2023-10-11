@@ -1,3 +1,14 @@
+# OS files
+.DS_Store
+
+# intellij
+.idea
+*.iml
+
+# composer
+composer.lock
+vendor/
+
 # ignore everything that starts with '#' (or '.#', the hidden variant):
 /**/[#]*
 /**/.[#]*
@@ -6,4 +17,5 @@ assets/css/[-]*
 assets/js/[-]*
 
 # Note: any files with leading '#' are treated as 'commented out' by PageFactory
+
 
