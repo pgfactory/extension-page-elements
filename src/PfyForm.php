@@ -703,7 +703,7 @@ class PfyForm extends Form
             if ($this->formElements[$name]['antiSpam'] ?? false) {
                 if ($value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
-                    return TransVars::resolveVariables('{{ pfy-anti-spam-warning }}');
+                    return TransVars::getVariable('pfy-anti-spam-warning');
                 }
                 unset($dataRec[$name]);
             }
@@ -1629,6 +1629,10 @@ EOT;
     public function renderFormHead(): string
     {
         $html = '';
+
+        if ($this->isSuccess()) {
+            $html .= $this->handleReceivedData();
+        }
 
         // schedule option may have found no matching event, in this case show message:
         if ($this->matchingEventAvailable === false) {
