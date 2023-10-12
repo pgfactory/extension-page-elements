@@ -219,7 +219,7 @@ EOT;
             // 'password' received -> validate:
             try {
                 kirby()->auth()->login($email, $password);
-                $str = self::renderMsg('pfy-login-success');
+                $str = self::renderMsg('pfy-login-success', $email);
                 mylog("$email successfully logged in", LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, $str);
 
@@ -248,9 +248,11 @@ EOT;
      * @param string $str
      * @return string
      */
-    private static function renderMsg(string $str): string
+    private static function renderMsg(string $str, $username = ''): string
     {
-        $username = PageFactory::$userName;
+        if (!$username) {
+            $username = PageFactory::$userName;
+        }
         $str = TransVars::getVariable($str);
         return str_replace('{{ username }}', $username, $str);
     } // renderMsg
