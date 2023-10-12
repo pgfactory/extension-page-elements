@@ -485,15 +485,15 @@ pfy-login-reset-pw:
 
 pfy-login-header:
   de: |
-    <h2>Anmelden</h2>
+    Anmelden
   _:  |
-    <h2>Login</h2>
+    Login
 
 pfy-login-passwordless-header:
   de: |
-    <h2>Anmelden ohne Passwort</h2>
+    Anmelden ohne Passwort
   _:  |
-    <h2>Passwordless Login</h2>
+    Passwordless Login
 
 pfy-login-success:
   de: 'Sie sind jetzt angemeldet als {{ username }}.'
@@ -537,12 +537,25 @@ pfy-login-username-info:
   _:  Your e-mail or username
 
 pfy-login-button:
-  de: Jetzt anmelden
-  _:  Login now
+  de: Anmelden
+  _:  Login
+
+pfy-login-pwless-button:
+  de: Code bestellen
+  _:  Request Code
+
+pfy-login-code-button:
+  de: Code absenden
+  _:  Send Code
+
+pfy-back:
+  de: Zurück
+  _:  Go back
+
 
 pfy-login-enter-code-header:
-  de: <h2>Zugangs-Code</h2>
-  _: <h2>Access Code</h2>
+  de: Zugangs-Code
+  _: Access Code
 
 pfy-login-enter-code-explanation:
   de: 'Zugangs-Code, den Sie demnächst per E-Mail erhalten werden:'

@@ -13,7 +13,9 @@ function login($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'mode' => ['[login,passwordless] Defines the login mode, either with username&password or passwordless',
+            'mode' => ['[login,passwordless,username-password-only] Defines the login mode. '.
+                'Default is a form supporting both username&password and passwordless.'.
+                'Use "username-password-only" if you don\'t want passwordless option.',
                 'login'],
             'nextPage' => ['Defines the page which to open after login', './'],
         ],

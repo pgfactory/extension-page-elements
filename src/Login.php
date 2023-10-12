@@ -14,8 +14,7 @@ class Login
     private static $selfLink = './';
     private static $nextPage = './';
     private static $challengePending = false;
-    private static $loginHeader = '';
-    private static $mode = 'login';
+    private static $loginMode;
 
     /**
      * @param array $options
@@ -38,7 +37,8 @@ class Login
             self::$nextPage = $nextPage;
         }
 
-        self::$mode = ($options['mode']??false) ?: 'login';
+        $defaultLoginMode = kirby()->option('pgfactory.pagefactory-elements.options.login-mode', 'login');
+        self::$loginMode = ($options['mode']??false) ?: $defaultLoginMode;
     } // init
 
 
@@ -49,20 +49,42 @@ class Login
     public static function render(): string
     {
         $wrapperClass = '';
-        if ($user = kirby()->user()) {
-            $html = '{{ pfy-logged-in-as }} '. $user->nameOrEmail();
+        if ($username = PageFactory::$userName) {
+            $html = <<<EOT
+<div class='pfy-already-logged-in'>
+    <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
+    <p><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
+</div>
+EOT;
+
 
         } else {
-            $html = self::renderLoginForm();
-            $wrapperClass = self::$challengePending? ' pfy-login-code' : '';
+            switch (self::$loginMode) {
+                case 'username-password-only':
+                    $html = self::renderLoginForm();
+                    $wrapperClass = 'pfy-login-unpw';
+                    break;
+                case 'passwordless':
+                    $html = self::renderCombinedLoginForm();
+                    $wrapperClass = 'pfy-login-otc';
+                    break;
+                default: // 'combined login'
+                    $html = self::renderCombinedLoginForm();
+                    $wrapperClass = 'pfy-login-unpw';
+                    break;
+            }
+            if (self::$challengePending) {
+                $wrapperClass = 'pfy-login-code';
+            }
         }
 
+
         $html = <<<EOT
-<div class='pfy-login-wrapper pfy-h-v-centered$wrapperClass'>
-<div>
+<div class='pfy-login-wrapper pfy-h-v-centered $wrapperClass'>
+    <div>
 $html
-</div>
-</div>
+    </div>
+</div><!-- /pfy-login-wrapper -->
 EOT;
 
         $html = TransVars::resolveVariables($html);
@@ -73,77 +95,98 @@ EOT;
 
 
     /**
+     * Renders a login firm that supports un-pw and passwordless login
      * @param string $message
-     * @return string|null
+     * @return string
      * @throws \Exception
      */
-    private static function renderLoginForm(string $message = ''): string|null
+    private static function renderCombinedLoginForm(string $message = ''): string
     {
-        self::$loginHeader = '{{ pfy-login-header }}';
-        $url2 = PageFactory::$appUrl.'panel/reset-password';
-        $label2 = '{{ pfy-login-reset-pw }}';
-        $url1 = urlAppendArg(self::$selfLink, 'login-otc');
-
-        $info = '{{ pfy-login-username-info }}';
+        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
+        $labelChangePw = '{{ pfy-login-reset-pw }}';
 
         $formOptions = [
-            'action' => self::$selfLink,
+            'action'             => self::$selfLink,
             'showDirectFeedback' => false,
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
+            'formTop'            => $message,
         ];
-        if ($message) {
-            $formOptions['formTop']  = $message;
-        }
 
-        if (isset($_GET['login-otc'])) {
-            $mode = 'login-otc';
-        } elseif (isset($_GET['login-pw'])) {
-            $mode = 'login-pw';
-        } else {
-            $mode = (self::$mode === 'passwordless') ? 'login-otc': 'login-pw';
-        }
+        $formOptions['formTop']  .= '<span class="pfy-login-code">{{ pfy-login-enter-code-explanation }}</span>';
 
-        if ($_POST['email']??false && !($_POST['password']??false)) {
-            $formOptions['class']    = 'pfy-login-otc';
-            $formOptions['formTop']  = '{{ pfy-login-enter-code-explanation }}';
-            self::$loginHeader   = '{{ pfy-login-enter-code-header }}';
-            $label1 = $label2 = '';
+        $loginHeader   = '<h2 class="pfy-login-otc">{{ pfy-login-passwordless-header }}</h2>';
+        $loginHeader  .= '<h2 class="pfy-login-unpw">{{ pfy-login-header }}</h2>';
+        $loginHeader  .= '<h2 class="pfy-login-code">{{ pfy-login-enter-code-header }}</h2>';
 
-        } elseif ($mode === 'login-otc') {
-            $formOptions['class']    = 'pfy-login-otc';
-            self::$loginHeader   = '{{ pfy-login-passwordless-header }}';
-            $url1 = urlAppendArg(self::$selfLink, 'login-pw');
-            $label1 = '{{ pfy-login-default }}';
-            $info = '{{ pfy-login-passwordless-info }}';
+        $labelLoginPwLess = '{{ pfy-login-with-otc }}';
+        $infoEmail  = '<span class="pfy-login-unpw">{{ pfy-login-username-info }}</span>';
+        $infoEmail .= '<span class="pfy-login-otc">{{ pfy-login-passwordless-info }}</span>';
 
-        } elseif ($mode === 'login-pw') {
-            self::$loginHeader   = '{{ pfy-login-header }}';
-            $url1 = urlAppendArg(self::$selfLink, 'login-otc');
-            $label1 = '{{ pfy-login-with-otc }}';
-        }
+        $labelLoginUnPw = '{{ pfy-login-default }}';
 
         $formElements = [
-            'email'     => ['label' => 'E-Mail:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $info, 'class' => 'pfy-email'],
+            'email'     => ['label' => 'E-Mail:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
             'password'  => ['label' => 'Password:', 'name' => 'pfy-login-password', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
             'code'      => ['label' => 'Code:',     'name' => 'pfy-login-code',      'class' => 'pfy-login-code'],
             'cancel'    => ['next' => self::$nextPage],
-            'submit'    => ['label' => '{{ pfy-login-button }}'],
+            'subm-unpw' => ['type' => 'submit', 'label' => '{{ pfy-login-button }}', 'class' => 'pfy-login-unpw'],
+            'subm-otc'  => ['type' => 'submit', 'label' => '{{ pfy-login-pwless-button }}', 'class' => 'pfy-login-otc'],
+            'subm-code' => ['type' => 'submit', 'label' => '{{ pfy-login-code-button }}', 'class' => 'pfy-login-code'],
         ];
 
-        if ($label1) {
-            $formOptions['formBottom'] = <<<EOT
+        $formOptions['formBottom'] = <<<EOT
 <div class="pfy-login-mode-links">
-<span class="pfy-login-pwless-link"><a href="$url1">$label1</a></span>
-<span class="pfy-login-pw-link"><a href="$url2">$label2</a></span>
+<span class="pfy-login-pwless-link pfy-login-unpw"><a id="pfy-login-pwless" href="#">$labelLoginPwLess</a></span>
+<span class="pfy-login-pw-link pfy-login-otc"><a id="pfy-login-pw" href="#">$labelLoginUnPw</a></span>
+<span class="pfy-login-chpw-link"><a href="$urlChangePw">$labelChangePw</a></span>
 </div>
 
 EOT;
-        }
         // now render the form:
         $form = new PfyForm($formOptions);
         $html = $form->renderForm($formElements);
-        $html = self::$loginHeader."\n$html";
+        $html = $loginHeader."\n$html";
+        return $html;
+    } // renderCombinedLoginForm
+
+
+    /**
+     * Renders a simple username/password login form
+     * @param string $message
+     * @return string
+     * @throws \Exception
+     */
+    private static function renderLoginForm(string $message = ''): string
+    {
+        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
+        $labelChangePw = '{{ pfy-login-reset-pw }}';
+
+        $formOptions = [
+            'action'             => self::$selfLink,
+            'showDirectFeedback' => false,
+            'callback'           => function($data) { return self::loginCallback($data); },
+            'wrapperClass'       => 'pfy-login-box',
+            'formTop'            => $message,
+        ];
+
+        $formElements = [
+            'email'     => ['label' => 'E-Mail:',   'name' => 'pfy-login-email', 'type' => 'text'],
+            'password'  => ['label' => 'Password:', 'name' => 'pfy-login-password', 'type' => 'password'],
+            'cancel'    => ['next' => self::$nextPage],
+            'submit'    => ['type' => 'submit', 'label' => '{{ pfy-login-button }}'],
+        ];
+
+        $formOptions['formBottom'] = <<<EOT
+<div class="pfy-login-mode-links">
+<span class="pfy-login-chpw-link"><a href="$urlChangePw">$labelChangePw</a></span>
+</div>
+
+EOT;
+        // now render the form:
+        $html = "<h2>{{ pfy-login-header }}</h2>\n";
+        $form = new PfyForm($formOptions);
+        $html .= $form->renderForm($formElements);
         return $html;
     } // renderLoginForm
 
@@ -207,7 +250,7 @@ EOT;
      */
     private static function renderMsg(string $str): string
     {
-        $username = kirby()->user()->nameOrEmail();
+        $username = PageFactory::$userName;
         $str = TransVars::getVariable($str);
         return str_replace('{{ username }}', $username, $str);
     } // renderMsg

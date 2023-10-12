@@ -4,13 +4,37 @@
 .pfy-default-styling {
 
   .pfy-login-wrapper {
+      &.pfy-login-unpw {
+        .pfy-login-otc,
+        .pfy-login-code {
+        display: none;
+      }
+    }
+
+      &.pfy-login-otc {
+        .pfy-login-unpw,
+        .pfy-login-code,
+        .pfy-password {
+        display: none;
+      }
+    }
+
+      &.pfy-login-code {
+        .pfy-login-otc,
+        .pfy-login-unpw,
+        .pfy-elem-wrapper.pfy-email,
+        .pfy-elem-wrapper.pfy-password {
+        display: none;
+      }
+    }
+
     --form-label-width: 8em;
     > div {
       padding: 1em 3em;
       border: 1px solid #ddd;
     }
     .pfy-form {
-      width: 25em;
+      width: 23em;
     }
     .pfy-login-mode-links {
       span {
@@ -21,27 +45,10 @@
         padding-right: 0;
       }
     }
-    .pfy-login-otc {
-      .pfy-password,
-      .pfy-login-code {
-        display: none;
-      }
-    }
-    &:not(.pfy-login-code) {
-      .pfy-login-code {
-        display: none;
-      }
-    }
-    &.pfy-login-code {
-      .pfy-login-code {
-        display: block;
-      }
-      .pfy-email,
-      .pfy-password,
-      .pfy-login-mode-links {
-        display: none;
-      }
-    }
-  }
 
-}
+    .pfy-already-logged-in {
+      text-align: center;
+    }
+  } // .pfy-login-wrapper
+
+} // .pfy-default-styling

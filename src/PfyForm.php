@@ -1745,7 +1745,8 @@ $input
 EOT;
 
             } elseif (str_contains(',cancel,submit,reset,', ",$type,")) {
-                $elem->setHtmlAttribute('class', "pfy-$type button");
+                $cls = $this->formElements[$_name]['class']??'';
+                $elem->setHtmlAttribute('class', "pfy-$type button $cls");
                 $h = (string)$elem->getControl();
                 $formButtons[] = $h;
 
@@ -1765,7 +1766,7 @@ EOT;
             $html .= $this->renderFormHint();
             $btns = implode(' ', $formButtons);
             $html .= <<<EOT
-<div class="pfy-elem-wrapper pfy-cancel button pfy-submit">
+<div class="pfy-elem-wrapper button pfy-cancel pfy-submit">
 <span class="pfy-input-wrapper">$btns</span>
 </div>
 
