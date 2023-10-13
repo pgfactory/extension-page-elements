@@ -58,7 +58,6 @@ const pfyFormsHelper = {
     const pwButtons = form.querySelectorAll('.pfy-form-show-pw ');
     if (pwButtons) {
       pwButtons.forEach(function (pwButton) {
-        mylog(pwButton);
         pwButton.addEventListener('click', function (e) {
           e.stopPropagation();
           e.stopImmediatePropagation();
@@ -67,12 +66,10 @@ const pfyFormsHelper = {
           const wrapper = btn.closest('.pfy-input-wrapper');
           const pwInput = wrapper.querySelector('input');
           if (btn.classList.contains('show')) {
-            mylog('hide password');
             btn.classList.remove('show');
             btn.setAttribute('aria-pressed', false);
             pwInput.setAttribute('type', 'password');
           } else {
-            mylog('show password');
             btn.classList.add('show');
             btn.setAttribute('aria-pressed', true);
             pwInput.setAttribute('type', 'text');

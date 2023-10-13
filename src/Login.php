@@ -43,10 +43,11 @@ class Login
 
 
     /**
+     * @param string $message
      * @return string
      * @throws \Exception
      */
-    public static function render(): string
+    public static function render(string $message = ''): string
     {
         $wrapperClass = '';
         if ($username = PageFactory::$userName) {
@@ -61,15 +62,15 @@ EOT;
         } else {
             switch (self::$loginMode) {
                 case 'username-password-only':
-                    $html = self::renderLoginForm();
+                    $html = self::renderLoginForm($message);
                     $wrapperClass = 'pfy-login-unpw';
                     break;
                 case 'passwordless':
-                    $html = self::renderCombinedLoginForm();
+                    $html = self::renderCombinedLoginForm($message);
                     $wrapperClass = 'pfy-login-otc';
                     break;
                 default: // 'combined login'
-                    $html = self::renderCombinedLoginForm();
+                    $html = self::renderCombinedLoginForm($message);
                     $wrapperClass = 'pfy-login-unpw';
                     break;
             }
@@ -126,9 +127,9 @@ EOT;
         $labelLoginUnPw = '{{ pfy-login-default }}';
 
         $formElements = [
-            'email'     => ['label' => 'E-Mail:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
-            'password'  => ['label' => 'Password:', 'name' => 'pfy-login-password', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
-            'code'      => ['label' => 'Code:',     'name' => 'pfy-login-code',      'class' => 'pfy-login-code'],
+            'email'     => ['label' => '{{ pfy-login-email }}:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
+            'password'  => ['label' => '{{ pfy-login-password }}:', 'name' => 'pfy-login-password', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
+            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfy-login-code',      'class' => 'pfy-login-code'],
             'cancel'    => ['next' => self::$nextPage],
             'subm-unpw' => ['type' => 'submit', 'label' => '{{ pfy-login-button }}', 'class' => 'pfy-login-unpw'],
             'subm-otc'  => ['type' => 'submit', 'label' => '{{ pfy-login-pwless-button }}', 'class' => 'pfy-login-otc'],

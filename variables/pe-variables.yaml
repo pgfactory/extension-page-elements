@@ -463,6 +463,18 @@ pfy-logout:
   de: 'Abmelden'
   _:  Logout
 
+pfy-login-email:
+  de: E-Mail
+  _:  E-Mail
+
+pfy-login-password:
+  de: Passwort
+  _:  Password
+
+pfy-login-code:
+  de: Code
+  _:  Code
+
 pfy-logged-in-label:
   de: 'Angemeldet als '
   _:  'Logged in as '
@@ -561,6 +573,14 @@ pfy-login-enter-code-explanation:
   de: 'Zugangs-Code, den Sie demnächst per E-Mail erhalten werden:'
   de2: 'Zugangs-Code, den du demnächst per E-Mail erhalten wirst:'
   _:  'Access Code which you should receive any moment by e-mail:'
+
+
+pfy-restricted-page:
+  de: Diese Seite ist nicht allgemein zugänglich.<br>Melden Sie sich bitte zuerst an.
+  de2: Diese Seite ist nicht allgemein zugänglich.<br>Melde dich bitte zuerst an.
+  _:   This page is not publicly accessible.<br>Please sign in to see the page.
+
+
 
 
 # === Events ==========================================
