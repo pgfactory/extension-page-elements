@@ -1211,6 +1211,10 @@ EOT;
      */
     private function handleFormBannerValues(string $str): string
     {
+        foreach ($this->auxBannerValues as $key => $value) {
+            $str = str_replace("%$key%", $value, $str);
+        }
+
         // %deadline%:
         if (str_contains($str, '%deadline%') && ($deadline = $this->formOptions['deadline'])) {
             $deadlineStr = Utils::timeToString($deadline);
@@ -1306,7 +1310,9 @@ EOT;
             return;
         }
         if (!($src = $eventOptions['src']??false)) {
-            throw new \Exception("Form: option 'schedule' without option 'file'.");
+            if (!($src = $eventOptions['file']??false)) { // allow 'file' as synonyme for 'src'
+                throw new \Exception("Form: option 'schedule' without option 'src'.");
+            }
         }
         $this->matchingEventAvailable = false;
 
