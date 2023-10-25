@@ -386,11 +386,15 @@ class Events extends DataSet
         $category = $category?: $this->options['category']??false;
         $templatesFile = $this->options['templatesFile']??false;
         $sortedData = $this->getData($category);
+        if (isset($this->options['offset']) && $offset === 0) {
+            $offset = $this->options['offset'];
+        }
         $nextEventInx = $this->findEvent($sortedData, $offset);
         if ($nextEventInx === false) {
             return false;
         }
         $nextEventRec = $sortedData[$nextEventInx];
+        $eventBanner = '';
 
         // prepare event banner:
         if ($templatesFile) {
