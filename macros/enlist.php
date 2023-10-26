@@ -40,6 +40,10 @@ function enlist($args = '')
                 'somebody enlists.', false],
             'notifyOwner' =>	['[email] If set, a notification mail will be sent to this address when '.
                 'somebody makes a an entry/modification to the list.', false],
+            'notifyActivatedReserve' =>	['[bool] If true, a notification mail is sent to the person '.
+                'who becomes active from a reserve position after a position ahead of that has been deleted. '.
+                'To customize, define variables ``pfy-enlist-notify-activated-reserve-subject`` and '.
+                '``pfy-enlist-notify-activated-reserve-subject``.', false],
 
             'obfuscate' =>	['[false|placeholder|initials] If true, placeholders are shown for existing entries '.
                 'instead of the names. If "initials", the names initials are shown.', false],
@@ -49,6 +53,8 @@ function enlist($args = '')
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people.', false],
             'adminMail' =>	['[string] Synonyme for adminEmail.', false],
+            'output' =>	['[bool] If true, no output is rendered -> used to set persisent options: '.
+                '[freezeTime,sendConfirmation,notifyOwner,obfuscate,admin,adminEmail,class,deadline].', true],
         ],
         'summary' => <<<EOT
 
@@ -62,6 +68,18 @@ By default, the tool requests name and e-mail addres for each entry. People can 
 configured accordingly. The time during which they can delete their entry can be limited, e.g. to 24 hours.
 
 If desired, you can define custom fields which will also be presented in the list.
+
+### Presetting Persistent Options
+
+If you need multiple enlistment fields with common options, you can preset them via a special call of the macro.
+
+-> use option ``output: false``.
+
+Persistent options:  
+freezeTime, sendConfirmation, notifyOwner, obfuscate, admin, adminEmail, class, deadline
+
+Example:
+    \{{ enlist(freezeTime:2, output:false) }}
 
 EOT,
     ];
@@ -79,9 +97,10 @@ EOT,
         $options['adminEmail'] = $options['adminMail'];
     }
     unset($options['adminMail']);
+    unset($options['inx']);
 
     $enlist = new Enlist($options, $auxOptions);
-    if ($options['title']) {
+    if ($options['output']) {
         $html .= $enlist->render();
     }
 

@@ -406,6 +406,36 @@ pfy-enlist-del-notification-body:
 
     The webmaster
 
+pfy-enlist-notify-activated-reserve-subject:
+  de: 'Einschreibeliste %topic% auf %host%'
+  _:  'Entry list %topic% on %host%'
+
+pfy-enlist-notify-activated-reserve-body:
+  de: |
+    Hallo %name%
+    Sie waren als Reserve in der Einschreibeliste %topic% eingetragen.
+
+    Sie sind nun in den aktiven Bereich vorgerückt, nachdem eine Position vor Ihnen gelöscht wurde.
+
+    Der Webmaster
+
+  de2: |
+    Hallo %name%
+    Du warst als Reserve in der Einschreibeliste %topic% eingetragen.
+
+    Du bist nun in den aktiven Bereich vorgerückt, nachdem eine Position vor dir gelöscht wurde.
+
+    Der Webmaster
+
+  _:  |
+    Hello %name%
+   
+    You were registered in the entry list %topic% on a reserve position.
+
+    Now you have been advanced to an active position, since a position ahead of you has been cleared.
+
+    The webmaster
+
 pfy-enlist-visitor-confirmation-subject:
   de: |
     Anmeldebestätigung

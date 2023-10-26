@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PfyForm;
@@ -9,7 +10,6 @@ use PgFactory\PageFactory\Utils;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\createHash;
-use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\parseArgumentStr;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
@@ -37,10 +37,12 @@ class Enlist
     private $datasetName;
     private $deadlineExpired = false;
     private $isEnlistAdmin = false;
+    private $titleClass = '';
     private $pagePath;
     private $pageId;
     private $fieldNames = [];
     private $customFields = [];
+    private $customFields0 = [];
     private $customFieldsEmpty = [];
     protected static $session;
 
@@ -69,7 +71,8 @@ class Enlist
 
     /**
      * @param $options
-     * @throws \Exception
+     * @param $customFields
+     * @throws InvalidArgumentException
      */
     public function __construct($options, $customFields)
     {
@@ -83,11 +86,20 @@ class Enlist
         if ($options['description']??false) {
             $options['info'] = $options['description'];
         }
+
+        $this->parseOptions($options);
+
         $this->fieldNames = ['#', '&nbsp;', 'Name'];
-//???
+
         if ($customFields) {
-            $nCustFiels = sizeof($customFields);
+            $this->customFields0 = $customFields;
+            $nCustFields = sizeof($customFields);
             foreach ($customFields as $key => $customField) {
+                if (($customField['hidden']??false) && !$this->isEnlistAdmin) {
+                    unset($customFields[$key]);
+                    $nCustFields--;
+                    continue;
+                }
                 // special case 'checkbox options':
                 if ((($customField['type']??'text') === 'checkbox') ||
                             ($customField['options']??false)) {
@@ -95,7 +107,7 @@ class Enlist
                     $customOptions = parseArgumentStr($customField['options']??'');
                     $customFields[$key]['options'] = $customOptions;
                     $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
-                    $nCustFiels += sizeof($customOptions) - 1;
+                    $nCustFields += sizeof($customOptions) - 1;
                 } else {
                     $key = rtrim($customField['label']??$key, ':');
                     $this->fieldNames[] = $key;
@@ -103,24 +115,12 @@ class Enlist
             }
             $this->customFields = $customFields;
 
-            $this->customFieldsEmpty = array_fill(0, $nCustFiels, '');
+            $this->customFieldsEmpty = array_fill(0, $nCustFields, '');
             $this->fieldNames[] = '&nbsp;';
         }
 
-        $this->parseOptions($options);
-
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
-
-        if ($permissionQuery = $this->admin) {
-            if ($permissionQuery === true) {
-                $permissionQuery = 'localhost|loggedin';
-            }
-            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
-            if ($this->isEnlistAdmin && ($this->inx === 1)) {
-                PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
-            }
-        }
     } // __construct
 
 
@@ -163,7 +163,7 @@ class Enlist
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setname="$this->datasetName">
-<div class='pfy-enlist-title'><span>$this->title</span>$headButtons</div>
+<div class='pfy-enlist-title$this->titleClass'><span>$this->title</span>$headButtons</div>
 $html
 </div>
 EOT;
@@ -177,7 +177,6 @@ EOT;
      */
     private function parseOptions(array $options): void
     {
-        $this->options = $options;
         if (($this->inx = $options['inx'] ?? false) === false) {
             if (isset($GLOBALS['pfyEnlistInx'])) {
                 $this->inx = $GLOBALS['pfyEnlistInx']++;
@@ -185,6 +184,7 @@ EOT;
                 $this->inx = $GLOBALS['pfyEnlistInx'] = 1;
             }
         }
+        $this->options = $options;
 
         $title = $title0 = $this->options['title'] ?? '';
 
@@ -212,6 +212,20 @@ EOT;
             } else {
                 $this->datasetName = "List-$this->inx";
             }
+        }
+
+        if ($permissionQuery = $this->admin) {
+            if ($permissionQuery === true) {
+                $permissionQuery = 'localhost|loggedin';
+            }
+            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
+            if ($this->isEnlistAdmin && ($this->inx === 1)) {
+                PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
+            }
+        }
+
+        if (!$this->title && !$this->isEnlistAdmin) {
+            $this->titleClass = ' pfy-empty-title';
         }
 
         // determine whether list is past deadline:
@@ -269,6 +283,10 @@ EOT;
         }
         $hClasses[] = 'pfy-enlist-icon pfy-enlist-icon-2';
         foreach ($this->fieldNames as $i => $headElem) {
+            $hidden = $this->customFields[$headElem]['hidden']??false;
+            if ($hidden && !$this->isEnlistAdmin) {
+                continue;
+            }
             if ($i !== $n-1) {
                 $thead .= "      <th class='{$hClasses[$i]}'>$headElem</th>\n";
             } else {
@@ -420,7 +438,7 @@ EOT;
 
 
     /**
-     * @param string $setName
+     * @param string|false $setName
      * @return array
      */
     private function getDataset(string|false $setName = false): array
@@ -430,6 +448,7 @@ EOT;
         if (!$setName) {
             $setName = $this->datasetName;
             $nTotalSlots = $this->nTotalSlots;
+            $nReserveSlots = $this->nReserveSlots;
             $initialRun = true;
         }
 
@@ -438,6 +457,7 @@ EOT;
             $dataset = [
                 'title' => $this->title,
                 'nSlots' => $nTotalSlots,
+                'nReserveSlots' => $nReserveSlots,
                 ];
             if ($this->freezeTime) {
                 $dataset['freezeTime'] = $this->freezeTime;
@@ -547,7 +567,7 @@ EOT;
         ];
         // optional custom fields:
         $i = 1;
-        foreach ($this->customFields as $fieldName => $rec) {
+        foreach ($this->customFields0 as $fieldName => $rec) {
             // special case 'checkbox options':
             if ($rec['options']??false) {
                 $rec['type'] = 'checkbox';
@@ -633,6 +653,10 @@ EOT;
     } // deObfuscateKey
 
 
+    /**
+     * @param array|false $dataset
+     * @return int
+     */
     private function countEntries(array|false $dataset = false): int
     {
         if (!$dataset) {
@@ -697,6 +721,15 @@ EOT;
     } // callback
 
 
+    /**
+     * @param array $data
+     * @param array $dataset
+     * @param string $context
+     * @param mixed $setName
+     * @param string $message
+     * @return void
+     * @throws \Exception
+     */
     private function handleNewEntry(array $data, array $dataset, string $context, mixed $setName, string $message): void
     {
         $name = $data['Name'] ?? '#####';
@@ -725,33 +758,7 @@ EOT;
             }
             $dataset[$prevElemId] = $data;
         } else {
-            $nSlots = $dataset['nSlots'];
-            unset($dataset['nSlots']);
-
-            if (isset($dataset['freezeTime'])) {
-                $freezeTime = $dataset['freezeTime'];
-                unset($dataset['freezeTime']);
-            }
-            $title = $dataset['title'];
-            unset($dataset['title']);
-
-            if (isset($dataset['deadlineExpired'])) {
-                $deadlineExpired = $dataset['deadlineExpired'];
-                unset($dataset['deadlineExpired']);
-            }
-
-            $data['_elemKey'] = createHash();
-            $dataset[] = $data;
-            $dataset = array_values($dataset);
-
-            $dataset['title'] = $title;
-            $dataset['nSlots'] = $nSlots;
-            if (isset($freezeTime)) {
-                $dataset['freezeTime'] = $freezeTime;
-            }
-            if (isset($deadlineExpired)) {
-                $dataset['deadlineExpired'] = $deadlineExpired;
-            }
+            $dataset = $this->modifyDataSet($dataset, data: $data);
         }
 
         // double-check against max number of entries:
@@ -774,6 +781,16 @@ EOT;
     } // handleNewEntry
 
 
+    /**
+     * @param array $dataset
+     * @param string $elemId
+     * @param string $message
+     * @param array $data
+     * @param string $context
+     * @param mixed $setName
+     * @return array
+     * @throws \Exception
+     */
     private function handleExistingEntry(array $dataset, string $elemId, string $message, array $data, string $context, mixed $setName): array
     {
         $found = array_filter($dataset, function ($e) use ($elemId) {
@@ -802,34 +819,114 @@ EOT;
             mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
         } else {
-            $nSlots = $dataset['nSlots'];
-            unset($dataset['nSlots']);
-            if ($freezeTime = ($dataset['freezeTime']??false)) {
-                unset($dataset['freezeTime']);
-            }
-            $title = $dataset['title'];
-            unset($dataset['title']);
-            if ($deadlineExpired = ($dataset['deadlineExpired'] ?? false)) {
-                unset($dataset['deadlineExpired']);
-            }
-
-            unset($dataset[$elemKey]);
-            $dataset = array_values($dataset);
-            $dataset['title'] = $title;
-            $dataset['nSlots'] = $nSlots;
-            if ($freezeTime) {
-                $dataset['freezeTime'] = $freezeTime;
-            }
-            if ($deadlineExpired) {
-                $dataset['deadlineExpired'] = true;
-            }
+            $dataset = $this->modifyDataSet($dataset, elemKey: $elemKey);
             $this->db->addRec($dataset, recKeyToUse: $setName);
             $this->handleNotifyOwner($rec, 'del', $setName);
+            if ($elemKey !== false) {
+                $this->handleNotifyReserve($dataset);
+            }
             mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
             $message = $message ? "<br>$message" : '';
             reloadAgent(message: '{{ pfy-enlist-deleted }}' . $message);
         }
     } // handleExistingEntry
+
+
+    /**
+     * @param array $dataset
+     * @param array|false $data
+     * @param string|false $elemKey
+     * @return array
+     * @throws \Exception
+     */
+    private function modifyDataSet(array $dataset, array|false $data = false, string|false $elemKey = false): array
+    {
+        $nSlots = $dataset['nSlots'];
+        unset($dataset['nSlots']);
+
+        $nReserveSlots = $dataset['nReserveSlots'];
+        unset($dataset['nReserveSlots']);
+
+        if (isset($dataset['freezeTime'])) {
+            $freezeTime = $dataset['freezeTime'];
+            unset($dataset['freezeTime']);
+        }
+        $title = $dataset['title'];
+        unset($dataset['title']);
+
+        if (isset($dataset['deadlineExpired'])) {
+            $deadlineExpired = $dataset['deadlineExpired'];
+            unset($dataset['deadlineExpired']);
+        }
+
+        if ($elemKey === false) {
+            $data['_elemKey'] = createHash();
+            $dataset[] = $data;
+            $dataset = array_values($dataset);
+        } else {
+            unset($dataset[$elemKey]);
+            $dataset = array_values($dataset);
+        }
+
+        $dataset['title'] = $title;
+        $dataset['nSlots'] = $nSlots;
+        $dataset['nReserveSlots'] = $nReserveSlots;
+        if (isset($freezeTime)) {
+            $dataset['freezeTime'] = $freezeTime;
+        }
+        if (isset($deadlineExpired)) {
+            $dataset['deadlineExpired'] = $deadlineExpired;
+        }
+        return $dataset;
+    } // modifyDataSet
+
+
+    /**
+     * @param array $dataset
+     * @return void
+     */
+    private function handleNotifyReserve(array $dataset): void
+    {
+        if (!$this->options['notifyActivatedReserve']) {
+            return;
+        }
+        $nSlots = $dataset['nSlots'];
+        $nReserveSlots = $dataset['nReserveSlots'];
+        $nActiveSlots = $nSlots - $nReserveSlots;
+        if (isset($dataset[$nActiveSlots - 1])) {
+            $rec = $dataset[$nActiveSlots - 1];
+            $this->notifyActivatedReserve($rec, $dataset['title']);
+        }
+    } // handleNotifyReserve
+
+
+    /**
+     * @param array $rec
+     * @param string $setName
+     * @return void
+     */
+    private function notifyActivatedReserve(array $rec, string $setName): void
+    {
+        $subject = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-subject }}');
+        $body = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-body }}');
+        $replace = [
+            '%name%' => $rec['Name'],
+            '%email%' => $rec['Email'],
+            '%topic%' => $setName,
+            '%host%' => PageFactory::$hostUrl,
+            '%page%' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $subject);
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $body);
+
+        Utils::sendMail($rec['Email'], $subject, $body );
+    } // notifyActivatedReserve
 
 
     /**
@@ -864,11 +961,11 @@ EOT;
         $subject = str_replace(
             array_keys($replace),
             array_values($replace),
-            TransVars::resolveVariables($subject, PageFactory::$defaultLanguage));
+            TransVars::resolveVariables($subject));
         $body = str_replace(
             array_keys($replace),
             array_values($replace),
-            TransVars::resolveVariables($body, PageFactory::$defaultLanguage));
+            TransVars::resolveVariables($body));
 
         Utils::sendMail($to, $subject, $body );
     } // handleNotifyOwner
@@ -908,6 +1005,10 @@ EOT;
     } // handleSendConfirmation
 
 
+    /**
+     * @param string $key
+     * @return mixed
+     */
     private function prepStaticOption(string $key): mixed
     {
         $val = ($this->options[$key] ?? false) ?: self::${"_$key"};

@@ -201,10 +201,13 @@
   button.pfy-enlist-delete {
     color: red;
     border-color: red
-}
-  button.pfy-enlist-add {
-    color: green;
-    border-color: #4d4;
-}
+  }
+    button.pfy-enlist-add {
+      color: green;
+      border-color: #4d4;
+  }
 
+  .pfy-empty-title {
+    display: none;
+  }
 } // .pfy-default-styling
