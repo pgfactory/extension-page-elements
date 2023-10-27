@@ -366,24 +366,24 @@ pfy-enlist-deleted:
   _:  'Your entry has been deleted.'
 
 pfy-enlist-add-notification-subject:
-  de: 'Neue Anmeldung für %topic% auf %host%'
-  _:  'Newly enlisted for %topic% on %host%'
+  de: 'Neue Anmeldung für %title% auf %host%'
+  _:  'Newly enlisted for %title% on %host%'
 
 pfy-enlist-del-notification-subject:
-  de: 'Neue Abmeldung für %topic% auf %host%'
-  _:  'Deleted entry from %topic% on %host%'
+  de: 'Neue Abmeldung für %title% auf %host%'
+  _:  'Deleted entry from %title% on %host%'
 
 pfy-enlist-add-notification-body:
   de: |
     Hallo
-    %name% hat sich angemeldet für %topic%.
+    %name% hat sich angemeldet für %title%.
 
     -> %host%/%page%
 
     Der Webmaster
   _:  |
     Hello
-    %name% enlisted for %topic%.
+    %name% enlisted for %title%.
 
     -> %host%/%page%
 
@@ -392,7 +392,7 @@ pfy-enlist-add-notification-body:
 pfy-enlist-del-notification-body:
   de: |
     Hallo
-    %name% hat sich abgemeldet von %topic%.
+    %name% hat sich abgemeldet von %title%.
 
     -> %host%/%page%
 
@@ -400,20 +400,20 @@ pfy-enlist-del-notification-body:
 
   _:  |
     Hello
-    %name% withdrew from %topic%.
+    %name% withdrew from %title%.
 
     -> %host%/%page%
 
     The webmaster
 
 pfy-enlist-notify-activated-reserve-subject:
-  de: 'Einschreibeliste %topic% auf %host%'
-  _:  'Entry list %topic% on %host%'
+  de: 'Einschreibeliste %title% auf %host%'
+  _:  'Entry list %title% on %host%'
 
 pfy-enlist-notify-activated-reserve-body:
   de: |
     Hallo %name%
-    Sie waren als Reserve in der Einschreibeliste %topic% eingetragen.
+    Sie waren als Reserve in der Einschreibeliste %title% eingetragen.
 
     Sie sind nun in den aktiven Bereich vorgerückt, nachdem eine Position vor Ihnen gelöscht wurde.
 
@@ -421,7 +421,7 @@ pfy-enlist-notify-activated-reserve-body:
 
   de2: |
     Hallo %name%
-    Du warst als Reserve in der Einschreibeliste %topic% eingetragen.
+    Du warst als Reserve in der Einschreibeliste %title% eingetragen.
 
     Du bist nun in den aktiven Bereich vorgerückt, nachdem eine Position vor dir gelöscht wurde.
 
@@ -430,7 +430,7 @@ pfy-enlist-notify-activated-reserve-body:
   _:  |
     Hello %name%
    
-    You were registered in the entry list %topic% on a reserve position.
+    You were registered in the entry list %title% on a reserve position.
 
     Now you have been advanced to an active position, since a position ahead of you has been cleared.
 

@@ -26,6 +26,7 @@ class Enlist
 {
     private $options;
     private $inx;
+    private $presetOptionsMode = false;
     private $title;
     private $nEntries = 0;
     private $nSlots = 0;
@@ -46,6 +47,13 @@ class Enlist
     private $customFieldsEmpty = [];
     protected static $session;
 
+    private static $_title = null;
+    private static $_nSlots = null;
+    private static $_nReserveSlots = null;
+    private $file;
+    private static $_file = null;
+    private $info;
+    private static $_info = null;
     private $freezeTime = false;
     private static $_freezeTime = null;
 
@@ -55,6 +63,8 @@ class Enlist
     private static $_sendConfirmation = null;
     private $notifyOwner;
     private static $_notifyOwner = null;
+    private $notifyActivatedReserve;
+    private static $_notifyActivatedReserve = null;
     private $obfuscate;
     private static $_obfuscate = null;
     private $admin;
@@ -177,22 +187,31 @@ EOT;
      */
     private function parseOptions(array $options): void
     {
+        $this->presetOptionsMode = !($options['output']??true);
         if (($this->inx = $options['inx'] ?? false) === false) {
             if (isset($GLOBALS['pfyEnlistInx'])) {
-                $this->inx = $GLOBALS['pfyEnlistInx']++;
-            } else {
+                $GLOBALS['pfyEnlistInx']++;
+                $this->inx = $GLOBALS['pfyEnlistInx'];
+            } elseif ($options['output']) {
                 $this->inx = $GLOBALS['pfyEnlistInx'] = 1;
+            } else {
+                $this->inx = 0;
             }
         }
         $this->options = $options;
 
-        $title = $title0 = $this->options['title'] ?? '';
+        $title = $title0 = $this->prepStaticOption('title', '');
 
+        $this->prepStaticOption('nSlots', 1);
+        $this->prepStaticOption('nReserveSlots', 0);
+        $this->prepStaticOption('info');
+        $this->prepStaticOption('file');
         $this->prepStaticOption('freezeTime');
         $this->prepStaticOption('sendConfirmation');
         $this->prepStaticOption('notifyOwner');
+        $this->prepStaticOption('notifyActivatedReserve');
         $this->prepStaticOption('obfuscate');
-        $this->prepStaticOption('admin');
+        $this->prepStaticOption('admin', true);
         $this->prepStaticOption('adminEmail');
         $this->prepStaticOption('class');
         $deadlineStr = $this->prepStaticOption('deadline');
@@ -207,7 +226,7 @@ EOT;
         $this->title = $title;
 
         if (!($this->datasetName = ($this->options['listName']??false))) {
-            if ($title0) {
+            if ($title0 && (self::$_title === null)) {
                 $this->datasetName = translateToFilename(strip_tags($title0), false);
             } else {
                 $this->datasetName = "List-$this->inx";
@@ -232,8 +251,6 @@ EOT;
         if ($deadline) {
             $this->deadlineExpired = ($deadline < time());
         }
-        $this->nReserveSlots = $this->options['nReserveSlots']??0;
-        $this->nSlots        = $this->options['nSlots']??1;
         $this->nTotalSlots   = $this->nSlots + $this->nReserveSlots;
 
         if ($this->freezeTime) {
@@ -419,8 +436,8 @@ EOT;
      */
     private function openDb(): void
     {
-        if ($filename = ($this->options['file']??false)) {
-            $filename = basename($filename);
+        if ($this->file) {
+            $filename = basename($this->file);
         } else {
             $filename = $this->pageId;
         }
@@ -534,9 +551,9 @@ EOT;
      */
     private function renderInfoButton(): void
     {
-        if ($info = ($this->options['info'] ?? false)) {
+        if ($this->info) {
             $this->title .= "<span tabindex='0' class='pfy-tooltip-anker'>" . ENLIST_INFO_ICON .
-                "</span><span class='pfy-tooltip'>$info</span>";
+                "</span><span class='pfy-tooltip'>$this->info</span>";
         }
     } // renderInfoButton
 
@@ -887,7 +904,7 @@ EOT;
      */
     private function handleNotifyReserve(array $dataset): void
     {
-        if (!$this->options['notifyActivatedReserve']) {
+        if (!$this->notifyActivatedReserve) {
             return;
         }
         $nSlots = $dataset['nSlots'];
@@ -912,7 +929,7 @@ EOT;
         $replace = [
             '%name%' => $rec['Name'],
             '%email%' => $rec['Email'],
-            '%topic%' => $setName,
+            '%title%' => $setName,
             '%host%' => PageFactory::$hostUrl,
             '%page%' => $this->pagePath,
         ];
@@ -954,7 +971,7 @@ EOT;
         $replace = [
             '%name%' => $data['Name'],
             '%email%' => $data['Email'],
-            '%topic%' => $setName,
+            '%title%' => $setName,
             '%host%' => PageFactory::$hostUrl,
             '%page%' => $this->pagePath,
         ];
@@ -987,7 +1004,7 @@ EOT;
         $replace = [
             '%name%' => $data['Name'],
             '%email%' => $data['Email'],
-            '%topic%' => $title,
+            '%title%' => $title,
             '%host%' => PageFactory::$hostUrl,
             '%page%' => $this->pagePath,
         ];
@@ -1009,17 +1026,19 @@ EOT;
      * @param string $key
      * @return mixed
      */
-    private function prepStaticOption(string $key): mixed
+    private function prepStaticOption(string $key, mixed $default = false): mixed
     {
-        $val = ($this->options[$key] ?? false) ?: self::${"_$key"};
-        if ($val && self::${"_$key"} === null) {
-            // set global default first time a value is defined:
-            self::${"_$key"} = $val;
+        if ($this->options[$key] !== null) {
+            // explicitly provided value:
+            $val = $this->options[$key];
+            if ($this->presetOptionsMode) {
+                self::${"_$key"} = $val;
+            }
+        } else {
+            // no explicit value -> try preset one:
+            $val = (self::${"_$key"} !== null) ? self::${"_$key"} : $default;
         }
-        if ($val) {
-            $this->$key = $val;
-        }
-        return $this->$key;
+        return $this->$key = $val;
     } // prepStaticOption
 
 
