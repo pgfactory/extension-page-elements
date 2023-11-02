@@ -43,7 +43,7 @@ function reloadAgent( arg, url, confirmMsg ) {
         console.log('initiating page reload: "' + newUrl + '"');
         window.location.replace(newUrl);
     }
-} // pfyReload
+} // reloadAgent
 
 
 function execAjaxPromise(cmd, options, url) {
@@ -91,3 +91,57 @@ function appendToUrl(url, arg, arg2) {
     }
     return url;
 } // appendToUrl
+
+
+/**
+ * Helper function to emit a beep sound in the browser using the Web Audio API.
+ *
+ * @param {number} duration - The duration of the beep sound in milliseconds.
+ * @param {number} frequency - The frequency of the beep sound.
+ * @param {number} volume - The volume of the beep sound.
+ *
+ * @returns {Promise} - A promise that resolves when the beep sound is finished.
+ *
+ * source: https://ourcodeworld.com/articles/read/1627/how-to-easily-generate-a-beep-notification-sound-with-javascript
+ */
+let pfyAudioContext = null;
+function beep(duration, frequency, volume){
+  if (!pfyAudioContext) {
+    pfyAudioContext = new AudioContext();
+  }
+
+  return new Promise((resolve, reject) => {
+    // Set default duration if not provided
+    duration = duration || 200;
+    frequency = frequency || 440;
+    volume = volume || 100;
+
+    try{
+      let oscillatorNode = pfyAudioContext.createOscillator();
+      let gainNode = pfyAudioContext.createGain();
+      oscillatorNode.connect(gainNode);
+
+      // Set the oscillator frequency in hertz
+      oscillatorNode.frequency.value = frequency;
+
+      // Set the type of oscillator
+      oscillatorNode.type= "square";
+      gainNode.connect(pfyAudioContext.destination);
+
+      // Set the gain to the volume
+      gainNode.gain.value = volume * 0.01;
+
+      // Start audio with the desired duration
+      oscillatorNode.start(pfyAudioContext.currentTime);
+      oscillatorNode.stop(pfyAudioContext.currentTime + duration * 0.001);
+
+      // Resolve the promise when the sound is finished
+      oscillatorNode.onended = () => {
+        resolve();
+      };
+    }catch(error){
+      reject(error);
+    }
+  });
+} // beep
+
