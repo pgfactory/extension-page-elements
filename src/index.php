@@ -62,8 +62,7 @@ const PE_URL_DEFINITIONS = [
 require_once __DIR__.'/pe_helper.php';
 
  // activate site-manager if requested:
-$optionsFromConfigFile = kirby()->option('pgfactory.pagefactory-pageelements.options');
-if ($optionsFromConfigFile['activateSitemapManager']??false) {
+if (kirby()->option('pgfactory.pagefactory-pageelements.options.activateSitemapManager')) {
     require_once 'site/plugins/pagefactory-pageelements/src/SitemapManager.php';
     SitemapManager::updateSitemap();
 }

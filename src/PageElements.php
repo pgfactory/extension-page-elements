@@ -53,15 +53,9 @@ class PageElements
 
     private function initPresentationSupport()
     {
-        $optionsFromConfigFile = kirby()->option('pgfactory.pagefactory-pageelements.options');
-        if (($optionsFromConfigFile['activatePresentationSupport']??false) && getStaticUrlArg('present')) {
-            PageFactory::$pg->addAssets([
-                'site/plugins/pagefactory-pageelements/assets/css/-presentation_support.css',
-                'site/plugins/pagefactory-pageelements/assets/js/jquery.sizes.js',
-                'site/plugins/pagefactory-pageelements/assets/js/presentation_support.js'
-            ]);
-            PageFactory::$pg->addBodyTagClass('pfy-presentation-support');
-            PageFactory::$pg->addBodyEndInjections("<div id='pfy-cursor-mark' style='display: none;'></div>\n");
+        $activatePresentationSupport = kirby()->option('pgfactory.pagefactory-pageelements.options.activatePresentationSupport');
+        if ($activatePresentationSupport && getStaticUrlArg('present')) {
+            new Presentation();
         }
     } // initPresentationSupport
 
