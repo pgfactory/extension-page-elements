@@ -71,6 +71,9 @@ class Presentation
             $lines = explode("\n", $md);
             if (preg_match('/(?<!\\\)\{:\s*(.*?)\s*}/i', $lines[0], $m)) {
                 $line = &$lines[0];
+
+                // special case '!font-size' -> ignored in non-presentation mode, but interpreted here:
+                $m[1] = preg_replace('/!font-size/', 'font-size', $m[1]);
                 $args = MdPlusHelper::parseInlineBlockArguments($m[1]);
                 if ($args['class']) {
                     $wrapperClass .= ' '.$args['class'];
