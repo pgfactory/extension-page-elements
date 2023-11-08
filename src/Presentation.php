@@ -26,8 +26,6 @@ class Presentation
             PageFactory::$pg->addJs("const presiAutoSizing = true;");
         }
 
-//        if (!$defaultSize = kirby()->option('pgfactory.pagefactory-elements.options.presentationDefaultSize')) {
-//        }
         $defaultSize = kirby()->option('pgfactory.pagefactory-elements.options.presentationDefaultSize', DEFAULT_FONT_SIZE);
         PageFactory::$pg->addJs("const presiDefaultFontSize = '$defaultSize';");
 
