@@ -53,7 +53,7 @@ class PageElements
 
     private function initPresentationSupport()
     {
-        $activatePresentationSupport = kirby()->option('pgfactory.pagefactory-pageelements.options.activatePresentationSupport');
+        $activatePresentationSupport = kirby()->option('pgfactory.pagefactory-elements.options.activatePresentationSupport');
         if ($activatePresentationSupport && getStaticUrlArg('present')) {
             new Presentation();
         }

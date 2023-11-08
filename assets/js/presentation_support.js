@@ -2,7 +2,7 @@
 // SlideShow Support for PageFactory
 const presentationCursorHideTime = 3000; // ms
 const presentationMaxFSize = 5; // vw
-var   presentationMinFSize = 2; // vw
+var   presentationMinFSize = 1.75; // vw
 var   presentationDefaultFSize = 3; // vw
 var   presentationAutoSizing = false;
 const debug = false; //document.body.classList.contains('debug');
@@ -314,8 +314,7 @@ function PfyPresentationSupport() {
 
 
   this.resizeSection = function (section) {
-    // section.style.opacity = 0.5;
-    section.style.opacity = 0;
+    section.style.opacity = 0.5;
     section.style.display = 'block';
 
     if (presentationAutoSizing) {
@@ -342,8 +341,13 @@ function PfyPresentationSupport() {
   this.autoResizeSection = function (section) {
     const noAutoAdjust = section.classList.contains('no-adjust') || section.querySelector('.no-adjust');
     if (noAutoAdjust) {
-      section.style.fontSize = presentationDefaultFSize + 'vw';
-      if (debug) { mylog(`no-adjust: fSize: ${presentationDefaultFSize}vw`); }
+      // apply default unless font-size already set on section element:
+      if (!section.style.fontSize) {
+        section.style.fontSize = presentationDefaultFSize + 'vw';
+        if (debug) {
+          mylog(`no-adjust: fSize: ${presentationDefaultFSize}vw`);
+        }
+      }
       return;
     }
     this.doResizeSection(section);
@@ -351,6 +355,11 @@ function PfyPresentationSupport() {
 
 
   this.doResizeSection = function (section) {
+    // check whether section already has a font-size applied:
+    if (section.style.fontSize) {
+      return;
+    }
+
     const mainHavail = this.mainHavail;
 
     let contentH = 0;
@@ -363,14 +372,16 @@ function PfyPresentationSupport() {
     if (debug) { mylog(`mainHavail: ${mainHavail}  fSize: ${fSize}vw`); }
 
     if (contentH > mainHavail) { // case 1: content too big for smallest fontsize
-      mylog("Too much content - scrolling will be necessary");
+      mylog(`Fontsize: ${fSize} (smallest fontsize)`);
+      // mylog("Too much content - scrolling will be necessary");
 
     } else {
       fSize = presentationMaxFSize;
       section.style.fontSize = fSize + 'vw';
       contentH = section.offsetHeight;
       if (contentH < mainHavail) { // case 2: content too small to fill space
-        mylog("Little content - using largest possible fontsize");
+        mylog(`Fontsize: ${fSize} (largest fontsize)`);
+        // mylog("Little content - using largest possible fontsize");
 
       } else {
         let step = (presentationMaxFSize - presentationMinFSize) / 2;
@@ -400,55 +411,157 @@ function PfyPresentationSupport() {
         mylog("Fontsize: " + fSize);
       }
     }
+    this.unhideImages(section);
   }; // doResizeSection
 
 
   this.hideImages = function(section) {
-    const images = section.querySelectorAll('.pfy-img-wrapper .pfy-img');
+    const images = section.querySelectorAll('.pfy-img');
     if (images) {
       images.forEach(function(image) {
         image.style.display = 'none';
       });
     }
-  };
+  }; // hideImages
+
+
+  this.unhideImages = function(section) {
+    const images = section.querySelectorAll('.pfy-img');
+    if (images) {
+      images.forEach(function(image) {
+        image.style.display = null;
+      });
+    }
+  }; // unhideImages
 
 
   this.resizeImages = function (section) {
-    const images = section.querySelectorAll('.pfy-img-wrapper .pfy-img');
+    const images = section.querySelectorAll('.pfy-img');
+    // const images = section.querySelectorAll('.pfy-img-wrapper');
+    // const images = section.querySelectorAll('.pfy-img-wrapper .pfy-img');
     if (images) {
+      this.hideImages(section);
       const parent = this;
       images.forEach(function(image) {
-        parent.resizeImage(section, image);
+//        parent.resizeImage(section, image);
       });
+      this.unhideImages(section);
     }
   }; // resizeImages
 
 
   this.resizeImage = function (section, image) {
-    const mainHavail = this.mainHavail;
-    let maxHeight = mainHavail * 0.6;
-    const step = mainHavail * 0.02;
-    const contentH0 = section.offsetHeight;
-    let contentH = 0;
-    let lastMaxHeight = 0;
+    let parentNode = image.parentNode;
+    let containerWidth = null;
+    let containerHeight = null;
+    let imgWrapper = image.closest('.pfy-img-wrapper');
+    let captionHeight = 0;
 
-    image.style.display = '';
-    image.style.maxHeight = maxHeight + 'px';
-
-
-    for (var i = 0; i < 30; i++) {
-      contentH = section.offsetHeight;
-      if (contentH <= contentH0) {
-        lastMaxHeight = maxHeight;
-        maxHeight += step;
-        image.style.maxHeight = maxHeight + 'px';
-      } else {
-        break;
-      }
+    // check whether pfy-img-wrapper exists, wrap if necessary:
+    if (!imgWrapper) {
+      const node = document.createElement("div");
+      node.classList.add('pfy-img-wrapper');
+      this.wrap(image, node);
+      imgWrapper = parentNode.querySelector('.pfy-img-wrapper');
+      image = imgWrapper.querySelector('.pfy-img');
+    } else {
+      // wrapper exists:
+      parentNode = parentNode.parentNode;
+      // image.style.display = 'none';
+      // containerWidth = parentNode.offsetWidth;
+      // containerHeight = parentNode.offsetHeight;
+      // image.style.display = 'block';
+      const caption = parentNode.querySelector('figcaption');
+      captionHeight = caption.offsetHeight;
     }
-    mylog(`image resized in ${i} steps`);
-    image.style.maxHeight = lastMaxHeight + 'px';
+
+    // determine height of wrapper without image interfering:
+    // image.style.display = 'none';
+    containerWidth = parentNode.offsetWidth;
+    containerHeight = parentNode.offsetHeight;
+    // image.style.display = null;
+
+    imgWrapper.style.width = containerWidth + 'px';
+    imgWrapper.style.height = containerHeight + 'px';
+
+    image.style.maxWidth = containerWidth + 'px';
+    image.style.maxHeight = (containerHeight - captionHeight) + 'px';
+    // image.style.height = (containerHeight - captionHeight) + 'px';
   }; // resizeImage
+
+
+  this.wrap = function (el, wrapper) {
+    if (el && el.parentNode) {
+      el.parentNode.insertBefore(wrapper, el);
+      wrapper.appendChild(el);
+    }
+  }; // wrap
+
+// this.resizeImage = function (section, image) {
+  //   image.style.display = 'none';
+  //   const node = document.createElement("div");
+  //   const content = image.outerHTML;
+  //
+  //   const container = image.parentNode;
+  //   container.appendChild(node);
+  //   const div = container.querySelector('div');
+  //   div.innerHTML = content;
+  //   div.classList.add('pfy-img-outer-wrapper');
+  //   image.remove();
+  //   image = div.querySelector('.pfy-img-wrapper');
+  //
+  //   const containerWidth = container.offsetWidth;
+  //   const containerHeight = container.offsetHeight;
+  //
+  //   // const img = image.querySelector('img');
+  //   // if (img) {
+  //   //   image.style.width = containerWidth + 'px';
+  //   //   image.style.height = containerHeight + 'px';
+  //   //   // img.style.maxWidth = '100%';
+  //   //   // img.style.maxHeight = '100%';
+  //   // } else {
+  //   //   image.style.maxWidth = containerWidth + 'px';
+  //   //   image.style.maxHeight = containerHeight + 'px';
+  //   // }
+  //   // image.style.maxWidth = containerWidth + 'px';
+  //   // image.style.maxHeight = containerHeight + 'px';
+  //   div.style.width = containerWidth + 'px';
+  //   div.style.height = containerHeight + 'px';
+  //   const figcaption = image.querySelector('figcaption');
+  //   if (figcaption) {
+  //     figcaption.style.width = containerWidth + 'px';
+  //   }
+  //
+  //   image.style.display = 'block';
+  //   mylog(`containerWidth: ${containerWidth}  containerHeight: ${containerHeight}`);
+  // }; // resizeImage
+
+  // this.resizeImage = function (section, image) {
+  //   const mainHavail = this.mainHavail;
+  //   let maxHeight = mainHavail * 0.4;
+  //   const step = mainHavail * 0.04;
+  //   // const step = mainHavail * 0.02;
+  //   const contentH0 = section.offsetHeight;
+  //   let contentH = 0;
+  //   let lastMaxHeight = maxHeight;
+  //
+  //   image.style.display = 'block';
+  //   image.style.maxHeight = maxHeight + 'px';
+  //
+  //
+  //   for (var i = 0; i < 30; i++) {
+  //     contentH = section.offsetHeight;
+  //     if (contentH <= contentH0) {
+  //       lastMaxHeight = maxHeight;
+  //       maxHeight += step;
+  //       image.style.maxHeight = maxHeight + 'px';
+  //     } else {
+  //       break;
+  //     }
+  //   }
+  //   mylog(`image resized in ${i} steps`);
+  //   image.style.maxHeight = lastMaxHeight + 'px';
+  // }; // resizeImage
 
 
   this.activateClickMarker = function () {

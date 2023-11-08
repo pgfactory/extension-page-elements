@@ -1,5 +1,4 @@
 <?php
-
 namespace PgFactory\PageFactoryElements;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\TransVars as TransVars;
@@ -9,6 +8,7 @@ use PgFactory\MarkdownPlus\MdPlusHelper as MdPlusHelper;
 //use function \PgFactory\PageFactory\translateToClassName as translateToClassName;
 use function \PgFactory\PageFactory\getStaticUrlArg as getStaticUrlArg;
 
+const DEFAULT_FONT_SIZE = '3vw';
 
 
 class Presentation
@@ -18,18 +18,18 @@ class Presentation
     {
         PageFactory::$pg->addAssets([
             'site/plugins/pagefactory-pageelements/assets/css/-presentation_support.css',
-            'site/plugins/pagefactory-pageelements/assets/js/jquery.sizes.js',
             'site/plugins/pagefactory-pageelements/assets/js/presentation_support.js'
         ]);
         PageFactory::$pg->addBodyTagClass('pfy-presentation-support');
 
-        if (kirby()->option('pgfactory.pagefactory-pageelements.options.presentationAutoSizing')) {
+        if (kirby()->option('pgfactory.pagefactory-elements.options.presentationAutoSizing')) {
             PageFactory::$pg->addJs("const presiAutoSizing = true;");
         }
 
-        if ($defaultSize = kirby()->option('pgfactory.pagefactory-pageelements.options.presentationDefaultSize')) {
-            PageFactory::$pg->addJs("const presiDefaultFontSize = '$defaultSize';");
-        }
+//        if (!$defaultSize = kirby()->option('pgfactory.pagefactory-elements.options.presentationDefaultSize')) {
+//        }
+        $defaultSize = kirby()->option('pgfactory.pagefactory-elements.options.presentationDefaultSize', DEFAULT_FONT_SIZE);
+        PageFactory::$pg->addJs("const presiDefaultFontSize = '$defaultSize';");
 
 
         $relLinks = '';
@@ -66,16 +66,20 @@ class Presentation
                 continue;
             }
 
-            // find pattern "{: font-size: XYxy }", e.g. "{: font-size: 20em }"
+            // find pattern "{: font-size: XYxy }" on H1 line, e.g. "# H1 {: font-size: 20em }"
             $wrapperAttributes = '';
-            if (preg_match('/\{:\s*(.*?)\s*}/i', $md, $m)) {
+            $lines = explode("\n", $md);
+            if (preg_match('/(?<!\\\)\{:\s*(.*?)\s*}/i', $lines[0], $m)) {
+                $line = &$lines[0];
                 $args = MdPlusHelper::parseInlineBlockArguments($m[1]);
                 if ($args['class']) {
-                    $wrapperClass .= ''.$args['class'];
+                    $wrapperClass .= ' '.$args['class'];
                 }
-                $wrapperAttributes = trim(preg_replace("/class='.*?'/", '', $args['htmlAttrs']));
-                $md = str_replace($m[0], '', $md);
+                $wrapperAttributes = ' '.trim(preg_replace("/class='.*?'/", '', $args['htmlAttrs']));
+                $line = rtrim(str_replace($m[0], '', $line));
+                $md = implode("\n", $lines);
             }
+
             $wrapperClass = preg_replace("/pfy-part-\d+/", "pfy-part-$inx", $wrapperClass);
             $html1 = TransVars::compile("#$md", $inx, removeComments: false);
             $html .= <<<EOT
