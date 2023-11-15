@@ -1084,7 +1084,8 @@ EOT;
 
         unset($eventOptions['file']);
         $sched = new Events($src, $eventOptions);
-        $nextEvents = $sched->getNextEvents();
+        $count = $eventOptions['count']??false;
+        $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;
     } // handleScheduleOption
 

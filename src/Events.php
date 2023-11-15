@@ -29,6 +29,11 @@ class Events extends DataSet
     private array $timePatterns;
     private array|null $templates = null;
 
+    /**
+     * @param string $file
+     * @param array $options
+     * @throws \Exception
+     */
     public function __construct(string $file, array $options = [])
     {
         $options['masterFileRecKeyType'] = 'index';
@@ -408,6 +413,52 @@ class Events extends DataSet
 
         return $nextEventRec;
     } // getNextEvent
+
+
+    /**
+     * @param string|false $category
+     * @param int $offset
+     * @return array|false
+     * @throws \Kirby\Exception\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
+     */
+    public function getNextEvents(string|false $category = false, int $offset = 0, int|false $count = false): array|false
+    {
+        $category = $category?: $this->options['category']??false;
+        $templatesFile = $this->options['templatesFile']??false;
+        if ($templatesFile) {
+            $this->loadTemplates($templatesFile);
+        }
+        $sortedData = $this->getData($category);
+        if (isset($this->options['offset']) && $offset === 0) {
+            $offset = $this->options['offset'];
+        }
+        $nextEventInx = $this->findEvent($sortedData, $offset);
+        if ($nextEventInx === false) {
+            return false;
+        }
+
+        $nextEvents = [];
+        $count = $count ?: sizeof($sortedData);
+        for ($i = $nextEventInx; $i < $count; $i++) {
+            $nextEventRec = $sortedData[$i];
+            $eventBanner = '';
+
+            // prepare event banner:
+            if ($templatesFile) {
+                $template = $this->getTemplate($category);
+                $eventBanner = $this->compileTemplate($template, $nextEventRec);
+                $eventBanner = markdown($eventBanner);
+                $eventBanner = $this->cleanup($eventBanner);
+            }
+            $nextEventRec['eventBanner'] = $eventBanner;
+            $nextEvents[] = $nextEventRec;
+        }
+
+        return $nextEvents;
+    } // getNextEvents
 
 
     /**
