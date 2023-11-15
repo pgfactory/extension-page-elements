@@ -15,6 +15,7 @@ use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
+use function PgFactory\PageFactory\fileExt;
 
 const ENLIST_INFO_ICON = 'ⓘ';
 const ENLIST_MAIL_ICON = '✉';
@@ -73,6 +74,7 @@ class Enlist
     private static $_adminEmail = null;
     private $class;
     private static $_class = null;
+    private array|false $events = false;
 
     /**
      * @var string
@@ -98,6 +100,8 @@ class Enlist
         }
 
         $this->parseOptions($options);
+
+        $this->events = $this->handleScheduleOption();
 
         $this->fieldNames = ['#', '&nbsp;', 'Name'];
 
@@ -139,6 +143,27 @@ class Enlist
      */
     public function render(): string
     {
+        if ($this->events) {
+            $html = '';
+            foreach ($this->events as $event) {
+                $this->title = $event['eventBanner'];
+                $this->datasetName =  $event['start'];
+                $html .= $this->renderElement();
+            }
+
+        } else {
+            $html = $this->renderElement();
+        }
+
+        return $html;
+    } // render
+
+
+    /**
+     * @return string
+     */
+    private function renderElement(): string
+    {
         // get access to the current dataset:
         $this->dataset = $this->getDataset();
 
@@ -178,7 +203,7 @@ $html
 </div>
 EOT;
         return $html;
-    } // render
+    } // renderElement
 
 
     /**
@@ -1040,6 +1065,28 @@ EOT;
         }
         return $this->$key = $val;
     } // prepStaticOption
+
+
+    /**
+     * @return array|false
+     * @throws \Exception
+     */
+    private function handleScheduleOption(): array|false
+    {
+        if (!($eventOptions = $this->options['schedule']??false)) {
+            return false;
+        }
+        if (!($src = $eventOptions['src']??false)) {
+            if (!($src = $eventOptions['file']??false)) { // allow 'file' as synonyme for 'src'
+                throw new \Exception("Form: option 'schedule' without option 'src'.");
+            }
+        }
+
+        unset($eventOptions['file']);
+        $sched = new Events($src, $eventOptions);
+        $nextEvents = $sched->getNextEvents();
+        return $nextEvents;
+    } // handleScheduleOption
 
 
 } // Enlist

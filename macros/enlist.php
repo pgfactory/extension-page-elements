@@ -53,6 +53,13 @@ function enlist($args = '')
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people. (default: false)', null],
             'adminMail' =>	['[string] Synonyme for adminEmail.', null],
+            'schedule' => ['{options} If defined, Events class is invoked to determine the next event and .'.
+                'based on that, presets "file", "maxCount" and "minRows". '.
+                'The event\'s rendered output becomes available as "%eventBanner%" to form banners.'.
+                '(E.g. formTop: "\<div>%eventBanner%\</div>").<br>'.
+                'Moreover, all values of found event are made available to form banners as "%key%". '.
+                '(For ref see macro *events()*).', false],
+
             'output' =>	['[bool] If true, no output is rendered -> used to set persisent options: '.
                 '[freezeTime,sendConfirmation,notifyOwner,obfuscate,admin,adminEmail,class,deadline].', true],
         ],
