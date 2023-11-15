@@ -35,6 +35,8 @@ function enlist($args = '')
 
             'info' =>	['[string] Content of info-tooltip next to title. (default: false)', null],
             'description' =>	['[string] synonyme for "info".', false],
+            //'editable' =>	        ['[bool] If true, users can modify their entries.', false],
+            'directlyToReserve' =>	['[bool] synonyme for "info".', false],
 
             'sendConfirmation' =>	['[bool] If true, a confirmation mail is sent to the address stated when '.
                 'somebody enlists. (default: false)', null],

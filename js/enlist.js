@@ -107,16 +107,18 @@ const Enlist = {
 
   preparePopupForm: function(mode, elemWrapper, elemId) {
     const name = elemWrapper.querySelector('.pfy-enlist-name').textContent;
-    const setname = elemWrapper.closest('.pfy-enlist-wrapper').dataset.setname;
+    const $list = elemWrapper.closest('.pfy-enlist-wrapper');
+    const setname = $list.dataset.setname;
+    const directreserve = $list.dataset.directreserve;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
     popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
 
-    const form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
-    const setnameElem = form.querySelector('[name=setname]');
+    const $form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
+    const setnameElem = $form.querySelector('[name=setname]');
     setnameElem.setAttribute('value', setname);
 
     // inhibit submit by enter key while in textarea:
-    const textareaFields = form.querySelectorAll('textarea');
+    const textareaFields = $form.querySelectorAll('textarea');
     if (textareaFields.length) {
       textareaFields.forEach(function (textareaField) {
         textareaField.addEventListener('keyup', function (e) {
@@ -127,9 +129,9 @@ const Enlist = {
       });
     }
 
-    const nameField = form.querySelector('[name=Name]');
+    const nameField = $form.querySelector('[name=Name]');
     if (mode === 'add') {
-      const submitBtn = form.querySelector('[name=_submit]');
+      const submitBtn = $form.querySelector('[name=_submit]');
       submitBtn.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
       submitBtn.setAttribute('name', 'add');
       setTimeout(function() {
@@ -144,14 +146,14 @@ const Enlist = {
       const nameLabel = nameField.parentElement.parentElement.querySelector('label');
       nameLabel.classList.remove('required');
 
-      const submitBtn = form.querySelector('[name=_submit]');
+      const submitBtn = $form.querySelector('[name=_submit]');
       submitBtn.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
       submitBtn.setAttribute('name', 'delete');
 
-      const redIdField = form.querySelector('[name=elemId]');
+      const redIdField = $form.querySelector('[name=elemId]');
       redIdField.setAttribute('value', elemId);
 
-      const emailField = form.querySelector('[name=Email]');
+      const emailField = $form.querySelector('[name=Email]');
       if (this.isEnlistAdmin) {
         const email = elemWrapper.querySelector('.pfy-enlist-email').textContent;
         emailField.setAttribute('value', email);
@@ -160,6 +162,11 @@ const Enlist = {
           emailField.focus();
         }, 60);
       }
+    }
+
+    if (!directreserve || mode === 'del') {
+      const $directreserve = $form.querySelector('#frm-directlyToReserve').closest('.pfy-elem-wrapper');
+      $directreserve.style.display = 'none';
     }
   } // preparePopupForm
 };

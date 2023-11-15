@@ -291,6 +291,19 @@ pfy-show-source-code: Show Source Code
 
 # Enlist
 
+pfy-enlist-name:
+  de: Name
+  _:  Name
+
+pfy-enlist-email:
+  de: E-Mail
+  _:  E-mail
+
+pfy-enlist-directly-to-reserve:
+  de: Direkt als Reserve eintragen
+  _:  Register as reserve directly
+
+
 pfy-enlist-add-title:
   de: Neuer Eintrag
   _:  New entry
