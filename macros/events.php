@@ -100,6 +100,17 @@ EOT,
     $ev = new Events($file, $options);
     $str .= $ev->render();
 
+    if ($options['wrap']) {
+        $str = <<<EOT
+
+<div class="pfy-events-list pfy-events-list-$inx">
+$str
+</div> <!-- pfy-events-list -->
+
+EOT;
+
+    }
+
     if ($options['markdown']) {
         return [$str]; // return [$str]; if result needs to be shielded
     } else {
