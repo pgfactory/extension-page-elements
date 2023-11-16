@@ -192,6 +192,10 @@ class Enlist
             $class .= ' pfy-enlist-expired';
         }
 
+        if (!$this->title && !$this->isEnlistAdmin) {
+            $this->titleClass = ' pfy-empty-title';
+        }
+
         $this->renderInfoButton();
 
         $headButtons = $this->renderSendMailToAllButton();
@@ -269,10 +273,6 @@ EOT;
             if ($this->isEnlistAdmin && ($this->inx === 1)) {
                 PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
             }
-        }
-
-        if (!$this->title && !$this->isEnlistAdmin) {
-            $this->titleClass = ' pfy-empty-title';
         }
 
         // determine whether list is past deadline:
@@ -1015,9 +1015,10 @@ EOT;
         $nSlots = $dataset['nSlots'];
         $nReserveSlots = $dataset['nReserveSlots'];
         $nActiveSlots = $nSlots - $nReserveSlots;
-        if (isset($dataset[$nActiveSlots - 1])) {
-            $rec = $dataset[$nActiveSlots - 1];
-            $this->notifyActivatedReserve($rec, $dataset['title']);
+        $rec = isset($dataset[$nActiveSlots - 1]['Name']) ? $dataset[$nActiveSlots - 1]: false;
+        if ($rec && !($rec['directlyToReserve']??false)) {
+            $title = strip_tags($dataset['title']);
+            $this->notifyActivatedReserve($rec, $title);
         }
     } // handleNotifyReserve
 
