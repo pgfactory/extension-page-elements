@@ -289,7 +289,26 @@ pfy-form-reload-btn:
 
 pfy-show-source-code: Show Source Code
 
-# Enlist
+
+pfy-form-problem-banner:
+  de: |
+    %%% .pfy-form-problem-hint
+    Problem mit diesem Webformular?
+
+    → bitte den {{ webmaster_link }} benachrichtigen. Danke.
+    %%%
+  _: |
+    %%% .pfy-form-problem-hint
+    Problems with this web form?
+
+    → Please contact the {{ webmaster_link }}. Thank you.
+    %%%
+
+
+
+
+
+# === Enlist =======================================
 
 pfy-enlist-name:
   de: Name
@@ -333,6 +352,14 @@ pfy-enlist-add-btn:
 pfy-enlist-delete-btn:
   de: Jetzt löschen
   _:  Delete now
+
+pfy-enlist-modify-btn:
+  de: Jetzt ändern
+  _:  Modify now
+
+pfy-enlist-delete-label:
+  de: Diesen Eintrag löschen
+  _:  Delete this entry
 
 
 pfy-enlist-deadline-expired-alert:

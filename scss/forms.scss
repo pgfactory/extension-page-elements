@@ -393,5 +393,13 @@
   --pfy-reveal-border: 1px solid #eee;
   --pfy-reveal-bg: var(--pfy-pre-background, #f3f5e3);
 
+
+  .pfy-form-problem-hint {
+    margin-top: 5em;
+    border: 1px solid #4444ff4f;
+    background: #ddddff5c;
+    padding: 1em;
+  }
+
 } // .pfy-default-styling
 
