@@ -506,44 +506,44 @@ class DataTable extends Data2DSet
         $out .= "  <form method='post'>\n"; // form around table for selectors
         $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
 
-        $tableButtons = $this->tableButtons;
+        $tableButtons = explodeTrim(',', $this->tableButtons);
         $buttons = '';
-        if (str_contains($tableButtons, 'archive')) {
-            $icon = renderIcon('database');
-            $buttons = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
-                "type='button' title='{{ pfy-table-archive-recs-title }}'>$icon</button>\n";
-            PageFactory::$pg->addAssets('POPUPS');
+        foreach ($tableButtons as $i => $tableButton) {
+            switch ($tableButton) {
+                case 'archive':
+                    $icon = renderIcon('database');
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
+                        "type='button' title='{{ pfy-table-archive-recs-title }}'>$icon</button>\n";
+                    PageFactory::$pg->addAssets('POPUPS');
+                    break;
 
-        } elseif (str_contains($tableButtons, 'delete')) {
-            $icon = renderIcon('trash');
-            $buttons = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
-                "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
-            PageFactory::$pg->addAssets('POPUPS');
-        }
+                case 'new':
+                case 'add':
+                $icon = '+';
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
+                        "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>\n";
+                    break;
 
-        if (str_contains($tableButtons, 'new') || str_contains($tableButtons, 'add')) {
-            $icon = '+';
-            $buttons .= "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
-                "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>\n";
-        }
+                case 'delete':
+                    $icon = renderIcon('trash');
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
+                        "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
+                    PageFactory::$pg->addAssets('POPUPS');
+                    break;
 
-        if (str_contains($tableButtons, 'download')) {
-            $buttons .= $this->renderTableDownloadButton();
-        }
-        $tableButtons = str_replace(['archive', 'delete', 'add', 'new', 'download'],'', $tableButtons);
+                case 'download':
+                    $button = $this->renderTableDownloadButton();
+                    break;
 
-        // handle custom table buttons:
-        $customTableButtons = explodeTrim(',', $tableButtons, true);
-        if ($customTableButtons) {
-            foreach ($customTableButtons as $button) {
-                // determine whether we need to wrap it in an HTML button:
-                if (str_contains($button, '<')) {
-                    $buttons .= $button;
-                } else {
-                    $class = translateToIdentifier($button, false, true, true);
-                    $buttons .= "<button class='pfy-button pfy-button-lean $class' type='button'>$button</button>";
-                }
+                default:
+                    if (str_contains($tableButton, '<')) {
+                        $button = $tableButton;
+                    } else {
+                        $class = translateToIdentifier($tableButton, false, true, true);
+                        $button = "<button id='pfy-table-button-$this->inx-$i' class='pfy-button pfy-button-lean $class' type='button'>$tableButton</button>";
+                    }
             }
+            $buttons .= $button."\n";
         }
 
         if ($buttons) {

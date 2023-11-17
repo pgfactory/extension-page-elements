@@ -18,6 +18,7 @@ const tableHelper = {
         const tableInx = table.dataset.tableinx;
         tableHelper.setupPropagateCheckbox(table);
         tableHelper.setupOpenDeleteRecordsDialog(table);
+        tableHelper.setupOpenArchiveRecordsDialog(table);
         tableHelper.setupEditButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
         tableHelper.setupModifiedMonitor(table, tableInx);
@@ -109,41 +110,47 @@ const tableHelper = {
         }
         currentlyOpenPopup = pfyPopup(options);
       });
-
-    } else {
-      const archiveButton = form.querySelector('.pfy-table-archive-recs-open-dialog');
-      if (archiveButton) {
-        archiveButton.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
-          let options = {};
-          if (!selected.length) {
-            options = {
-              text: `{{ pfy-table-delete-nothing-selected }}`,
-              header: `{{ pfy-table-archive-recs-header }}`,
-              closeOnBgClick: true,
-              buttons: 'Ok'
-            };
-          } else {
-            options = {
-              text: `{{ pfy-data-archive-records }}`,
-              header: `{{ pfy-table-archive-recs-header }}`,
-              closeOnBgClick: true,
-              buttons: 'Cancel, Confirm',
-              wrapperClass: 'pfy-data-archive-records',
-              callbackArg: form,
-              onConfirm: function (that, form) {
-                form.setAttribute('action', pageUrl + '?archive');
-                form.submit();
-              }
-            };
-          }
-          currentlyOpenPopup = pfyPopup(options);
-        });
-
-      }
     }
   }, // setupOpenDeleteRecordsDialog
+
+
+  setupOpenArchiveRecordsDialog: function (table) {
+    const wrapper = table.closest('.pfy-table-wrapper');
+    const form = wrapper.querySelector('form');
+    if (!form) {
+      return;
+    }
+    const archiveButton = form.querySelector('.pfy-table-archive-recs-open-dialog');
+    if (archiveButton) {
+      archiveButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
+        let options = {};
+        if (!selected.length) {
+          options = {
+            text: `{{ pfy-table-delete-nothing-selected }}`,
+            header: `{{ pfy-table-archive-recs-header }}`,
+            closeOnBgClick: true,
+            buttons: 'Ok'
+          };
+        } else {
+          options = {
+            text: `{{ pfy-data-archive-records }}`,
+            header: `{{ pfy-table-archive-recs-header }}`,
+            closeOnBgClick: true,
+            buttons: 'Cancel, Confirm',
+            wrapperClass: 'pfy-data-archive-records',
+            callbackArg: form,
+            onConfirm: function (that, form) {
+              form.setAttribute('action', pageUrl + '?archive');
+              form.submit();
+            }
+          };
+        }
+        currentlyOpenPopup = pfyPopup(options);
+      });
+    }
+  }, // setupOpenArchiveRecordsDialog
 
 
   setupEditButtons: function (table, tableInx) {
