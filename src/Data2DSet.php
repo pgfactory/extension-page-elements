@@ -23,6 +23,7 @@ class Data2DSet extends DataSet
 {
     protected array $columnKeys = [];
     private string $unknownValue = UNKNOWN;
+    private bool $markLocked = false;
 
     /**
      * @param string $file
@@ -31,6 +32,7 @@ class Data2DSet extends DataSet
      */
     public function __construct(string $file, array $options = [])
     {
+        $this->markLocked = $options['markLocked'] ?? false;
         parent::__construct($file, $options);
 
         if ($unknown = $options['unknownValue']??false) {
@@ -48,8 +50,29 @@ class Data2DSet extends DataSet
     {
         $includeSystemElements = $this->options['includeSystemElements']??false;
         $data = $this->data($includeSystemElements);
-        list($data2D, $headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
+        list($headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
 
+        $data2D = self::normalizeData($data, $headerElems, $elementKeys);
+
+        $this->nRows = sizeof($data2D)-1;
+        $this->columnKeys = $headerElems;
+        $this->nCols = sizeof($elementKeys);
+
+        if ($this->options['obfuscateRows']??false) {
+            $data2D = $this->obfuscateRows($data2D);
+        }
+        if ($this->options['minRows']??false) {
+            $data2D = $this->addRows($data2D, $elementKeys);
+        }
+
+        return $data2D;
+    } // get2DNormalizedData
+
+
+    public static function normalizeData($data, $headerElems, $elementKeys): array
+    {
+        $data2D = [];
+        $data2D['_hrd'] = array_combine($elementKeys, $elementKeys);
         foreach ($data as $recKey => $rec) {
             $newRec = [];
             foreach ($headerElems as $key => $value) {
@@ -74,7 +97,7 @@ class Data2DSet extends DataSet
                             } elseif (is_scalar($v)) {
                                 $v = ($v === $value);
                             } else {
-                                $newRec[$value] = $this->unknownValue;
+                                $newRec[$value] = '?'; //$this->unknownValue;
                                 continue 2;
                             }
                         }
@@ -82,32 +105,14 @@ class Data2DSet extends DataSet
 
                     // no matching data found -> mark as unknown
                     } else {
-                        $newRec[$key] = $this->unknownValue;
+                        $newRec[$key] = '?'; //$this->unknownValue;
                     }
                 }
             }
-
-            if ($this->markLocked) {
-                $origRec = $this->find($recKey);
-                $newRec['_locked'] = $origRec->isLocked();
-            }
-
-            $data2D[$recKey] = $this->arrayCombine($elementKeys, $newRec);
+            $data2D[$recKey] = self::arrayCombine($elementKeys, $newRec);
         }
-
-        $this->nRows = sizeof($data2D)-1;
-        $this->columnKeys = $headerElems;
-        $this->nCols = sizeof($elementKeys);
-
-        if ($this->options['obfuscateRows']??false) {
-            $data2D = $this->obfuscateRows($data2D);
-        }
-        if ($this->options['minRows']??false) {
-            $data2D = $this->addRows($data2D, $elementKeys);
-        }
-
         return $data2D;
-    } // get2DNormalizedData
+    } // normalizeData
 
 
     /**
@@ -167,11 +172,10 @@ class Data2DSet extends DataSet
             if ($this->markLocked) {
                 $elementKeys[] = '_locked';
             }
-            $data2D['_hdr'] = $this->arrayCombine($elementKeys, $elementKeys);
         } else {
             $headerElems = [];
         }
-        return [$data2D, $headerElems, $elementKeys];
+        return [$headerElems, $elementKeys];
     } // prepare
 
 
@@ -180,7 +184,7 @@ class Data2DSet extends DataSet
      * @param array $values
      * @return array
      */
-    private function arrayCombine(array $keys, array $values): array
+    private static function arrayCombine(array $keys, array $values): array
     {
         $nKeys = sizeof($keys);
         $nValues = sizeof($values);
@@ -192,7 +196,8 @@ class Data2DSet extends DataSet
             }
         } elseif ($nKeys > $nValues) {
             for ($i=$nValues; $i<$nKeys; $i++) {
-                $values[$i] = str_replace('_', ' ', ($keys[$i]??''));
+                $values[$i] = '';
+                // originally: $values[$i] = str_replace('_', ' ', ($keys[$i]??''));
             }
         }
         return array_combine($keys, $values);
@@ -202,7 +207,7 @@ class Data2DSet extends DataSet
     private function addRows(array $data2D, array $elementKeys): array
     {
         if (($minRows = $this->options['minRows']) && ($minRows > $this->nRows)) {
-            $emptyRec = $this->arrayCombine($elementKeys, array_fill(0, $this->nCols, ''));
+            $emptyRec = self::arrayCombine($elementKeys, array_fill(0, $this->nCols, ''));
             $emptyRecs = array_fill(0, ($minRows - $this->nRows), $emptyRec);
             $data2D = array_merge_recursive($data2D, $emptyRecs);
             $this->nRows = sizeof($data2D)-1;

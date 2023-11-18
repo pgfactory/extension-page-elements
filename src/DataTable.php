@@ -29,7 +29,7 @@ if (!function_exists('array_is_list')) {
 }
 
 
-class DataTable extends Data2DSet
+class DataTable
 {
     private $tableData;
     private $tableHeaders;
@@ -59,13 +59,19 @@ class DataTable extends Data2DSet
     private bool $dialogInitialized = false;
     public bool $announceEmptyTable;
     private $archiveDb;
+    private $data2Dset;
+    private $nRows;
+    private $nCols;
+    private $officeFormatAvailable = false;
+    private $columnKeys = [];
+    private $file = false;
 
     /**
-     * @param string $file
+     * @param string|array $dataSrc
      * @param array $options
      * @throws \Exception
      */
-    public function __construct(string $file, array $options = [])
+    public function __construct(string|array $dataSrc, array $options = [])
     {
         if (isset($GLOBALS['tableInx'])) {
             $GLOBALS['tableInx']++;
@@ -74,7 +80,15 @@ class DataTable extends Data2DSet
             $this->inx = $GLOBALS['tableInx'] = 1;
             PageFactory::$pg->addAssets('TABLES');
         }
-        parent::__construct($file, $options);
+        if (!isset($options['headers'])) {
+            $options['headers'] = true;
+        }
+        if (is_string($dataSrc)) {
+            $this->file = $dataSrc;
+            $this->data2Dset = new Data2DSet($dataSrc, $options);
+        } else {
+            $this->tableData = $dataSrc;
+        }
 
         if (isset($_GET['delete']) || isset($_GET['archive'])) {
             // skip, if no recKeys supplied or recKeys belong to some other table:
@@ -92,12 +106,10 @@ class DataTable extends Data2DSet
         $this->footers = ($options['footers']??false) ?: ($options['footer']??false);
         $this->caption = $options['caption']??false;
         $this->captionAbove = (($options['captionPosition']??false) ?: 'b')[0] === 'a';
-        $this->obfuscateRecKeys = $options['obfuscateRecKeys'] ?? false;
         $this->interactive = $options['interactive'] ?? false;
         $tableButtons = $options['tableButtons'] ?? false;
         $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
-        $this->downloadFilename = ($options['downloadFilename']??false) ?: base_name($file, false);
-        $this->showRowNumbers = $options['showRowNumbers'] ?? false;
+        $this->showRowNumbers = $options['showRowNumbers'] ?? false; //??? obsolete?
         $this->showRowSelectors = $options['showRowSelectors'] ?? false;
 
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
@@ -158,7 +170,12 @@ class DataTable extends Data2DSet
      */
     private function prepareTableData(): void
     {
-        $this->tableData = $this->getNormalized2D_Data($this->tableHeaders);
+        if ($this->data2Dset) {
+            $this->tableData = $this->data2Dset->getNormalized2D_Data($this->tableHeaders);
+        } else {
+            $elementKeys = array_values($this->tableHeaders);
+            $this->tableData = Data2DSet::normalizeData($this->tableData, $this->tableHeaders, $elementKeys);
+        }
     } // prepareTableData
 
 
@@ -169,15 +186,13 @@ class DataTable extends Data2DSet
      */
     public function render(): string
     {
-        if (!$this->data) {
+        $this->prepareTableData();
+
+        if (sizeof($this->tableData) < 2) {
             if ($this->announceEmptyTable) {
                 return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
-            } else {
-                $rec = array_combine(array_values($this->tableHeaders), array_pad([], sizeof($this->tableHeaders), ''));
-                $this->addRec($rec, flush:false);
             }
         }
-        $this->prepareTableData();
 
         // inject service rows: select(delete), row-numbers, edit-buttons
         $this->prependServiceColumns();
@@ -410,6 +425,13 @@ class DataTable extends Data2DSet
                 }
                 $i++;
                 $v = $rec[$k]??'';
+                if (is_array($v)) {
+                    if (isset($v['_'])) {
+                        $v = $v['_'];
+                    } else {
+                        $v = implode(',', $v);
+                    }
+                }
                 if (!preg_match('/^\{\{.*}}$/', $k)) {
                     $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
                 } else {
@@ -605,16 +627,20 @@ EOT;
         }
         $keysSelected = $_POST['pfy-reckey'];
         if ($keysSelected) {
-            foreach ($keysSelected as $key) {
-                if (strlen($key) > 4) { // skip _hdr and empty records
-                    if ($archiveMode) {
-                        $this->archive($key);
-                    } else {
-                        $this->remove($key);
+            if ($this->data2Dset) {
+                foreach ($keysSelected as $key) {
+                    if (strlen($key) > 4) { // skip _hdr and empty records
+                        if ($archiveMode) {
+                            $this->archive($key);
+                        } else {
+                            $this->data2Dset->remove($key);
+                        }
                     }
                 }
+                $this->data2Dset->flush();
+            } else {
+                throw new \Exception("Error: DataTable operating in array-, not file-mode");
             }
-            $this->flush();
         }
         unset($_POST['pfy-reckey']);
         $msg = TransVars::getVariable('pfy-form-rec-deleted');
@@ -648,13 +674,13 @@ EOT;
      */
     private function exportDownloadDocs(): string
     {
-        $file = $this->export(fileType: true);
+        $file = $this->data2Dset->export(fileType: true);
         return $file;
     } // exportDownloadDocs
 
 
     private function archive($key) {
-        $dataRec = $this->find($key);
+        $dataRec = $this->data2Dset->find($key);
         // in case data was empty and we added an empty rec, remove it again here:
         if ($dataRec) {
             $rec = $dataRec->data();
@@ -696,5 +722,37 @@ EOT;
         $this->$key = $var;
         return $var;
     } // parseArrayArg
+
+
+    public function getSize(): int|false
+    {
+        if ($this->data2Dset) {
+            return $this->data2Dset->getSize();
+        } else {
+            throw new \Exception("Error: DataTable operating in array-, not file-mode");
+        }
+    } // getSize
+
+
+    public function purge(): void
+    {
+        if ($this->data2Dset) {
+            $this->data2Dset->purge();
+        } else {
+            throw new \Exception("Error: DataTable operating in array-, not file-mode");
+        }
+    } // purge
+
+
+    public function addRec(array $rec, bool $flush = true, $recKeyToUse = false)
+    {
+        if ($this->data2Dset) {
+            $this->data2Dset->addRec($rec, $flush, $recKeyToUse);
+        } else {
+            throw new \Exception("Error: DataTable operating in array-, not file-mode");
+        }
+    } // addRec
+
+
 
 } // DataTable
