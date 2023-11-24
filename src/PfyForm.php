@@ -193,7 +193,7 @@ class PfyForm extends Form
 
 
         // determine $label, $name, $type and $subType:
-        list($label, $name, $type) = $this->parseMainOptions($elemOptions);
+        list($label, $name, $type) = $this->parseOptions($elemOptions);
         if ($name === null) { // this is the case if antiSpam is suppressed by edit-rec option
             return;
         }
@@ -360,7 +360,7 @@ class PfyForm extends Form
             unset($this->fieldNames[$name]);
         }
 
-        // note: 'info' option handled in parseMainOptions()
+        // note: 'info' option handled in parseOptions()
     } // addElement
 
 
@@ -468,6 +468,7 @@ class PfyForm extends Form
         $this->formElements[$name]['subKeys'] = array_keys($radioElems);
         // handle option 'horizontal':
         $elemOptions['class'] .= (($layout = ($elemOptions['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
+        $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
 
         if ($elemOptions['splitOutput']??false) {
             $this->addFieldNames($name, $radioElems);
@@ -514,6 +515,7 @@ class PfyForm extends Form
                 $elem->setHtmlAttribute('value', $elemOptions['preset']);
             }
         }
+        $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
 
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
         return $elem;
@@ -1017,7 +1019,7 @@ EOT;
      * @return array
      * @throws \Exception
      */
-    private function parseMainOptions(array &$elemOptions): array
+    private function parseOptions(array &$elemOptions): array
     {
         $args = [];
         $label = $elemOptions['label'] ?? false;
@@ -1138,7 +1140,7 @@ EOT;
         }
 
         return array($label, $name, $type);
-    } // parseMainOptions
+    } // parseOptions
 
 
     /**
@@ -1760,6 +1762,7 @@ EOT;
                 $h = (string)$elem->getControl();
                 $formButtons[] = $h;
 
+            // all other field types (except bypassed and import):
             } elseif (!str_contains(',bypassed,@import,', ",$type,")) {
                 $input = "<span class='pfy-input-wrapper'>$input</span>";
                 $html .= <<<EOT
