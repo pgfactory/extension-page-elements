@@ -107,7 +107,7 @@
     padding-bottom: calc(var(--form-row-gap-height, 1em) / 2);
   }
 
-  .pfy-elem-wrapper.required label::after,
+  .pfy-elem-wrapper.required .pfy-label-wrapper label::after,
   label.required::after {
     content: '*';
     color: var(--form-required-marker-color, orange);
