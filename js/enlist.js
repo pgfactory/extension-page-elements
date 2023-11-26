@@ -77,7 +77,7 @@ const Enlist = {
 
   openPopup: function(elem, mode) {
     // check whether page timed out:
-    if (pageLoaded < (Math.floor(Date.now()/1000) - 3600)) {
+    if (pageLoaded < (Math.floor(Date.now()/1000) - 600)) {
       pfyConfirm({text: `{{ pfy-form-timed-out }}`})
         .then(function () {
           reloadAgent();
@@ -92,9 +92,9 @@ const Enlist = {
       closeOnBgClick: true,
     };
     if (typeof elem !== 'undefined') {
-      const elemWrapper = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
-      const elemId = elemWrapper.dataset.elemkey;
-      options.onOpen = function() { Enlist.preparePopupForm(mode, elemWrapper, elemId); };
+      const $tableRow = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
+      const elemId = $tableRow.dataset.reckey;
+      options.onOpen = function() { Enlist.preparePopupForm(mode, $tableRow, elemId); };
     }
     Enlist.currentlyOpenPopup = pfyPopup(options);
 
@@ -105,17 +105,25 @@ const Enlist = {
   }, // openPopup
 
 
-  preparePopupForm: function(mode, elemWrapper, elemId) {
-    const name = elemWrapper.querySelector('.pfy-enlist-name').textContent;
-    const $list = elemWrapper.closest('.pfy-enlist-wrapper');
+
+  preparePopupForm: function(mode, $tableRow, elemId) {
+    let name = $tableRow.querySelector('.pfy-enlist-name').innerHTML;
+    name = name.substring(5).replace('\n', '');
+    name = name.replace(/\s*<.*/, '');
+    const $list = $tableRow.closest('.pfy-enlist-wrapper');
     const setname = $list.dataset.setname;
-    const directreserve = $list.dataset.directreserve;
+    let   directreserve = $list.dataset.directreserve;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
     popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
 
     const $form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
     const setnameElem = $form.querySelector('[name=setname]');
+    const customFields = $form.querySelectorAll('.pfy-enlist-custom');
     setnameElem.setAttribute('value', setname);
+
+    // disable submit button to prevent multiple submits:
+    const $submit = $form.querySelector('[type="submit"]');
+    $submit.disabled = true;
 
     // inhibit submit by enter key while in textarea:
     const textareaFields = $form.querySelectorAll('textarea');
@@ -129,46 +137,152 @@ const Enlist = {
       });
     }
 
+    const $deleteCheckbox = $form.querySelector('#pfy-enlist-delete');
+    let $deleteChoice = null;
+    if ($deleteCheckbox) {
+       $deleteChoice = $deleteCheckbox.closest('.pfy-elem-wrapper');
+    }
+
     const nameField = $form.querySelector('[name=Name]');
+
+    this.setupModifiedMonitor($form);
+
+    // === add mode =========================================
     if (mode === 'add') {
-      const submitBtn = $form.querySelector('[name=_submit]');
-      submitBtn.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
-      submitBtn.setAttribute('name', 'add');
+      $form.classList.add('pfy-enlist-add-mode');
+      $submit.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
+      $submit.setAttribute('name', 'add');
+
+      if ($deleteChoice) {
+        $deleteChoice.style.display = 'none';
+      }
+
       setTimeout(function() {
         nameField.focus();
       }, 60);
-    }
+    } else
 
+    // === delete/modify mode ================================
     if (mode === 'del') {
+      $form.classList.add('pfy-enlist-delete-mode');
       nameField.setAttribute('value', name);
       nameField.setAttribute('readonly', true);
 
       const nameLabel = nameField.parentElement.parentElement.querySelector('label');
       nameLabel.classList.remove('required');
 
-      const submitBtn = $form.querySelector('[name=_submit]');
-      submitBtn.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
-      submitBtn.setAttribute('name', 'delete');
+      this.fillFormValues($form, $tableRow, elemId);
 
-      const redIdField = $form.querySelector('[name=elemId]');
-      redIdField.setAttribute('value', elemId);
+        if ($deleteChoice) {
+          if (customFields) {
+            $submit.setAttribute('value', `{{ pfy-enlist-modify-btn }}`);
+          } else {
+            $submit.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
+          }
+            $deleteCheckbox.addEventListener('change', function(e) {
+                if (this.checked) {
+                    $submit.value = `{{ pfy-enlist-delete-btn }}`;
+                } else {
+                    $submit.value = `{{ pfy-enlist-modify-btn }}`;
+                }
+            });
+        } else {
+          $submit.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
+        }
 
+        // set submit button:
+      $submit.setAttribute('name', 'delete');
+
+      directreserve = false;
+    } // mode del
+  }, // preparePopupForm
+
+
+  setupModifiedMonitor: function ($form) {
+    // enable submit when email-field non-empty:
+    const $submit = $form.querySelector('[type="submit"]');
+    const nameField = $form.querySelector('[name=Name]');
       const emailField = $form.querySelector('[name=Email]');
-      if (this.isEnlistAdmin) {
-        const email = elemWrapper.querySelector('.pfy-enlist-email').textContent;
-        emailField.setAttribute('value', email);
-      } else {
-        setTimeout(function () {
-          emailField.focus();
-        }, 60);
+      nameField.addEventListener('keyup', function(e) {
+      if (this.value && emailField.value) {
+        $submit.disabled = false;
       }
+    });
+    emailField.addEventListener('keyup', function(e) {
+      if (this.value && nameField.value) {
+        $submit.disabled = false;
+      }
+    });
+  }, // setupModifiedMonitor
+
+
+  fillFormValues: function($form, $tableRow, elemId) {
+    // get elemId
+    const recIdField = $form.querySelector('[name=elemId]');
+    recIdField.setAttribute('value', elemId);
+
+    // get Email, if in admin mode:
+    const emailField = $form.querySelector('[name=Email]');
+    if (this.isEnlistAdmin) {
+      const email = $tableRow.querySelector('.pfy-enlist-email').textContent;
+      emailField.setAttribute('value', email);
+      const $submit = $form.querySelector('[type="submit"]');
+      $submit.disabled = false;
+    } else {
+      // set focus to email-field:
+      setTimeout(function () {
+        emailField.focus();
+      }, 60);
     }
 
-    if (!directreserve || mode === 'del') {
-      const $directreserve = $form.querySelector('#frm-directlyToReserve').closest('.pfy-elem-wrapper');
-      $directreserve.style.display = 'none';
+    // get custom elements:
+    const $customFields = $form.querySelectorAll('.pfy-elem-wrapper.pfy-enlist-custom');
+    if ($customFields) {
+      $customFields.forEach(function ($elem) {
+        const classList = $elem.classList;
+        let idy = false;
+        classList.forEach(function(cls) {
+          const m = cls.match(/pfy-elem_(.*)/);
+          if (!idy && m) {
+            idy = m[1];
+          }
+        });
+        const $inputs = $elem.querySelectorAll('input');
+        if ($inputs) {
+          $inputs.forEach($input => {
+            const type = $input.type;
+            if (type === 'radio' || type === 'checkbox') {
+              const $optionLabel = $input.closest('label');
+              let optionLabel = $optionLabel.innerText;
+              let srcIdy = '.pfy-elem_' + idy;
+              let $tableElem = $tableRow.querySelector(srcIdy.toLowerCase());
+              if ($tableElem) {
+                // case no splitOutput:
+                const x = $tableElem.innerText;
+                $input.checked = ($tableElem.innerText.includes(optionLabel));
+
+              } else {
+                // case splitOutput:
+                srcIdy = '.pfy-elem_' + idy + '-' + optionLabel;
+                $tableElem = $tableRow.querySelector(srcIdy.toLowerCase());
+                if ($tableElem) {
+                  $input.checked = ($tableElem.innerText !== '0');
+                }
+              }
+
+            } else {
+              const srcIdy = '.pfy-elem_' + idy;
+              const $tableElem = $tableRow.querySelector(srcIdy);
+              $input.value = $tableElem.innerText;
+            }
+          });
+        }
+
+      }); // $customFields
     }
-  } // preparePopupForm
+  }, // fillFormValues
+
+
 };
 
 Enlist.init();

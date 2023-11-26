@@ -22,8 +22,8 @@ const UNKNOWN = '?';
 class Data2DSet extends DataSet
 {
     protected array $columnKeys = [];
-    private string $unknownValue = UNKNOWN;
     private bool $markLocked = false;
+    private static string $placeholderForUndefined = UNKNOWN;
 
     /**
      * @param string $file
@@ -36,7 +36,7 @@ class Data2DSet extends DataSet
         parent::__construct($file, $options);
 
         if ($unknown = $options['unknownValue']??false) {
-            $this->unknownValue = $unknown;
+            self::$placeholderForUndefined = $unknown;
         }
     } // __construct
 
@@ -52,7 +52,7 @@ class Data2DSet extends DataSet
         $data = $this->data($includeSystemElements);
         list($headerElems, $elementKeys) = $this->prepare($headerElems, $includeSystemElements);
 
-        $data2D = self::normalizeData($data, $headerElems, $elementKeys);
+        $data2D = self::normalizeData($data, $headerElems, self::$placeholderForUndefined);
 
         $this->nRows = sizeof($data2D)-1;
         $this->columnKeys = $headerElems;
@@ -69,22 +69,27 @@ class Data2DSet extends DataSet
     } // get2DNormalizedData
 
 
-    public static function normalizeData($data, $headerElems, $elementKeys): array
+    public static function normalizeData(array $data, array $headerElems, string $placeholderForUndefined = null): array
     {
+        if ($placeholderForUndefined === null) {
+            $placeholderForUndefined = self::$placeholderForUndefined;
+        }
         $data2D = [];
-        $data2D['_hrd'] = array_combine($elementKeys, $elementKeys);
+        $data2D['_hrd'] = $headerElems;
+        $elementKeys = array_keys($headerElems);
         foreach ($data as $recKey => $rec) {
             $newRec = [];
             foreach ($headerElems as $key => $value) {
                 if (isset($rec[$key])) {
-                    if (is_bool($rec[$key])) {
-                        $newRec[$key] = $rec[$key]? '1':'0';
-                    } elseif (is_scalar($rec[$key])) {
-                        $newRec[$key] = $rec[$key];
-                    } elseif (is_array($rec[$key]) && isset($rec[$key]['_'])) {
-                        $newRec[$key] = $rec[$key]['_'];
-                    } elseif (is_array($rec[$key])) {
-                        $newRec[$key] = json_encode($rec[$key]);
+                    $val = $rec[$key];
+                    if (is_bool($val)) {
+                        $newRec[$key] = $val? '1':'0';
+                    } elseif (is_scalar($val)) {
+                        $newRec[$key] = $val;
+                    } elseif (is_array($val) && isset($val['_'])) {
+                        $newRec[$key] = $val['_'];
+                    } elseif (is_array($val)) {
+                        $newRec[$key] = json_encode($val);
                     }
                 } else {
                     // no elem found, check for indexed element of type 'a.b':
@@ -97,15 +102,15 @@ class Data2DSet extends DataSet
                             } elseif (is_scalar($v)) {
                                 $v = ($v === $value);
                             } else {
-                                $newRec[$value] = '?'; //$this->unknownValue;
+                                $newRec[$value] = $placeholderForUndefined;
                                 continue 2;
                             }
                         }
-                        $newRec[$index] = is_bool($v) ? ($v?'1':'0'): $v;
+                        $newRec[$key] = is_bool($v) ? ($v?'1':'0'): $v;
 
                     // no matching data found -> mark as unknown
                     } else {
-                        $newRec[$key] = '?'; //$this->unknownValue;
+                        $newRec[$key] = $placeholderForUndefined;
                     }
                 }
             }
@@ -161,10 +166,10 @@ class Data2DSet extends DataSet
                     }
                 } else {
                     $headerElems = array_filter($headerElems, function ($e) {
-                        return ($e[0] !== '_');
+                        return (((string)$e)[0] !== '_');
                     });
                     $elementKeys = array_filter($elementKeys, function ($e) {
-                        return ($e[0] !== '_');
+                        return (((string)$e)[0] !== '_');
                     });
                     $elementKeys = array_values($elementKeys);
                 }

@@ -141,6 +141,23 @@
     background: var(--pfy-enlist-reserve-field-bg, #f6f6ff);
   }
 
+  .pfy-enlist-delete-btn-wrapper {
+    padding-top: 1em;
+    display: flex;
+    justify-content: flex-end;
+    .pfy-input-wrapper {
+      width: unset;
+    }
+    label {
+      font-style: italic;
+    }
+    input {
+      float: right;
+      margin-left: 1em;
+    }
+  }
+
+
   #pfy-enlist-form {
     display: none;
     background: yellow;
@@ -155,10 +172,10 @@
 
   .pfy-popup-wrapper.pfy-enlist-del-mode {
     .add { display: none; }
-    .pfy-enlist-custom {
-      opacity: 50%;
-      pointer-events:none;
-    }
+    //.pfy-enlist-custom {
+    //  opacity: 50%;
+    //  pointer-events:none;
+    //}
   }
 
   .pfy-enlist-expired {
@@ -212,5 +229,11 @@
 
   .pfy-empty-title {
     display: none;
+  }
+
+  .pfy-enlist-delete-mode {
+    .pfy-enlist-directly {
+      display: none;
+    }
   }
 } // .pfy-default-styling

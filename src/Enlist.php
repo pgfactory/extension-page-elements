@@ -13,9 +13,10 @@ use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\parseArgumentStr;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
+use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
-use function PgFactory\PageFactory\fileExt;
+use function PgFactory\PageFactory\explodeTrimAssoc;
 
 const ENLIST_INFO_ICON = 'ⓘ';
 const ENLIST_MAIL_ICON = '✉';
@@ -38,6 +39,7 @@ class Enlist
     private $dataset;
     private $datasets;
     private $datasetName;
+    private array $tableData = [];
     private $directlyReservePossible = false;
     private $deadlineExpired = false;
     private $isEnlistAdmin = false;
@@ -74,8 +76,12 @@ class Enlist
     private static $_admin = null;
     private $adminEmail;
     private static $_adminEmail = null;
+    private $directlyToReserve;
+    private static $_directlyToReserve = null;
     private $class;
     private static $_class = null;
+    private bool $editable = false;
+    private static bool|null $_editable = null;
     private array|false $events = false;
 
     /**
@@ -97,7 +103,7 @@ class Enlist
         self::$session = kirby()->session();
         self::$obfuscateSessKey = "obfuscate:$pageId:elemKeys";
 
-        if ($options['description']??false) {
+        if ($options['description'] ?? false) {
             $options['info'] = $options['description'];
         }
 
@@ -109,31 +115,45 @@ class Enlist
 
         if ($customFields) {
             $this->customFields0 = $customFields;
+            // Replace - with _ in all keys;
+            $customFields1 = $customFields;
+            $customFields = [];
+            foreach ($customFields1 as $key => $rec) {
+                $key = str_replace('-', '_', $key);
+                $key = preg_replace('/\W/', '', $key);
+                $customFields[$key] = $rec;
+            }
+
             $nCustFields = sizeof($customFields);
             foreach ($customFields as $key => $customField) {
-                if (($customField['hidden']??false) && !$this->isEnlistAdmin) {
+                if (($customField['hidden'] ?? false) && !$this->isEnlistAdmin) {
                     unset($customFields[$key]);
                     $nCustFields--;
                     continue;
                 }
                 // special case 'checkbox options':
-                if ((($customField['type']??'text') === 'checkbox') ||
-                            ($customField['options']??false)) {
+                if ((($customField['type'] ?? 'text') === 'checkbox') ||
+                    ($customField['options'] ?? false)) {
                     $customField['type'] = 'checkbox';
-                    $customOptions = parseArgumentStr($customField['options']??'');
+                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
                     $customFields[$key]['options'] = $customOptions;
-                    $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
-                    $nCustFields += sizeof($customOptions) - 1;
+                    if ($customField['splitOutput']??false) {
+                        $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
+                        $nCustFields += sizeof($customOptions) - 1;
+                    } else {
+                        $key = rtrim($customField['label'] ?? $key, ':');
+                        $this->fieldNames[] = $key;
+                    }
                 } else {
-                    $key = rtrim($customField['label']??$key, ':');
+                    $key = rtrim($customField['label'] ?? $key, ':');
                     $this->fieldNames[] = $key;
                 }
             }
             $this->customFields = $customFields;
 
             $this->customFieldsEmpty = array_fill(0, $nCustFields, '');
-            $this->fieldNames[] = '&nbsp;';
         }
+        $this->fieldNames[] = '&nbsp; ';
 
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
@@ -149,7 +169,7 @@ class Enlist
             $html = '';
             foreach ($this->events as $event) {
                 $this->title = $event['eventBanner'];
-                $this->datasetName =  $event['start'];
+                $this->datasetName = $event['start'];
                 $html .= $this->renderElement();
             }
 
@@ -169,10 +189,7 @@ class Enlist
         // get access to the current dataset:
         $this->dataset = $this->getDataset();
 
-        // obtain current count of entries:
-        $this->nEntries = $this->countEntries();
-
-        $id = ($this->options['id']??false)?: "pfy-enlist-wrapper-$this->inx";
+        $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$this->inx";
         $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . $this->class);
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
@@ -181,7 +198,7 @@ class Enlist
                 if ($this->adminEmail === true) {
                     $adminEmail = PageFactory::$webmasterEmail;
                     PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
-                } elseif($this->adminEmail) {
+                } elseif ($this->adminEmail) {
                     PageFactory::$pg->addJs("const adminEmail = '$this->adminEmail';");
                 }
             }
@@ -200,8 +217,8 @@ class Enlist
 
         $headButtons = $this->renderSendMailToAllButton();
 
-        $html = $this->renderEntryTable();
-        $attrib = $this->directlyReservePossible? ' data-directreserve="true"': '';
+        $html = $this->renderTable();
+        $attrib = $this->directlyReservePossible ? ' data-directreserve="true"' : '';
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setname="$this->datasetName"$attrib>
@@ -219,7 +236,7 @@ EOT;
      */
     private function parseOptions(array $options): void
     {
-        $this->presetOptionsMode = !($options['output']??true);
+        $this->presetOptionsMode = !($options['output'] ?? true);
         if (($this->inx = $options['inx'] ?? false) === false) {
             if (isset($GLOBALS['pfyEnlistInx'])) {
                 $GLOBALS['pfyEnlistInx']++;
@@ -246,6 +263,8 @@ EOT;
         $this->prepStaticOption('admin', true);
         $this->prepStaticOption('adminEmail');
         $this->prepStaticOption('class');
+        $this->prepStaticOption('directlyToReserve');
+        $this->prepStaticOption('editable');
         $deadlineStr = $this->prepStaticOption('deadline');
         $deadline = false;
         if ($deadlineStr) {
@@ -257,11 +276,11 @@ EOT;
 
         $this->title = $title;
 
-        if (!($this->datasetName = ($this->options['listName']??false))) {
+        if (!($this->datasetName = ($this->options['listName'] ?? false))) {
             if ($title0 && (self::$_title === null)) {
-                $this->datasetName = $this->inx.'_'.translateToFilename(strip_tags($title0), false);
+                $this->datasetName = $this->inx . '_' . translateToFilename(strip_tags($title0), false);
             } else {
-                $this->datasetName = $this->inx."_List";
+                $this->datasetName = $this->inx . "_List";
             }
         }
 
@@ -279,7 +298,7 @@ EOT;
         if ($deadline) {
             $this->deadlineExpired = ($deadline < time());
         }
-        $this->nTotalSlots   = $this->nSlots + $this->nReserveSlots;
+        $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
 
         if ($this->freezeTime) {
             $this->freezeTime = $this->freezeTime * 3600; // freezeTime is in hours
@@ -289,181 +308,162 @@ EOT;
 
     /**
      * @return string
+     * @throws \Exception
      */
-    private function renderEntryTable()
+    private function renderTable()
     {
-        $thead = $this->renderEntryTableHeader();
-        $rows = '';
-        for ($i=0; $i<$this->nTotalSlots; $i++) {
-            $rows .= $this->renderListEntry($i);
-        }
-        $tableClass = $this->customFields? ' pfy-enlist-custom-fields': '';
+        list($data, $tableHeaders, $colClasses, $rowClasses, $rowIds) = $this->prepareTableData();
 
-        $html = <<<EOT
-<table class='pfy-enlist-table$tableClass'>
-  <thead>
-$thead
-  </thead>
+        $tableClass = $this->customFields ? ' pfy-enlist-custom-fields' : '';
+        $tableOptions = [
+            'tableClass' => "pfy-enlist-table$tableClass",
+            'tableHeaders' => $tableHeaders,
+            'minRows' => $this->nTotalSlots,
+            'announceEmptyTable' => false,
+            'dataReference' => true,
+            'colClasses' => $colClasses,
+            'rowClasses' => $rowClasses,
+            'rowIds' => $rowIds,
+            'unknownValue' => '&nbsp;',
+            'placeholderForUndefined' => '',
+        ];
+        $dt = new DataTable($data, $tableOptions);
 
-  <tbody>
-$rows
-  </tbody>
-</table>
-EOT;
+        $html = $dt->render();
 
         return $html;
-    } // renderEntryTable
+    } // renderTable
 
 
     /**
-     * @return string
-     */
-    private function renderEntryTableHeader(): string
-    {
-        $thead = '';
-        $n = sizeof($this->fieldNames);
-        $hClasses = ['pfy-enlist-row-num','pfy-enlist-icon pfy-enlist-icon-1','pfy-enlist-name'];
-        for ($i=3; $i<$n; $i++) {
-            $hClasses[$i] = "pfy-enlist-custom-field pfy-enlist-custom-field-".($i+1);
-        }
-        $hClasses[] = 'pfy-enlist-icon pfy-enlist-icon-2';
-        foreach ($this->fieldNames as $i => $headElem) {
-            $hidden = $this->customFields[$headElem]['hidden']??false;
-            if ($hidden && !$this->isEnlistAdmin) {
-                continue;
-            }
-            if ($i !== $n-1) {
-                $thead .= "      <th class='{$hClasses[$i]}'>$headElem</th>\n";
-            } else {
-                $thead .= "      <th class='pfy-enlist-icon pfy-enlist-icon-2'>$headElem</th>\n";
-            }
-        }
-        $header = <<<EOT
-    <tr>
-$thead    </tr>
-EOT;
-        return $header;
-    } // renderEntryTableHeader
-
-
-    /**
-     * @param int $i
-     * @return string
-     */
-    private function renderListEntry(int $i): string
-    {
-        $html = "      <td class='pfy-enlist-row-num'>".($i+1).":</td>\n";
-        $elemKey = '';
-
-        // filled element:
-        if (isset($this->dataset[$i]['Name'])) {
-            list($icon, $class, $name, $customFields, $elemKey) = $this->renderFilledRow($i);
-
-        // add element:
-        } elseif (!$this->addFieldAdded && !($this->deadlineExpired && !$this->isEnlistAdmin)) {
-            $this->addFieldAdded = true;
-            $class = ($this->deadlineExpired && $this->isEnlistAdmin) ? ' pfy-enlist-elem-frozen' : '';
-            $icon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
-            list($class, $name, $customFields) = ['pfy-enlist-add'.$class, '{{ pfy-enlist-add-text }}', $this->customFieldsEmpty];
-
-        } else {
-            list($icon, $class, $name, $customFields) = ['', 'pfy-enlist-empty', '', $this->customFieldsEmpty];
-        }
-        if ($i >= $this->nSlots) {
-            $class .= ' pfy-enlist-reserve';
-        }
-        $html .= "      <td class='pfy-enlist-icon-1'>$icon</td>\n";
-        $html .= "      <td class='pfy-enlist-name'>$name</td>\n";
-        if (is_array($customFields)) {
-            $j = 1;
-            foreach ($customFields as $name => $value) {
-                if (($value['options']??false) && (is_array($value['options']))) {
-                    foreach ($value['options'] as $elem) {
-                        $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$elem</td>\n";
-                        $j++;
-                    }
-                    $j++;
-                } else {
-                    $value = str_replace("\n", '<br>', $value);
-                    $html .= "      <td class='pfy-enlist-custom-field pfy-enlist-custom-field-$j'>$value</td>\n";
-                }
-            }
-        }
-        $html .= "      <td class='pfy-enlist-icon-2'>$icon</td>\n";
-
-        $html = <<<EOT
-    <tr class="$class" data-elemkey="$elemKey">
-$html    </tr>
-
-
-EOT;
-        return $html;
-    } // renderListEntry
-
-
-    /**
-     * @param int $i
      * @return array
+     * @throws \Exception
      */
-    private function renderFilledRow(int $i): array
+    private function prepareTableData(): array
     {
-        $class = '';
-        $rec = $this->dataset[$i];
-        if (isset($rec['Name'])) {
-            $text = $rec['Name'];
-            $icon = '<button type="button" title="{{ pfy-enlist-delete-title }}">'.ENLIST_DELETE_ICON.'</button>';
-            $class = 'pfy-enlist-delete';
-            // handle obfuscate name:
-            list($text, $icon) = $this->obfuscateNameInRow($text, $icon);
-            $isEmptyRec = false;
-        } else {
-            $isEmptyRec = true;
-            $icon = $text = '';
-        }
-        $class .= ($this->deadlineExpired && $this->isEnlistAdmin) ? ' pfy-enlist-elem-frozen' : '';
+        $rowIds = [];
+        $this->tableData = $this->dataset;
+        // obtain current count of entries:
+        $data = &$this->tableData;
+        $this->nEntries = $this->countEntries();
 
-        // handle freezeTime:
-        if ($this->freezeTime) {
-            $time = $rec['_time']??PHP_INT_MAX;
-            if (is_string($time)) {
-                $time = strtotime($time);
-            }
-            if ($time < (time() - $this->freezeTime)) {
-                if (!$this->isEnlistAdmin) {
-                    $icon = '';
-                    $class = 'pfy-enlist-elem-frozen';
-                } else {
-                    $class = 'pfy-enlist-delete pfy-enlist-elem-pseudo-frozen';
-                }
-            }
-        }
-        if ($this->deadlineExpired && !$this->isEnlistAdmin) {
-            $icon = '';
-        }
+        $tableHeaders = [];
+        $tableHeaders['#'] = '#';
+        $tableHeaders['&nbsp;'] = '&nbsp;';
+        $tableHeaders['Name'] = 'Name';
 
-        // append email if in admin mode:
-        if ($this->isEnlistAdmin && ($email = ($rec['Email']??false))) {
-            $text .= " <span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
-        }
-
-        // handle custom fields:
-        $customFields = [];
+        // custom fields:
         foreach ($this->customFields as $key => $value) {
-            // element containing options:
             if ($value['options']??false) {
-                foreach ($value['options'] as $k => $v) {
-                    $customFields[] = $rec[$key][$k]??'?';
+                if ($value['splitOutput']??false) {
+                    foreach ($value['options'] as $val => $label) {
+                        if ($val || $label) {
+                            $tableHeaders["$key.$val"] = $val;
+                        }
+                    }
+                } else {
+                    $tableHeaders[$key] = $key;
                 }
 
-            // regular element:
             } else {
-                $customFields[] = $rec[$key]??'?';
+                $tableHeaders[$key] = $key;
+            }
+
+        }
+        $tableHeaders['&nbsp; '] = '&nbsp; ';
+
+        // fix data: remove email, _time, directlyToReserve; obfuscate elemKey, add email to name if admin:
+        foreach ($data as $k => $rec) {
+            if (!is_int($k)) {
+                unset($data[$k]);
+            } elseif ($this->isEnlistAdmin && ($email = ($data[$k]['Email']??false))) {
+                $data[$k]['Name'] .= " <span class='pfy-enlist-email'><a href='mailto:$email'>$email</a></span>\n";
+            }
+            if ($data[$k]['_elemKey']??false) {
+                $rowIds[$k] = $this->obfuscateKey($data[$k]['_elemKey']);
+            }
+            if ($rec['Email']??false) {
+                unset($data[$k]['Email']);
+            }
+            if ($rec['_time']??false) {
+                unset($data[$k]['_time']);
+            }
+            if ($rec['directlyToReserve']??false) {
+                unset($data[$k]['directlyToReserve']);
             }
         }
-        $elemKey = $rec['_elemKey']??'';
-        $elemKey = $this->obfuscateKey($elemKey);
-        return [$icon, $class, $text, $customFields, $elemKey];
-    } // renderFilledRow
+
+        // determine colClasses:
+        $colClasses = ['pfy-enlist-row-num','pfy-enlist-icon pfy-enlist-icon-1','pfy-enlist-name'];
+        $i = 0;
+        foreach ($this->customFields as $key => $customField) {
+            if (isset($customField['options'])) {
+                if ($customField['splitOutput']??false) {
+                    foreach ($customField['options'] as $val => $label) {
+                        if ($val || $label) {
+                            $i++;
+                            $colClasses[] = "pfy-enlist-custom pfy-enlist-custom-$i pfy-elem_" . translateToClassName("$key-$val");
+                        }
+                    }
+                } else {
+                    $i++;
+                    $colClasses[] = "pfy-enlist-custom pfy-enlist-custom-$i pfy-elem_".translateToClassName($key);
+                }
+            } else {
+                $i++;
+                $colClasses[] = "pfy-enlist-custom pfy-enlist-custom-$i pfy-elem_".translateToClassName($key);
+            }
+        }
+        $colClasses[] = 'pfy-enlist-icon pfy-enlist-icon-2';
+
+        // determine rowClasses:
+        $rowClasses = [];
+        $addFieldDone = false;
+        for ($i=0; $i<$this->nTotalSlots; $i++) {
+            $rec = ($data[$i]??false) ? $data[$i] : [];
+            if ($rec['Name']??false) {
+                $rowClasses[$i] = 'pfy-enlist-delete';
+            } else {
+                if (!$addFieldDone) {
+                    $addFieldDone = true;
+                    $rowClasses[$i] = 'pfy-enlist-add';
+                } else {
+                    $rowClasses[$i] = 'pfy-enlist-empty';
+                }
+            }
+            $rowClasses[$i] .= ($i >= $this->nSlots)? ' pfy-enlist-reserve': '';
+        }
+
+        $emptyRow = [];
+        foreach ($this->fieldNames as $v) {
+            $emptyRow[$v] = '';
+        }
+
+        // fill data:
+        foreach ($data as $i => $rec) {
+            if (!($rec['Name']??false)) {
+                $data[$i] = $emptyRow;
+            }
+        }
+
+        $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+        $addIcon    = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
+        for ($i = 0; $i < $this->nTotalSlots; $i++) {
+            $rowClass = $rowClasses[$i];
+            $row = &$data[$i];
+            $row['#'] = $i + 1;
+            if (str_contains($rowClass, 'delete')) {
+                $row['&nbsp;'] = $deleteIcon;
+                $row['&nbsp; '] = $deleteIcon;
+            } elseif (str_contains($rowClass, 'add')) {
+                $row['&nbsp;'] = $addIcon;
+                $row['&nbsp; '] = $addIcon;
+            }
+        }
+
+        return [$data, $tableHeaders, $colClasses, $rowClasses, $rowIds];
+    } // prepareTableData
+
 
 
     /**
@@ -497,6 +497,7 @@ EOT;
     private function getDataset(string|false $setName = false): array
     {
         $nTotalSlots = false;
+        $nReserveSlots = false;
         $initialRun = false;
         if (!$setName) {
             $setName = $this->datasetName;
@@ -507,11 +508,10 @@ EOT;
 
         if (!isset($this->datasets[$setName])) {
             // create new dataset:
-            $dataset = [
-                'title' => $this->title,
-                'nSlots' => $nTotalSlots,
-                'nReserveSlots' => $nReserveSlots,
-                ];
+            $dataset = array_fill(0, $nTotalSlots, []);
+            $dataset['title'] = $this->title;
+            $dataset['nSlots'] = $nTotalSlots;
+            $dataset['nReserveSlots'] = $nReserveSlots;
             if ($this->freezeTime) {
                 $dataset['freezeTime'] = $this->freezeTime;
             }
@@ -572,44 +572,42 @@ EOT;
                     $data = $this->db->data();
                     $this->dataset = $data[$setName];
                 }
+
+                // check whether there are free reserve slots:
+                if ($this->directlyToReserve) {
+                    $directlyToReserve = false;
+                    for ($i = 0; $i < $this->nSlots; $i++) {
+                        if (!($dataset[$i]['Name'] ?? false)) {
+                            $directlyToReserve = true;
+                            break;
+                        }
+                    }
+                    if ($directlyToReserve) {
+                        $directlyToReserve = false;
+                        for ($i = $this->nSlots; $i < $nTotalSlots; $i++) {
+                            if (!($dataset[$i]['Name'] ?? false)) {
+                                $directlyToReserve = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!$directlyToReserve) {
+                        $this->directlyToReserve = false;
+                    }
+                }
             }
         }
-
         return $this->dataset;
     } // getDataset
 
 
+    /**
+     * @param string $setName
+     * @return array
+     */
     private function prepareDataSet(string $setName): array
     {
-        $tmp = [];
-        $dataset = [];
-        $dataset0 = $this->datasets[$setName];
-        foreach ($dataset0 as $rec) {
-            if (isset($rec['Name'])) {
-                if ($rec['directlyToReserve']??false) {
-                    $tmp[] = $rec;
-                } else {
-                    $dataset[] = $rec;
-                }
-            }
-        }
-        if ((sizeof($dataset) < $this->nSlots) && (sizeof($tmp) < $this->nReserveSlots)) {
-            $this->directlyReservePossible = true;
-        }
-
-        for ($i = sizeof($dataset); $i < $this->nSlots; $i++) {
-            $dataset[] = [];
-        }
-
-        if ($tmp) {
-            foreach ($tmp as $rec) {
-                $dataset[] = $rec;
-            }
-        }
-        for ($i = sizeof($dataset); $i < $this->nTotalSlots; $i++) {
-            $dataset[] = [];
-        }
-        $dataset['title'] = $dataset0['title'];
+        $dataset = $this->datasets[$setName];
         $dataset['nSlots'] = $this->nTotalSlots;
         $dataset['nReserveSlots'] = $this->nReserveSlots;
         return $dataset;
@@ -671,20 +669,36 @@ EOT;
             'Name' => ['label' => '{{ pfy-enlist-name }}:', 'required' => true],
             'Email' => ['label' => '{{ pfy-enlist-email }}:', 'required' => true],
         ];
+
         // optional custom fields:
         $i = 1;
-        foreach ($this->customFields0 as $fieldName => $rec) {
-            // special case 'checkbox options':
-            if ($rec['options']??false) {
+        foreach ($this->customFields as $fieldName => $rec) {
+            // if type missing but options present -> set to checkbox as default:
+            if (!($rec['type']??false) && ($rec['options']??false)) {
                 $rec['type'] = 'checkbox';
             }
             $rec['class'] = 'pfy-enlist-custom pfy-enlist-custom-'.$i++;
+            $rec['class'] .= ' pfy-elem_'.translateToClassName($fieldName);
             $formFields[$fieldName] = $rec;
         }
 
         // option directlyToReserve:
-        if ($this->options['directlyToReserve']) {
-            $formFields['directlyToReserve'] = ['label' => '{{ pfy-enlist-directly-to-reserve }}', 'type' => 'checkbox'];
+        if ($this->directlyToReserve) {
+            $formFields['directlyToReserve'] = [
+                'label' => '{{ pfy-enlist-directly-to-reserve }}',
+                'type' => 'checkbox',
+                'class' => 'pfy-enlist-directly',
+            ];
+        }
+
+        // option editable:
+        if ($this->editable) {
+            $formFields['editable'] = [
+                'label' => '{{ pfy-enlist-delete-label }}',
+                'type' => 'checkbox',
+                'class' => 'pfy-enlist-delete-checkbox',
+                'id'    => 'pfy-enlist-delete',
+            ];
         }
 
         // standard form end fields:
@@ -825,7 +839,7 @@ EOT;
             }
         }
 
-        if ($elemId === '') {
+        if ($elemId === '' || $elemId === 'undefined') {
             // new entry:
             $this->handleNewEntry($data, $dataset, $context, $setName, $message);
 
@@ -852,18 +866,6 @@ EOT;
         $exists = array_filter($dataset, function ($e) use ($name) {
             return ($e['Name'] ?? '') === $name;
         });
-        if ($this->customFields) {
-            foreach ($this->customFields as $key => $args) {
-                if (is_array($args['options'] ?? false)) {
-                    $o = [];
-                    foreach ($args['options'] as $k => $v) {
-                        $o[$k] = in_array($k, $data[$key]);
-                    }
-                    $data[$key] = $o;
-                }
-            }
-        }
-
         if ($exists) {
             $prevElemId = array_keys($exists)[0];
             $email = $data['Email'] ?? '#####';
@@ -874,7 +876,7 @@ EOT;
             }
             $dataset[$prevElemId] = $data;
         } else {
-            $dataset = $this->modifyDataSet($dataset, data: $data);
+            $dataset = $this->modifyDataSet($dataset, 'add', data: $data);
         }
 
         // double-check against max number of entries:
@@ -935,9 +937,17 @@ EOT;
             mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
         } else {
-            $dataset = $this->modifyDataSet($dataset, elemKey: $elemKey);
+            $data['_elemKey'] = $rec['_elemKey'];
+//ToDo: editable
+            if (isset($_POST['delete_entry'])) {
+                $del = ($_POST['delete_entry']??false) === 'on';
+                $op = $del ?'delete' : 'modify';
+            } else {
+                $op = 'delete';
+            }
+            $dataset = $this->modifyDataSet($dataset, $op, $data, elemKey: $elemKey);
             $this->db->addRec($dataset, recKeyToUse: $setName);
-            $this->handleNotifyOwner($rec, 'del', $setName);
+            $this->handleNotifyOwner($data, 'del', $setName);
             if ($elemKey !== false) {
                 $this->handleNotifyReserve($dataset);
             }
@@ -956,9 +966,11 @@ EOT;
      * @return array
      * @throws \Exception
      */
-    private function modifyDataSet(array $dataset, array|false $data = false, string|false $elemKey = false): array
+    private function modifyDataSet(array $dataset, string $op, array|false $data = false, string|false $elemKey = false): array
     {
-        $nSlots = $dataset['nSlots'];
+        $data = $this->fixCustomFields($data);
+
+        $nTotalSlots = $dataset['nSlots'];
         unset($dataset['nSlots']);
 
         $nReserveSlots = $dataset['nReserveSlots'];
@@ -976,22 +988,44 @@ EOT;
             unset($dataset['deadlineExpired']);
         }
 
-        if ($elemKey === false) {
-            $data['_elemKey'] = createHash();
-            foreach ($dataset as $key => $rec) {
-                if (!isset($rec['Name'])) {
-                    $dataset[$key] = $data;
-                    break;
-                }
-            }
-            $dataset = array_values($dataset);
-        } else {
-            unset($dataset[$elemKey]);
-            $dataset = array_values($dataset);
+        if ( $elemKey === false) {
+            $op = 'add';
         }
+        switch ($op) {
+            case 'add':
+                $data['_elemKey'] = createHash();
+                // find next empty slot (depending on directlyToReserve):
+                $i = ($data['directlyToReserve']??false) ? ($nTotalSlots - $nReserveSlots) : 0;
+                for (;$i < $nTotalSlots; $i++) {
+                    if (!isset($dataset[$i]['Name'])) {
+                        $dataset[$i] = $data;
+                        break;
+                    }
+                }
+                break;
+            case 'modify':
+                $elemKey = $data['_elemKey'];
+                foreach ($dataset as $key => $rec) {
+                    if (($rec['_elemKey']??false) === $elemKey) {
+                        $dataset[$key] = $data;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                for ($i=$elemKey; $i<$nTotalSlots-1; $i++) {
+                    if ($dataset[$i+1]['directlyToReserve']??false) {
+                        break;
+                    }
+                    $dataset[$i] = $dataset[$i+1];
+                }
+                $dataset[$i] = [];
+        }
+        $dataset = array_values($dataset);
 
         $dataset['title'] = $title;
-        $dataset['nSlots'] = $nSlots;
+        $dataset['nSlots'] = $nTotalSlots;
         $dataset['nReserveSlots'] = $nReserveSlots;
         if (isset($freezeTime)) {
             $dataset['freezeTime'] = $freezeTime;
@@ -1134,7 +1168,7 @@ EOT;
      */
     private function prepStaticOption(string $key, mixed $default = false): mixed
     {
-        if ($this->options[$key] !== null) {
+        if (($this->options[$key]??null) !== null) {
             // explicitly provided value:
             $val = $this->options[$key];
             if ($this->presetOptionsMode) {
@@ -1169,6 +1203,42 @@ EOT;
         $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;
     } // handleScheduleOption
+
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    private function fixCustomFields(array $data): array
+    {
+        if ($this->customFields) {
+            foreach ($this->customFields as $key => $customField) {
+                if (is_array($customField['options'] ?? false)) {
+                    $o = [];
+                    $o['_'] = '';
+                    foreach ($customField['options'] as $value => $label) {
+                        $receivedVal = $data[$key];
+                        if (is_array($receivedVal)) { // -> heckbox and multiselect
+                            $recV = in_array($value, $receivedVal);
+                            $o[$value] = $recV;
+                            if ($recV) {
+                                $o['_'] .= $value.',';
+                            }
+                        } else { // -> radio
+                            $recV = ($value === $receivedVal);
+                            $o[$value] = $recV;
+                            if ($recV) {
+                                $o['_'] .= "$value,";
+                            }
+                        }
+                    }
+                    $o['_'] = rtrim($o['_'], ',');
+                    $data[$key] = $o;
+                }
+            }
+        }
+        return $data;
+    } // fixCustomFields
 
 
 } // Enlist
