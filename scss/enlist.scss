@@ -163,19 +163,30 @@
     background: yellow;
   }
 
-
+  .pfy-popup-wrapper {
+    .add, .del, .modify { display: none; }
+  }
   .pfy-popup-wrapper.pfy-enlist-add-mode {
-    .del { display: none; }
-    .pfy-form {
+    .add { display: block; }
+    .pfy-enlist-delete-checkbox {
+      display: none;
     }
   }
 
+  .pfy-popup-wrapper.pfy-enlist-modify-mode {
+    .modify { display: block; }
+  }
+
   .pfy-popup-wrapper.pfy-enlist-del-mode {
-    .add { display: none; }
-    //.pfy-enlist-custom {
-    //  opacity: 50%;
-    //  pointer-events:none;
-    //}
+    .del { display: block; }
+  }
+
+  .pfy-enlist-delete-checkbox {
+    font-weight: bold;
+    direction: rtl;
+    input {
+      margin-left: 0.6em;
+    }
   }
 
   .pfy-enlist-expired {

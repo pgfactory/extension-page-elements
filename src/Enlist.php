@@ -657,7 +657,8 @@ EOT;
             $addHelp = TransVars::getVariable('pfy-enlist-popup-add-nofreeze-help');
         }
         $delHelp = TransVars::getVariable('pfy-enlist-popup-del-help');
-        $popupHelp = "<div class='add'>$addHelp</div><div class='del'>$delHelp</div>";
+        $modifyHelp = TransVars::getVariable('pfy-enlist-popup-modify-help');
+        $popupHelp = "<div class='add'>$addHelp</div><div class='del'>$delHelp</div><div class='modify'>$modifyHelp</div>";
         $formOptions = [
             'confirmationText' => '',
             'wrapperClass' => 'pfy-enlist-form-wrapper',
@@ -693,7 +694,7 @@ EOT;
 
         // option editable:
         if ($this->editable) {
-            $formFields['editable'] = [
+            $formFields['delete_entry'] = [
                 'label' => '{{ pfy-enlist-delete-label }}',
                 'type' => 'checkbox',
                 'class' => 'pfy-enlist-delete-checkbox',
@@ -876,6 +877,10 @@ EOT;
             }
             $dataset[$prevElemId] = $data;
         } else {
+            if (isset($data['delete_entry'])) {
+                unset($data['delete_entry']);
+            }
+
             $dataset = $this->modifyDataSet($dataset, 'add', data: $data);
         }
 
@@ -902,14 +907,14 @@ EOT;
     /**
      * @param array $dataset
      * @param string $elemId
-     * @param string $message
+     * @param string $alertMsg
      * @param array $data
      * @param string $context
      * @param mixed $setName
      * @return array
      * @throws \Exception
      */
-    private function handleExistingEntry(array $dataset, string $elemId, string $message, array $data, string $context, mixed $setName): array
+    private function handleExistingEntry(array $dataset, string $elemId, string $alertMsg, array $data, string $context, mixed $setName): array
     {
         $found = array_filter($dataset, function ($e) use ($elemId) {
             return ($e['_elemKey'] ?? '') === $elemId;
@@ -924,7 +929,7 @@ EOT;
         $time = strtotime($rec['_time'] ?? 0);
         if ($time < (time() - ($dataset['freezeTime']??PHP_INT_MAX))) {
             if ($this->isEnlistAdmin) {
-                $message = '{{ pfy-enlist-del-freeze-time-expired }}';
+                $alertMsg = '{{ pfy-enlist-del-freeze-time-expired }}';
             } else {
                 mylog("EnList freezeTime expired: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
@@ -936,12 +941,13 @@ EOT;
         if ($email0 !== $email) {
             mylog("EnList wrong email for delete: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
+
         } else {
             $data['_elemKey'] = $rec['_elemKey'];
-//ToDo: editable
-            if (isset($_POST['delete_entry'])) {
-                $del = ($_POST['delete_entry']??false) === 'on';
+            if (isset($data['delete_entry'])) {
+                $del = ($data['delete_entry']??false);
                 $op = $del ?'delete' : 'modify';
+                unset($data['delete_entry']);
             } else {
                 $op = 'delete';
             }
@@ -951,9 +957,16 @@ EOT;
             if ($elemKey !== false) {
                 $this->handleNotifyReserve($dataset);
             }
-            mylog("EnList entry deleted: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-            $message = $message ? "<br>$message" : '';
-            reloadAgent(message: '{{ pfy-enlist-deleted }}' . $message);
+            if ($op === 'modify') {
+                $mainMsg = '{{ pfy-enlist-modified }}';
+                $logMsg = 'modified';
+            } else {
+                $mainMsg = '{{ pfy-enlist-deleted }}';
+                $logMsg = 'deleted';
+            }
+            mylog("EnList entry $logMsg: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
+            $alertMsg = $alertMsg ? "<br>$alertMsg" : '';
+            reloadAgent(message: $mainMsg . $alertMsg);
         }
         return []; // actually always reloads before getting here
     } // handleExistingEntry

@@ -341,6 +341,10 @@ pfy-enlist-add-popup-header:
   de: 'Eintragen'
   _:  'New entry'
 
+pfy-enlist-modify-popup-header:
+  de: 'Ändern'
+  _:  'Modify entry'
+
 pfy-enlist-del-popup-header:
   de: 'Löschen'
   _:  'Delete entry'
@@ -381,6 +385,11 @@ pfy-enlist-popup-add-help:
   de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag noch bis %freezetime% selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
   en: '<p><strong>Comment</strong>:</p><p>You can delete this entry until %freezetime%.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
+pfy-enlist-popup-modify-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag ändern?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag ändern?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to modify this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
+
 pfy-enlist-popup-del-help:
   de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
   de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
@@ -404,6 +413,11 @@ pfy-enlist-deleted:
   de: 'Ihr Eintrag wurde gelöscht.'
   de2: 'Dein Eintrag wurde gelöscht.'
   _:  'Your entry has been deleted.'
+
+pfy-enlist-modified:
+  de: 'Ihr Eintrag wurde geändert.'
+  de2: 'Dein Eintrag wurde geändert.'
+  _:  'Your entry has been modified.'
 
 pfy-enlist-add-notification-subject:
   de: 'Neue Anmeldung für %title% auf %host%'

@@ -87,7 +87,7 @@ const Enlist = {
 
     let options = {
       contentFrom: '#pfy-enlist-form .pfy-enlist-form-wrapper',
-      header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
+      header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="modify">{{ pfy-enlist-modify-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
       autofocus: false,
       closeOnBgClick: true,
     };
@@ -114,9 +114,18 @@ const Enlist = {
     const setname = $list.dataset.setname;
     let   directreserve = $list.dataset.directreserve;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
-    popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
 
     const $form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
+
+    const $deleteCheckbox = $form.querySelector('#pfy-enlist-delete');
+    let $deleteChoice = null;
+    if ($deleteCheckbox && (mode !== 'add')) {
+      $deleteChoice = $deleteCheckbox.closest('.pfy-elem-wrapper');
+      mode = 'modify';
+    }
+
+    popupWrapper.classList.add('pfy-enlist-' + mode + '-mode');
+
     const setnameElem = $form.querySelector('[name=setname]');
     const customFields = $form.querySelectorAll('.pfy-enlist-custom');
     setnameElem.setAttribute('value', setname);
@@ -137,12 +146,6 @@ const Enlist = {
       });
     }
 
-    const $deleteCheckbox = $form.querySelector('#pfy-enlist-delete');
-    let $deleteChoice = null;
-    if ($deleteCheckbox) {
-       $deleteChoice = $deleteCheckbox.closest('.pfy-elem-wrapper');
-    }
-
     const nameField = $form.querySelector('[name=Name]');
 
     this.setupModifiedMonitor($form);
@@ -160,18 +163,30 @@ const Enlist = {
       setTimeout(function() {
         nameField.focus();
       }, 60);
-    } else
+    } else {
 
-    // === delete/modify mode ================================
-    if (mode === 'del') {
-      $form.classList.add('pfy-enlist-delete-mode');
       nameField.setAttribute('value', name);
-      nameField.setAttribute('readonly', true);
-
       const nameLabel = nameField.parentElement.parentElement.querySelector('label');
       nameLabel.classList.remove('required');
 
       this.fillFormValues($form, $tableRow, elemId);
+
+      // === delete mode ================================
+      if (mode === 'del') {
+        $form.classList.add('pfy-enlist-delete-mode');
+        nameField.setAttribute('readonly', true);
+
+        // set submit button:
+        $submit.setAttribute('name', 'delete');
+        $submit.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
+
+        directreserve = false;
+      } else // mode del
+
+
+      // === modify mode ================================
+      if (mode === 'modify') {
+        $form.classList.add('pfy-enlist-modify-mode');
 
         if ($deleteChoice) {
           if (customFields) {
@@ -179,22 +194,24 @@ const Enlist = {
           } else {
             $submit.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
           }
-            $deleteCheckbox.addEventListener('change', function(e) {
-                if (this.checked) {
-                    $submit.value = `{{ pfy-enlist-delete-btn }}`;
-                } else {
-                    $submit.value = `{{ pfy-enlist-modify-btn }}`;
-                }
-            });
+          $deleteCheckbox.addEventListener('change', function (e) {
+            if (this.checked) {
+              $submit.value = `{{ pfy-enlist-delete-btn }}`;
+                popupWrapper.classList.remove('pfy-enlist-modify-mode');
+                popupWrapper.classList.add('pfy-enlist-del-mode');
+            } else {
+              $submit.value = `{{ pfy-enlist-modify-btn }}`;
+                popupWrapper.classList.add('pfy-enlist-modify-mode');
+                popupWrapper.classList.remove('pfy-enlist-del-mode');
+            }
+          });
         } else {
           $submit.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
         }
+        $submit.setAttribute('name', 'modify');
+      } // mode modify
+    } // not add mode
 
-        // set submit button:
-      $submit.setAttribute('name', 'delete');
-
-      directreserve = false;
-    } // mode del
   }, // preparePopupForm
 
 
@@ -224,8 +241,11 @@ const Enlist = {
     // get Email, if in admin mode:
     const emailField = $form.querySelector('[name=Email]');
     if (this.isEnlistAdmin) {
-      const email = $tableRow.querySelector('.pfy-enlist-email').textContent;
-      emailField.setAttribute('value', email);
+      const $email = $tableRow.querySelector('.pfy-enlist-email');
+      if ($email) {
+        const email = $tableRow.querySelector('.pfy-enlist-email').textContent;
+        emailField.setAttribute('value', email);
+      }
       const $submit = $form.querySelector('[type="submit"]');
       $submit.disabled = false;
     } else {
