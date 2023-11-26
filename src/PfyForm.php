@@ -147,7 +147,11 @@ class PfyForm extends Form
      */
     public function renderForm($formElements): string
     {
-        $this->formElements = $formElements;
+        foreach ($formElements as $name => $rec) {
+            $name = str_replace('-', '_', $name);
+            $name = preg_replace('/\W/', '', $name);
+            $this->formElements[$name] = $rec;
+        }
         $this->fireRenderEvents();
 
         $html = $this->renderFormHead();
@@ -421,7 +425,10 @@ class PfyForm extends Form
     {
         $elemOptions = &$this->formElements[$name];
         $type = $elemOptions['type'];
-        $selectionElems = parseArgumentStr($elemOptions['options']);
+        $selectionElems = $elemOptions['options'];
+        if (is_string($selectionElems)) {
+            $selectionElems = explodeTrimAssoc(',', $selectionElems);
+        }
         foreach ($selectionElems as $key => $value) {
             if (!$value) {
                 $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
@@ -459,7 +466,11 @@ class PfyForm extends Form
     private function addRadioElem(string $name, string $label): object
     {
         $elemOptions = &$this->formElements[$name];
-        $radioElems = parseArgumentStr($elemOptions['options']);
+        if (is_string($elemOptions['options'])) {
+            $radioElems = explodeTrimAssoc(',', $elemOptions['options']);
+        } else {
+            $radioElems = $elemOptions['options'];
+        }
         $elem = $this->addRadioList($name, $label, $radioElems);
         if ($elemOptions['preset']??false) {
             $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
@@ -489,7 +500,7 @@ class PfyForm extends Form
         $elemOptions = &$this->formElements[$name];
         if ($elemOptions['options']??false) {
             if (is_string($elemOptions['options'])) {
-                $checkboxes = parseArgumentStr($elemOptions['options']);
+                $checkboxes = explodeTrimAssoc(',', $elemOptions['options']);
             } else {
                 $checkboxes = $elemOptions['options'];
             }
@@ -1048,8 +1059,7 @@ EOT;
         }
 
         // shape name: replace '-' with '_' and remove all non-alpha:
-        $name = str_replace('-', '_', $name);
-        $name = preg_replace('/\W/', '', $name);
+        $elemOptions['name'] = $name;
 
         // if elem marked by asterisk, remove it - will be visualized by class required:
         if ($label[strlen($label) - 1] === '*') {
@@ -1125,15 +1135,11 @@ EOT;
 
         // check choice options, convert to key:value if string:
         if (is_string($elemOptions['options']??false)) {
-            $o = parseArgumentStr($elemOptions['options']);
+            $o = explodeTrimAssoc(',', $elemOptions['options']);
             $out = '';
             foreach ($o as $k => $v) {
                 $v = str_replace("'", "\\'", $v);
-                if (is_int($k)) {
-                    $out .= "$v:'$v',";
-                } else {
-                    $out .= "$k:'$v',";
-                }
+                $out .= "$k:'$v',";
             }
             $out = rtrim($out, ',');
             $elemOptions['options'] = rtrim($out, ',');
@@ -1568,7 +1574,7 @@ EOT;
                             $a = $v['arguments'] ?? '';
                             $a = trim($a, '{}');
                             if ($a) {
-                                $newFields1[$k] = parseArgumentStr($a);
+                                $newFields1[$k] = explodeTrimAssoc(',', $a);
                             } else {
                                 $newFields1[$k] = [];
                             }
@@ -1692,9 +1698,7 @@ EOT;
 
         foreach ($this->formElements as $key => $rec) {
             if (preg_match('/\W/', $key)) {
-                $key1 = str_replace('-', '_', $key);
-                $key1 = preg_replace('/\W/', '', $key1);
-                $this->formElements = array_splice_associative($this->formElements, $key, 1, [$key1 => $rec]);
+                throw new \Exception("Error: fishy character in form-element name '$key'");
             }
         }
 

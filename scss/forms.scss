@@ -36,9 +36,14 @@
     width: var(--form-label-width, 6em);
 
     label {
-      padding-top: 0.5em;
       display: inline-block;
     }
+  }
+  .pfy-elem-wrapper:not(.pfy-choice) .pfy-label-wrapper label {
+      padding-top: 0.5em;
+  }
+  .pfy-choice {
+    padding-top: 0.5em;
   }
 
   .pfy-password .pfy-input-wrapper {
@@ -96,13 +101,6 @@
       border-radius: 4px;
     }
   }
-
-  .pfy-elem-wrapper.pfy-select,
-  .pfy-elem-wrapper.pfy-radio,
-  .pfy-elem-wrapper.pfy-checkbox .pfy-label-wrapper label {
-    padding-top: 0;
-  }
-
 
   .pfy-elem-wrapper {
     padding-top: calc(var(--form-row-gap-height, 1em) / 2);
