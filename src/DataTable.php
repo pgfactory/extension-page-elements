@@ -65,6 +65,10 @@ class DataTable
     private $officeFormatAvailable = false;
     private $columnKeys = [];
     private $file = false;
+    private array $colClasses;
+    private array $rowClasses;
+    private array $rowIds;
+    private string $placeholderForUndefined;
 
     /**
      * @param string|array $dataSrc
@@ -100,6 +104,9 @@ class DataTable
 
         $this->tableId = ($options['tableId']??false) ?: "pfy-table-$this->inx";
         $this->tableClass = ($options['tableClass']??false) ?: 'pfy-table';
+        $this->colClasses = $options['colClasses']??[];
+        $this->rowClasses = $options['rowClasses']??[];
+        $this->rowIds = $options['rowIds']??[];
         $this->tdClass = $options['tdClass']??'';
         $this->tableWrapperClass = ($options['tableWrapperClass']??false) ?: 'pfy-table-wrapper';
         $this->dataReference = $options['dataReference']??false; // whether to include data-elemkey and data-reckey
@@ -126,6 +133,7 @@ class DataTable
         $this->export = $options['export'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->markLocked = $options['markLocked'] ?? false;
+        $this->placeholderForUndefined = $options['placeholderForUndefined'] ?? '?';
 
         if ($permission === true) {
             $permission = 'localhost|loggedin';
@@ -162,22 +170,6 @@ class DataTable
             $this->parseArrayArg('footers');
         }
     } // __construct
-
-
-    /**
-     * @return void
-     * @throws \Exception
-     */
-    private function prepareTableData(): void
-    {
-        if ($this->data2Dset) {
-            $this->tableData = $this->data2Dset->getNormalized2D_Data($this->tableHeaders);
-        } else {
-            $elementKeys = array_values($this->tableHeaders);
-            $this->tableData = Data2DSet::normalizeData($this->tableData, $this->tableHeaders, $elementKeys);
-        }
-    } // prepareTableData
-
 
 
     /**
@@ -222,6 +214,21 @@ class DataTable
         $out .= "</div> <!-- table-wrapper $this->tableWrapperClass -->\n\n";
         return $out;
     } // render
+
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function prepareTableData(): void
+    {
+        if ($this->data2Dset) {
+            $this->tableData = $this->data2Dset->getNormalized2D_Data($this->tableHeaders);
+        } else {
+            $this->tableData = Data2DSet::normalizeData($this->tableData, $this->tableHeaders, $this->placeholderForUndefined);
+        }
+    } // prepareTableData
 
 
 
@@ -373,7 +380,9 @@ class DataTable
             if (isset($this->serviceColArray[$i])) {
                 $class = "pfy-service-row {$this->serviceColArray[$i]}";
             } else {
-                $class = translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                if (!($class = ($this->colClasses[$i-1]??false))) {
+                    $class = translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                }
             }
             $this->elementLabels[] = $c;
             if (!preg_match('/[^-\w\s]/', $elem)) {
@@ -402,12 +411,15 @@ class DataTable
         $r = 0;
         foreach ($data as $key => $rec) {
             if ($this->dataReference) {
+                if ($this->rowIds[$r]??false) {
+                    $key = $this->rowIds[$r];
+                }
                 $recKey = " data-reckey='$key'";
             } else {
                 $recKey = '';
             }
+            $rowClass = $this->rowClasses[$r]??'';
             $r++;
-            $rowClass = '';
 
             // mark record if locked:
             if ($this->markLocked) {
@@ -417,7 +429,7 @@ class DataTable
                 unset($rec['_locked']);
             }
 
-            $out .= "    <tr class='pfy-row-$r$rowClass'$recKey>\n";
+            $out .= "    <tr class='pfy-row-$r $rowClass'$recKey>\n";
             $i = 0;
             foreach ($elemKeys as $c => $k) {
                 if ($c === '_locked') {
@@ -432,7 +444,9 @@ class DataTable
                         $v = implode(',', $v);
                     }
                 }
-                if (!preg_match('/^\{\{.*}}$/', $k)) {
+                if ($this->colClasses[$i-1]??false) {
+                    $class = $this->colClasses[$i-1];
+                } elseif (!preg_match('/^\{\{.*}}$/', $k)) {
                     $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
                 } else {
                     $class = '';
