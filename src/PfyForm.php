@@ -636,7 +636,12 @@ class PfyForm extends Form
 
         // add 'continue...' if direct feedback is active:
         if ($this->showDirectFeedback) {
-            $html .= "<div class='pfy-form-success-continue'><a href='{$this->formOptions['next']}'>{{ pfy-form-success-continue }}</a></div>\n";
+            $next = $this->formOptions['next'];
+            $class = 'pfy-form-success-continue';
+            if ($next === '~page/' || !$next) {
+                $class .= ' pfy-form-continue-same';
+            }
+            $html .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
         }
 
         // write log:
@@ -1131,7 +1136,7 @@ EOT;
         if (!isset($elemOptions['options'])) {
             $elemOptions['options'] = false;
         } elseif (is_string($elemOptions['options'])) {
-            $o = explodeTrimAssoc(',', $elemOptions['options']);
+            $o = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
             $elemOptions['options'] = array_flip($o);
         } elseif (!is_array($elemOptions['options'])) {
             throw new \Exception("Error: Form argument 'options' must be of type string or array.");
@@ -1652,7 +1657,7 @@ EOT;
         if ($this->formOptions['action'] ?? false) {
             $this->setAction($this->formOptions['action']);
         } else {
-            $this->setAction(PageFactory::$pageUrl."#pfy-form-wrapper-$this->formIndex");
+            $this->setAction(PageFactory::$pageUrl);
         }
         $html .= "<!-- pfy-form-wrapper -->\n";
         $formInx = self::$formInx;

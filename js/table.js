@@ -105,6 +105,7 @@ const tableHelper = {
             wrapperClass: 'pfy-data-delete-records',
             callbackArg: form,
             onConfirm: function (that, form) {
+              localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
               form.setAttribute('action', pageUrl + '?delete' + formId);
               form.submit();
             }

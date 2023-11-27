@@ -195,6 +195,7 @@ const pfyFormsHelper = {
     this.resetErrorStates(form);
     this.prefillComputedFields(form);
     this.disableForm(form,false);
+    this.setTriggerOnContinueLink();
   }, // presetForm
 
 
@@ -453,6 +454,9 @@ const pfyFormsHelper = {
     const dataStr = JSON.stringify(Array.from(data.entries()));
     serverLog('Browser submits: ' + dataStr, 'form-log.txt');
 
+    // leave scroll-request in localStorage:
+    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+
     pfyFormsHelper.submitNow = true;
     form.submit();
   }, // doSubmitForm
@@ -550,6 +554,21 @@ const pfyFormsHelper = {
       });
     }, t);
   }, // freezeWindowAfter
+
+
+  setTriggerOnContinueLink()
+  {
+    const continueLinks = document.querySelectorAll('.pfy-form-continue-same');
+    if (continueLinks) {
+      continueLinks.forEach(function (link) {
+        link.addEventListener('click', function () {
+          localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+        });
+      });
+    }
+  }, // setTriggerOnContinueLink
+
+
 
 }; // pfyFormsHelper
 

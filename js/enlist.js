@@ -117,6 +117,8 @@ const Enlist = {
 
     const $form = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
 
+    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+
     const $deleteCheckbox = $form.querySelector('#pfy-enlist-delete');
     let $deleteChoice = null;
     if ($deleteCheckbox && (mode !== 'add')) {
@@ -271,9 +273,8 @@ const Enlist = {
         if ($inputs) {
           $inputs.forEach($input => {
             const type = $input.type;
+
             if (type === 'radio' || type === 'checkbox') {
-              const $optionLabel = $input.closest('label');
-              let optionLabel = $optionLabel.innerText;
               let srcIdy = '.pfy-elem_' + idy;
               let $tableElem = $tableRow.querySelector(srcIdy.toLowerCase());
               if ($tableElem) {
@@ -283,7 +284,7 @@ const Enlist = {
 
               } else {
                 // case splitOutput:
-                srcIdy = '.pfy-elem_' + idy + '-' + optionLabel;
+                srcIdy = '.pfy-elem_' + idy + '-' + $input.value;
                 $tableElem = $tableRow.querySelector(srcIdy.toLowerCase());
                 if ($tableElem) {
                   $input.checked = ($tableElem.innerText !== '0');

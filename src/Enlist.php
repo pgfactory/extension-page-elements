@@ -135,7 +135,8 @@ class Enlist
                 if ((($customField['type'] ?? 'text') === 'checkbox') ||
                     ($customField['options'] ?? false)) {
                     $customField['type'] = 'checkbox';
-                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
+                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '', splitOnLastMatch:true);
+                    $customOptions = array_flip($customOptions);
                     $customFields[$key]['options'] = $customOptions;
                     if ($customField['splitOutput']??false) {
                         $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
@@ -419,16 +420,29 @@ EOT;
         // determine rowClasses:
         $rowClasses = [];
         $addFieldDone = false;
+        $freezeTime = $this->freezeTime? time() - intval($this->freezeTime): false;
         for ($i=0; $i<$this->nTotalSlots; $i++) {
             $rec = ($data[$i]??false) ? $data[$i] : [];
-            if ($rec['Name']??false) {
-                $rowClasses[$i] = 'pfy-enlist-delete';
+            if ($freezeTime) {
+                $time = strtotime($this->dataset[$i]['_time'] ?? '');
+                if ($time && ($time < $freezeTime)) {
+                    $rowClasses[$i] = 'pfy-enlist-elem-frozen';
+                    continue;
+                }
+            }
+            if ($this->deadlineExpired) {
+                $rowClasses[$i] = 'pfy-enlist-expired';
             } else {
-                if (!$addFieldDone) {
-                    $addFieldDone = true;
-                    $rowClasses[$i] = 'pfy-enlist-add';
+                if ($rec['Name'] ?? false) {
+                    $rowClasses[$i] = ($this->obfuscate !== true) ? 'pfy-enlist-delete' : 'pfy-enlist-obscured';
+
                 } else {
-                    $rowClasses[$i] = 'pfy-enlist-empty';
+                    if (!$addFieldDone) {
+                        $addFieldDone = true;
+                        $rowClasses[$i] = 'pfy-enlist-add';
+                    } else {
+                        $rowClasses[$i] = 'pfy-enlist-empty';
+                    }
                 }
             }
             $rowClasses[$i] .= ($i >= $this->nSlots)? ' pfy-enlist-reserve': '';
@@ -446,7 +460,11 @@ EOT;
             }
         }
 
-        $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+        if ($this->obfuscate !== true) {
+            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+        } else {
+            $deleteIcon = '';
+        }
         $addIcon    = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
         for ($i = 0; $i < $this->nTotalSlots; $i++) {
             $rowClass = $rowClasses[$i];
@@ -595,6 +613,14 @@ EOT;
                         $this->directlyToReserve = false;
                     }
                 }
+
+                if ($this->obfuscate) {
+                    for ($i = 0; $i < $this->nSlots; $i++) {
+                        if (($dataset[$i]['Name'] ?? false)) {
+                            $this->dataset[$i]['Name'] = $this->obfuscateNameInRow($dataset[$i]['Name']);
+                        }
+                    }
+                }
             }
         }
         return $this->dataset;
@@ -721,18 +747,13 @@ EOT;
 
     /**
      * @param mixed $text
-     * @param string $icon
-     * @return array
+     * @return string
      */
-    private function obfuscateNameInRow(mixed $text, string $icon): array
+    private function obfuscateNameInRow(mixed $text): string
     {
-        if ($this->obfuscate) {
             $text0 = $text;
             if ($this->obfuscate === true) {
                 $text = '*****';
-                if (!$this->isEnlistAdmin) {
-                    $icon = '';
-                }
             } else {
                 $t = explode(' ', $text);
                 $text = '';
@@ -744,8 +765,7 @@ EOT;
             if ($this->isEnlistAdmin) { // in admin mode: show
                 $text .= " <span class='pfy-enlist-admin-preview'>($text0)</span>";
             }
-        }
-        return array($text, $icon);
+        return $text;
     } // obfuscateNameInRow
 
 
@@ -1026,8 +1046,11 @@ EOT;
                 }
                 break;
 
-            default:
+            default: // case 'delete':
                 for ($i=$elemKey; $i<$nTotalSlots-1; $i++) {
+                    if (!isset($dataset[$i+1])) {
+                        continue;
+                    }
                     if ($dataset[$i+1]['directlyToReserve']??false) {
                         break;
                     }
