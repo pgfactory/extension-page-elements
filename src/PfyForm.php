@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * PfyForm is based on Nette Forms
+ * https://doc.nette.org/en/forms/controls
+ */
+
 namespace PgFactory\PageFactory;
 
 use Kirby\Exception\InvalidArgumentException;
@@ -426,9 +431,6 @@ class PfyForm extends Form
         $elemOptions = &$this->formElements[$name];
         $type = $elemOptions['type'];
         $selectionElems = $elemOptions['options'];
-        if (is_string($selectionElems)) {
-            $selectionElems = explodeTrimAssoc(',', $selectionElems);
-        }
         foreach ($selectionElems as $key => $value) {
             if (!$value) {
                 $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
@@ -466,11 +468,7 @@ class PfyForm extends Form
     private function addRadioElem(string $name, string $label): object
     {
         $elemOptions = &$this->formElements[$name];
-        if (is_string($elemOptions['options'])) {
-            $radioElems = explodeTrimAssoc(',', $elemOptions['options']);
-        } else {
-            $radioElems = $elemOptions['options'];
-        }
+        $radioElems = $elemOptions['options'];
         $elem = $this->addRadioList($name, $label, $radioElems);
         if ($elemOptions['preset']??false) {
             $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
@@ -499,11 +497,7 @@ class PfyForm extends Form
     {
         $elemOptions = &$this->formElements[$name];
         if ($elemOptions['options']??false) {
-            if (is_string($elemOptions['options'])) {
-                $checkboxes = explodeTrimAssoc(',', $elemOptions['options']);
-            } else {
-                $checkboxes = $elemOptions['options'];
-            }
+            $checkboxes = $elemOptions['options'];
             $elem = $this->addCheckboxList($name, $label, $checkboxes);
             if ($elemOptions['preset']??false) {
                 $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
@@ -1133,16 +1127,14 @@ EOT;
             $elemOptions['disabled'] = false;
         }
 
-        // check choice options, convert to key:value if string:
-        if (is_string($elemOptions['options']??false)) {
+        // check choice options, convert to label:value if string:
+        if (!isset($elemOptions['options'])) {
+            $elemOptions['options'] = false;
+        } elseif (is_string($elemOptions['options'])) {
             $o = explodeTrimAssoc(',', $elemOptions['options']);
-            $out = '';
-            foreach ($o as $k => $v) {
-                $v = str_replace("'", "\\'", $v);
-                $out .= "$k:'$v',";
-            }
-            $out = rtrim($out, ',');
-            $elemOptions['options'] = rtrim($out, ',');
+            $elemOptions['options'] = array_flip($o);
+        } elseif (!is_array($elemOptions['options'])) {
+            throw new \Exception("Error: Form argument 'options' must be of type string or array.");
         }
 
         return array($label, $name, $type);
@@ -1660,7 +1652,7 @@ EOT;
         if ($this->formOptions['action'] ?? false) {
             $this->setAction($this->formOptions['action']);
         } else {
-            $this->setAction(PageFactory::$pageUrl);
+            $this->setAction(PageFactory::$pageUrl."#pfy-form-wrapper-$this->formIndex");
         }
         $html .= "<!-- pfy-form-wrapper -->\n";
         $formInx = self::$formInx;
@@ -1670,7 +1662,7 @@ EOT;
             $html .= "<div class='pfy-form-and-table-wrapper'>\n";
         }
 
-        $html .= "<div class='$wrapperClass'>\n";
+        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
 
         list($id, $formClass, $aria) = $this->getHeadAttributes();
 
