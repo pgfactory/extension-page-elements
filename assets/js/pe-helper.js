@@ -2,6 +2,17 @@
  * Helper functions for PageElements
  */
 
+window.onload = function() {
+    // To leave scroll request use:
+    //      localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+    // Scroll to position if request was left in localStorage:
+    const yPos = localStorage.getItem('scrollpos');
+    if (yPos) {
+        document.documentElement.scrollTop = yPos;
+        localStorage.setItem('scrollpos', 0);
+    }
+}
+
 
 function serverLog(text, logFileName) {
   let url = window.location.href + '?ajax&log=' +  encodeURI(text);
@@ -34,14 +45,39 @@ function reloadAgent( arg, url, confirmMsg ) {
     if (typeof arg !== 'undefined') {
         newUrl = appendToUrl(newUrl, arg);
     }
+
+    // leave scroll-request in localStorage:
+    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+
+    // if sleep-overlay is present, replace img with spinner:
+    const overlay = document.querySelector('.pfy-overlay-background');
+    if (overlay) {
+        const img = overlay.querySelector('.pfy-timeout-img');
+        if (img) {
+            let url = img.getAttribute('src');
+            url = url.replace('sleeping.png', 'spinner.gif');
+            img.setAttribute('src', url);
+            img.setAttribute('style', 'width: 50px;');
+        }
+        // overlay.remove();
+    }
+
     if (typeof confirmMsg !== 'undefined') {
         pfyConfirm(confirmMsg).then(function() {
             console.log('initiating page reload: "' + newUrl + '"');
             window.location.replace(newUrl);
+            // force reload if hash is present in URL:
+            if (newUrl.indexOf('#') !== -1) {
+                window.location.reload();
+            }
         });
     } else {
         console.log('initiating page reload: "' + newUrl + '"');
         window.location.replace(newUrl);
+        // force reload if hash is present in URL:
+        if (newUrl.indexOf('#') !== -1) {
+            window.location.reload();
+        }
     }
 } // reloadAgent
 
