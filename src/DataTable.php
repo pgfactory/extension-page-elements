@@ -193,7 +193,7 @@ class DataTable
             $this->activateInteractiveTable();
         }
 
-        $out = "\n<div class='$this->tableWrapperClass'>\n";
+        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass'>\n";
         $out .= $this->renderTableButtons();
 
 

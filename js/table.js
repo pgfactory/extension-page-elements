@@ -85,6 +85,8 @@ const tableHelper = {
     if (deleteButton) {
       deleteButton.addEventListener('click', function (e) {
         e.stopPropagation();
+        const wrapper = e.target.closest('.pfy-table-wrapper');
+        const formId = '#' + wrapper.getAttribute('id');
         const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
         let options = {};
         if (!selected.length) {
@@ -103,7 +105,7 @@ const tableHelper = {
             wrapperClass: 'pfy-data-delete-records',
             callbackArg: form,
             onConfirm: function (that, form) {
-              form.setAttribute('action', pageUrl + '?delete');
+              form.setAttribute('action', pageUrl + '?delete' + formId);
               form.submit();
             }
           };
