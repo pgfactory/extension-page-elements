@@ -423,26 +423,39 @@ EOT;
         $freezeTime = $this->freezeTime? time() - intval($this->freezeTime): false;
         for ($i=0; $i<$this->nTotalSlots; $i++) {
             $rec = ($data[$i]??false) ? $data[$i] : [];
+            $rowClasses[$i] = '';
+
+            // check whether freezeTime defined and expired:
             if ($freezeTime) {
                 $time = strtotime($this->dataset[$i]['_time'] ?? '');
                 if ($time && ($time < $freezeTime)) {
-                    $rowClasses[$i] = 'pfy-enlist-elem-frozen';
+                    $rowClasses[$i] = 'pfy-enlist-elem-frozen ';
+                    if (!$this->isEnlistAdmin) {
+                        // stop here if not admin:
+                        $rowClasses[$i] .= ($i >= $this->nSlots)? ' pfy-enlist-reserve': '';
+                        continue;
+                    }
+                }
+            }
+
+            // check whether entire list reached deadline:
+            if ($this->deadlineExpired) {
+                $rowClasses[$i] .= 'pfy-enlist-expired';
+                if (!$this->isEnlistAdmin) {
+                    // stop here if not admin:
+                    $rowClasses[$i] .= ($i >= $this->nSlots) ? ' pfy-enlist-reserve' : '';
                     continue;
                 }
             }
-            if ($this->deadlineExpired) {
-                $rowClasses[$i] = 'pfy-enlist-expired';
-            } else {
-                if ($rec['Name'] ?? false) {
-                    $rowClasses[$i] = ($this->obfuscate !== true) ? 'pfy-enlist-delete' : 'pfy-enlist-obscured';
+            if ($rec['Name'] ?? false) {
+                $rowClasses[$i] .= ($this->obfuscate !== true) ? 'pfy-enlist-delete' : 'pfy-enlist-obfuscated';
 
+            } else {
+                if (!$addFieldDone) {
+                    $addFieldDone = true;
+                    $rowClasses[$i] .= 'pfy-enlist-add';
                 } else {
-                    if (!$addFieldDone) {
-                        $addFieldDone = true;
-                        $rowClasses[$i] = 'pfy-enlist-add';
-                    } else {
-                        $rowClasses[$i] = 'pfy-enlist-empty';
-                    }
+                    $rowClasses[$i] .= 'pfy-enlist-empty';
                 }
             }
             $rowClasses[$i] .= ($i >= $this->nSlots)? ' pfy-enlist-reserve': '';
@@ -900,7 +913,7 @@ EOT;
             if (isset($data['delete_entry'])) {
                 unset($data['delete_entry']);
             }
-
+            $data['_time'] = date('Y-m-d\TH:i');
             $dataset = $this->modifyDataSet($dataset, 'add', data: $data);
         }
 
@@ -985,8 +998,10 @@ EOT;
                 $logMsg = 'deleted';
             }
             mylog("EnList entry $logMsg: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
-            $alertMsg = $alertMsg ? "<br>$alertMsg" : '';
-            reloadAgent(message: $mainMsg . $alertMsg);
+            if ($alertMsg) {
+                $mainMsg = "$alertMsg<br>Admin: $mainMsg";
+            }
+            reloadAgent(message: $mainMsg);
         }
         return []; // actually always reloads before getting here
     } // handleExistingEntry

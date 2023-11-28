@@ -27,7 +27,7 @@ class Events extends DataSet
 {
     public $filetime;
     private array $timePatterns;
-    private array|null $templates = null;
+    private mixed $templates = null;
 
     /**
      * @param string $file
@@ -204,12 +204,15 @@ class Events extends DataSet
      * @return mixed
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function getTemplate($category): mixed
+    private function getTemplate(string|false $category): mixed
     {
         if ($this->templates === null) {
             $this->loadTemplates();
         }
         $templates = $this->templates;
+        if (is_string($templates)) {
+            return $templates;
+        }
 
         $templateName = $this->options['templateBasename'] ?? '';
         if ($templateName) {
@@ -470,12 +473,12 @@ class Events extends DataSet
     {
         $file = $file ?: ($this->options['templatesFile']??false);
         if (!$file) {
-            return;
+            throw new \Exception("Error: events file '$file' not found.");
         }
         $ext = fileExt($file);
         switch ($ext) {
             case 'txt':
-                $this->templates['_'] = loadFile($file);
+                $this->templates = loadFile($file);
                 break;
             case 'yaml':
                 $this->templates = loadFile($file);
