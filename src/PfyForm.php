@@ -749,7 +749,7 @@ class PfyForm extends Form
                 foreach ($template as $key => $name1) {
                     $value1[$key] = in_array($key, $value);
                     if ($value1[$key]) {
-                        $value1[ARRAY_SUMMARY_NAME] .= $key.',';
+                        $value1[ARRAY_SUMMARY_NAME] .= $key.', ';
                     }
                 }
                 $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ', ');
