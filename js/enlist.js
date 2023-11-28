@@ -218,20 +218,20 @@ const Enlist = {
 
 
   setupModifiedMonitor: function ($form) {
-    // enable submit when email-field non-empty:
+    // enable submit when name and  email-field non-empty:
     const $submit = $form.querySelector('[type="submit"]');
     const nameField = $form.querySelector('[name=Name]');
-      const emailField = $form.querySelector('[name=Email]');
-      nameField.addEventListener('keyup', function(e) {
-      if (this.value && emailField.value) {
+    const emailField = $form.querySelector('[name=Email]');
+    ['keyup', 'change'].forEach(event => nameField.addEventListener(event, function(e) {
+      if (this.value && emailField.value && $submit.disabled) {
         $submit.disabled = false;
       }
-    });
-    emailField.addEventListener('keyup', function(e) {
-      if (this.value && nameField.value) {
+    }));
+    ['keyup', 'change'].forEach(event => emailField.addEventListener(event, function(e) {
+      if (this.value && nameField.value && $submit.disabled) {
         $submit.disabled = false;
       }
-    });
+    }));
   }, // setupModifiedMonitor
 
 
