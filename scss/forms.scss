@@ -44,6 +44,9 @@
   }
   .pfy-choice {
     padding-top: 0.5em;
+    &.pfy-horizontal label {
+      padding-right: 1em;
+    }
   }
 
   .pfy-password .pfy-input-wrapper {

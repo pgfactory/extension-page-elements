@@ -1134,6 +1134,7 @@ EOT;
             $body);
 
         Utils::sendMail($rec['Email'], $subject, $body );
+        mylog("Newly activated reserve slot notified: {$rec['Name']} {$rec['Email']}", 'enlist-log.txt');
     } // notifyActivatedReserve
 
 
