@@ -671,7 +671,7 @@ EOT;
     {
         $button = '';
         $appUrl = PageFactory::$appUrl;
-        if ($this->officeFormatAvailable) {
+        if (DataSet::$officeFormatAvailable) {
             $file = $this->exportDownloadDocs();
             $filename = basename($file);
             $icon = renderIcon('cloud_download_alt');
