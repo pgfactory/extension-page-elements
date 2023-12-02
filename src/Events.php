@@ -308,16 +308,22 @@ class Events extends DataSet
      */
     private function compileTemplate(string $template, array $eventRec): string
     {
-        // translate PageFactory Macros first:
+        // immediately replace patterns %key% with value from data-rec:
         $template = $this->resolveVariables($template, $eventRec);
+
+        // execute PageFactory Macros:
         $template = TransVars::executeMacros($template, onlyMacros:true);
 
+        //
         $eventRec['filetime'] = $this->filetime;
+        $vars = array_merge(\PgFactory\PageFactory\TransVars::$variables, $eventRec);
+
+        // compile templage with Twig:
         $loader = new \Twig\Loader\ArrayLoader([
             'index' => $template,
         ]);
         $twig = new \Twig\Environment($loader);
-        return $twig->render('index', $eventRec);
+        return $twig->render('index', $vars);
     } // compileTemplate
 
 
