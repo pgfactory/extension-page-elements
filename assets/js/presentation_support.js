@@ -150,7 +150,6 @@ function PfyPresentationSupport() {
 
   this.initKeyHandlers = function () {
     var parent = this;
-    var ugLightbox = document.querySelector('.ug-lightbox');
     var activeElement = document.querySelector('.pfy-current-element');
     if (!activeElement) {
       activeElement = document.querySelector('.pfy-presentation-section');
@@ -165,12 +164,7 @@ function PfyPresentationSupport() {
         activeElement.closest('form') ||
         activeElement.closest('input') ||
         activeElement.closest('textarea') ||
-        (ugLightbox && window.getComputedStyle(ugLightbox).display !== 'none')
-      ) {
-        mylog('in form: ' + activeElement.closest('form'));
-        mylog('in input: ' + activeElement.closest('input'));
-        mylog('in textarea: ' + activeElement.closest('textarea'));
-        mylog('ug-lightbox: ' + ugLightbox + ' - ' + window.getComputedStyle(ugLightbox).display);
+        document.querySelector('.baguetteBox-open') ) {
         return document.defaultAction;
       }
 
@@ -363,7 +357,7 @@ function PfyPresentationSupport() {
     const mainHavail = this.mainHavail;
 
     let contentH = 0;
-    fSize = presentationMinFSize;
+    let fSize = presentationMinFSize;
 
     this.hideImages(section);
 

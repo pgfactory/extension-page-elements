@@ -44,12 +44,48 @@ class Presentation
         PageFactory::$wrapperClass = 'pfy-presentation-section';
         PageFactory::registerSrcFileProcessor('\\PgFactory\\PageFactoryElements\\Presentation::autoSplitSections');
 
-        if ($height = getStaticUrlArg('h', true)) {
+        // url-arg "height":
+        if ($height = getStaticUrlArg('height', true)) {
             if ($height === 'false') {
                 kirby()->session()->remove("pfy.h");
             } else {
                 $height = intval($height);
                 PageFactory::$pg->addCss("body { --pfy-presi-height:{$height}vw; }");
+                if (isset($_GET['height'])) {
+                    $_height = 100 - $height + 0.5;
+                    $html = "<input id='height-slider' type='range' name='height' min='0' max='100' value='$_height'>";
+                    PageFactory::$pg->addBodyEndInjections($html);
+                    $js = <<<EOT
+const url = window.location.href.replace(/\?.*/, '');
+const \$input = document.querySelector("#height-slider");
+\$input.addEventListener("input", (event) => {
+    const newVal = 100 - parseInt( \$input.value);
+    mylog(`new height: \${newVal}`);
+    window.location.href = url + '?height=' + newVal;
+});
+
+EOT;
+                    PageFactory::$pg->addJsReady($js);
+                    $css = <<<EOT
+body  {
+    position: relative;
+}
+
+#height-slider {
+    position: absolute;
+    top: 0;
+    right: 0;
+    appearance: slider-vertical;
+    height: 100vw;
+    background: yellow;
+    width: 1em;
+    z-index: 99;
+}
+
+EOT;
+                    PageFactory::$pg->addCss($css);
+
+                }
             }
         }
     } // __construct

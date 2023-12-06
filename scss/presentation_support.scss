@@ -6,7 +6,7 @@
 */
 
 $height: var(--pfy-presi-height, 66vw);
-$headerHeight: 7vmin;
+$headerHeight: var(--pfy-presi-header-height, 7vmin);
 $mainHeight: calc( #{$height} - #{$headerHeight} );
 $sectionPaddingBottom: 1rem; //2rem;
 $sectionHeight: calc(#{$mainHeight} - 1rem);
@@ -22,18 +22,30 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
 
 .pfy-presentation-support:not(.pfy-small-screen) {
 // === Debug ====================
-//  &.debug {
-//    .pfy-page {
-//      border: 1px dashed red;
-//    }
-//    .pfy-main {
-//      border: 1px dotted yellow;
-//    }
-//    .pfy-presentation-section {
-//      border: 2px dotted cyan;
-//    }
-//  }
-
+/*
+  &.debug {
+    .pfy-page {
+      border: 1px dashed red;
+      outline: 1px dashed red;
+      outline-offset: -1px;
+    }
+    .pfy-header-wrapper {
+      border: 1px dashed magenta;
+      outline: 1px dashed magenta;
+      outline-offset: -2px;
+    }
+    .pfy-main {
+      border: 1px dashed orange;
+      outline: 1px dashed orange;
+      outline-offset: -2px;
+    }
+    .pfy-presentation-section {
+      border: 2px dotted blue;
+      outline: 2px dotted blue;
+      outline-offset: -3px;
+    }
+  }
+*/
   .web-mode-only {
     display: none;
   }
@@ -58,6 +70,7 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     margin: 0;
     position: relative;
     overflow: hidden;
+    background-color: $bodyBgColor;
   }
 
   .pfy-header-wrapper {
@@ -103,7 +116,6 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     position: absolute;
     padding: 1rem 3vmin 0 5vmin;
     width: 100%;
-    height: -webkit-fill-available;
     display: none;
     opacity: 0;
     transition: opacity 0.3s;
@@ -230,7 +242,7 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     .withhold,
     .pfy-withheld {
       position: relative;
-      opacity: 0.3;
+      opacity: 0.1;
       filter: blur(5px) brightness(0.7);
 
       &.pfy-elem-visible {
@@ -249,6 +261,9 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
       }
     }
 
+    //.pfy-elem-visible:not(.pfy-current-element) {
+    //  opacity: 0.5;
+    //}
 
   } // section
 
