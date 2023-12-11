@@ -28,6 +28,7 @@ const FORMS_SUPPORTED_TYPES =
 
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
+const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
 
 mb_internal_encoding("utf-8");
 
@@ -103,7 +104,9 @@ class PfyForm extends Form
         $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
+        $formOptions['dbOptions']['keepDataDuration']    = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
         $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
+        $formOptions['dbOptions']['includeMeta'] = ($formOptions['dbOptions']['includeMeta']??false)?: true;
 
         $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
         $recLocking                         = $formOptions['recLocking']??false;
