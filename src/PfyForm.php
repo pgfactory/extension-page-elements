@@ -1548,6 +1548,24 @@ EOT;
      */
     private function handleCallback(array &$dataRec): array
     {
+        if ($this->formOptions['callback'] instanceof \Closure) {
+            $res = $this->formOptions['callback']($dataRec);
+            if (is_array($res)) {
+                $html = ($res['html'] ?? ($res[0] ?? ''));
+                $continueEval = $res['continueEval'] ?? ($res[1] ?? true);
+                $this->showForm = $res['showForm'] ?? ($res[2] ?? true);
+                $this->showDirectFeedback = $res['showDirectFeedback'] ?? ($res[3] ?? true);
+                if (isset($res[4]) || isset($res['dataRec'])) {
+                    $dataRec = $res['dataRec'] ?? $res[4];
+                }
+
+            } else {
+                $html = '';
+                $continueEval = (bool)$res;
+            }
+            return [$html, $continueEval];
+        }
+
         $callbacks = explodeTrim(',', $this->formOptions['callback']);
 
         foreach ($callbacks as $callback) {
