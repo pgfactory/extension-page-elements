@@ -86,7 +86,6 @@ const tableHelper = {
       deleteButton.addEventListener('click', function (e) {
         e.stopPropagation();
         const wrapper = e.target.closest('.pfy-table-wrapper');
-        const formId = '#' + wrapper.getAttribute('id');
         const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
         let options = {};
         if (!selected.length) {
@@ -106,7 +105,7 @@ const tableHelper = {
             callbackArg: form,
             onConfirm: function (that, form) {
               localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
-              form.setAttribute('action', pageUrl + '?delete' + formId);
+              form.setAttribute('action', pageUrl + '?delete');
               form.submit();
             }
           };
