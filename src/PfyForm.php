@@ -1981,6 +1981,10 @@ EOT;
                     $endStr = $s;
                 }
 
+                // remove 'T' in ISO format:
+                $startStr = str_replace('T', ' ', $startStr);
+                $endStr   = str_replace('T', ' ', $endStr);
+
                 if (!$basename) {
                     $rec['start'] = $startStr;
                     $rec['end'] = $endStr;
