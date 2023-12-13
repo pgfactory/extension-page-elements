@@ -23,6 +23,7 @@ const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
     'url,date,datetime-local,time,datetime,month,integer,number,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
+    'event,'.
     'button,reset,submit,cancel,@import,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
@@ -60,6 +61,7 @@ class PfyForm extends Form
     private $matchingEventAvailable = null;
     private $requiredInputFound = false;
     private $addFormTableWrapper = false;
+    private $eventFieldFound = false;
     public static $formInx = 0;
 
     /**
@@ -104,7 +106,8 @@ class PfyForm extends Form
         $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
-        $formOptions['dbOptions']['keepDataDuration']    = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
+        $formOptions['dbOptions']['keepDataDuration']   = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
+        $formOptions['dbOptions']['keepDataOnField']    = $formOptions['dbOptions']['keepDataOnField']?? false;
         $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
         $formOptions['dbOptions']['includeMeta'] = ($formOptions['dbOptions']['includeMeta']??false)?: true;
 
@@ -179,6 +182,7 @@ class PfyForm extends Form
     {
         // handle '@import' => import form element defs from file:
         $this->handleFieldsImport();
+        $this->handleComposedFields();
 
         // add fields:
         foreach ($this->formElements as $name => $elemOptions) {
@@ -334,12 +338,27 @@ class PfyForm extends Form
 
         // handle presets (resp. value / default):
         if ($preset = ($elemOptions['preset']??($elemOptions['value']??false))) {
+            if (is_bool($preset)) {
+                $preset = $preset?'true':'false';
+            }
             $elem->setHtmlAttribute('data-preset', $preset);
         }
 
         // handle compute-saveAs:
         if ($saveAs = ($elemOptions['saveAs']??false)) {
             $this->formElements[$name]['saveAs'] = $saveAs;
+        }
+
+        // handle defaultDuration:
+        if (isset($elemOptions['defaultEventDuration'])) {
+            $defaultEventDuration = ($elemOptions['defaultEventDuration']??0);
+            $elem->setHtmlAttribute('data-related-field', $elemOptions['relatedField']??'');
+            $elem->setHtmlAttribute('data-event-duration', $defaultEventDuration);
+        }
+
+        // handle step:
+        if ($step = ($elemOptions['step']??false)) {
+            $elem->setHtmlAttribute('step', $step);
         }
 
         // handle min:
@@ -1109,6 +1128,7 @@ EOT;
                 return [null, null, null];
             } else {
                 $elemOptions['class'] .= ' pfy-obfuscate';
+//???
                 $args['antiSpam'] = $elemOptions['antiSpam'];
             }
         }
@@ -1528,24 +1548,60 @@ EOT;
      */
     private function handleCallback(array &$dataRec): array
     {
-        $callback = $this->formOptions['callback'];
-        $res = $callback($dataRec);
+        $callbacks = explodeTrim(',', $this->formOptions['callback']);
 
-        if (is_array($res)) {
-            $html         = ($res['html']?? ($res[0]??''));
-            $continueEval = $res['continueEval']?? ($res[1]??true);
-            $this->showForm   = $res['showForm']?? ($res[2]??true);
-            $this->showDirectFeedback = $res['showDirectFeedback']?? ($res[3]??true);
-            if (isset($res[4]) || isset($res['dataRec'])) {
-                $dataRec   = $res['dataRec'] ?? $res[4];
+        foreach ($callbacks as $callback) {
+            if ($callback[0] === '~') {
+                $res = $this->handlePhpCallback($callback, $dataRec);
+            } else {
+                $callback = rtrim($callback, '();');
+                if (method_exists($this, $callback)) {
+                    $res = $this->$callback($dataRec);
+
+                } elseif (function_exists($callback)) {
+                    $res = $callback($dataRec);
+                } else {
+                    throw new \Exception("Error: function '$callback' not available.");
+                }
             }
+            if (is_array($res)) {
+                $html = ($res['html'] ?? ($res[0] ?? ''));
+                $continueEval = $res['continueEval'] ?? ($res[1] ?? true);
+                $this->showForm = $res['showForm'] ?? ($res[2] ?? true);
+                $this->showDirectFeedback = $res['showDirectFeedback'] ?? ($res[3] ?? true);
+                if (isset($res[4]) || isset($res['dataRec'])) {
+                    $dataRec = $res['dataRec'] ?? $res[4];
+                }
 
-        } else {
-            $html = '';
-            $continueEval = (bool)$res;
+            } else {
+                $html = '';
+                $continueEval = (bool)$res;
+            }
         }
         return [$html, $continueEval];
     } // handleCallback
+
+
+    /**
+     *
+     *   PHP:   return [true, handle($dataRec)];
+     * @param string $callback
+     * @param array $dataRec
+     * @return mixed
+     */
+    private function handlePhpCallback(string $callback, array &$dataRec): mixed
+    {
+        $res = true;
+        $file = resolvePath($callback);
+        if ((fileExt($file) === 'php') && file_exists($file)) {
+            list($res, $rec) = require $file;
+            if (is_bool($res)) {
+                $dataRec = $rec;
+                $res = true;
+            }
+        }
+        return $res;
+    } // handlePhpCallback
 
 
     /**
@@ -1587,6 +1643,19 @@ EOT;
             }
         }
     } // handleFieldsImport
+
+
+    /**
+     * @return void
+     */
+    private function handleComposedFields(): void
+    {
+        foreach ($this->formElements as $name => $rec) {
+            if (($rec['type']??false) === 'event') {
+                $this->composeEventElement($name);
+            }
+        }
+    } // handleComposedFields
 
 
     /**
@@ -1869,5 +1938,82 @@ EOT;
         $html .= "</div>\n<!-- /pfy-form-wrapper -->\n";
         return $html;
     } // _renderFormTail
+
+
+    /**
+     * Special callback method for Events:
+     *  converts from values $rec['_date'], $rec['_from'], $rec['_till'] to values $rec['start'] and $rec['end']
+     *  -> handles events that cross midnight (-> auto-increases end-date).
+     * @param array $rec
+     * @return mixed
+     */
+    private function convertEventTimes(array &$rec): mixed
+    {
+        $basename = '';
+        foreach ($rec as $key => $value) {
+            if (str_contains($key, 'start')) {
+                $startStr = $value;
+                $basename = substr(preg_replace('/start/', '', $key), 1);
+            } elseif (str_contains($key, 'end')) {
+                $endStr = $value;
+                if ($startStr > $endStr) {
+                    // illegal: end before start -> reverse
+                    $s = $startStr;
+                    $startStr = $endStr;
+                    $endStr = $s;
+                }
+
+                if (!$basename) {
+                    $rec['start'] = $startStr;
+                    $rec['end'] = $endStr;
+
+                } else {
+                    $rec[$basename.'_start'] = $startStr;
+                    $rec[$basename.'_end'] = $endStr;
+                }
+                $basename = $fromDate = $fromTime = $tillDate = $tillTime = ''; // reset to be on the safe side
+            }
+        }
+        return true;
+    } // convertEventTimes
+
+
+    private function composeEventElement(int|string $name): void
+    {
+        if (!$this->eventFieldFound) {
+            $this->eventFieldFound = true;
+            $startName = 'start';
+            $endName   = 'end';
+        } else {
+            $startName = $name . '_start';
+            $endName   = $name . '_end';
+        }
+
+        $eventElements = [];
+        $startLabel = TransVars::getVariable('pfy-form-event-start-label');
+        $endLabel = TransVars::getVariable('pfy-form-event-end-label');
+        $eventElements[$startName] = [
+            'type' => 'datetime-local',
+            'label' => $startLabel,
+            'class' => 'pfy-event-elem pfy-event-elem-from',
+            'preset' => ($this->formElements[$name]['preset']??''),
+        ];
+        $eventElements[$endName] = [
+            'type' => 'datetime-local',
+            'label' => $endLabel,
+            'class' => 'pfy-event-elem pfy-event-elem-till',
+            'relatedField' => $startName,
+            'defaultEventDuration' => ($this->formElements[$name]['defaultDuration']??0),
+        ];
+
+        $this->formElements = array_splice_associative($this->formElements, $name, 1, $eventElements);
+
+        // add event-callback handler:
+        if (!($this->formOptions['callback'] ?? false)) {
+            $this->formOptions['callback'] = 'convertEventTimes';
+        } elseif (!str_contains($this->formOptions['callback'], 'convertEventTimes')) {
+            $this->formOptions['callback'] .= ',convertEventTimes';
+        }
+    } // composeEventElement
 
 } // PfyForm

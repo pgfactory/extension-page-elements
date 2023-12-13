@@ -305,7 +305,13 @@ pfy-form-problem-banner:
     %%%
 
 
+pfy-form-event-start-label:
+  de: 'Von:'
+  _:  'From:'
 
+pfy-form-event-end-label:
+  de: 'Bis:'
+  _:  'Until:'
 
 
 # === Enlist =======================================

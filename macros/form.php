@@ -109,6 +109,9 @@ function form($args = '')
 
             'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
 
+            'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
+                'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
+
             'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
         ],
         'summary' => <<<EOT

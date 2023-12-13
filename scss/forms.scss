@@ -4,7 +4,8 @@
     --form-row-gap-height: 1em;
     --form-label-width: 7em;
     --form-input-width: 15em;
-    --form-input-height: 2em;
+    --form-input-medium-width: 10em;
+    --form-input-height: 2.2em;
     --form-required-marker-color: gray;
     --form-tooltip-anker-color: gray;
     --form-field-background-color:
@@ -15,7 +16,9 @@
 
 @import '~/site/plugins/pagefactory/scss/_scss-variables.scss';
 
-
+$inputHeight: var(--form-input-height, 2.2em);
+$shortWidth: var(--form-input-medium-width, 4em);
+$mediumWidth: var(--form-input-medium-width, 10em);
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
@@ -62,7 +65,7 @@
     border: none;
     background: none;
     width: 2em;
-    height: var(--form-input-height, 2em);
+    height: #{$inputHeight};
     opacity: 0.5;
     &:hover,
     &:focus-visible {
@@ -71,7 +74,7 @@
 
     svg {
       position: absolute;
-      top: calc((var(--form-input-height, 2em) - 1em) / 2 - 0.1em);
+      top: calc((#{$inputHeight} - 1em) / 2 - 0.1em);
       right: 0.3em;
       width: 1.4em;
       height: 1.4em;
@@ -95,8 +98,11 @@
     input, textarea {
       width: 100%;
     }
+    input, select {
+      height: #{$inputHeight};
+    }
     input, textarea, select {
-      padding: calc((var(--form-input-height, 2em) - 1em) / 2);
+      padding: calc((#{$inputHeight} - 1em) / 2);
       line-height: 1em;
       color: inherit;
       background-color: var(--form-field-background-color, #fffff6);
@@ -215,10 +221,10 @@
     }
   }
   input.short {
-    width: 4em;
+    width: $shortWidth;
   }
   input.medium {
-    width: 10em;
+    width: $mediumWidth;
   }
   &.pfy-large-screen {
     .pfy-elem-wrapper.button {
@@ -399,6 +405,21 @@
     background: #fff9ee;
     border: 1px solid orange;
     padding: 1em;
+  }
+
+
+  // Event widget:
+  .pfy-event-elem {
+    &.pfy-date {
+      display: inline-block;
+    }
+    &.pfy-time {
+      display: inline-block;
+      .pfy-label-wrapper {
+        display: none;
+      }
+    }
+
   }
 
 

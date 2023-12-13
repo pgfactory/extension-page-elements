@@ -215,11 +215,11 @@ const pfyFormsHelper = {
     // reset 'textarea' and 'input' fields, except 'submit,cancel,checkbox,radio,button':
     let fields = form.querySelectorAll('input, textarea');
     if (fields.length) {
-      const excludeTypes = 'submit,cancel,checkbox,radio,button';
+      const typesToSkip = 'submit,cancel,checkbox,radio,button';
       fields.forEach(function (field) {
         const type = field.getAttribute('type');
         const readonly = field.getAttribute('readonly') !== null;
-        if (!readonly && excludeTypes.includes(type)) {
+        if (!readonly && typesToSkip.includes(type)) {
           return;
         }
         const val = pfyFormsHelper.getFieldValue(field, data);
@@ -359,24 +359,105 @@ const pfyFormsHelper = {
   prefillComputedFields(form) {
     let fields = form.querySelectorAll('input');
     if (fields.length) {
-      const types = 'hidden,submit,cancel,checkbox,radio,button';
+      const parent = this;
+      const typesToSkip = 'hidden,submit,cancel,checkbox,radio,button';
       fields.forEach(function (field) {
         const type = field.getAttribute('type');
         const readonly = field.getAttribute('readonly') !== null;
-        if (!readonly && !types.includes(type)) {
-          let val = field.dataset.preset ?? '';
-          const ch1 = val.charAt(0);
-          if (ch1 === '=') {
-            val = val.substring(1);
-            val = pfyFormsHelper.evalExpr(form, val);
-            const name = field.getAttribute('name');
-            mylog(`computed name: ${name}  type: ${type}  val: ${val}`);
-            field.value = val;
-          }
+        if (readonly || typesToSkip.includes(type)) {
+          return;
+        }
+
+        // computed fields are identified by a leading '=' in 'data-preset':
+        let val = field.dataset.preset ?? '';
+        const ch1 = val.charAt(0);
+        if (ch1 === '=') {
+          val = val.substring(1);
+          val = pfyFormsHelper.evalExpr(form, val);
+          const name = field.getAttribute('name');
+          mylog(`computed name: ${name}  type: ${type}  val: ${val}`);
+          field.value = val;
+        }
+
+        // handle eventDuration-> field with 'data-event-duration':
+        if (field.dataset.eventDuration ?? '') {
+          parent.handleEventFields(form, field);
         }
       });
     }
   }, // prefillComputedFields
+
+
+  handleEventFields(form, field) {
+    const parent = this;
+    const duration = parseInt(field.dataset.eventDuration ?? '');
+    const relatedField = field.dataset.relatedField ?? '';
+    const $startDate = form.querySelector('[name='+relatedField+']');
+    const preset = $startDate.dataset.preset ?? false;
+    const now = new Date();
+    const nextFullHour = parent.roundUpMinutes(now);
+
+    if (preset) {
+      // preset event start:
+      if (!$startDate.value) {
+        if (preset === 'true') {
+          $startDate.value = parent.toIsoLocalString(nextFullHour);
+        } else {
+          let dateStr = parent.toIsoLocalString();
+          if (preset.length === 5) {
+            dateStr = dateStr.substring(0,11) + preset;
+          } else {
+            dateStr = preset;
+          }
+          $startDate.value = dateStr;
+        }
+      }
+
+      // preset event end:
+      if (!field.value && duration) {
+        const end = new Date($startDate.value);
+        field.value = parent.addMinutes(end, duration);
+      }
+    }
+
+    // handle changes in startDate -> adapt endDate:
+    $startDate.addEventListener('change', function (e) {
+      const start = new Date($startDate.value);
+      const duration = parseInt(field.dataset.eventDuration ?? '');
+      field.value = parent.addMinutes(start, duration);
+    })
+
+    // handle changes in endDate -> adapt duration:
+    field.addEventListener('change', function (e) {
+      const start = new Date($startDate.value);
+      const end = new Date(field.value);
+      field.dataset.eventDuration = (end.getTime() - start.getTime()) / 60000;
+    })
+  }, // handleEventFields
+
+
+  toIsoLocalString(date) {
+    if (typeof date === 'undefined') {
+      date = new Date();
+    }
+    const currentIsoDateString = new Date(date - date.getTimezoneOffset() * 60000).toISOString();
+    return currentIsoDateString.substring(0,16);
+  }, // toIsoLocalString
+
+
+  addMinutes(dateStr, minutes) {
+    const t = Date.parse(dateStr);
+    let   date = new Date;
+    date.setTime(t + (minutes * 60000));
+    return this.toIsoLocalString(date);
+  }, // addMinutes
+
+
+  roundUpMinutes(date) {
+    date.setHours(date.getHours() + Math.ceil(date.getMinutes()/60));
+    date.setMinutes(0, 0, 0); // Resets also seconds and milliseconds
+    return date;
+  }, // roundUpMinutes
 
 
   checkHonigtopf(form) {
@@ -567,8 +648,6 @@ const pfyFormsHelper = {
       });
     }
   }, // setTriggerOnContinueLink
-
-
 
 }; // pfyFormsHelper
 
