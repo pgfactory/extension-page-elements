@@ -85,6 +85,7 @@ function reloadAgent( arg, url, confirmMsg ) {
 function execAjaxPromise(cmd, options, url) {
   return new Promise(function(resolve) {
     let url = window.location.href;
+    url = url.replace(/#.*/, '');
     if (typeof url === 'undefined') {
       url = pageUrl;
     }
