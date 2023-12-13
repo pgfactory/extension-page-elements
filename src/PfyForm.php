@@ -1057,13 +1057,6 @@ EOT;
         $label = $elemOptions['label'] ?? false;
         $name = $elemOptions['name'] ?? false;
 
-        if (isset($elemOptions['options'])) {
-            $options = $elemOptions['options'];
-            if ($options && is_string($options) && $options[0] === '$') {
-                $elemOptions['options'] = handleDataImportPattern($options);
-            }
-        }
-
         // case: only label given:
         if ($label && !$name) {
             $name = $label;
