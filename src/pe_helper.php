@@ -127,3 +127,4 @@ function array_splice_associative($input, $key, $length, $replacement=array()) {
 
     return array_merge($before_slice, $replacement, $after_slice);
 } // array_splice_associative
+
