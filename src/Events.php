@@ -357,16 +357,19 @@ class Events extends DataSet
     private function prepareTimePatterns(): void
     {
         $patterns = [
-            'Y', 'y', 'n', 'm', 'M', 'F', 'd', 'l', 'D'
+            'Y1', 'Y2', 'Y', 'n', 'm', 'M', 'F', 'd', 'l', 'D'
         ];
         $values = [];
         foreach ($patterns as $v) {
+            $v = preg_replace('/\d/', '', $v);
             $values[] = date($v);
         }
 
-        // for the last month of an year, we assume the user wants to see the coming year:
-        if ($values[2] > YEAR_THRESHOLD) {
+        // for the last month in a year, we assume the user wants to see the coming year:
+        if ($values[3] > 11) {
             $values[0]++;
+        }
+        if ($values[3] > 10) {
             $values[1]++;
         }
 
