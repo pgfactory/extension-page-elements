@@ -11,6 +11,7 @@ namespace PgFactory\PageFactoryElements;
 
 use PgFactory\PageFactory\DataSet as DataSet;
 use PgFactory\PageFactory\PageFactory;
+use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\fileGetContents;
 use function PgFactory\PageFactory\fileTime;
@@ -110,13 +111,25 @@ class Events extends DataSet
                 }
             }
         }
-        ksort($sortedData);
 
         if ($category) {
-            $sortedData = array_filter($sortedData, function ($rec) use ($category) {
-                return $category === ($rec['category'] ?? false);
-            });
+            if (str_contains($category, '|')) {
+                $tmpData = [];
+                $categories = explodeTrim('|', $category);
+                foreach ($categories as $category) {
+                    $data = array_filter($sortedData, function ($rec) use ($category) {
+                        return $category === ($rec['category'] ?? false);
+                    });
+                    $tmpData = array_merge($tmpData, $data);
+                }
+                $sortedData = $tmpData;
+            } else {
+                $sortedData = array_filter($sortedData, function ($rec) use ($category) {
+                    return $category === ($rec['category'] ?? false);
+                });
+            }
         }
+        ksort($sortedData);
         return array_values($sortedData);
     } // getData
 
@@ -444,6 +457,12 @@ class Events extends DataSet
             $this->loadTemplates($templatesFile);
         }
         $sortedData = $this->getData($category);
+
+        // case multiple categories -> extract first for further processing:
+        if (is_string($category) && str_contains($category, '|')) {
+            $category = preg_replace('/\|.*/', '', $category);
+        }
+
         if (isset($this->options['offset']) && $offset === 0) {
             $offset = $this->options['offset'];
         }
