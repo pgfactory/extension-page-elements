@@ -19,9 +19,9 @@ function enlist($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'title' =>	['[string] Title of enlistment table. (default: false)', null],
             'nSlots' =>	['[integer] Number of slots to show in the enlistment table. (default: 1)', null],
             'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table. (default: 0)', null],
+            'title' =>	['[string] Title of enlistment table. (default: false)', null],
 
             'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry. (default: false)', null],
             'deadline' =>	['[ISO-datetime|relative] The time until when people can enlist. (default: false)', null],
