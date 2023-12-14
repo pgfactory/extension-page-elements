@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use IntlDateFormatter;
 use PgFactory\PageFactory\PageFactory;
 
 // ToDo: option to import translations table from a file
@@ -53,6 +54,27 @@ function translateDateTimes(string $str):string
     return $str;
 } // translateDateTimes
 
+
+/**
+ * @param string|int|null $t
+ * @return string
+ */
+function intlDateTime(string|int $t = null, $dateFormat = IntlDateFormatter::LONG, $timeFormat = IntlDateFormatter::SHORT): string
+{
+    if ($t === null) {
+        $t = time();
+    } elseif (is_string($t)) {
+        $t = strtotime($t);
+    }
+    $fmt = datefmt_create(
+        PageFactory::$locale,
+        $dateFormat,
+        $timeFormat,
+        PageFactory::$timezone,
+        IntlDateFormatter::GREGORIAN
+    );
+    return datefmt_format( $fmt , $t);
+} // intlDateTime
 
 
 /**

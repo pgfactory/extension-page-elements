@@ -1,5 +1,6 @@
 <?php
 namespace PgFactory\PageFactory;
+use function PgFactory\PageFactoryElements\intlDateTime;
 use function PgFactory\PageFactoryElements\translateDateTimes as translateDateTimes;
 /*
  * PageFactory Macro (and Twig Function)
@@ -80,8 +81,9 @@ EOT,
     } elseif (!is_numeric($dateTime)) {
         $dateTime = strtotime($dateTime);
     }
-    $out  = date($format, $dateTime);
-    $out = translateDateTimes($out);
+    $out = intlDateTime($dateTime);
+//    $out  = date($format, $dateTime);
+//    $out = translateDateTimes($out);
     $str .= $out;
 
     return $str; // return [$str]; if result needs to be shielded
