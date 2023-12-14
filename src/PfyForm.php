@@ -62,6 +62,7 @@ class PfyForm extends Form
     private $requiredInputFound = false;
     private $addFormTableWrapper = false;
     private $eventFieldFound = false;
+    private $tableTitle;
     public static $formInx = 0;
 
     /**
@@ -114,6 +115,7 @@ class PfyForm extends Form
         $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
         $recLocking                         = $formOptions['recLocking']??false;
         $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
+        $this->tableTitle                   = $formOptions['tableTitle']??false;
 
         if ($recLocking) {
             PageFactory::$pg->addJs('const pfyFormRecLocking = true;');
@@ -749,6 +751,8 @@ class PfyForm extends Form
                     $v = $dataRec[$varName] ?? '';
                     $saveAs = str_replace($m[0], "'$v'", $saveAs);
                 }
+                $saveAs = str_replace('%today%', '\''.date('Y-m-d').'\'', $saveAs);
+                $saveAs = str_replace('%now%', '\''.date('Y-m-d H:i').'\'', $saveAs);
                 try {
                     $value = eval("return $saveAs;");
                     $dataRec[$name] = $value;
@@ -1027,7 +1031,11 @@ class PfyForm extends Form
         $html = $ds ? $ds->render() : '';
         $header = '';
         if ($this->tableOptions['editMode'] !== 'popup') {
-            $header = '<h2>{{ pfy-table-data-output-header }}</h2>';
+            if ($this->tableTitle) {
+                $header .= compileMarkdown($this->tableTitle);
+            } else {
+                $header = '<h2>{{ pfy-table-data-output-header }}</h2>';
+            }
         }
         if ($html) {
             $html = <<<EOT
@@ -1355,12 +1363,16 @@ EOT;
                 $value = json_encode($value);
             }
             $this->auxBannerValues[$key] = $value;
+            if ($this->tableTitle) {
+                $this->tableTitle = str_replace("%$key%", $value, $this->tableTitle);
+            }
         }
 
         if ($maxCount = ($nextEvent['maxCount']??false)) {
             $this->formOptions['maxCount'] = $maxCount;
             $this->tableOptions['minRows'] = $maxCount;
         }
+
         $this->matchingEventAvailable = true;
     } // handleScheduleOption
 

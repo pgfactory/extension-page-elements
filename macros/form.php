@@ -112,6 +112,9 @@ function form($args = '')
             'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
 
+            'tableTitle' =>	['If set, defines the title above the data-table in markdown format. ',
+                'Supported placeholders: ``%today%`` ``%now%``', false],
+
             'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
         ],
         'summary' => <<<EOT

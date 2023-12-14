@@ -292,13 +292,13 @@ pfy-show-source-code: Show Source Code
 
 pfy-form-problem-banner:
   de: |
-    %%% .pfy-form-problem-hint
+    %%% .pfy-form-problem-hint.pfy-screen-only
     Problem mit diesem Webformular?
 
     → bitte den {{ webmaster_link }} benachrichtigen. Danke.
     %%%
   _: |
-    %%% .pfy-form-problem-hint
+    %%% .pfy-form-problem-hint.pfy-screen-only
     Problems with this web form?
 
     → Please contact the {{ webmaster_link }}. Thank you.
