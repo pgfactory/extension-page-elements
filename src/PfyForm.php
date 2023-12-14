@@ -343,6 +343,9 @@ class PfyForm extends Form
             if (is_bool($preset)) {
                 $preset = $preset?'true':'false';
             }
+            if (str_contains($preset, '%')) {
+                $preset = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $preset);
+            }
             $elem->setHtmlAttribute('data-preset', $preset);
         }
 
@@ -751,8 +754,9 @@ class PfyForm extends Form
                     $v = $dataRec[$varName] ?? '';
                     $saveAs = str_replace($m[0], "'$v'", $saveAs);
                 }
-                $saveAs = str_replace('%today%', '\''.date('Y-m-d').'\'', $saveAs);
-                $saveAs = str_replace('%now%', '\''.date('Y-m-d H:i').'\'', $saveAs);
+                if (str_contains($saveAs, '%')) {
+                    $saveAs = str_replace(['%today%', '%now%'], ['\'' . date('Y-m-d') . '\'', '\'' . date('Y-m-d H:i') . '\''], $saveAs);
+                }
                 try {
                     $value = eval("return $saveAs;");
                     $dataRec[$name] = $value;
