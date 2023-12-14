@@ -509,10 +509,17 @@ class DataTable
                     continue;
                 }
                 if (isset($footer[$key])) {
-                    if (str_contains($footer[$key], TABLE_SUM_SYMBOL) || str_contains($footer[$key], TABLE_COUNT_SYMBOL)) {
-                        $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $footer[$key]);
-                    } else {
-                        $val = $footer[$key];
+                    $val = $footer[$key];
+                    if (str_contains($val, TABLE_SUM_SYMBOL) || str_contains($val, TABLE_COUNT_SYMBOL)) {
+                        $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $val);
+                    }
+                    if ($val[0] === '=') {
+                        try {
+                            $val = substr($val,1);
+                            $val = eval("return $val;");
+                        } catch (\Exception $e) {
+                            exit($e);
+                        }
                     }
                 } else {
                     $val = '&nbsp;';
