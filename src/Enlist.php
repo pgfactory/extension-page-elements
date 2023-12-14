@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use IntlDateFormatter;
 use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\DataSet;
@@ -269,8 +270,7 @@ EOT;
         $deadlineStr = $this->prepStaticOption('deadline');
         $deadline = false;
         if ($deadlineStr) {
-            $deadline = strtotime($deadlineStr);
-            $deadlineStr = date('l, d.F Y', $deadline);
+            $deadlineStr = intlDateTime($deadlineStr, IntlDateFormatter::RELATIVE_LONG, false);
             $title0 = str_replace('%deadline%', $deadlineStr, $title);
             $title = translateDateTimes($title0);
         }
@@ -647,8 +647,6 @@ EOT;
     private function prepareDataSet(string $setName): array
     {
         $dataset = $this->datasets[$setName];
-        $dataset['nSlots'] = $this->nTotalSlots;
-        $dataset['nReserveSlots'] = $this->nReserveSlots;
         return $dataset;
     } // prepareDataSet
 
@@ -692,6 +690,9 @@ EOT;
     {
         if ($this->freezeTime) {
             $addHelp = TransVars::getVariable('pfy-enlist-popup-add-help');
+            // translate freezeTime:
+            $s = intlDateTime(time() + $this->freezeTime, IntlDateFormatter::MEDIUM);
+            $addHelp = str_replace('%freezetime%', $s, $addHelp);
         } else {
             $addHelp = TransVars::getVariable('pfy-enlist-popup-add-nofreeze-help');
         }
@@ -949,8 +950,16 @@ EOT;
      */
     private function handleExistingEntry(array $dataset, string $elemId, string $alertMsg, array $data, string $context, mixed $setName): array
     {
-        $found = array_filter($dataset, function ($e) use ($elemId) {
-            return ($e['_elemKey'] ?? '') === $elemId;
+        $found = array_filter($dataset, function ($e) use ($elemId, $data) {
+            if (!is_array($e)) {
+                return false;
+            } elseif (isset($e['_elemKey'])) {
+                return ($e['_elemKey'] ?? '') === $elemId;
+            } elseif ($e) {
+                return (($e['Name']??1) === ($data['Name']??2)) && (($e['Email']??3) === ($data['Email']??4));
+            } else {
+                return false;
+            }
         });
         if (!$found) {
             mylog('Delete request ignored, element not found - probably outdated');
