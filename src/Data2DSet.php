@@ -74,6 +74,9 @@ class Data2DSet extends DataSet
         if ($placeholderForUndefined === null) {
             $placeholderForUndefined = self::$placeholderForUndefined;
         }
+        if (!PageFactory::$debug) {
+            $placeholderForUndefined = '';
+        }
         $data2D = [];
         $data2D['_hrd'] = $headerElems;
         $elementKeys = array_keys($headerElems);
@@ -195,9 +198,7 @@ class Data2DSet extends DataSet
         $nValues = sizeof($values);
         if ($nKeys < $nValues) {
             for ($i=$nKeys; $i<$nValues; $i++) {
-                $k = str_replace('-', '_', ($values[$i]??''));
-                $k = preg_replace('/\W/', '', $k);
-                $keys[$i] = translateToIdentifier($k);
+                $keys[$i] = translateToIdentifier($values[$i]??'');
             }
         } elseif ($nKeys > $nValues) {
             for ($i=$nValues; $i<$nKeys; $i++) {

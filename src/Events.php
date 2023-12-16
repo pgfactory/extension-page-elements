@@ -18,7 +18,7 @@ use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\translateToIdentifier;
+use function PgFactory\PageFactory\translateToClassName;
 
  // Optional support for propre localization of dates -> requires twig/intl-extra
  //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
@@ -296,7 +296,7 @@ class Events extends DataSet
         $mdStr = '';
         foreach ($events as $i => $eventRec) {
             $category = $eventRec['category']??false;
-            $catClass = translateToIdentifier($category);
+            $catClass = translateToClassName($category);
             if ($this->options['wrap']) {
                 $wrap1 = "\n%%%%%% .pfy-event-wrapper.event-$catClass\n\n";
                 $wrap2 = "\n\n%%%%%%\n\n";
