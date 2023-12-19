@@ -9,8 +9,8 @@ use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
 use PgFactory\PageFactory\TransVars;
-use function \PgFactory\PageFactory\base_name;
 use function \PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\translateToClassName;
 use function \PgFactory\PageFactory\translateToIdentifier;
 use function \PgFactory\PageFactory\array_splice_assoc;
 use function \PgFactory\PageFactory\renderIcon;
@@ -268,10 +268,10 @@ class DataTable
                     $serviceColumns[$i] = strtolower("pfy-row-$hdr");
                 } else {
                     $hdr = false;
-                    $serviceColumns[$i] = 'pfy-row-'.translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                    $serviceColumns[$i] = 'pfy-row-'.translateToClassName($elem);
                 }
                 if (!str_contains($elem, '<')) {
-                    $class = translateToIdentifier($elem, false, true, true);
+                    $class = translateToClassName($elem);
                     $elem = "<button class='pfy-button pfy-button-lean $class' type='button'>$elem</button>";
                 }
                 $this->injectColumn($elem, $hdr, isServiceCol: true);
@@ -328,8 +328,7 @@ class DataTable
         $newCol = array_pad($newCol, $this->nRows, $fillWith);
 
         // fix $this->elementLabels accordingly:
-        $name = translateToIdentifier($headElement, removeNonAlpha: true);
-        $name = rtrim($name, '_');
+        $name = translateToIdentifier($headElement);
         if (is_array($this->tableHeaders)) {
             array_splice_assoc($this->tableHeaders, $col, $col, [$name => $headElement]);
         }
@@ -381,7 +380,7 @@ class DataTable
                 $class = "pfy-service-row {$this->serviceColArray[$i]}";
             } else {
                 if (!($class = ($this->colClasses[$i-1]??false))) {
-                    $class = translateToIdentifier($elem, removeNonAlpha: true, toLowerCase: true);
+                    $class = translateToClassName($elem);
                 }
             }
             $this->elementLabels[] = $c;
@@ -447,7 +446,7 @@ class DataTable
                 if ($this->colClasses[$i-1]??false) {
                     $class = $this->colClasses[$i-1];
                 } elseif (!preg_match('/^\{\{.*}}$/', $k)) {
-                    $class = 'td-'.translateToIdentifier($k, removeNonAlpha: true);
+                    $class = 'td-'.translateToClassName($k);
                 } else {
                     $class = '';
                 }
@@ -582,7 +581,7 @@ class DataTable
                     if (str_contains($tableButton, '<')) {
                         $button = $tableButton;
                     } else {
-                        $class = translateToIdentifier($tableButton, false, true, true);
+                        $class = translateToClassName($tableButton);
                         $button = "<button id='pfy-table-button-$this->inx-$i' class='pfy-button pfy-button-lean $class' type='button'>$tableButton</button>";
                     }
             }

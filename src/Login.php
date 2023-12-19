@@ -51,13 +51,11 @@ class Login
     {
         $wrapperClass = '';
         if ($username = PageFactory::$userName) {
-            $html = <<<EOT
-<div class='pfy-already-logged-in'>
-    <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
-    <p><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
-</div>
-EOT;
-
+            if (kirby()->option('pgfactory.pagefactory-elements.options.allowChangePassword')) {
+                $html = self::renderAccountAdminForm($username);
+            } else {
+                $html = self::renderLogoutForm($username);
+            }
 
         } else {
             switch (self::$loginMode) {
@@ -103,8 +101,6 @@ EOT;
      */
     private static function renderCombinedLoginForm(string $message = ''): string
     {
-        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
-        $labelChangePw = '{{ pfy-login-reset-pw }}';
 
         $formOptions = [
             'action'             => self::$selfLink,
@@ -140,7 +136,6 @@ EOT;
 <div class="pfy-login-mode-links">
 <span class="pfy-login-pwless-link pfy-login-unpw"><a id="pfy-login-pwless" href="#">$labelLoginPwLess</a></span>
 <span class="pfy-login-pw-link pfy-login-otc"><a id="pfy-login-pw" href="#">$labelLoginUnPw</a></span>
-<span class="pfy-login-chpw-link"><a href="$urlChangePw">$labelChangePw</a></span>
 </div>
 
 EOT;
@@ -280,5 +275,40 @@ EOT;
         }
         return $email;
     } // getUsersEmail
+
+
+    /**
+     * @param mixed $username
+     * @return string
+     */
+    private static function renderLogoutForm(mixed $username): string
+    {
+        $html = <<<EOT
+<div class='pfy-already-logged-in'>
+    <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
+    <p><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
+</div>
+EOT;
+        return $html;
+    } // renderLogoutForm
+
+
+    /**
+     * @param mixed $username
+     * @return string
+     */
+    private static function renderAccountAdminForm(mixed $username): string
+    {
+        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
+        $labelChangePw = '{{ pfy-login-reset-pw }}';
+        $html = <<<EOT
+<div class='pfy-already-logged-in'>
+    <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
+    <div class="pfy-login-reset-pw"><a href="$urlChangePw">$labelChangePw</a></div>
+    <div class="pfy-login-button-row"><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></div>
+</div>
+EOT;
+        return $html;
+    } // renderAccountAdminForm
 
 } // Login

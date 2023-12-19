@@ -582,8 +582,8 @@ pfy-login-with-otc:
   _:  Login with one-time-code
 
 pfy-login-reset-pw:
-  de: 'Passwort neu setzen'
-  _:  Reset password
+  de: 'Passwort ändern oder neu setzen'
+  _:  'Change or reset password'
 
 pfy-login-header:
   de: |
