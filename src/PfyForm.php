@@ -10,7 +10,6 @@ namespace PgFactory\PageFactory;
 use Kirby\Exception\InvalidArgumentException;
 use Nette\Forms\Form;
 use Nette\Utils\Html;
-use voku\helper\HtmlDomParser;
 use Kirby\Email\PHPMailer;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
@@ -21,7 +20,7 @@ use function PgFactory\PageFactoryElements\array_splice_associative as array_spl
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
-    'url,date,datetime-local,time,datetime,month,integer,number,range,tel,'.
+    'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'event,'.
     'button,reset,submit,cancel,@import,';
@@ -40,30 +39,34 @@ class PfyForm extends Form
     private array $elemOptions;
     private array $tableOptions = [];
     private array $fieldNames = [];
-    private array $formElements = [];
+    protected array $formElements = [];
     private array $choiceOptions = [];
     private array $bypassedElements = [];
     private $db = false;
-    private $file = false;
     private $dataTable = false;
-    private int $formIndex = 0;
-    private int $index = 0;
+    protected int $formIndex = 0;
+    private int $elemInx = 0;
     private int $revealInx = 0;
-    protected bool $isFormAdmin = false;
     protected bool $inhibitAntiSpam = false;
-    protected bool $showDirectFeedback = true;
-    protected bool $showForm = true;
-    private string $name;
     private string $formWrapperClass = '';
-    private string $tableButtons = '';
-    private $callback;
     private array $auxBannerValues = [];
     private $matchingEventAvailable = null;
-    private $requiredInputFound = false;
+    private $requiredInputFound = [];
     private $addFormTableWrapper = false;
     private $eventFieldFound = false;
     private $tableTitle;
-    public static $formInx = 0;
+    protected static $formInx = 0;
+    private string $formButtons = '';
+    private bool $noShowOpened = false;
+
+    protected mixed $deadlinePassed = false;
+    protected mixed $maxCountExceeded = false;
+
+    // Output controlling states:
+    protected bool $showDirectFeedback = true;
+    protected    mixed $formResponse = '';
+    protected  bool $isFormAdmin = false;
+    protected bool $showForm = true;
 
     /**
      * @param $formOptions
@@ -103,6 +106,7 @@ class PfyForm extends Form
         $formOptions['deadline']            = $formOptions['deadline']??false;
         $formOptions['id']                  = $formOptions['id']??false;
         $formOptions['class']               = $formOptions['class']??false;
+        $formOptions['wrapperClass']        = $formOptions['wrapperClass']??false;
         $formOptions['action']              = $formOptions['action']??false;
         $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
@@ -114,7 +118,7 @@ class PfyForm extends Form
 
         $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
         $recLocking                         = $formOptions['recLocking']??false;
-        $this->formWrapperClass             = ($formOptions['wrapperClass']??'')? ' '.$formOptions['wrapperClass'] :'';
+        $this->formWrapperClass             = $formOptions['wrapperClass']? ' '.$formOptions['wrapperClass'] :'';
         $this->tableTitle                   = $formOptions['tableTitle']??false;
 
         if ($recLocking) {
@@ -125,6 +129,9 @@ class PfyForm extends Form
             $permissionQuery = $this->tableOptions['permission'];
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
+
+        $this->checkDeadline(); // -> sets $this->deadlinePassed and $this->formResponse
+        $this->checkMaxCount();
 
         $this->handleScheduleOption();
 
@@ -155,33 +162,82 @@ class PfyForm extends Form
 
 
     /**
+     * All-in-one convenience method: renders a form in one call.
      * @return string
      * @throws \Exception
      */
     public function renderForm($formElements): string
     {
-        foreach ($formElements as $name => $rec) {
-            $name = str_replace('-', '_', $name);
-            $name = preg_replace('/\W/', '', $name);
-            $this->formElements[$name] = $rec;
-        }
-        $this->fireRenderEvents();
+        $this->createForm($formElements);
+        $html = "\n\n<!-- === pfy form widget === -->\n";
 
-        $html = $this->renderFormHead();
-        $html .= $this->renderFormFields();
-        $html .= $this->renderFormTail();
+        $this->handleReceivedData();
+        $formResponse = $this->deadlinePassed . $this->maxCountExceeded . $this->formResponse;
+        if (!$this->showDirectFeedback && $this->formResponse) {
+            reloadAgent(message: strip_tags($this->formResponse));
+        }
+
+        if ($formResponse) {
+            if (!$this->isFormAdmin) {
+                $this->injectNoShowCssRule();
+                return $formResponse;
+            }
+            if ($this->formResponse) {
+                $formResponse .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+                $formResponse .= "\n\n<!-- === /pfy form widget === -->\n";
+                return $formResponse;
+            }
+            $html .= $formResponse;
+        }
+
+        if (!$this->showForm && $this->showDirectFeedback) {
+            // normal case after data received -> show response, hide form:
+            $html .= $this->injectNoShowCssRule();
+        }
+
+        // assemble form:
+        $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
+                                                        //    pfy-form-wrapper
+        $html .= $this->renderFormHead();               //      form
+                                                        //        pfy-elems-wrapper
+        $html .= $this->renderFormFields();             //          pfy-elem-wrapper ...
+
+        $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
+                                                        //      /form
+                                                        //    /pfy-form-wrapper
+        $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+        $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
+        $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
+
+        $html .= $this->injectNoSHowEnd();
+        $html .= "<!-- === /pfy form widget === -->\n\n";
         return $html;
     } // renderForm
 
 
     /**
-     * @param array|null $formOptions
-     * @param array $formElements
+     * For each element in $this->formElements invokes addElement() which adds elements to NetteForm.
+     * Handles composed elements, such as 'event'.
+     * Aditionally adds hidden bookkeeping elements.
      * @return void
      * @throws InvalidArgumentException
      */
-    public function createForm(): void
+    public function createForm($formElements): void
     {
+        // build $this->formElements from submitted $formElements:
+        foreach ($formElements as $name => $rec) {
+            $rec['origName'] = trim($name);
+            $name = translateToIdentifier($name);
+            $this->formElements[$name] = $rec;
+        }
+
+        $inx = $this->formOptions['inx'];
+        // handle option labelWidth:
+        if ($lWidth = $this->formOptions['labelWidth']) {
+            PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
+        }
+
+
         // handle '@import' => import form element defs from file:
         $this->handleFieldsImport();
         $this->handleComposedFields();
@@ -193,17 +249,147 @@ class PfyForm extends Form
             }
             $this->addElement($name);
         }
+
+        // standard hidden fields for internal bookkeeping:
+        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId'] ?? '', 'preset' => '']);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this::$formInx, 'preset' => $this::$formInx]);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
+
+        $this->fireRenderEvents();
+
     } // createForm
 
 
+
+
+
+
+    // === private methods ========================================================
+
     /**
+     * Renders element identified by $name.
+     * @param string $name
+     * @return string
+     */
+    protected function renderFormElement(string $name): string
+    {
+        $html = '';
+        $rec = $this->formElements[$name];
+        $_name = strtolower($name);
+        try {
+            $elem = $this[$name];
+        } catch (\Exception $e) {
+            try {
+                $name = "_$name";
+                $elem = $this[$name];
+            } catch (\Exception $e) {
+                exit($e);
+            }
+        }
+        $label = (string)$elem->getLabel();
+        if (str_contains(($rec['label'] ?? ''), '*')) {
+            $rec['required'] = true;
+        }
+        $label = "<span class='pfy-label-wrapper'>$label</span>";
+        $input = (string)$elem->getControl();
+        $type = $this->determineType($_name, $rec['type'] ?? false);
+        $attr = '';
+
+        // if nette forms applied a value, turn it into a data-preset:
+        if (!str_contains('button,hidden,cancel,submit,reset,select,multiselect,radio,checkbox,upload', $type) && str_contains($input, 'value="')) {
+            $input = preg_replace('/value="(.*?)"/', "data-preset=\"$1\"", $input);
+        }
+
+        if ($type === 'password') {
+            $icon = svg('site/plugins/pagefactory-pageelements/assets/icons/show.svg') .
+                svg('site/plugins/pagefactory-pageelements/assets/icons/hide.svg');
+            $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
+        }
+        if ($description = ($rec['description'] ?? '')) {
+            $input .= "<span class='pfy-form-field-description'>$description</span>";
+        }
+
+        $class = $rec['class'];
+        if ($rec['required'] ?? false) {
+            if (($rec['required'] === true)) {
+                $class .= ' pfy-required';
+            } else {
+                $class .= ' pfy-required-group';
+                $attr .= " data-required-group='{$rec['required']}'";
+            }
+        }
+
+        if ($type === 'hidden') {
+            $html = $input;
+
+        } elseif (($type === 'textarea') && ($rec['reveal'] ?? false)) {
+            $inx = self::$formInx . "_$this->revealInx";
+            $controllerLabel = $rec['reveal'];
+            $html = <<<EOT
+<div class="pfy-elem-wrapper pfy-reveal-controller">
+<span class="pfy-reveal-controller-label"><label for="frm-CommentController$inx" class=""><input type="checkbox" name="CommentController$inx" class="pfy-reveal-controller" aria-controls="pfy-reveal-container-$inx" data-reveal-target="#pfy-reveal-container-$inx" data-icon-closed="+" data-icon-open="∣" id="frm-CommentController$inx" aria-expanded="false">$controllerLabel</label></span>
+</div>
+EOT;
+
+            $html .= <<<EOT
+<div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
+<!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class">
+<span class="pfy-input-wrapper">
+$input
+</span>
+</div><!-- /pfy-elem-wrapper -->
+</div>
+
+EOT;
+
+        } elseif (str_contains(',cancel,submit,reset,', ",$type,")) {
+            $cls = $this->formElements[$_name]['class'] ?? '';
+            $elem->setHtmlAttribute('class', "pfy-$type button $cls");
+            $this->formButtons .= (string)$elem->getControl();
+            return '';
+
+            // all other field types (except bypassed and import):
+        } elseif (!str_contains(',bypassed,@import,', ",$type,")) {
+            // get errors and render them:
+            $errors = '';
+            if ($this[$name]->hasErrors()) {
+                $class .= ' pfy-form-elem-has-error';
+                foreach ($this[$name]->getErrors() as $error) {
+                    $errors .= "<div class='pfy-form-elem-error-msg'>$error</div>\n";
+                }
+            }
+
+            if ($attr) {
+                $label = str_replace('<label', "<label $attr", $label);
+            }
+
+            $input = "<span class='pfy-input-wrapper'>$input</span>";
+            $html = <<<EOT
+<!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class">
+$label
+$input
+$errors
+</div><!-- /pfy-elem-wrapper -->
+
+EOT;
+        }
+        return $html;
+    } // renderFormElement
+
+
+    /**
+     * Creates an element in NetteForms.
+     * This is the place where field types are interpreted.
      * @param array $elemOptions
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    public function addElement(string $elemName, array $elemOptions = null): void
+    protected function addElement(string $elemName, array $elemOptions = null): void
     {
-        $this->index++;
+        $this->elemInx++;
+        // if $elemOptions not suppliedm use $this->formElements
         if ($elemOptions === null) {
             $elemOptions = &$this->formElements[$elemName];
             $elemOptions['name'] = $elemName;
@@ -250,8 +436,11 @@ class PfyForm extends Form
                 $elem = $this->addTextareaElem($name, $label);
                 break;
             case 'integer':
+                $elem = $this->addInteger($name, $label);
+                break;
             case 'number':
-                $elem = $this->addIntegerElem($name, $label);
+            case 'float':
+                $elem = $this->addFloat($name, $label);
                 break;
             case 'email':
                 $elem = $this->addEmail($name, $label);
@@ -305,16 +494,20 @@ class PfyForm extends Form
         if ($id = $elemOptions['id']??false) {
             $elem->setHtmlId($id);
         } elseif ($this->formIndex > 1) {
-            $id = "frm-$type-$this->formIndex-$this->index";
+            $id = "frm-$type-$this->formIndex-$this->elemInx";
             $elem->setHtmlId($id);
         }
 
         $class = "pfy-$type";
 
         // handle 'required' option:
-        if (($elemOptions['required']??false) !== false) {
-            $elem->setRequired($elemOptions['required']);
-            $this->requiredInputFound = true;
+        if ($required =($elemOptions['required']??false)) {
+            if ($required === true) {
+                $this->requiredInputFound['_'] = '{{ pfy-form-required-info }}';
+                $elem->setRequired();
+            } else {
+                $this->requiredInputFound[$required] = $required;
+            }
         }
 
         // handle 'disabled' option:
@@ -368,7 +561,7 @@ class PfyForm extends Form
 
         // handle min:
         if ($min = ($elemOptions['min']??false)) {
-            $elem->setHtmlAttribute('min', $min);
+            $elem->addRule(self::Min, 'Min value: %d', $min);
         }
 
         // handle max -> take into account case maxCount:
@@ -380,7 +573,7 @@ class PfyForm extends Form
                     $max = min($max, $available);
                 }
             }
-            $elem->setHtmlAttribute('max', $max);
+            $elem->addRule(self::Max, 'Max value: %d', $max);
         }
 
         // handle 'wrapperId' option:
@@ -425,24 +618,11 @@ class PfyForm extends Form
         }
         $elem = $this->addTextarea($name, $label);
         if ($revealLabel) {
-            $this->elemOptions['class'] = ($elemOptions['class']??'') ? $elemOptions['class'].' pfy-reveal-target':'pfy-reveal-target';
             $elem->setHtmlAttribute('data-reveal-target-id', $targetId);
         }
+        $elemOptions['class'] .= 'pfy-auto-grow';
         return $elem;
     } // addTextareaElem
-
-
-    /**
-     * @param string $name
-     * @param string $label
-     * @param array $elemOptions
-     * @return object|\Nette\Forms\Controls\TextInput
-     */
-    private function addIntegerElem(string $name, string|object $label): object
-    {
-        $elem = $this->addInteger($name, $label);
-        return $elem;
-    } // addIntegerElem
 
 
     /**
@@ -571,8 +751,12 @@ class PfyForm extends Form
     /**
      * @return string
      */
-    public function handleReceivedData(): mixed
+    protected function handleReceivedData(): void
     {
+        if (!$this->isSuccess()) {
+            return;
+        }
+
         $html = false;
         $dataRec = $this->getValues(true);
 
@@ -588,12 +772,12 @@ class PfyForm extends Form
         // check presence of $formInxReceived:
         $formInxReceived = $dataRec['_formInx']??false;
         if ($formInxReceived === false || isset($_POST['cancel'])) {
-            return '';
+            return;
         }
 
         // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
         if (intval($formInxReceived) !== $this->formIndex) {
-            return null; // signal 'processing skipped, continue processing'
+            return; // signal 'processing skipped, continue processing'
         }
 
         $csrf = $_POST['_csrf']??false;
@@ -605,7 +789,8 @@ class PfyForm extends Form
         if ($this->formOptions['callback']) {
             list($html, $continueEval) = $this->handleCallback($dataRec);
             if (!$continueEval) {
-                return $html;
+                $this->formResponse =  $html;
+                return;
             }
         }
 
@@ -616,13 +801,18 @@ class PfyForm extends Form
         if (is_string($dataRec)) {
             // string means spam detected:
             $this->showForm = false;
-            return "<div class='pfy-form-error'>$dataRec</div>\n";
+            $this->formResponse =  "<div class='pfy-form-error'>$dataRec</div>\n";
         }
 
         // handle optional 'deadline' and 'maxCount':
-        if ($this->handleDeadline() || $this->handleMaxCount($dataRec)) {
+        if ($this->applyRequiredGroupCheck($dataRec)) {
+            return;
+        }
+
+        // handle optional 'deadline' and 'maxCount':
+        if ($this->deadlinePassed || $this->checkMaxCount($dataRec)) {
             if (!$this->isFormAdmin) {
-                return '';
+                return;
             }
         }
 
@@ -631,7 +821,6 @@ class PfyForm extends Form
 
         // if 'file' defined, save received data:
         if ($this->formOptions['file']) {
-            $this->file = $this->formOptions['file'];
             $err = $this->storeSubmittedData($dataRec, $recKey);
             if ($err) {
                 $err = TransVars::getVariable($err, true);
@@ -656,16 +845,17 @@ class PfyForm extends Form
                 $response = "{{ pfy-form-submit-success }}";
             }
             $html = "<div class='pfy-form-success'>$response</div>\n";
+
+            // handle optional confirmation mail:
+            $html .= $this->handleConfirmationMail($dataRec);
         }
 
-        // handle optional confirmation mail:
-        $html .= $this->handleConfirmationMail($dataRec);
 
         // add 'continue...' if direct feedback is active:
         if ($this->showDirectFeedback) {
-            $next = $this->formOptions['next'];
+            $next = $this->formOptions['next'] ?: '~page/';
             $class = 'pfy-form-success-continue';
-            if ($next === '~page/' || !$next) {
+            if ($next === '~page/') {
                 $class .= ' pfy-form-continue-same';
             }
             $html .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
@@ -675,16 +865,14 @@ class PfyForm extends Form
         $logText = strip_tags($html);
         mylog($logText, 'form-log.txt');
 
-        // handle indirect feedback -> via message:
-        if ($html && !$this->showDirectFeedback) {
-            reloadAgent(message: $logText);
-        }
-
         if (isset($_POST)) {
             unset($_POST);
         }
         $this->showForm = false;
-        return $html;
+        if ($html) {
+            $html = "<div class='pfy-form-response'>\n$html\n</div><!-- /pfy-form-response -->\n";
+        }
+        $this->formResponse =  $html;
     } // handleReceivedData
 
 
@@ -771,6 +959,9 @@ class PfyForm extends Form
             // filter out any fields starting with '_':
             if ($name[0] === '_') {
                 unset($dataRec[$name]);
+
+            } elseif ($value === null) {
+                $dataRec[$name] = '';
 
             } elseif (is_array($value) && isset($this->choiceOptions[$name])) {
                 $template = $this->choiceOptions[$name];
@@ -1006,11 +1197,339 @@ class PfyForm extends Form
 
 
     /**
+     * @param array $elemOptions
+     * @return array
+     * @throws \Exception
+     */
+    private function parseOptions(array &$elemOptions): array
+    {
+        $label = $elemOptions['label'] ?? false;
+        $name = $elemOptions['name'] ?? false;
+
+        if (!$label && $name) {
+            if ($name === 'cancel') { // handle short-hands for cancel and confirm
+                $label = '{{ pfy-cancel }}';
+            } elseif ($name === 'submit') {
+                $label = '{{ pfy-submit }}';
+            } else {
+                if (isset($elemOptions['label'])) {
+                    $label = $elemOptions['label'];
+                } else {
+                    $label = ($elemOptions['origName']??false) ?: '';
+                    $label = html_entity_decode($label);
+                }
+                $label = ucwords(str_replace('_', ' ', $label)) . ':';
+            }
+        }
+
+        // if elem marked by asterisk, remove it - will be visualized by class required:
+        if ($label && $label[strlen($label) - 1] === '*') {
+            $elemOptions['required'] = true;
+            $label = str_replace('*', '', $label);
+        }
+
+        $elemOptions['name'] = $name;
+        $elemOptions['label'] = $label;
+        $_name = strtolower($name);
+
+        // handle 'info' option:
+        if ($info = ($elemOptions['info'] ?? false)) {
+            $label .= "<button type='button' class='pfy-tooltip-anker'>".INFO_ICON.
+                "</button><span class='pfy-tooltip'>$info</span>";
+        }
+
+        // if label contains HTML, we need to transform it:
+        if (str_contains($label, '<')) {
+            $label = Html::el('span')->setHtml($label);
+        }
+
+        $type = $elemOptions['type']??false;
+
+        // shorthand:
+        if ($type === 'required') {
+            $elemOptions['required'] = true;
+            $type = 'text';
+        }
+
+        $type = $this->determineType($_name, $type);
+
+        if (!isset($elemOptions['class'])) {
+            $elemOptions['class'] = '';
+        }
+
+        // handle 'antiSpam' option:
+        if (($elemOptions['antiSpam']??false) !== false) {
+            if ($this->inhibitAntiSpam) {
+                $elemOptions['antiSpam'] = false;
+                return [null, null, null];
+            } else {
+                $elemOptions['class'] .= ' pfy-obfuscate';
+            }
+        }
+
+
+        if (!str_contains(FORMS_SUPPORTED_TYPES, ",$type,")) {
+            throw new \Exception("Forms: requested type not supported: '$type'");
+        }
+
+        // register found $name with global list of field-names (used for table-output):
+        if (!str_contains('submit,cancel,hidden', $_name)) {
+            $this->fieldNames[$name] = $name;
+        }
+        $elemOptions['isArray'] = false;
+
+        if (array_key_exists('disabled', $elemOptions)) {
+            $elemOptions['disabled'] = ($elemOptions['disabled'] !== false);
+        } else {
+            $elemOptions['disabled'] = false;
+        }
+
+        // check choice options, convert to label:value if string:
+        if (!isset($elemOptions['options'])) {
+            $elemOptions['options'] = false;
+        } elseif (is_string($elemOptions['options'])) {
+            $o = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
+            $elemOptions['options'] = array_flip($o);
+        } elseif (!is_array($elemOptions['options'])) {
+            throw new \Exception("Error: Form argument 'options' must be of type string or array.");
+        }
+
+        return array($label, $name, $type);
+    } // parseOptions
+
+
+    
+    
+    
+    protected function renderFormWrapperHead(): string
+    {
+        $html = '';
+        $formInx = self::$formInx;
+
+        if ($this->addFormTableWrapper) {
+            $html .= "<div class='pfy-form-and-table-wrapper'>\n";
+        }
+
+        $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
+        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
+        return $html;
+    } // renderFormWrapperHead
+
+
+    /**
      * @return string
      * @throws \Exception
      */
-    private function renderDataTable(): string
+    protected function renderFormHead(): string
     {
+        $html = '';
+
+        // schedule option may have found no matching event, in this case show message:
+        if ($this->matchingEventAvailable === false) {
+            $this->showForm = false;
+            return '{{ pfy-form-no-event-found }}';
+        }
+        if (!$this->showForm) {
+            return '';
+        }
+
+        if ($this->formOptions['action'] ?? false) {
+            $this->setAction($this->formOptions['action']);
+        } else {
+            $this->setAction(PageFactory::$pageUrl);
+        }
+
+        list($id, $formClass, $aria) = $this->getHeadAttributes();
+        if ($this->hasErrors()) {
+            $formClass .= ' pfy-form-has-errors';
+        }
+
+        $htmlForm = $this->getRenderer()->render($this, 'begin');
+        $htmlForm = "<form$id class='$formClass'$aria" . substr($htmlForm, 5);
+        $html .= $htmlForm;
+        $html .= $this->getRenderer()->render($this, 'errors');
+        $html .= $this->renderFormTopBanner();
+        $html .= "\n\n<div class='pfy-elems-wrapper'>\n";
+
+        return $html;
+    } // renderFormHead
+
+
+    /**
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    protected function renderFormFields(array|null $formElements = null): string
+    {
+        if ($formElements !== null) {
+            $this->formElements = $formElements;
+        }
+
+        foreach ($this->formElements as $key => $rec) {
+            if (preg_match('/\W/', $key)) {
+                throw new \Exception("Error: fishy character in form-element name '$key'");
+            }
+        }
+
+        $html = '';
+        foreach ($this->formElements as $name => $rec) {
+            $html .= $this->renderFormElement($name);
+        } // loop over formElements
+
+        return $html;
+    } // renderFormFields
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    protected function renderFormTail(): string
+    {
+        $html = '';
+        $html .= $this->renderFormButtons();
+
+        // add standard hidden fields to identify data: which form, which data-record:
+        $html .= $this->_renderFormTail();
+        // handle deadline option:
+        if ($this->deadlinePassed) {
+            $this->showForm = $this->isFormAdmin;
+        }
+
+            // handle maxCount option:
+        if ($this->maxCountExceeded) {
+            $this->showForm = $this->isFormAdmin;
+        }
+
+        return $html;
+    } // renderFormTail
+
+
+    protected function renderFormTableWrapperTail()
+    {
+        $html = '';
+        if ($this->addFormTableWrapper) {
+            $html = "</div><!-- /pfy-form-and-table-wrapper -->\n";
+        }
+        return $html;
+    } // renderFormTableWrapperTail
+
+
+    /**
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    private function _renderFormTail(): string
+    {
+        // add standard hidden fields to identify data: which form, which data-record:
+        $html = '';
+        $elem = $this['_reckey'];
+        $html .= $elem->getControl()."\n";
+
+        $elem = $this['_formInx'];
+        $html .= $elem->getControl()."\n";
+
+        $elem = $this['_csrf'];
+        $html .= $elem->getControl()."\n";
+
+        $html .= "</div><!-- /pfy-elems-wrapper -->\n";
+
+        $html .= $this->renderFormBottomBanner();
+
+        $html .= $this->getRenderer()->render($this, 'end'); // </form>
+
+        $html .= "</div><!-- /pfy-form-wrapper -->\n\n\n";
+        return $html;
+    } // _renderFormTail
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function renderFormTopBanner(): string
+    {
+        if ($str = $this->formOptions['formTop']) {
+            $str = $this->compileFormBanner($str);
+            $str = "\n<div class='pfy-form-top'>$str</div>\n";
+        }
+        return $str;
+    } // renderFormTopBanner
+
+
+    /**
+     * @return string|false
+     * @throws \Exception
+     */
+    private function renderFormHintBanner(): string|false
+    {
+        if (!($str = ($this->formOptions['formHint']??false)) && $this->requiredInputFound) {
+            if ($this->requiredInputFound['_']??false) {
+                unset($this->requiredInputFound['_']);
+                $str .= "<div>{{ pfy-form-required-info }}</div>";
+            }
+            if ($this->requiredInputFound) {
+                $s = '';
+                foreach ($this->requiredInputFound as $r) {
+                    $s .= "$r,";
+                }
+                $s = rtrim($s, ', ');
+                $s = "<span class='pfy-form-required-group-marker'>$s</span>";
+                $str .= "<div>$s {{ pfy-form-required-group-info }}</div>";
+            }
+        }
+        if ($str) {
+            $str = $this->compileFormBanner($str);
+            $str = "\n<div class='pfy-form-hint'>$str</div>\n";
+        }
+        return $str;
+    } // renderFormHintBanner
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function renderFormBottomBanner(): string
+    {
+        if ($str = ($this->formOptions['formBottom']??false)) {
+            $str = $this->compileFormBanner($str);
+            $str = "\n<div class='pfy-form-bottom'>$str</div>\n";
+        }
+        return $str;
+    } // renderFormBottomBanner
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function renderFormButtons(): string
+    {
+        $html = '';
+        if ($this->formButtons) {
+            $html = $this->renderFormHintBanner();
+            $html .= <<<EOT
+<div class="pfy-elem-wrapper button pfy-cancel pfy-submit">
+<span class="pfy-input-wrapper">$this->formButtons</span>
+</div>
+
+EOT;
+        }
+        return $html;
+    } // renderFormButtons
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    protected function renderDataTable(): string
+    {
+        if (!(($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->formOptions['file'] && $this->isFormAdmin)) {
+            return '';
+        }
+
         $ds = $this->openDataTable();
         $noData = !$ds->getSize();
         if (!$ds->announceEmptyTable && $noData) {
@@ -1046,10 +1565,11 @@ class PfyForm extends Form
 <div class='pfy-table-data-output-wrapper'>
 $header
 $html
-</div>
+</div><!-- /pfy-table-data-output-wrapper -->
+
 EOT;
         }
-		// if data was empty and we added an empty rec, remove it now:
+        // if data was empty and we added an empty rec, remove it now:
         if ($noData) {
             $ds->purge();
         }
@@ -1059,164 +1579,19 @@ EOT;
 
 
     /**
-     * @param array $elemOptions
-     * @return array
-     * @throws \Exception
-     */
-    private function parseOptions(array &$elemOptions): array
-    {
-        $args = [];
-        $label = $elemOptions['label'] ?? false;
-        $name = $elemOptions['name'] ?? false;
-
-        // case: only label given:
-        if ($label && !$name) {
-            $name = $label;
-
-        // case: only name given:
-        } elseif (!$label && $name) {
-            if ($name === 'cancel') { // handle short-hands for cancel and confirm
-                $label = '{{ pfy-cancel }}';
-            } elseif ($name === 'submit') {
-                $label = '{{ pfy-submit }}';
-            } else {
-                $label = ucwords(str_replace('_', ' ', $name)) . ':';
-            }
-        }
-
-        // shape name: replace '-' with '_' and remove all non-alpha:
-        $elemOptions['name'] = $name;
-
-        // if elem marked by asterisk, remove it - will be visualized by class required:
-        if ($label[strlen($label) - 1] === '*') {
-            $elemOptions['required'] = true;
-            $label = rtrim(substr($label, 0, -1));
-        }
-
-        $label0 = str_replace(['*',':'], '', $label);
-        $elemOptions['label'] = $label0; //???
-
-        // handle 'info' option:
-        if ($info = ($elemOptions['info'] ?? false)) {
-            $label .= "<button type='button' class='pfy-tooltip-anker'>".INFO_ICON.
-                "</button><span class='pfy-tooltip'>$info</span>";
-        }
-
-        // if label contains HTML, we need to transform it:
-        if (str_contains($label, '<')) {
-            $label = Html::el('span')->setHtml($label);
-        }
-
-        $type = isset($elemOptions['type']) ? ($elemOptions['type']?:false): false;
-
-        // shorthand:
-        if ($type === 'required') {
-            $elemOptions['required'] = true;
-            $type = 'text';
-        }
-
-        $_name = strtolower($name);
-        $type = $this->determineType($_name, $type);
-
-        if (!isset($elemOptions['class'])) {
-            $elemOptions['class'] = '';
-        }
-
-        if ($path = ($elemOptions['path']??false)) {
-            $args['path'] = $path;
-        }
-
-        // handle 'antiSpam' option:
-        if (($elemOptions['antiSpam']??false) !== false) {
-            if ($this->inhibitAntiSpam) {
-                $elemOptions['antiSpam'] = false;
-                return [null, null, null];
-            } else {
-                $elemOptions['class'] .= ' pfy-obfuscate';
-//???
-                $args['antiSpam'] = $elemOptions['antiSpam'];
-            }
-        }
-
-
-        if (!str_contains(FORMS_SUPPORTED_TYPES, ",$type,")) {
-            throw new \Exception("Forms: requested type not supported: '$type'");
-        }
-
-        // register found $name with global list of field-names (used for table-output):
-        if (!str_contains('submit,cancel,hidden', $_name)) {
-            $this->fieldNames[$name] = $name;
-        }
-        $elemOptions['isArray'] = false;
-
-        if (array_key_exists('required', $elemOptions)) {
-            $elemOptions['required'] = ($elemOptions['required'] !== false);
-        } else {
-            $elemOptions['required'] = false;
-        }
-        if (array_key_exists('disabled', $elemOptions)) {
-            $elemOptions['disabled'] = ($elemOptions['disabled'] !== false);
-        } else {
-            $elemOptions['disabled'] = false;
-        }
-
-        // check choice options, convert to label:value if string:
-        if (!isset($elemOptions['options'])) {
-            $elemOptions['options'] = false;
-        } elseif (is_string($elemOptions['options'])) {
-            $o = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
-            $elemOptions['options'] = array_flip($o);
-        } elseif (!is_array($elemOptions['options'])) {
-            throw new \Exception("Error: Form argument 'options' must be of type string or array.");
-        }
-
-        return array($label, $name, $type);
-    } // parseOptions
-
-
-    /**
      * @return string
      * @throws \Exception
      */
-    private function renderFormTop(): string
+    protected function renderProblemWithFormBanner(): string
     {
-        if ($str = $this->formOptions['formTop']) {
-            $str = $this->compileFormBanner($str);
-            $str = "\n<div class='pfy-form-top'>$str</div>\n";
+        $html = '';
+        if ($this->formOptions['problemWithFormBanner'] ?? false) {
+            $banner = TransVars::getVariable('pfy-problem-with-form-banner');
+            $banner = markdown($banner);
+            $html .= "\n$banner\n";
         }
-        return $str;
-    } // renderFormTop
-
-
-    /**
-     * @return string
-     * @throws \Exception
-     */
-    function renderFormBottom(): string
-    {
-        if ($str = ($this->formOptions['formBottom']??false)) {
-            $str = $this->compileFormBanner($str);
-            $str = "\n<div class='pfy-form-bottom'>$str</div>\n";
-        }
-        return $str;
-    } // renderFormBottom
-
-
-    /**
-     * @return string|false
-     * @throws \Exception
-     */
-    private function renderFormHint(): string|false
-    {
-        if (!($str = ($this->formOptions['formHint']??false)) && $this->requiredInputFound) {
-            $str = '{{ pfy-form-required-info }}';
-        }
-        if ($str) {
-            $str = $this->compileFormBanner($str);
-            $str = "\n<div class='pfy-form-hint'>$str</div>\n";
-        }
-        return $str;
-    } // renderFormHint
+        return $html;
+    } // renderProblemWithFormBanner
 
 
     /**
@@ -1305,9 +1680,42 @@ EOT;
 
 
     /**
+     * @param $dataRec
+     * @return bool
+     */
+    private function applyRequiredGroupCheck($dataRec)
+    {
+        $errorsFound = false;
+        $requiredGroups = [];
+        foreach ($dataRec as $key => $value) {
+            if (($required = ($this->formElements[$key]['required']??false)) && (is_string($required))) {
+                $requiredGroups[$required]['names'][] = $key;
+                if (!isset($requiredGroups[$required]['all-empty'])) {
+                    $requiredGroups[$required]['all-empty'] = true;
+                }
+                $requiredGroups[$required]['all-empty'] = !$value && $requiredGroups[$required]['all-empty'];
+            }
+        }
+        if ($requiredGroups) {
+            foreach ($requiredGroups as $requiredGroup) {
+                if ($requiredGroup['all-empty']) {
+                    $errorsFound = true;
+                    $affectedElems = $requiredGroup['names'];
+                    foreach ($affectedElems as $name) {
+                        $this[$name]->addError('{{ pfy-form-required-group-empty }}');
+                    }
+                }
+
+            }
+        }
+        return $errorsFound;
+    } // applyRequiredGroupCheck
+
+
+    /**
      * @return string|false
      */
-    private function handleDeadline(): string|false
+    private function checkDeadline(): void
     {
         if ($deadlineStr = $this->formOptions['deadline']) {
             $deadline = strtotime($deadlineStr);
@@ -1320,17 +1728,49 @@ EOT;
                 // deadline is overridden if visitor is logged in:
                 if (!$this->isFormAdmin) {
                     if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
-                        return $deadlineNotice;
+                        $this->deadlinePassed .= $deadlineNotice;
                     } else {
-                        return '{{ pfy-form-deadline-expired }}';
+                        $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-expired">{{ pfy-form-deadline-expired }}</div>';
                     }
                 } else {
-                    return TransVars::getVariable('pfy-form-deadline-expired-warning');
+                    $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-expired-warning');
                 }
             }
         }
-        return false;
-    } // handleDeadline
+    } // checkDeadline
+
+
+    /**
+     * @param array $dataRec
+     * @return string|false
+     * @throws \Exception
+     */
+    private function checkMaxCount(array $dataRec = []): bool
+    {
+        if ($dataRec && ($maxCountOn = $this->formOptions['maxCountOn'])) {
+            $pending = $dataRec[$maxCountOn]??1;
+        } else {
+            $pending = 1;
+        }
+        list($available, $maxCount, $currCount) = $this->getAvailableAndMaxCount();
+        if ($maxCount) {
+            if ($pending) {
+                $currCount += ($pending - 1);
+            }
+            if ($currCount >= $maxCount) {
+                if (!$this->isFormAdmin) {
+                    if ($maxCountNotice = ($this->formOptions['maxCountNotice']??false)) {
+                        $this->maxCountExceeded = $maxCountNotice;
+                    } else {
+                        $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+                    }
+                } else {
+                    $this->maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
+                }
+            }
+        }
+        return (bool)$this->maxCountExceeded;
+    } // checkMaxCount
 
 
     /**
@@ -1379,39 +1819,6 @@ EOT;
 
         $this->matchingEventAvailable = true;
     } // handleScheduleOption
-
-
-    /**
-     * @param array $dataRec
-     * @return string|false
-     * @throws \Exception
-     */
-    private function handleMaxCount(array $dataRec = []): string|false
-    {
-        if ($dataRec && ($maxCountOn = $this->formOptions['maxCountOn'])) {
-            $pending = $dataRec[$maxCountOn]??1;
-        } else {
-            $pending = 1;
-        }
-        list($available, $maxCount, $currCount) = $this->getAvailableAndMaxCount();
-        if ($maxCount) {
-            if ($pending) {
-                $currCount += ($pending - 1);
-            }
-            if ($currCount >= $maxCount) {
-                if (!$this->isFormAdmin) {
-                    if ($maxCountNotice = ($this->formOptions['maxCountNotice']??false)) {
-                        return $maxCountNotice;
-                    } else {
-                        return '{{ pfy-form-maxcount-reached }}';
-                    }
-                } else {
-                    return TransVars::getVariable('pfy-form-maxcount-reached-warning');
-                }
-            }
-        }
-        return false;
-    } // handleMaxCount
 
 
     /**
@@ -1690,7 +2097,7 @@ EOT;
      * @param mixed $type
      * @return string
      */
-    public function determineType(array|string|null $_name, mixed $type): string
+    protected function determineType(array|string|null $_name, mixed $type): string
     {
         // for convenience: check for specific names and automatically apply default type:
         if ($type === false) {
@@ -1714,7 +2121,7 @@ EOT;
     /**
      * @return string[]
      */
-    public function getHeadAttributes(): array
+    protected function getHeadAttributes(): array
     {
         $class = "pfy-form pfy-form-$this->formIndex ".$this->formOptions['class'];
         $id1 = $this->formOptions['id'];
@@ -1730,241 +2137,6 @@ EOT;
         }
         return array($id, $class, $aria);
     } // getHeadAttributes
-
-
-    /**
-     * @return string
-     * @throws \Exception
-     */
-    public function renderFormHead(): string
-    {
-        $html = '';
-
-        if ($this->isSuccess()) {
-            $html .= $this->handleReceivedData();
-        }
-
-        // schedule option may have found no matching event, in this case show message:
-        if ($this->matchingEventAvailable === false) {
-            $this->showForm = false;
-            return '{{ pfy-form-no-event-found }}';
-        }
-        if (!$this->showForm) {
-            return '';
-        }
-
-        if ($this->formOptions['action'] ?? false) {
-            $this->setAction($this->formOptions['action']);
-        } else {
-            $this->setAction(PageFactory::$pageUrl);
-        }
-        $html .= "<!-- pfy-form-wrapper -->\n";
-        $formInx = self::$formInx;
-        $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
-
-        if ($this->addFormTableWrapper) {
-            $html .= "<div class='pfy-form-and-table-wrapper'>\n";
-        }
-
-        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
-
-        list($id, $formClass, $aria) = $this->getHeadAttributes();
-
-        $htmlForm = $this->getRenderer()->render($this, 'begin');
-        $htmlForm = "<form$id class='$formClass'$aria" . substr($htmlForm, 5);
-        $html .= $htmlForm;
-        $html .= $this->getRenderer()->render($this, 'errors');
-        $html .= $this->renderFormTop();
-        $html .= "\n<div class='pfy-elems-wrapper'>\n";
-
-        return $html;
-    } // renderFormHead
-
-
-    /**
-     * @return string
-     * @throws InvalidArgumentException
-     */
-    public function renderFormFields(array|null $formElements = null): string
-    {
-        if ($formElements !== null) {
-            $this->formElements = $formElements;
-        }
-        $this->createForm();
-
-        foreach ($this->formElements as $key => $rec) {
-            if (preg_match('/\W/', $key)) {
-                throw new \Exception("Error: fishy character in form-element name '$key'");
-            }
-        }
-
-        $html = '';
-        $formButtons = [];
-        foreach ($this->formElements as $name => $rec) {
-            $_name = strtolower($name);
-            try {
-                $elem = $this[$name];
-            } catch (\Exception $e) {
-                try {
-                    $name = "_$name";
-                    $elem = $this[$name];
-                } catch (\Exception $e) {
-                    exit($e);
-                }
-            }
-            $label = (string)$elem->getLabel();
-            if (str_contains(($rec['label']??''), '*')) {
-                $rec['required'] = true;
-            }
-            $label = "<span class='pfy-label-wrapper'>$label</span>";
-            $input = (string)$elem->getControl();
-            $type = $this->determineType($_name, $rec['type']??false);
-
-            if ($type === 'password') {
-                $icon = svg('site/plugins/pagefactory-pageelements/assets/icons/show.svg').
-                        svg('site/plugins/pagefactory-pageelements/assets/icons/hide.svg');
-                $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
-            }
-            if ($description = ($rec['description']??'')) {
-                $input .= "<span class='pfy-form-field-description'>$description</span>";
-            }
-
-            $class = $rec['class'];
-            $class .= ($rec['required']??false) ? ' required' : '';
-
-            if ($type === 'hidden') {
-                $html .= $input;
-
-            } elseif (($type === 'textarea') && ($rec['reveal']??false)) {
-                $inx = self::$formInx."_$this->revealInx";
-                $controllerLabel = $rec['reveal'];
-                $html .= <<<EOT
-<div class="pfy-elem-wrapper pfy-reveal-controller">
-<span class="pfy-reveal-controller-label"><label for="frm-CommentController$inx" class=""><input type="checkbox" name="CommentController$inx" class="pfy-reveal-controller" aria-controls="pfy-reveal-container-$inx" data-reveal-target="#pfy-reveal-container-$inx" data-icon-closed="+" data-icon-open="∣" id="frm-CommentController$inx" aria-expanded="false">$controllerLabel</label></span>
-</div>
-EOT;
-
-                $html .= <<<EOT
-<div id='pfy-reveal-container-$inx' class="pfy-reveal-container" aria-hidden="true">
-<!-- pfy-elem-wrapper -->
-<div class="pfy-elem-wrapper pfy-$type $class">
-<span class="pfy-input-wrapper">
-$input
-</span>
-</div><!-- /pfy-elem-wrapper -->
-</div>
-
-EOT;
-
-            } elseif (str_contains(',cancel,submit,reset,', ",$type,")) {
-                $cls = $this->formElements[$_name]['class']??'';
-                $elem->setHtmlAttribute('class', "pfy-$type button $cls");
-                $h = (string)$elem->getControl();
-                $formButtons[] = $h;
-
-            // all other field types (except bypassed and import):
-            } elseif (!str_contains(',bypassed,@import,', ",$type,")) {
-                $input = "<span class='pfy-input-wrapper'>$input</span>";
-                $html .= <<<EOT
-<!-- pfy-elem-wrapper -->
-<div class="pfy-elem-wrapper pfy-$type $class">
-$label
-$input
-</div><!-- /pfy-elem-wrapper -->
-
-EOT;
-            }
-        }
-        if ($formButtons) {
-            $html .= $this->renderFormHint();
-            $btns = implode(' ', $formButtons);
-            $html .= <<<EOT
-<div class="pfy-elem-wrapper button pfy-cancel pfy-submit">
-<span class="pfy-input-wrapper">$btns</span>
-</div>
-
-EOT;
-        }
-        return $html;
-    } // renderFormFields
-
-
-    /**
-     * @return string
-     * @throws \Exception
-     */
-    public function renderFormTail(): string
-    {
-        // add standard hidden fields to identify data: which form, which data-record:
-        $html = $this->_renderFormTail();
-        $msg = '';
-        if ($this->isSuccess()) {
-            $msg = $this->handleReceivedData();
-            $html .= $msg;
-        }
-
-        if (!$msg) {
-            // handle deadline option:
-            if ($msg = $this->handleDeadline()) {
-                $this->showForm = $this->isFormAdmin;
-                $html .= $msg;
-            }
-
-            // handle maxCount option:
-            if ($msg = $this->handleMaxCount()) {
-                $this->showForm = $this->isFormAdmin;
-                $html .= $msg;
-            }
-        }
-
-        if (!$this->showForm) {
-            // render result of (successful) data reception:
-            $css = ".pfy-form-{$this->formIndex},\n".
-                ".pfy-show-unless-form-data-received,\n".
-                ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
-            PageFactory::$pg->addCss($css);
-        }
-
-        if (($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->formOptions['file'] && $this->isFormAdmin) {
-            $html .= $this->renderDataTable();
-        }
-        if ($this->addFormTableWrapper) {
-            $html .= "</div>\n<!-- /pfy-form-and-table-wrapper -->\n";
-        }
-
-        return $html;
-    } // renderFormTail
-
-
-    /**
-     * @return string
-     * @throws InvalidArgumentException
-     */
-    private function _renderFormTail(): string
-    {
-        // add standard hidden fields to identify data: which form, which data-record:
-        $html = '';
-        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $formOptions['recId'] ?? '', 'preset' => '']);
-        $elem = $this['_reckey'];
-        $html .= $elem->getControl()."\n";
-
-        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this::$formInx, 'preset' => $this::$formInx]);
-        $elem = $this['_formInx'];
-        $html .= $elem->getControl()."\n";
-
-        $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
-        $elem = $this['_csrf'];
-        $html .= $elem->getControl()."\n";
-
-        $html .= "</div><!-- /pfy-elems-wrapper -->\n";
-
-        $html .= $this->renderFormBottom();
-
-        $html .= $this->getRenderer()->render($this, 'end'); // </form>
-
-        $html .= "</div>\n<!-- /pfy-form-wrapper -->\n";
-        return $html;
-    } // _renderFormTail
 
 
     /**
@@ -2009,6 +2181,10 @@ EOT;
     } // convertEventTimes
 
 
+    /**
+     * @param int|string $name
+     * @return void
+     */
     private function composeEventElement(int|string $name): void
     {
         if (!$this->eventFieldFound) {
@@ -2047,4 +2223,23 @@ EOT;
         }
     } // composeEventElement
 
+    protected function injectNoShowCssRule(): string
+    {
+        $css = ".pfy-form-{$this->formIndex},\n" .
+            ".pfy-show-unless-form-data-received,\n" .
+            ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
+        PageFactory::$pg->addCss($css);
+        $this->noShowOpened = true;
+        return "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
+    } // injectNoShowCssRule
+
+
+    protected function injectNoSHowEnd()
+    {
+        $html = '';
+        if ($this->noShowOpened) {
+            $html = "</div><!-- /pfy-show-unless-form-data-received-$this->formIndex -->\n";
+        }
+        return $html;
+    } // injectNoSHowEnd
 } // PfyForm

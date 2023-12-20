@@ -12,6 +12,11 @@
 $revealControllerHeight: 2em;
 $revealArrowSize: 1em;
 
+$revealControllerBg:    var(--pfy-reveal-controller-bg);
+$revealControllerBorder:var(--pfy-reveal-controller-border, var(--pfy-reveal-border));
+$revealContainerBg:     var(--pfy-reveal-container-bg);
+$revealContainerBorder: var(--pfy-reveal-container-border, var(--pfy-reveal-border));
+
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
@@ -77,8 +82,8 @@ $revealArrowSize: 1em;
 
   .pfy-reveal-controller-wrapper {
     position: relative;
-    background: var(--pfy-reveal-bg);
-    border: var(--pfy-reveal-border);
+    background: $revealControllerBg;
+    border: $revealControllerBorder;
     &.pfy-target-revealed.pfy-target-shadow {
       box-shadow: 0 5px 5px -5px rgb(0 0 0 / 75%);
     }
@@ -88,16 +93,17 @@ $revealArrowSize: 1em;
       min-height: var(--pfy-reveal-controller-height, #{$revealControllerHeight});
       padding-top: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 1em) / 2);
       padding-bottom: calc((var(--pfy-reveal-controller-height, #{$revealControllerHeight}) - 2em) / 2);
+      cursor: pointer;
     }
     input:focus-visible + label {
       @include _focus;
     }
     &.pfy-reveal-frame {
-      border: 1px solid #ddd;
+      border: $revealContainerBorder;
 
       + .pfy-reveal-container > .pfy-reveal-container-inner {
         padding: 1em;
-        border: 1px solid #ddd;
+        border: $revealContainerBorder;
         border-top: none;
       }
 
@@ -114,7 +120,7 @@ $revealArrowSize: 1em;
     overflow: hidden;
     position: relative;
     margin-bottom: 0.7em;
-    background: var(--pfy-reveal-container-bg);
+    background: $revealContainerBg;
     z-index: 0;
 
 

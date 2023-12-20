@@ -1,16 +1,21 @@
 <?php
 namespace PgFactory\PageFactory;
 
+use Kirby\Exception\InvalidArgumentException;
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/PfyForm.php';
 
 
-
+$GLOBALS['pfy.form'] = false;
 /*
  * PageFactory Macro (and Twig Function)
  */
 
 
+/**
+ * @throws InvalidArgumentException
+ */
 function form($args = '')
 {
     $funcName = basename(__FILE__, '.php');
@@ -25,7 +30,9 @@ function form($args = '')
 
             'id' =>	['Id applied to the form element.', false],
 
-            'class' =>	['Class applied to the form element.', false],
+            'class' =>	['Class applied to the form element.', 'pfy-form-colored'],
+
+            'wrapperClass' =>	['Class applied to the form wrapper.', false],
 
             'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
@@ -116,6 +123,14 @@ function form($args = '')
                 'Supported placeholders: ``%today%`` ``%now%``', false],
 
             'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
+
+            'output' =>	['Option to control peacemeal rendering: <br>'.
+                '1) ``false`` to define form without output.<br>'.
+                '2) ``name-of-elem`` to render fields up to that field.<br>'.
+                '3) ``rest`` to render rest of form.', true],
+
+            'problemWithFormBanner' =>	['If true, a banner is added below the form, providing the '.
+                'webmaster-email to contact in case of problems with the form.', true],
         ],
         'summary' => <<<EOT
 
@@ -232,37 +247,159 @@ EOT,
     if ($options['maxCount'] && !$options['minRows']) {
         $options['minRows'] = $options['maxCount'];
     }
+    $output = $options['output'];
 
-    if ($lWidth = $options['labelWidth']) {
-        PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
-    }
-
-    $part = $options['part']??false;
-    if (!$part && !isset($GLOBALS['pfy.form'])) {
+    if ($output === true) {
+        // normal invocation in one junk:
         $form = new PfyForm($options);
         $html .= $form->renderForm($auxOptions);
 
     } else {
-        if ($part === 'head') {
-            $form = new PfyForm($options);
-            $GLOBALS['pfy.form'] = $form;
-            $form->fireRenderEvents();
-            $html .= $form->renderFormHead();
+        if ($output === false) {
+            $form = $GLOBALS['pfy.form'] = new PfyFormSplitSyntax($options);
+            $html = $form->init($auxOptions);
 
-        } elseif ($part === 'fields') {
-            $form = $GLOBALS['pfy.form'];
-            $html .= $form->renderFormFields($auxOptions);
-
-        } elseif ($part === 'tail') {
-            $form = $GLOBALS['pfy.form'];
-            unset($GLOBALS['pfy.form']);
-            $html .= $form->renderFormTail();
+        } else {
+            $html .= $GLOBALS['pfy.form']->renderFormPieces(uptoWhich: $output);
         }
     }
 
-    $html = shieldStr($html);
+    if ($html) {
+        $html = shieldStr($html);
+    }
     return $html;
 } // form
 
 
 
+ // === class PfyFormSplitSyntax ======================================
+class PfyFormSplitSyntax extends PfyForm
+{
+    private mixed $lastRendered = false;
+
+    public function init(array $formElements): string
+    {
+        $this->createForm($formElements);
+
+        $html = "\n\n<!-- === pfy form widget === -->\n";
+
+        $this->handleReceivedData();
+
+        // check for form issues: deadlinePassed and maxCountExceeded:
+        $formIssueResponse = '';
+        if ($this->deadlinePassed) {
+            $formIssueResponse = $this->deadlinePassed;
+            if (!$this->isFormAdmin) {
+                $this->showForm = false;
+            }
+        } elseif ($this->maxCountExceeded) {
+            $formIssueResponse = $this->maxCountExceeded;
+            if (!$this->isFormAdmin) {
+                $this->showForm = false;
+            }
+        }
+
+        if (!$this->showForm && $this->showDirectFeedback) {
+            // normal case after data received -> show response, hide form:
+            $html .= $formIssueResponse.$this->formResponse;
+            $this->injectNoShowCssRule();
+            $html .= "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
+
+        } else {
+            // check for data-received feedback:
+            if (!$this->showDirectFeedback && $this->formResponse) {
+                // no showDirectFeedback -> send feedback via banner:
+                reloadAgent(message: strip_tags($this->formResponse));
+            }
+            // normal case when no data-received and/or form-issue encountered:
+            $html .= $formIssueResponse;
+            if ($this->showForm) {
+                // show form, either because no data-received or admin-mode:
+                $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
+            } else {
+                // don't show form:
+                $html .= $this->injectNoShowCssRule();
+            }
+        }
+        return $html;
+    } // init
+
+
+    /**
+     * Prerequisite: createForm() executed -> form structure ($this->formElements) is set up at this point.
+     * Now render elements in chunks (defined by the name of the last element to render)
+     * Keeps track via $this->lastRendered what elements have been rendered before.
+     * @param string|bool $uptoWhich
+     * @return string
+     * @throws \Exception
+     */
+    public function renderFormPieces(string|bool $uptoWhich): string
+    {
+        $html = '';
+        // formResponse is set by received data eval
+        // -> can be
+        //      error in data
+        //      deadline expired
+        //      maxCount exceeded
+
+        // lastRendered:
+        //   = false: this is the very first run -> render form head
+        //   = true:  all elements have been rendered -> render form tail
+        //   = int:   index of next element to be rendered
+        if ($this->lastRendered === false) {
+            $this->lastRendered = 0;
+            if (!$this->showForm) {
+                return '';
+            }
+            $html = $this->renderFormHead();
+            $i = 0; // render elem 0 next
+
+        } else {
+            $i = $this->lastRendered + 1;
+        }
+
+        $names = array_keys($this->formElements);
+        $lastElemInx = sizeof($names) - 1;
+
+        // determine which pieces to render next:
+        //      from = $i  to = $upTo
+        if ($uptoWhich === true || $uptoWhich === 'rest') {
+            $upTo = $lastElemInx;
+            $this->lastRendered = true;
+
+        } else {
+            $upTo = array_search($uptoWhich, $names);
+            if ($upTo === false) {
+                throw new \Exception("Form element unknown: '$uptoWhich'");
+            }
+            $this->lastRendered = ($upTo === $lastElemInx)? true: $upTo;
+        }
+
+        // render elements of specified piece:  from $i to $upTo
+        if ($this->showForm) {
+            for (; $i <= $upTo; $i++) {
+                $name = $names[$i];
+                $html .= $this->renderFormElement($name);
+            }
+        }
+
+        // render everything after the last form element:
+        if ($this->lastRendered === true) {
+            if ($this->showForm) {
+                $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
+                                                                //      /form
+                                                                //    /pfy-form-wrapper
+                $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+                $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
+                $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
+            }
+
+            $html .= $this->injectNoSHowEnd();
+            $html .= "<!-- === /pfy form widget === -->\n\n";
+        }
+
+        return $html;
+    } // renderFormPieces
+
+
+} // PfyFormSplitSyntax

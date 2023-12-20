@@ -44,6 +44,7 @@ const pfyFormsHelper = {
     pfyFormsHelper.setupModifiedMonitor(form);
     pfyFormsHelper.setupPwTrigger(form);
     pfyFormsHelper.presetForm(form);
+    pfyFormsHelper.initAutoGrow(form);
 
     if (typeof setFocus !== 'undefined') {
       const input1 = form.querySelector('.pfy-input-wrapper input');
@@ -146,6 +147,12 @@ const pfyFormsHelper = {
           if (next) {
             reloadAgent('', next);
           }
+
+          const hasErrors = form.classList.contains('pfy-form-has-errors');
+          if (hasErrors) {
+            reloadAgent();
+          }
+
           const wasModified = (form.dataset.changed ?? 'false') !== 'false';
           form.dataset.changed = false;
           pfyFormsHelper.presetForm(form);
@@ -194,7 +201,6 @@ const pfyFormsHelper = {
     this.setRecId(form, recId);
     this.resetErrorStates(form);
     this.prefillComputedFields(form);
-    this.disableForm(form,false);
     this.setTriggerOnContinueLink();
   }, // presetForm
 
@@ -522,7 +528,6 @@ const pfyFormsHelper = {
     const buttons = form.querySelectorAll('.button');
     buttons.forEach(function(button) {
       button.disabled = true;
-      button.classList.add('pfy-button-disabled');
     });
 
     const clone = form.cloneNode(true);
@@ -569,6 +574,20 @@ const pfyFormsHelper = {
     }
     return new Function('return ' + str)();
   }, // isFormChanged
+
+
+  initAutoGrow(form) {
+    // source: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+    const growers = document.querySelectorAll(".pfy-auto-grow .pfy-input-wrapper");
+    if (growers) {
+      growers.forEach((grower) => {
+        const textarea = grower.querySelector("textarea");
+        textarea.addEventListener("input", () => {
+          grower.dataset.replicatedValue = textarea.value;
+        });
+      });
+    }
+  }, // initAutoGrow
 
 
   freezeWindowAfter(delay, onClick = false, retrigger = false) {
