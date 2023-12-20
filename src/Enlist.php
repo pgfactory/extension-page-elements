@@ -909,6 +909,9 @@ EOT;
                 mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
             }
+            if ($elemKey = ($dataset[$prevElemId]['_elemKey']??false)) {
+                $data['_elemKey'] = $elemKey;
+            }
             $dataset[$prevElemId] = $data;
         } else {
             if (isset($data['delete_entry'])) {
@@ -985,7 +988,12 @@ EOT;
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
 
         } else {
-            $data['_elemKey'] = $rec['_elemKey'];
+            // catch irregular case: _elemKey missing:
+            if ($rec['_elemKey']??false) {
+                $data['_elemKey'] = $rec['_elemKey'];
+            } else {
+                $data['_elemKey'] = $elemId;
+            }
             if (isset($data['delete_entry'])) {
                 $del = ($data['delete_entry']??false);
                 $op = $del ?'delete' : 'modify';
