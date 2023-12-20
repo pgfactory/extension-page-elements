@@ -209,9 +209,9 @@ class DataTable
         // render table end tags:
         $out .= "</table>\n";
         if ($this->tableButtons) {
-            $out .= "  </form>\n";
+            $out .= "  </form><!-- /table-form -->\n";
         }
-        $out .= "</div> <!-- table-wrapper $this->tableWrapperClass -->\n\n";
+        $out .= "</div> <!-- /$this->tableWrapperClass -->\n\n";
         return $out;
     } // render
 

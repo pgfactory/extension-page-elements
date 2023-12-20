@@ -169,9 +169,15 @@ class Data2DSet extends DataSet
                     }
                 } else {
                     $headerElems = array_filter($headerElems, function ($e) {
+                        if (!$e) {
+                            return false;
+                        }
                         return (((string)$e)[0] !== '_');
                     });
                     $elementKeys = array_filter($elementKeys, function ($e) {
+                        if (!$e) {
+                            return false;
+                        }
                         return (((string)$e)[0] !== '_');
                     });
                     $elementKeys = array_values($elementKeys);
