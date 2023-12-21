@@ -24,15 +24,14 @@ function form($args = '')
         'options' => [
             'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
 
-            'part' =>	['[head,fields,tail] If set, defines which part of a form is constructed. '.
-                '"head" accepts form-options. "fields" defines form fields and can be invoked multiple times. '.
-                '"tail" terminates form assembly and renders final the HTML.', false],
-
             'id' =>	['Id applied to the form element.', false],
 
-            'class' =>	['Class applied to the form element.', 'pfy-form-colored'],
+            'class' =>	['Class applied to the form element.<br>(Note: to prevent default coloring of form, override class '.
+                'without "pfy-form-colored")', 'pfy-form-colored'],
 
             'wrapperClass' =>	['Class applied to the form wrapper.', false],
+
+            'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
 
             'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
@@ -96,6 +95,10 @@ function form($args = '')
             'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
                 'in output table.', false],
 
+            'tableTitle' =>	['If set, defines the title above the data-table in markdown format.<br>'.
+                'If option ``schedule`` is active, placeholders of type `%key%` are replaced with values from the '.
+                'event record', false],
+
             'tableFooters' =>	['(recId:\'%sum%\' or \'%count%\' or \'string\') '.
                 'Adds a footer row to the table showing counts and sums for specified columns..', false],
 
@@ -114,17 +117,12 @@ function form($args = '')
                 'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;fieldName&#95;</strong> }}`` '
                 , true],
 
-            'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
-
             'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
 
-            'tableTitle' =>	['If set, defines the title above the data-table in markdown format. '.
-                'Supported placeholders: ``%today%`` ``%now%``', false],
-
             'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
 
-            'output' =>	['Option to control peacemeal rendering: <br>'.
+            'output' =>	['Option to control split syntax rendering: <br>'.
                 '1) ``false`` to define form without output.<br>'.
                 '2) ``name-of-elem`` to render fields up to that field.<br>'.
                 '3) ``rest`` to render rest of form.', true],
@@ -221,16 +219,39 @@ To activate the anti-spam mechanism, you need to add an additional text field to
 where *Name* is the field-name of another field in your form. This will insert an invisible honeypot field.
 
 #### CSS-Variables:
-- -\-form-width
-- -\-form-row-gap-height
-- -\-form-label-width
-- -\-form-input-width
-- -\-form-field-background-color
-- -\-form-required-marker-color
-- -\-form-tooltip-anker-color
-- -\-form-field-description-color:
-- -\-form-field-error-color:
+- -\-pfy-form-width		(28em)
+- -\-pfy-form-label-width		(6em)
+- -\-pfy-form-input-width		(22em)
+- -\-pfy-form-row-gap-height		(1em)
 
+- -\-pfy-form-input-height		(2.2em)
+- -\-pfy-form-input-medium-width		(4em)
+- -\-pfy-form-input-medium-width		(10em)
+- -\-pfy-form-choice-option-width		(6em)
+
+- -\-pfy-form-input-color		(inherit)
+- -\-pfy-form-field-background-color		(#fffff6)
+- -\-pfy-form-field-border		(1px solid #b4b3b3)
+- -\-pfy-form-readonly-field-bg		(#f8f8f8)
+
+- -\-pfy-form-required-marker-color		(orange)
+- -\-pfy-form-tooltip-anker-color		(inherit)
+- -\-pfy-form-field-description-color		(inherit)
+- -\-pfy-form-tooltip-color		(#222)
+- -\-pfy-form-tooltip-bg		(#fef5e0)
+- -\-pfy-form-error-color-base		(20deg, 100%)
+
+- -\-pfy-form-reveal-controller-bg
+- -\-pfy-form-reveal-controller-border		(1px solid #eee)
+- -\-pfy-form-reveal-container-bg
+- -\-pfy-form-reveal-container-border		(1px solid #eee)
+- -\-pfy-form-reveal-padding		(0)
+
+- -\-pfy-problem-with-pfy-form-bg		(#fff9ee)
+- -\-pfy-problem-with-pfy-form-border		(orange)
+
+Note: colors only active if `.pfy-form-colored` is applied to the form.
+ 
 <div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
 EOT,

@@ -234,7 +234,7 @@ class PfyForm extends Form
         $inx = $this->formOptions['inx'];
         // handle option labelWidth:
         if ($lWidth = $this->formOptions['labelWidth']) {
-            PageFactory::$pg->addCss(".pfy-form-$inx { --form-label-width: $lWidth}\n");
+            PageFactory::$pg->addCss(".pfy-form-$inx { --pfy-form-label-width: $lWidth}\n");
         }
 
 

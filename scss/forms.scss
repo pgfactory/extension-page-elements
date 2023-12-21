@@ -1,44 +1,66 @@
 /*
   CSS-Variables:
-    --form-width: 26em;
-    --form-row-gap-height: 1em;
-    --form-label-width: 7em;
-    --form-input-width: 15em;
-    --form-choice-option-width: 6em;
-    --form-input-medium-width: 10em;
-    --form-input-height: 2.2em;
-    --form-required-marker-color: gray;
-    --form-tooltip-anker-color: gray;
-    --form-field-background-color:
-    --form-field-border:
-    --form-field-description-color:
-    --form-field-error-color:
+--pfy-form-input-height		(2.2em)
+--pfy-form-input-medium-width		(4em)
+--pfy-form-input-medium-width		(10em)
+--pfy-form-choice-option-width		(6em)
+--pfy-form-label-width		(6em)
+--pfy-form-input-width		(22em)
+--pfy-form-row-gap-height		(1em)
+--pfy-form-width		(28em)
+
+--pfy-form-input-color		(--pfy-form-input-color-default)
+--pfy-form-field-background-color		(--pfy-form-field-background-color-default)
+--pfy-form-field-border		(--pfy-form-field-border-default)
+--pfy-form-readonly-field-bg		(--pfy-form-readonly-field-bg-default)
+
+--pfy-form-required-marker-color		(--pfy-form-required-marker-color-default)
+--pfy-form-tooltip-anker-color		(inherit)
+--pfy-form-field-description-color		(inherit)
+--pfy-form-tooltip-color		(--pfy-form-tooltip-color-default)
+--pfy-form-tooltip-bg		(--pfy-form-tooltip-bg-default)
+
+--pfy-form-error-color-base		(20deg, 100%)
+
+--pfy-problem-with-form-bg		(#fff9ee)
+--pfy-problem-with-form-border		(orange)
+
+--pfy-form-reveal-controller-bg		(--pfy-form-reveal-bg)
+--pfy-form-reveal-controller-border		(--pfy-form-reveal-border)
+--pfy-form-reveal-container-bg		(--pfy-form-reveal-bg)
+--pfy-form-reveal-container-border		(--pfy-form-reveal-border)
+--pfy-form-reveal-padding		(0)
  */
 
 @import '~/site/plugins/pagefactory/scss/_scss-variables.scss';
 
-$inputHeight:           var(--form-input-height, 2.2em);
-$shortWidth:            var(--form-input-medium-width, 4em);
-$mediumWidth:           var(--form-input-medium-width, 10em);
-$choiceOptionWidth:     var(--form-choice-option-width, 6em);
+$inputHeight:           var(--pfy-form-input-height, 2.2em);
+$shortWidth:            var(--pfy-form-input-medium-width, 4em);
+$mediumWidth:           var(--pfy-form-input-medium-width, 10em);
+$choiceOptionWidth:     var(--pfy-form-choice-option-width, 6em);
+$labelWidth:            var(--pfy-form-label-width, 6em);
+$inputWidth:            var(--pfy-form-input-width, 22em);
+$rowGapHeight:          var(--pfy-form-row-gap-height, 1em);
+$formWidth:             var(--pfy-form-width, 28em);
 
-$inputColor:            var(--form-input-color, var(--form-input-color-default));
-$inputBg:               var(--form-field-background-color, var(--form-field-background-color-default));
-$inputBorder:           var(--form-field-border, var(--form-field-border-default));
-$readonlyBg:            var(--form-readonly-field-bg, var(--form-readonly-field-bg-default));
+$inputColor:            var(--pfy-form-input-color, var(--pfy-form-input-color-default));
+$inputBg:               var(--pfy-form-field-background-color, var(--pfy-form-field-background-color-default));
+$inputBorder:           var(--pfy-form-field-border, var(--pfy-form-field-border-default));
+$readonlyBg:            var(--pfy-form-readonly-field-bg, var(--pfy-form-readonly-field-bg-default));
 
-$requiredMarkerColor:   var(--form-required-marker-color, var(--form-required-marker-color-default));
-$tooltipAnkerColor:     var(--form-tooltip-anker-color, inherit);
-$tooltipColor:          var(--form-tooltip-color, var(--form-tooltip-color-default));
-$tooltipBg:             var(--form-tooltip-bg, var(--form-tooltip-bg-default));
+$requiredMarkerColor:   var(--pfy-form-required-marker-color, var(--pfy-form-required-marker-color-default));
+$tooltipAnkerColor:     var(--pfy-form-tooltip-anker-color, inherit);
+$fieldDescriptorColor:  var(--pfy-form-field-description-color, inherit);
+$tooltipColor:          var(--pfy-form-tooltip-color, var(--pfy-form-tooltip-color-default));
+$tooltipBg:             var(--pfy-form-tooltip-bg, var(--pfy-form-tooltip-bg-default));
 
-$errorColorBase:        var(--form-error-color-base);
-$errorColor:            hsl(var(--form-error-color-base), 50%);
-$errorBg:               hsl(var(--form-error-color-base), 99%);
-$errorBorder:           hsl(var(--form-error-color-base), 90%);
+$errorColorBase:        var(--pfy-form-error-color-base);
+$errorColor:            hsl(var(--pfy-form-error-color-base), 50%);
+$errorBg:               hsl(var(--pfy-form-error-color-base), 99%);
+$errorBorder:           hsl(var(--pfy-form-error-color-base), 90%);
 
-$problemWithFormBg:     var(--problem-with-form-bg,     #fff9ee);
-$problemWithFormBorder: var(--problem-with-form-border, orange);
+$problemWithFormBg:     var(--pfy-problem-with-form-bg,     #fff9ee);
+$problemWithFormBorder: var(--pfy-problem-with-form-border, orange);
 
 $formRevealControllerBg:    var(--pfy-form-reveal-controller-bg, var(--pfy-form-reveal-bg));
 $formRevealControllerBorder:var(--pfy-form-reveal-controller-border, var(--pfy-form-reveal-border));
@@ -49,17 +71,17 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
   .pfy-form-colored {
-    --form-input-color-default:             inherit;
-    --form-error-color-base:                20deg, 100%; // red
-    --form-field-background-color-default:  #fffff6;
-    --form-field-border-default:            1px solid #b4b3b3;
-    --form-required-marker-color-default:   orange;
-    --form-tooltip-bg-default:              #fef5e0;
-    --form-tooltip-color-default:           #222;
-    --form-readonly-field-bg-default:       #f8f8f8;
+    --pfy-form-input-color-default:             inherit;
+    --pfy-form-error-color-base:                20deg, 100%; // red
+    --pfy-form-field-background-color-default:  #fffff6;
+    --pfy-form-field-border-default:            1px solid #b4b3b3;
+    --pfy-form-required-marker-color-default:   orange;
+    --pfy-form-tooltip-bg-default:              #fef5e0;
+    --pfy-form-tooltip-color-default:           #222;
+    --pfy-form-readonly-field-bg-default:       #f8f8f8;
 
-    //--pfy-form-reveal-border: 1px solid #eee;
-    //--pfy-form-reveal-bg: var(--pfy-pre-background, #f3f5e3);
+    --pfy-form-reveal-border: 1px solid #eee;
+    //--pfy-form-reveal-bg: #eee;
   }
 
   input[type=cancel],
@@ -75,7 +97,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   .pfy-label-wrapper {
-    width: var(--form-label-width, 6em);
+    width: $labelWidth;
 
     label {
       display: inline-block;
@@ -139,8 +161,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-input-wrapper {
-    width: calc(100% - var(--form-label-width, 6em) - 6px);
-    max-width: var(--form-input-width, 22em);
+    width: calc(100% - #{$labelWidth} - 6px);
+    max-width: $inputWidth;
 
     input, textarea {
       width: 100%;
@@ -168,8 +190,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   .pfy-elem-wrapper {
-    padding-top: calc(var(--form-row-gap-height, 1em) / 2);
-    padding-bottom: calc(var(--form-row-gap-height, 1em) / 2);
+    padding-top: calc(#{$rowGapHeight} / 2);
+    padding-bottom: calc(#{$rowGapHeight} / 2);
   }
 
   .pfy-elem-wrapper.pfy-required .pfy-label-wrapper label::after,
@@ -249,7 +271,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   .pfy-form {
-    max-width: var(--form-width, 28em);
+    max-width: $formWidth;
     textarea::placeholder,
     input::placeholder {
       text-align: right;
@@ -267,7 +289,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     .pfy-input-wrapper input + span {
       padding: 0.4em;
       display: block;
-      color: var(--form-field-description-color, inherit);
+      color: $fieldDescriptorColor;
     }
     .pfy-input-wrapper .error {
       color: $errorColor;
@@ -323,7 +345,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   &.pfy-small-screen {
     .pfy-form {
       .pfy-elem-wrapper:not(.short) {
-        --form-input-width: 100%;
+        --pfy-form-input-width: 100%;
 
         .pfy-label-wrapper,
         .pfy-label-wrapper label,
@@ -392,14 +414,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-elem-wrapper.pfy-reveal-controller {
     background: $formRevealControllerBg;
     border: $formRevealControllerBorder;
-    //border-radius: 4px;
-    //border-radius: 4px 4px 0 0;
     border-bottom: none;
     position: relative;
     width: 100%;
     padding-left: $formRevealPadding;
     padding-right: $formRevealPadding;
-    margin-top: var(--form-row-gap-height, 1em);
+    margin-top: $rowGapHeight;
     .pfy-label-wrapper {
       display: none;
     }
@@ -411,15 +431,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       display: inline-block;
       width: calc(100% - 1em);
       cursor: pointer;
-      padding-top: calc(var(--form-row-gap-height, 1em) / 2);
-      padding-bottom: calc(var(--form-row-gap-height, 1em) / 2);
+      padding-top: calc(#{$rowGapHeight} / 2);
+      padding-bottom: calc(#{$rowGapHeight} / 2);
     }
   }
   .pfy-reveal-controller {
     padding: 0;
-  }
-  .pfy-reveal-controller::before {
-//    transform-origin: 50% 64% !important;
   }
 
   .pfy-elem-wrapper.pfy-submit {
@@ -429,21 +446,13 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
 
-  //.pfy-form .pfy-reveal-controller-wrapper {
-  //  //background: $formRevealControllerBg;
-  //  //border: $formRevealControllerBorder;
-  //}
   .pfy-form .pfy-reveal-container {
     background: $formRevealContainerBg;
     border: $formRevealContainerBorder;
     border-top: none;
-    //border-radius: 4px;
-    //border-radius: 0 0 4px 4px;
     padding-left: $formRevealPadding;
     padding-right: $formRevealPadding;
-    margin-bottom: var(--form-row-gap-height, 1em);
-    //outline: $formRevealContainerBorder;
-    //outline-offset: -2px;
+    margin-bottom: $rowGapHeight;
     .pfy-reveal-container-inner.pfy-reveal-container-inner {
       padding-top: 0.5em;
 
@@ -458,7 +467,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
   .pfy-elem-wrapper input.pfy-reveal-controller::before {
     left: calc(-0.2em + #{$formRevealPadding}) !important;
-    //left: -0.2em !important;
     top: 0.4em;
   }
 
@@ -524,23 +532,23 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-overlay-background-frozen {
     overflow: hidden;
   }
-//???
-  .pfy-reveal-source {
-     .pfy-reveal-controller-wrapper {
-       border-bottom: 1px solid #ddd;
-     }
-    outline: 1px solid var(--pfy-pre-background, #ddd);
-    margin-bottom: 2em;
-    .pfy-reveal-container-inner {
-      padding-top: 0 !important;
 
-      pre {
-        margin: 0;
-        outline: none;
-        padding: 1em;
-      }
-    }
-  }
+  //.pfy-reveal-source {
+  //   .pfy-reveal-controller-wrapper {
+  //     border-bottom: 1px solid #ddd;
+  //   }
+  //  outline: 1px solid $preBg;
+  //  margin-bottom: 2em;
+  //  .pfy-reveal-container-inner {
+  //    padding-top: 0 !important;
+  //
+  //    pre {
+  //      margin: 0;
+  //      outline: none;
+  //      padding: 1em;
+  //    }
+  //  }
+  //}
 
 
   .pfy-problem-with-form-hint {
