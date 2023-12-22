@@ -217,6 +217,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-form-required-marker {
     color: $requiredMarkerColor;
     display: inline-block;
+    min-width: 1rem;
   }
 
   .pfy-table-data-output-wrapper {
