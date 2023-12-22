@@ -700,6 +700,7 @@ EOT;
         $modifyHelp = TransVars::getVariable('pfy-enlist-popup-modify-help');
         $popupHelp = "<div class='add'>$addHelp</div><div class='del'>$delHelp</div><div class='modify'>$modifyHelp</div>";
         $formOptions = [
+            'class' => 'pfy-form-colored',
             'confirmationText' => '',
             'wrapperClass' => 'pfy-enlist-form-wrapper',
             'formBottom' => $popupHelp,
