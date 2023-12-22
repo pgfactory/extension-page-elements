@@ -59,4 +59,14 @@
     }
   } // .pfy-login-wrapper
 
+  .pfy-elem-wrapper.pfy-cancel.pfy-submit {
+    margin-right: 0;
+    input {
+      margin-right: 0;
+    }
+    .pfy-cancel {
+      margin-right: 0.3em;
+    }
+  }
+
 } // .pfy-default-styling

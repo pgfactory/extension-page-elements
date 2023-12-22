@@ -105,6 +105,7 @@ EOT;
         $formOptions = [
             'action'             => self::$selfLink,
             'showDirectFeedback' => false,
+            'class'              => 'pfy-form-colored',
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => $message,
