@@ -296,6 +296,7 @@ class Events extends DataSet
         $mdStr = '';
         foreach ($events as $i => $eventRec) {
             $category = $eventRec['category']??false;
+            $eventRec['index'] = $i + 1;
             $catClass = translateToClassName($category);
             if ($this->options['wrap']) {
                 $wrap1 = "\n%%%%%% .pfy-event-wrapper.event-$catClass\n\n";
