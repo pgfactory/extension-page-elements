@@ -267,7 +267,7 @@ const pfyFormsHelper = {
         if (name.charAt(len - 1) === ']') {
           const val = field.value;
           const preset = pfyFormsHelper.getChoiceFieldValue(field, null, name, data);
-          field.checked = preset.includes(val);
+          field.checked = (preset !== '#novalue#') && preset.includes(val);
         } else {
           let preset = pfyFormsHelper.getFieldValue(field, data, name);
           field.checked = !!preset;
@@ -275,23 +275,33 @@ const pfyFormsHelper = {
       });
     }
 
-    // reset choice elements 'select':
-    const options = form.querySelectorAll('option');
-    if (options.length) {
-      options.forEach(function (optionElem) {
-        const selectField = optionElem.parentElement;
-        const optionVal = optionElem.value ? optionElem.value : 'impossiblevalue';
-        let   preset = 'undefined';
-        let   name = selectField.getAttribute('name');
+    // reset select elements 'options':
+    const selects = form.querySelectorAll('select');
+    if (selects.length) {
+      selects.forEach(function (selectElem) {
+        // for each option: get 'data-preset' values, put them in 'value':
+        let name = selectElem.getAttribute('name');
         const len = name.length;
         if (name.charAt(len - 1) === ']') {
-          preset = pfyFormsHelper.getChoiceFieldValue(selectField, optionElem, name, data);
-          preset = preset.includes(optionVal);
-        } else {
-          preset = pfyFormsHelper.getFieldValue(selectField, data, name);
-          preset = (preset === optionVal);
+          name = name.substring(0, len - 2);
         }
-        optionElem.selected = preset;
+        let val = '';
+        if ((typeof data !== 'undefined') && (typeof data[name] !== 'undefined')) {
+          val = data[name];
+        } else {
+          val = selectElem.dataset.preset || '';
+        }
+        const options = selectElem.querySelectorAll('option');
+        if (options) {
+          options.forEach(function (option) {
+            const optName = option.value;
+            if (typeof val[optName] !== 'undefined') {
+              option.selected = val[optName];
+            } else {
+              option.selected = (val===optName);
+            }
+          });
+        }
       });
     }
   }, // presetChoiceFields
@@ -344,7 +354,8 @@ const pfyFormsHelper = {
   getChoiceFieldValue(field, optionElem, name, data) {
     const dataAvailable = Object.keys(data).length;
     if (typeof data === 'undefined' || !dataAvailable) {
-      return field.dataset.preset ?? 'novalue';
+      return field.dataset.preset ?? '#novalue#';
+      // return field.dataset.preset ?? 'novalue';
     }
     name = name.substring(0, name.length - 2);
     const rec = data[name] ?? false;
@@ -355,7 +366,8 @@ const pfyFormsHelper = {
       } else {
         sub = field.value;
       }
-      const val = rec[sub] ? sub : 'novalue';
+      const val = rec[sub] ? sub : '#novalue#';
+      // const val = rec[sub] ? sub : 'novalue';
       return val.toString();
     }
     return '';

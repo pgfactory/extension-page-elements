@@ -97,6 +97,7 @@ class PfyForm extends Form
         $formOptions['mailTo']              = $formOptions['mailTo']??false;
         $formOptions['maxCount']            = $formOptions['maxCount']??false;
         $formOptions['maxCountOn']          = $formOptions['maxCountOn']??false;
+        $formOptions['labelWidth']          = $formOptions['labelWidth']??false;
         $formOptions['formTop']             = $formOptions['formTop']??false;
         $formOptions['formHint']            = $formOptions['formHint']??false;
         $formOptions['formBottom']          = $formOptions['formBottom']??false;
@@ -130,10 +131,9 @@ class PfyForm extends Form
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
         }
 
+        $this->handleScheduleOption();
         $this->checkDeadline(); // -> sets $this->deadlinePassed and $this->formResponse
         $this->checkMaxCount();
-
-        $this->handleScheduleOption();
 
         // open database:
         if ($formOptions['file']) {
@@ -231,7 +231,7 @@ class PfyForm extends Form
             $this->formElements[$name] = $rec;
         }
 
-        $inx = $this->formOptions['inx'];
+        $inx = $this->formIndex;
         // handle option labelWidth:
         if ($lWidth = $this->formOptions['labelWidth']) {
             PageFactory::$pg->addCss(".pfy-form-$inx { --pfy-form-label-width: $lWidth}\n");
@@ -629,46 +629,6 @@ EOT;
      * @param string $name
      * @param string $label
      * @param array $elemOptions
-     * @param string $type
-     * @return object|\Nette\Forms\Controls\MultiSelectBox|\Nette\Forms\Controls\SelectBox
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private function addSelectElem(string $name, string $label): object
-    {
-        $elemOptions = &$this->formElements[$name];
-        $type = $elemOptions['type'];
-        $selectionElems = $elemOptions['options'];
-        foreach ($selectionElems as $key => $value) {
-            if (!$value) {
-                $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
-            }
-        }
-        if ($type === 'multiselect') {
-            $elem = $this->addMultiSelect($name, $label, $selectionElems);
-            $this->formElements[$name]['isArray'] = true;
-            $this->formElements[$name]['subKeys'] = array_keys($selectionElems);
-        } else {
-            $elem = $this->addSelect($name, $label, $selectionElems);
-        }
-        if ($preset = ($elemOptions['preset']??false)) {
-            $elem->setHtmlAttribute('data-preset', $preset);
-        }
-        if ($elemOptions['prompt']??false) {
-            $elem->setPrompt($elemOptions['prompt']);
-        }
-        $this->choiceOptions[$name] = $selectionElems;
-
-        if ($elemOptions['splitOutput']??false) {
-            $this->addFieldNames($name, $selectionElems);
-        }
-        return $elem;
-    } // addSelectElem
-
-
-    /**
-     * @param string $name
-     * @param string $label
-     * @param array $elemOptions
      * @return object|\Nette\Forms\Controls\RadioList
      * @throws \Kirby\Exception\InvalidArgumentException
      */
@@ -678,7 +638,10 @@ EOT;
         $radioElems = $elemOptions['options'];
         $elem = $this->addRadioList($name, $label, $radioElems);
         if ($elemOptions['preset']??false) {
-            $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
+            // check preset -> if value given, replace with key:
+            if (($p = array_search($elemOptions['preset'], $radioElems)) !== false) {
+                $elemOptions['preset'] = $p;
+            }
         }
         $this->formElements[$name]['isArray'] = true;
         $this->formElements[$name]['subKeys'] = array_keys($radioElems);
@@ -707,7 +670,17 @@ EOT;
             $checkboxes = $elemOptions['options'];
             $elem = $this->addCheckboxList($name, $label, $checkboxes);
             if ($elemOptions['preset']??false) {
-                $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
+                // check presets -> if value(s) given, replace with key(s):
+                $presets = explodeTrim(',', $elemOptions['preset']);
+                $presetStr = '';
+                foreach ($presets as $preset) {
+                    if (($p = array_search($preset, $checkboxes)) !== false) {
+                        $presetStr .= "$p,";
+                    } else {
+                        $presetStr .= "$preset,";
+                    }
+                }
+                $elemOptions['preset'] = rtrim($presetStr, ',');
             }
             $this->choiceOptions[$name] = $checkboxes;
             if ($elemOptions['splitOutput']??false) {
@@ -721,17 +694,75 @@ EOT;
 
         } else {
             $elemOptions['class'] .= ' pfy-single-checkbox';
+            $label = rtrim($label, ':');
             $elem = $this->addCheckbox($name, $label);
-            if ($elemOptions['preset']??false) {
-                $elem->setHtmlAttribute('data-preset', $elemOptions['preset']);
-                $elem->setHtmlAttribute('value', $elemOptions['preset']);
-            }
         }
         $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
 
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
         return $elem;
     } // addCheckboxElem
+
+
+    /**
+     * @param string $name
+     * @param string $label
+     * @param array $elemOptions
+     * @param string $type
+     * @return object|\Nette\Forms\Controls\MultiSelectBox|\Nette\Forms\Controls\SelectBox
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
+    private function addSelectElem(string $name, string $label): object
+    {
+        $elemOptions = &$this->formElements[$name];
+        $type = $elemOptions['type'];
+        if ($type === 'dropdown') {
+            $type = $elemOptions['type'] = 'select';
+        }
+        $selectionElems = $elemOptions['options'];
+        foreach ($selectionElems as $key => $value) {
+            if (!$value) {
+                $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
+            }
+        }
+        if ($type === 'multiselect') {
+            $elem = $this->addMultiSelect($name, $label, $selectionElems);
+            $elem->setHtmlAttribute('size', min(5,sizeof($selectionElems)));
+            $this->formElements[$name]['isArray'] = true;
+            $this->formElements[$name]['subKeys'] = array_keys($selectionElems);
+            if ($elemOptions['preset']??false) {
+                // check presets -> if value(s) given, replace with key(s):
+                $presets = explodeTrim(',', $elemOptions['preset']);
+                $presetStr = '';
+                foreach ($presets as $preset) {
+                    if (($p = array_search($preset, $selectionElems)) !== false) {
+                        $presetStr .= "$p,";
+                    } else {
+                        $presetStr .= "$preset,";
+                    }
+                }
+                $elemOptions['preset'] = rtrim($presetStr, ',');
+            }
+
+        } else {
+            $elem = $this->addSelect($name, $label, $selectionElems);
+            if ($elemOptions['preset']??false) {
+                // check presets -> if value(s) given, replace with key(s):
+                if (($p = array_search($elemOptions['preset'], $selectionElems)) !== false) {
+                    $elemOptions['preset'] = $p;
+                }
+            }
+        }
+        if ($elemOptions['prompt']??false) {
+            $elem->setPrompt($elemOptions['prompt']);
+        }
+        $this->choiceOptions[$name] = $selectionElems;
+
+        if ($elemOptions['splitOutput']??false) {
+            $this->addFieldNames($name, $selectionElems);
+        }
+        return $elem;
+    } // addSelectElem
 
 
     /**
@@ -1288,8 +1319,7 @@ EOT;
         if (!isset($elemOptions['options'])) {
             $elemOptions['options'] = false;
         } elseif (is_string($elemOptions['options'])) {
-            $o = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
-            $elemOptions['options'] = array_flip($o);
+            $elemOptions['options'] = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
         } elseif (!is_array($elemOptions['options'])) {
             throw new \Exception("Error: Form argument 'options' must be of type string or array.");
         }
