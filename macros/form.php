@@ -124,8 +124,10 @@ function form($args = '')
 
             'output' =>	['Option to control split syntax rendering: <br>'.
                 '1) ``false`` to define form without output.<br>'.
-                '2) ``name-of-elem`` to render fields up to that field.<br>'.
-                '3) ``rest`` to render rest of form.', true],
+                '2) ``head`` to render form head.<br>'.
+                '3) ``name-of-elem`` to render fields up to that field (optional and repeatable).<br>'.
+                '4) ``rest`` to render all remaining form elements<br>'.
+                '5) ``tail`` form tail.', true],
 
             'problemWithFormBanner' =>	['If true, a banner is added below the form, providing the '.
                 'webmaster-email to contact in case of problems with the form.', true],
@@ -384,9 +386,17 @@ class PfyFormSplitSyntax extends PfyForm
 
         // determine which pieces to render next:
         //      from = $i  to = $upTo
-        if ($uptoWhich === true || $uptoWhich === 'rest') {
+        if ($uptoWhich === 'head') {
+            $upTo = -1;
+            $this->lastRendered = -1;
+
+        } elseif ($uptoWhich === true || $uptoWhich === 'rest') {
             $upTo = $lastElemInx;
             $this->lastRendered = true;
+
+        } else if ($uptoWhich === 'tail') {
+            $upTo = -1;
+            $this->lastRendered = -1;
 
         } else {
             $upTo = array_search($uptoWhich, $names);
@@ -405,7 +415,7 @@ class PfyFormSplitSyntax extends PfyForm
         }
 
         // render everything after the last form element:
-        if ($this->lastRendered === true) {
+        if ($uptoWhich === 'tail') {
             if ($this->showForm) {
                 $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
                                                                 //      /form
