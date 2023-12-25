@@ -1366,7 +1366,7 @@ EOT;
         if ($this->formOptions['action'] ?? false) {
             $this->setAction($this->formOptions['action']);
         } else {
-            $this->setAction(PageFactory::$pageUrl);
+            $this->setAction($_SERVER['REQUEST_URI']); // this page's URL, poss. including ?xy
         }
 
         list($id, $formClass, $aria) = $this->getHeadAttributes();
