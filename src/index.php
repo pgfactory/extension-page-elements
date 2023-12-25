@@ -61,8 +61,16 @@ const PE_URL_DEFINITIONS = [
 
 require_once __DIR__.'/pe_helper.php';
 
+ // run init-code if requested in config.php:
+if ($code = kirby()->option('pgfactory.pagefactory-elements.options.initCode')) {
+    $code = 'site/custom/code/'.$code;
+    if (file_exists($code)) {
+        require $code;
+    }
+}
+
  // activate site-manager if requested:
-if (kirby()->option('pgfactory.pagefactory-pageelements.options.activateSitemapManager')) {
+if (kirby()->option('pgfactory.pagefactory-elements.options.activateSitemapManager')) {
     require_once 'site/plugins/pagefactory-pageelements/src/SitemapManager.php';
     SitemapManager::updateSitemap();
 }

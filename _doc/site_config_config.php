@@ -2,7 +2,8 @@
 
     'pgfactory.pagefactory-elements.options' => [
         'allowChangePassword' => true,
-//  		'log-ip'		=> true, // whether serverLog() shall include IP of agent in log,
+//        'initCode' => 'init.php',         // run init code in site/custom/code/
+//        'login-mode' => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
 //        'activatePresentationSupport' => true,
 //        'presentationAutoSizing'      => true,
 //        'presentationDefaultSize'     => '1.8vw',
