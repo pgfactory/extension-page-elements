@@ -15,7 +15,8 @@ window.onload = function() {
 
 
 function serverLog(text, logFileName) {
-  let url = window.location.href + '?ajax&log=' +  encodeURI(text);
+  let url = appendToUrl(window.location.href, '?ajax&log=' +  encodeURI(text));
+  mylog('url: ' + url);
   if (typeof logFileName !== 'undefined') {
     url += '&filename=' + encodeURI(logFileName);
   }
