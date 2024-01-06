@@ -2229,11 +2229,19 @@ EOT;
         $eventElements = [];
         $startLabel = TransVars::getVariable('pfy-form-event-start-label');
         $endLabel = TransVars::getVariable('pfy-form-event-end-label');
+        
+        // preset: true = today, hour = today plus given time
+        $preset = $this->formElements[$name]['preset']??'';
+        if ($preset === true) {
+            $preset = date('Y-m-d').' 12:00';
+        } elseif (preg_match('/^\d\d[.:]\d\d$/', $preset)) {
+            $preset = date('Y-m-d ').$preset;
+        }
         $eventElements[$startName] = [
             'type' => 'datetime-local',
             'label' => $startLabel,
             'class' => 'pfy-event-elem pfy-event-elem-from',
-            'preset' => ($this->formElements[$name]['preset']??''),
+            'preset' => $preset,
         ];
         $eventElements[$endName] = [
             'type' => 'datetime-local',
