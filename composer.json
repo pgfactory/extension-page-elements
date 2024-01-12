@@ -1,6 +1,7 @@
 {
     "require": {
         "nette/forms": "^3.1",
-        "phpoffice/phpspreadsheet": "^1.28"
+        "phpoffice/phpspreadsheet": "^1.28",
+        "fullcalendar/fullcalendar": "^3.10"
     }
 }
