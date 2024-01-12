@@ -5,6 +5,7 @@
 --pfy-form-input-medium-width		(10em)
 --pfy-form-choice-option-width		(6em)
 --pfy-form-label-width		(6em)
+--pfy-form-reversed-label-width  (12em)
 --pfy-form-input-width		(22em)
 --pfy-form-row-gap-height		(1em)
 --pfy-form-width		(28em)
@@ -39,6 +40,7 @@ $shortWidth:            var(--pfy-form-input-medium-width, 4em);
 $mediumWidth:           var(--pfy-form-input-medium-width, 10em);
 $choiceOptionWidth:     var(--pfy-form-choice-option-width, 6em);
 $labelWidth:            var(--pfy-form-label-width, 6em);
+$reversedLabelWidth:    var(--pfy-form-reversed-label-width, 12em);
 $inputWidth:            var(--pfy-form-input-width, 22em);
 $rowGapHeight:          var(--pfy-form-row-gap-height, 1em);
 $formWidth:             var(--pfy-form-width, 28em);
@@ -119,6 +121,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     .pfy-label-wrapper {
       margin-top: calc((#{$inputHeight} - 1em) / 2);
     }
+    &:not(.pfy-horizontal) .pfy-choice-wrapper {
+      width: 100%;
+    }
   }
 
   .pfy-password .pfy-input-wrapper {
@@ -161,7 +166,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-input-wrapper {
-    width: calc(100% - #{$labelWidth} - 6px);
+    width: calc(100% - #{$labelWidth} - 0.25em);
     max-width: $inputWidth;
 
     input, textarea {
@@ -173,8 +178,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
     input.pfy-choice {
       height: 1em;
-      margin-top: calc((#{$inputHeight} - 1em) / 2);
-      margin-bottom: calc((#{$inputHeight} - 1em) / 2);
+      width: 1em;
+      margin-right: 0.4em;
+      transform: translateY(3px);
+      font-size: 1em;
     }
     input, textarea, select {
       line-height: 1em;
@@ -184,14 +191,75 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       border-radius: 4px;
     }
   }
+  .pfy-choice .pfy-input-wrapper {
+    max-width: unset;
+    label {
+      padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
+      padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
+    }
+  }
+  .pfy-choice-wrapper {
+    display: inline-block;
+  }
+  .pfy-single-checkbox {
+    .pfy-input-wrapper {
+      width: 100%;
+      max-width: unset;
+    }
+    .pfy-choice-wrapper {
+      width: 100%;
+    }
+    label {
+      width: calc(100% - 1.5em);
+    }
+
+    &.reversed {
+      .pfy-label-wrapper {
+        display: none;
+      }
+      .pfy-choice-wrapper {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        label {
+          width: var(--pfy-form-label-width, 6em);
+          margin-right: 0.25em;
+        }
+        input {
+          margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
+        }
+      }
+    }
+  }
+
+  .pfy-elem-wrapper.reversed:not(.pfy-single-checkbox) .pfy-choice-wrapper {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    margin-right: 1em;
+    label {
+      width: $reversedLabelWidth;
+      margin-right: 0.25em;
+      padding-right: 0.5em;
+      text-align: right;
+      min-width: unset;
+    }
+    label:after {
+      content: ':';
+    }
+    input {
+      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
+    }
+  }
+
   .pfy-multiselect select  {
     height: unset;
     padding: 2px;
   }
 
   .pfy-elem-wrapper {
-    padding-top: calc(#{$rowGapHeight} / 2);
-    padding-bottom: calc(#{$rowGapHeight} / 2);
+    margin-top: calc(#{$rowGapHeight} / 2);
+    margin-bottom: calc(#{$rowGapHeight} / 2);
   }
 
   .pfy-elem-wrapper.pfy-required .pfy-label-wrapper label::after,
@@ -373,11 +441,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     width: fit-content!important;
     margin-right: 0.5em;
   }
-  .pfy-horizontal {
-    br {
-      display: none;
-    }
-  }
 
   .pfy-textarea {
     .pfy-label-wrapper,
@@ -533,23 +596,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-overlay-background-frozen {
     overflow: hidden;
   }
-
-  //.pfy-reveal-source {
-  //   .pfy-reveal-controller-wrapper {
-  //     border-bottom: 1px solid #ddd;
-  //   }
-  //  outline: 1px solid $preBg;
-  //  margin-bottom: 2em;
-  //  .pfy-reveal-container-inner {
-  //    padding-top: 0 !important;
-  //
-  //    pre {
-  //      margin: 0;
-  //      outline: none;
-  //      padding: 1em;
-  //    }
-  //  }
-  //}
 
 
   .pfy-problem-with-form-hint {
