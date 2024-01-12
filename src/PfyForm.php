@@ -158,15 +158,20 @@ class PfyForm extends Form
         PageFactory::$pg->addAssets('POPUPS');
         PageFactory::$pg->addAssets('REVEAL');
         PageFactory::$pg->addAssets('FORMS');
+
+        if ($formOptions['init']??true) {
+            PageFactory::$pg->addJsReady('pfyFormsHelper.init();');
+        }
     } // __construct
 
 
     /**
      * All-in-one convenience method: renders a form in one call.
+     * @param array $formElements
      * @return string
-     * @throws \Exception
+     * @throws InvalidArgumentException
      */
-    public function renderForm($formElements): string
+    public function renderForm(array $formElements): string
     {
         $this->createForm($formElements);
         $html = "\n\n<!-- === pfy form widget === -->\n";
@@ -209,8 +214,9 @@ class PfyForm extends Form
         $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
         $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
 
-        $html .= $this->injectNoSHowEnd();
+        $html .= $this->injectNoShowEnd();
         $html .= "<!-- === /pfy form widget === -->\n\n";
+        $this->activateWindowFreeze();
         return $html;
     } // renderForm
 
@@ -226,6 +232,10 @@ class PfyForm extends Form
     {
         // build $this->formElements from submitted $formElements:
         foreach ($formElements as $name => $rec) {
+            if ($rec === false) {
+                unset($formElements[$name]);
+                continue;
+            }
             $rec['origName'] = trim($name);
             $name = translateToIdentifier($name);
             $this->formElements[$name] = $rec;
@@ -292,6 +302,26 @@ class PfyForm extends Form
         }
         $label = "<span class='pfy-label-wrapper'>$label</span>";
         $input = (string)$elem->getControl();
+
+        // fix for NetteForm's quirk: input outside of label in choice fields
+        if (str_contains($input, 'type="radio"') || str_contains($input, 'type="checkbox"')) {
+            if (preg_match_all('|<label\s?(for="(.*?)")?><input (.*?)>(.*?)</label>|', $input, $m)) {
+                $input1 = '';
+                foreach ($m[2] as $i => $mm) {
+                    $formInx = self::$formInx;
+                    $elemInx = $this->formElements[$name]['elemInx'];
+                    if ($m[2][$i]) {
+                        $id = $m[2][$i];
+                        $for = $m[1][$i];
+                    } else {
+                        $id = $m[2][$i] ?: "pfy-input-$formInx-$elemInx-".($i+1);
+                        $for = "for='$id'";
+                    }
+                    $input1 .= "<span class='pfy-choice-wrapper'><input id='$id' {$m[3][$i]}><label $for>{$m[4][$i]}</label></span>";
+                }
+                $input = $input1;
+            }
+        }
         $type = $this->determineType($_name, $rec['type'] ?? false);
         $attr = '';
 
@@ -395,6 +425,7 @@ EOT;
             $elemOptions['name'] = $elemName;
         }
 
+        $elemOptions['elemInx'] = $this->elemInx;
 
         // determine $label, $name, $type and $subType:
         list($label, $name, $type) = $this->parseOptions($elemOptions);
@@ -547,7 +578,7 @@ EOT;
             $this->formElements[$name]['saveAs'] = $saveAs;
         }
 
-        // handle defaultDuration:
+        // handle defaultEventDuration:
         if (isset($elemOptions['defaultEventDuration'])) {
             $defaultEventDuration = ($elemOptions['defaultEventDuration']??0);
             $elem->setHtmlAttribute('data-related-field', $elemOptions['relatedField']??'');
@@ -694,7 +725,9 @@ EOT;
 
         } else {
             $elemOptions['class'] .= ' pfy-single-checkbox';
-            $label = rtrim($label, ':');
+            if (!str_contains($elemOptions['class'], 'reversed')) {
+                $label = rtrim($label, ':');
+            }
             $elem = $this->addCheckbox($name, $label);
         }
         $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
@@ -720,6 +753,15 @@ EOT;
             $type = $elemOptions['type'] = 'select';
         }
         $selectionElems = $elemOptions['options'];
+
+        // handle special case of one select option -> render as readonly:
+        if (sizeof($selectionElems) === 1) {
+            $elem = $this->addText($name, $label);
+            $elem->setHtmlAttribute('readonly', '');
+            $elemOptions['value'] = reset($selectionElems);
+            return $elem;
+        }
+
         foreach ($selectionElems as $key => $value) {
             if (!$value) {
                 $selectionElems[$key] = '{{ pfy-form-select-empty-option }}';
@@ -816,6 +858,8 @@ EOT;
             reloadAgent(null, '{{ pfy-form-session-expired }}');
         }
 
+        $this->restoreBypassedFields($dataRec);
+
         // handle 'callback' on data received:
         if ($this->formOptions['callback']) {
             list($html, $continueEval) = $this->handleCallback($dataRec);
@@ -826,6 +870,12 @@ EOT;
         }
 
         $recKey = $dataRec['_reckey']??false;
+        
+        // handle delete request:
+        if ($this->handleDeleteRequest($dataRec, $recKey)) {
+            $this->formResponse =  '{{ pfy-form-rec-deleted-confirmation }}';
+            return;
+        }
 
         $dataRec = $this->normalizeData($dataRec);
 
@@ -931,12 +981,11 @@ EOT;
 
 
     /**
-     * @param $key
-     * @param $rec
-     * @return void
+     * @param string $key
+     * @param object $rec
      * @throws \Exception
      */
-    private function handleUploadedFile($key, $rec)
+    private function handleUploadedFile(string $key, object $rec): void
     {
         $path = $this->formElements[$key]['args']['path']??false;
         $path = resolvePath($path);
@@ -946,8 +995,22 @@ EOT;
         $filename = str_replace('..','.', $filename);
         $filename = preg_replace('/[^.\w-]/','', $filename);
         $rec->move($path.$filename);
-    } // handleUploadedFile($key, $rec)
+    } // handleUploadedFile
 
+
+    /**
+     * @param array $dataRec
+     * @return void
+     */
+    private function restoreBypassedFields(array &$dataRec): void
+    {
+        $bypassedElements = array_keys($this->bypassedElements);
+        foreach ($dataRec as $name => $value) {
+            if (in_array($name, $bypassedElements)) {
+                $dataRec[$name] = $this->bypassedElements[$name];
+            }
+        }
+    } // restoreBypassedFields
 
     /**
      * @param array $dataRec
@@ -955,7 +1018,6 @@ EOT;
      */
     private function normalizeData(array $dataRec): array|string
     {
-        $bypassedElements = array_keys($this->bypassedElements);
         foreach ($dataRec as $name => $value) {
             // handle anti-spam field:
             if ($this->formElements[$name]['antiSpam'] ?? false) {
@@ -1024,10 +1086,6 @@ EOT;
             $type = $this->formElements[$name]['type']??false;
             if ($type === 'password') {
                 $dataRec[$name] = password_hash($value, null);
-            }
-
-            if (in_array($name, $bypassedElements)) {
-                $dataRec[$name] = $this->bypassedElements[$name];
             }
         }
         return $dataRec;
@@ -1328,9 +1386,9 @@ EOT;
     } // parseOptions
 
 
-    
-    
-    
+    /**
+     * @return string
+     */
     protected function renderFormWrapperHead(): string
     {
         $html = '';
@@ -1435,7 +1493,10 @@ EOT;
     } // renderFormTail
 
 
-    protected function renderFormTableWrapperTail()
+    /**
+     * @return string
+     */
+    protected function renderFormTableWrapperTail(): string
     {
         $html = '';
         if ($this->addFormTableWrapper) {
@@ -1587,7 +1648,7 @@ EOT;
             if ($this->tableTitle) {
                 $header .= compileMarkdown($this->tableTitle);
             } else {
-                $header = '<h2>{{ pfy-table-data-output-header }}</h2>';
+                $header = '<p class="pfy-table-data-output-header">{{ pfy-table-data-output-header }}</p>';
             }
         }
         if ($html) {
@@ -1710,10 +1771,34 @@ EOT;
 
 
     /**
+     * @param array $dataRec
+     * @param string $recKey
+     * @return bool
+     * @throws \Exception
+     */
+    private function handleDeleteRequest(array $dataRec, string $recKey): bool
+    {
+        if (!$recKey) {
+            return false;
+        }
+        
+        if (!($dataRec['_delete']??false)) {
+            return false;
+        }
+
+        $this->openDB();
+        if ($rec = $this->db->find($recKey)) {
+            $rec->delete(true);
+        }
+        return true;
+    } // handleDeleteRequest
+
+
+    /**
      * @param $dataRec
      * @return bool
      */
-    private function applyRequiredGroupCheck($dataRec)
+    private function applyRequiredGroupCheck($dataRec): bool
     {
         $errorsFound = false;
         $requiredGroups = [];
@@ -2170,48 +2255,6 @@ EOT;
 
 
     /**
-     * Special callback method for Events:
-     *  converts from values $rec['_date'], $rec['_from'], $rec['_till'] to values $rec['start'] and $rec['end']
-     *  -> handles events that cross midnight (-> auto-increases end-date).
-     * @param array $rec
-     * @return mixed
-     */
-    private function convertEventTimes(array &$rec): mixed
-    {
-        $basename = '';
-        foreach ($rec as $key => $value) {
-            if (str_contains($key, 'start')) {
-                $startStr = $value;
-                $basename = substr(preg_replace('/start/', '', $key), 1);
-            } elseif (str_contains($key, 'end')) {
-                $endStr = $value;
-                if ($startStr > $endStr) {
-                    // illegal: end before start -> reverse
-                    $s = $startStr;
-                    $startStr = $endStr;
-                    $endStr = $s;
-                }
-
-                // remove 'T' in ISO format:
-                $startStr = str_replace('T', ' ', $startStr);
-                $endStr   = str_replace('T', ' ', $endStr);
-
-                if (!$basename) {
-                    $rec['start'] = $startStr;
-                    $rec['end'] = $endStr;
-
-                } else {
-                    $rec[$basename.'_start'] = $startStr;
-                    $rec[$basename.'_end'] = $endStr;
-                }
-                $basename = $fromDate = $fromTime = $tillDate = $tillTime = ''; // reset to be on the safe side
-            }
-        }
-        return true;
-    } // convertEventTimes
-
-
-    /**
      * @param int|string $name
      * @return void
      */
@@ -2248,19 +2291,16 @@ EOT;
             'label' => $endLabel,
             'class' => 'pfy-event-elem pfy-event-elem-till',
             'relatedField' => $startName,
-            'defaultEventDuration' => ($this->formElements[$name]['defaultDuration']??0),
+            'defaultEventDuration' => ($this->formElements[$name]['defaultEventDuration']??0),
         ];
 
         $this->formElements = array_splice_associative($this->formElements, $name, 1, $eventElements);
-
-        // add event-callback handler:
-        if (!($this->formOptions['callback'] ?? false)) {
-            $this->formOptions['callback'] = 'convertEventTimes';
-        } elseif (!str_contains($this->formOptions['callback'], 'convertEventTimes')) {
-            $this->formOptions['callback'] .= ',convertEventTimes';
-        }
     } // composeEventElement
 
+
+    /**
+     * @return string
+     */
     protected function injectNoShowCssRule(): string
     {
         $css = ".pfy-form-{$this->formIndex},\n" .
@@ -2272,12 +2312,28 @@ EOT;
     } // injectNoShowCssRule
 
 
-    protected function injectNoSHowEnd()
+    /**
+     * @return string
+     */
+    protected function injectNoShowEnd(): string
     {
         $html = '';
         if ($this->noShowOpened) {
             $html = "</div><!-- /pfy-show-unless-form-data-received-$this->formIndex -->\n";
         }
         return $html;
-    } // injectNoSHowEnd
+    } // injectNoShowEnd
+
+
+    /**
+     * @return void
+     */
+    protected function activateWindowFreeze(): void
+    {
+        if ($time = ($this->formOptions['windowFreezeTime']??false)) {
+            $js = "pfyFormsHelper.freezeWindowAfter('$time');";
+            PageFactory::$pg->addJsReady($js);
+        }
+    } // activateWindowFreeze
+
 } // PfyForm
