@@ -83,9 +83,11 @@ function reloadAgent( arg, url, confirmMsg ) {
 } // reloadAgent
 
 
-function execAjaxPromise(cmd, options, url) {
+function execAjaxPromise(cmd, options, url = false) {
   return new Promise(function(resolve) {
-    let url = window.location.href;
+    if (!url) {
+      url = window.location.href;
+    }
     url = url.replace(/#.*/, '');
     if (typeof url === 'undefined') {
       url = pageUrl;
@@ -94,9 +96,10 @@ function execAjaxPromise(cmd, options, url) {
     if (typeof options === 'undefined') {
       options = {};
     }
+    const payload = JSON.stringify(options);
     fetch(url, {
       method: 'POST',
-      body: JSON.stringify(options),
+      body: payload,
       headers: {
         'Content-Type': 'application/json'
       }
