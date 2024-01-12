@@ -42,6 +42,7 @@ function pfyPopup( options ) {
         options = { text: str };
     }
     this.options = options;
+    this.initialOpacity = options.initialOpacity || 1;
     this.text  = (typeof options.text !== 'undefined' && options.text)? options.text : ''; // text synonym for content
     this.content  = (typeof options.content !== 'undefined' && options.content)? options.content : this.text;
 
@@ -487,6 +488,7 @@ function pfyPopup( options ) {
     this.setupCloseTriggers();
     this.popup.parentElement.removeAttribute('style');
     this.popup.style.display = 'initial';
+    this.popup.style.opacity = this.initialOpacity;
 
     // freeze background:
     if (this.modal) {
