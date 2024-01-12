@@ -1263,7 +1263,6 @@ EOT;
                 $tableOptions['serviceColumns'] = $editTable['serviceColumns'] ?? 'select,num';
                 $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
             }
-            PageFactory::$pg->applyRobotsAttrib();
 
         // handle showData:
         } elseif ($showData) {
@@ -1276,7 +1275,6 @@ EOT;
                 $tableOptions['tableButtons'] = $showData['tableButtons']??'download';
                 $tableOptions['serviceColumns'] = $showData['serviceColumns']??'';
             }
-            PageFactory::$pg->applyRobotsAttrib();
         }
 
         unset($tableOptions['editTable']);
@@ -1620,6 +1618,9 @@ EOT;
         if (!(($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->formOptions['file'] && $this->isFormAdmin)) {
             return '';
         }
+
+        // to be on the save side: always invoke robots header when displaying form data.
+        PageFactory::$pg->applyRobotsAttrib();
 
         $ds = $this->openDataTable();
         $noData = !$ds->getSize();
