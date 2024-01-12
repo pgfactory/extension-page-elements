@@ -61,7 +61,7 @@ function compileJs(): void
                     $rec = $transVars[$key];
                     $val = json_encode($rec);
                     $varName = translateToIdentifier($key, true);
-                    $out .= "var _$varName = translateVar($val);\n";
+                    $out .= "const _$varName = translateVar($val);\n";
                     $jsStr = str_replace($m[0][$i], '${_'.$varName.'}', $jsStr);
                 }
             }
