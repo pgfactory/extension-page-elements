@@ -61,6 +61,9 @@ function form($args = '')
 
             'next' =>	['[URL] If set, defines the link target (href) of the "Continue..." response.', false],
 
+            'windowFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
+                'e.g. "+1 hour".', '+1 hour'],
+
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 'Which is followed by a "Continue..." link.'.
                 '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
@@ -423,6 +426,7 @@ class PfyFormSplitSyntax extends PfyForm
                 $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
                 $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
+                $this->activateWindowFreeze();
             }
 
             $html .= $this->injectNoSHowEnd();
