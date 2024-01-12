@@ -1,4 +1,8 @@
 
+// to automatically install:
+//  sed -e '/pgfactory.pagefactory-elements.options/r site/plugins/pagefactory-pageelements/_doc/config.php' site/config/config.php > site/config/config.php1
+//
+// config options to insert into site/config/config.php:
 
     'pgfactory.pagefactory-elements.options' => [
         'allowChangePassword' => true,
@@ -9,6 +13,9 @@
 //        'presentationDefaultSize'     => '1.8vw',
     ],
 
+
+
+/*
 ## User Self Admin:
 
 Prerequisite:
@@ -39,3 +46,4 @@ Using config options:
 
     kirby()->option('pgfactory.pagefactory-elements.options.allowChangePassword');
 
+*/
