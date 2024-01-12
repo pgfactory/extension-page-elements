@@ -9,31 +9,34 @@ const pfyFormsHelper = {
 
   windowTimeout: false,
 
-  init(forms, setFocus) {
-    // forms defined as query string:
-    if (typeof forms === 'string') {
-      forms = document.querySelectorAll(forms);
-
-    // form defined as DOM element:
-    } else if (forms instanceof Element) {
+  init(forms, setFocus, windowFreezeTime = false) {
+    if (forms instanceof Element) {
       pfyFormsHelper.initForm(forms, setFocus);
-      return;
 
     // form undefined:
-    } else if ((typeof forms === 'undefined') || !(forms instanceof NodeList)) {
-      forms = document.querySelectorAll('.pfy-form');
-    }
+    } else {
+      if ((typeof forms === 'undefined')) {
+        // forms not defined -> apply to all forms in page:
+        forms = document.querySelectorAll('.pfy-form');
 
-    // at this point forms is certainly a NoteList:
-    if ((typeof forms !== 'undefined') && forms.length) {
-      forms.forEach(function(form) {
-        pfyFormsHelper.initForm(form, setFocus);
-      });
-    }
+      } else if (typeof forms === 'string') {
+        // forms defined as query string -> get all matching forms:
+        forms = document.querySelectorAll(forms);
 
+      } else if (!(forms instanceof NodeList)) {
+        return;
+      }
+      if (forms) {
+        forms.forEach(function (form) {
+          pfyFormsHelper.initForm(form, setFocus);
+        })
+      }
+    }
 
     // initialize freeze timer:
-    this.freezeWindowAfter('1 hour');
+    if (windowFreezeTime) {
+      this.freezeWindowAfter(windowFreezeTime);
+    }
   }, // init
 
 
@@ -186,7 +189,6 @@ const pfyFormsHelper = {
   }, // setupSubmitHandler
 
 
-
   presetForm(form, data, recId) {
     if (typeof form === 'string') {
       form = document.querySelector(form);
@@ -205,8 +207,7 @@ const pfyFormsHelper = {
   }, // presetForm
 
 
-  disableForm(form, value = true)
-  {
+  disableForm(form, value = true)  {
     // disable form buttons:
     const frmButtons = form.querySelectorAll('[name="_submit"]');
     if (frmButtons) {
@@ -430,11 +431,14 @@ const pfyFormsHelper = {
           $startDate.value = dateStr;
         }
       }
+    }
 
-      // preset event end:
-      if (!field.value && duration) {
-        const end = new Date($startDate.value);
-        field.value = parent.addMinutes(end, duration);
+    // preset event end:
+    if (!field.value && duration) {
+      const startStr = $startDate.value;
+      if (startStr) {
+        const end = new Date(startStr);
+        field.value = parent. fixDatetimeFormat(field, parent.addMinutes(end, duration));
       }
     }
 
@@ -442,16 +446,35 @@ const pfyFormsHelper = {
     $startDate.addEventListener('change', function (e) {
       const start = new Date($startDate.value);
       const duration = parseInt(field.dataset.eventDuration ?? '');
-      field.value = parent.addMinutes(start, duration);
-    })
+      let newVal = parent.addMinutes(start, duration);
+      newVal = parent.fixDatetimeFormat(field, newVal);
+      field.value = newVal;
+    });
+
+    if ($startDate.value && field.value) {
+      const start = new Date($startDate.value);
+      const end = new Date(field.value);
+      field.dataset.eventDuration = (end.getTime() - start.getTime()) / 60000;
+    }
+
 
     // handle changes in endDate -> adapt duration:
     field.addEventListener('change', function (e) {
       const start = new Date($startDate.value);
       const end = new Date(field.value);
       field.dataset.eventDuration = (end.getTime() - start.getTime()) / 60000;
-    })
+    });
   }, // handleEventFields
+
+
+  fixDatetimeFormat(field, value) {
+    if (field.type === 'date') {
+      value = value.substring(0, 10);
+    } else if (value.length < 16) {
+      value = value.substring(0, 10) + ' 12:00';
+    }
+    return value;
+  }, //fixDatetimeFormat
 
 
   toIsoLocalString(date) {
@@ -490,14 +513,14 @@ const pfyFormsHelper = {
       const referenceValue = referenceElement.value;
       check = !value;
       if (!check) {
-        pfyFormsHelper.openCheckPopup(form, referenceValue, label);
+        pfyFormsHelper.openAntiSpamPopup(form, referenceValue, label);
       }
     }
     return check;
   }, // checkHonigtopf
 
 
-  openCheckPopup(form, referenceValue, referenceName) {
+  openAntiSpamPopup(form, referenceValue, referenceName) {
     let text = `<label>{{ pfy-form-override-honeypot }} <input type="text" id="pfy-check-input"></label>`;
     text = text.replace(/%refName%/, referenceName);
     let pfyResponseValue;
@@ -533,7 +556,7 @@ const pfyFormsHelper = {
       },
       function (error) { }
     );
-  }, // openCheckPopup
+  }, // openAntiSpamPopup
 
 
   doSubmitForm(form) {
@@ -649,8 +672,12 @@ const pfyFormsHelper = {
             freezeWindowAfter(delay, onClick, retrigger);
           }
         } else {
+          let text = `{{ pfy-form-timeout-alert }}`;
+          if (typeof onClick === 'string') {
+            text = onClick;
+          }
           pfyConfirm({
-            text: `{{ pfy-form-timeout-alert }}`,
+            text: text,
             buttons: `Cancel,{{ pfy-form-reload-btn }}`,
           })
           .then(
@@ -668,8 +695,7 @@ const pfyFormsHelper = {
   }, // freezeWindowAfter
 
 
-  setTriggerOnContinueLink()
-  {
+  setTriggerOnContinueLink()  {
     const continueLinks = document.querySelectorAll('.pfy-form-continue-same');
     if (continueLinks) {
       continueLinks.forEach(function (link) {
@@ -682,4 +708,4 @@ const pfyFormsHelper = {
 
 }; // pfyFormsHelper
 
-pfyFormsHelper.init();
+
