@@ -1,0 +1,163 @@
+
+
+pfy-cal-event:
+    de: Ereignis
+    _: Event
+
+pfy-cal-location:
+    de: Ort
+    _: Location
+
+pfy-cal-date:
+    de: 'Datum:'
+    _: 'Date:'
+pfy-cal-start-date-label:
+    de: 'Datum:'
+    _: 'Date:'
+pfy-cal-end-date-label:
+    de: 'Datum:'
+    _: 'Date:'
+
+pfy-cal-start-time-label:
+    de: Zeit
+    _: Time
+pfy-cal-end-time-label:
+    de: Zeit
+    _: Time
+pfy-cal-time:
+    de: Zeit
+    _: Time
+
+pfy-cal-comment:
+    de: Notiz
+    _: Comment
+
+pfy-cal-comment-placeholder:
+    de: Notiz
+    _: Comment
+
+pfy-cal-delete-entry:
+    de: Eintrag löschen
+    _: Delete entry
+
+pfy-cal-delete-entry-now:
+    de: Löschen
+    _:  Delete
+
+pfy-cal-insufficient-permission:
+    de: Sie haben keine Berechtigung, diesen Kalender zu verändern.
+    de2: Du hast keine Berechtigung, diesen Kalender zu verändern.
+    _:  You have no permission to modify this calendar.
+
+pfy-cal-no-permission-event-in-past:
+    de: Kalendereinträge in der Vergangenheit können nicht erzeugt oder verändert werden.
+    _:  You can't create or modify events that lie in the past.
+
+pfy-cal-no-permission-others-event:
+    de: Kalendereinträge anderer Benutzer können Sie nicht verändern.
+    de2: Kalendereinträge anderer Benutzer kannst du nicht verändern.
+    _:  You can't modify events of other users.
+
+# deleted confirmation -> pfy-form-rec-deleted-confirmation
+
+pfy-cal-stored-confirmation:
+    de: Der Eintrag wurde gespeichert.
+    _:  The event has been stored.
+
+pfy-cal-submit-entry-now:
+    de: Absenden
+    _:  Submit
+
+pfy-cal-modif-entry:
+    de: Eintrag ändern
+    _: Modify Event
+
+pfy-cal-new-entry:
+    de: Neuer Eintrag
+    _: New Event
+
+pfy-cal-event-placeholder:
+    de: Titel
+    _:  title
+
+pfy-cal-location-placeholder:
+    de: Ort
+    _:  Location
+
+pfy-cal-legend-from:
+    de: Von
+    _:  From
+
+pfy-cal-legend-till:
+    de: Bis
+    _:  Till
+
+pfy-cal-category-all:
+    de: ''
+    _:  ''
+
+pfy-cal-category-label:
+    de: Kategorie
+    _:  Category
+
+pfy-cal-event-title:
+    de: Bezeichnung
+    _:  Event name
+
+pfy-cal-allday-event:
+    de: Ganztägig
+    _:  Allday
+
+# labels:
+pfy-cal-label-prev:
+    _:  '〈 '
+pfy-cal-label-next:
+    _:  ' 〉'
+pfy-cal-label-prev-year:
+    _:  '《'
+pfy-cal-label-next-year:
+    _:  '》'
+pfy-cal-label-year:
+    de: 'Jahr'
+    _:  'Year'
+pfy-cal-label-month:
+    de: 'Monat'
+    _:  'Month'
+pfy-cal-label-week:
+    de: 'Woche'
+    _:  'Week'
+pfy-cal-label-day:
+    de: 'Tag'
+    _:  'Day'
+pfy-cal-label-today:
+    de: 'Heute'
+    _:  'Today'
+pfy-cal-label-list:
+    de: 'Listenansicht'
+    _:  'List view'
+
+pfy-cal-label-week-nr:
+    de: 'KW'
+    _:  'W'
+pfy-cal-label-allday:
+    de: 'Ganztag'
+    _:  'all day'
+pfy-cal-label-more-link:
+    de: 'mehr'
+    _:  'more'
+pfy-cal-label-empty-list:
+    de: 'leer'
+    _:  'empty'
+pfy-cal-timeout-alert:
+    de: |
+        <h2>Zeitüberschreitung</h2>
+        <p>Diese Seite war zu lange offen.</p>
+        <p>Bitte laden Sie die Seite neu, bevor Sie weiter machen.</p>
+    de2: |
+        <h2>Zeitüberschreitung</h2>
+        <p>Diese Seite war zu lange offen.</p>
+        <p>Bitte lade die Seite neu, bevor du weiter machst.</p>
+    _:  |
+        <h2>Timeout</h2>
+        <p>This page has been open for too long.</p>
+        <p>Please, reload before you continue.</p>

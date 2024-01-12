@@ -1,0 +1,53 @@
+// Calendar Styling
+//==================
+
+/*
+**	Variables:
+**
+ */
+
+
+
+#pfy .pfy-encapsulated.pfy-default-styling,
+.pfy-default-styling {
+
+  .pfy-calendar {
+    a, a:hover {
+      border-bottom: none;
+    }
+  }
+  .fc-event {
+    min-height: 1em;
+  }
+
+  .pfy-calendar-narrow {
+    .fc-header-toolbar {
+      position: relative;
+    }
+    .fc-toolbar-chunk {
+      display: inline-block;
+      margin-top: 2em;
+    }
+    .fc-toolbar-chunk:nth-child(2) {
+      display: block;
+      position: absolute;
+      top: 0;
+      margin: 0;
+      h2 {
+        font-size: 150%;
+        white-space: nowrap;
+      }
+    }
+  }
+  .fc-toolbar-chunk {
+    h2 {
+      white-space: nowrap;
+    }
+  }
+
+  .pfy-popup-wrapper .pfy-popup-container {
+    padding-top: 0.5em;
+  }
+
+} // pfy-default-styling
+

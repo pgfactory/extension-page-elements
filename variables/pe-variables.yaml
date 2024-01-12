@@ -1,3 +1,6 @@
+pfy-cal-label-today:
+  de: 'Heute'
+  _:  'Today'
 
 # Tables
 
@@ -83,8 +86,8 @@ pfy-datatables-records:
   _:  'Records'
 
 pfy-table-data-output-header:
-  de: 'Empfangene Daten'
-  _:  'Received Data'
+  de: 'Empfangene Daten:'
+  _:  'Received Data:'
 
 pfy-row-edit-header:
   de: 'Edit'
@@ -116,6 +119,7 @@ pfy-alert-header:
 pfy-form-select-empty-option:
   de: '&lt; auswählen &gt;'
   _:  '&lt; select &gt;'
+
 pfy-noscript-warning:
   de: Ihr Browser lässt die Auführung von JavaScripts nicht zu. Deshalb wird dieses Formular nicht funktionieren.
   _:  Your browser does not permit javascripts. Thus, this form will not work.
@@ -239,6 +243,10 @@ pfy-confirmation-response-message:
     Best Regards
     The organisation team
 
+pfy-form-rec-deleted-confirmation:
+  de: 'Der Eintrag wurde gelöscht.'
+  _:  'The entry has been deleted.'
+
 
 # Deadline:
 pfy-form-deadline-expired:
@@ -285,7 +293,7 @@ pfy-form-timeout-alert:
   de: |
     <h2>Zeitüberschreitung</h2>
     <p>Dieses Formular war zu lange offen.<br>Sie riskieren Datenverlust, wenn Sie es jetzt absenden.</p>
-    <p>Bitte laden Sie die Seite neu, bevor du das Formular verwenden.</p>
+    <p>Bitte laden Sie die Seite neu, bevor Sie das Formular verwenden.</p>
   de2: |
     <h2>Zeitüberschreitung</h2>
     <p>Dieses Formular war zu lange offen.<br>Du riskierst Datenverlust, wenn du es jetzt absendest.</p>
