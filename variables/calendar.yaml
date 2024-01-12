@@ -44,6 +44,10 @@ pfy-cal-delete-entry-now:
     de: Löschen
     _:  Delete
 
+pfy-cal-end-before-start:
+    de: 'Fehler: Ereignisbeginn nach dessen Ende ist unmöglich.'
+    _:  'Error: event cannot end before it started.'
+
 pfy-cal-insufficient-permission:
     de: Sie haben keine Berechtigung, diesen Kalender zu verändern.
     de2: Du hast keine Berechtigung, diesen Kalender zu verändern.

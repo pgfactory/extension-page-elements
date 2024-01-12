@@ -281,6 +281,14 @@ EOT;
             }
         }
 
+        // check end before start:
+        if ($dataRec['start'] > $dataRec['end']) {
+            $res = [
+                'html' => '{{ pfy-cal-end-before-start }}',
+                'continueEval' => false,
+                'showDirectFeedback' => false
+            ];
+        }
 
         // prevent creator tampering:
         if (($res === true || $res['continueEval']) && !$dataRec['_reckey']) {
