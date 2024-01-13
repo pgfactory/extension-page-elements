@@ -679,9 +679,9 @@ pfy-login-code-button:
   de: Code absenden
   _:  Send Code
 
-pfy-back:
-  de: Zurück
-  _:  Go back
+pfy-login-remain-loggedin:
+  de: Abbrechen
+  _:  Cancel
 
 
 pfy-restricted-page:

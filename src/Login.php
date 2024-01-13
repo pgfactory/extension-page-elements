@@ -285,7 +285,7 @@ EOT;
         $html = <<<EOT
 <div class='pfy-already-logged-in'>
     <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
-    <p><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
+    <p><a class="pfy-button" href='./'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
 </div>
 EOT;
         return $html;
@@ -304,7 +304,7 @@ EOT;
 <div class='pfy-already-logged-in'>
     <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
     <div class="pfy-login-reset-pw"><a href="$urlChangePw">$labelChangePw</a></div>
-    <div class="pfy-login-button-row"><a class="pfy-button" href='./'>{{ pfy-back }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></div>
+    <div class="pfy-login-button-row"><a class="pfy-button" href='./'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></div>
 </div>
 EOT;
         return $html;
