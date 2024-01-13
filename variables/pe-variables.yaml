@@ -599,7 +599,7 @@ pfy-login-default:
   _:  Login with password
 
 pfy-login-with-otc:
-  de: 'Anmelden mit Zugangs-Code'
+  de: 'Anmelden mit Login Code'
   _:  Login with one-time-code
 
 pfy-login-reset-pw:
@@ -633,34 +633,34 @@ pfy-logged-in-as:
   _:  'You are logged in as '
 
 pfy-login-otc-info:
-  de: 'Sie können dieses Feld leer lassen. Dann senden wir Ihnen per E-Mail einen Zugangs-Code.'
-  de2: 'Du kannst dieses Feld leer lassen. Dann senden wir dir per E-Mail einen Zugangs-Code.'
-  _:  'You may leave this field empty. Then we will send you an e-mail containing an access code.'
+  de: 'Sie können dieses Feld leer lassen. Dann senden wir Ihnen per E-Mail einen Login Code.'
+  de2: 'Du kannst dieses Feld leer lassen. Dann senden wir dir per E-Mail einen Login Code.'
+  _:  'You may leave this field empty. Then we will send you an e-mail containing a login code.'
 
 pfy-login-passwordless-info:
   de: |
-    Wir werden Ihnen einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
-    &rarr; Wechseln Sie zu Ihrer E-Mail App und kopieren Sie den zugesendeten <strong>Zugangs-Code</strong> 
+    Wir werden Ihnen einen <strong>Login Code</strong> an diese E-Mail Adresse zusenden.</br>
+    &rarr; Wechseln Sie zu Ihrer E-Mail App und kopieren Sie den zugesendeten <strong>Login Code</strong> 
     in das hier folgende Eingabefeld.<br><br>
     <em>Achtung:Ihre E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
   de2: |
-    Wir werden dir einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
-    &rarr; Wechsele zu deiner E-Mail App und kopiere den zugesendeten <strong>Zugangs-Code</strong> in das 
+    Wir werden dir einen <strong>Login Code</strong> an diese E-Mail Adresse zusenden.</br>
+    &rarr; Wechsele zu deiner E-Mail App und kopiere den zugesendeten <strong>Login Code</strong> in das 
     hier folgende Eingabefeld.<br><br>
     <em>Achtung:Deine E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
   _:  |
-    We will send an <strong>access code</strong> to this e-mail address.<br>
-    &rarr; switch to your e-mail app and copy that <strong>access code</strong> to the input field opening up 
+    We will send a <strong>login code</strong> to this e-mail address.<br>
+    &rarr; switch to your e-mail app and copy that <strong>login code</strong> to the input field opening up 
     next.<br><br>
     <em>Note: use your e-mail address that has been registered with this website previously.</em>
 
 pfy-login-code-info:
   de: |
-    Geben Sie hier den <strong>Zugangs-Code</strong> ein, den wir Ihnen per E-Mail zugesendet haben.
+    Geben Sie hier den <strong>Login Code</strong> ein, den wir Ihnen per E-Mail zugesendet haben.
   de2: |
-    Gib hier den <strong>Zugangs-Code</strong> ein, den wir dir per E-Mail zugesendet haben.
+    Gib hier den <strong>Login Code</strong> ein, den wir dir per E-Mail zugesendet haben.
   _: |
-    Enter here the <strong>access code</strong> which we sent you by e-mail.
+    Enter here the <strong>login code</strong> which we sent you by e-mail.
 
 pfy-login-username-info:
   de: Ihre E-Mail Adresse oder Ihr Benutzername
@@ -690,13 +690,13 @@ pfy-restricted-page:
   _:   This page is not publicly accessible.<br>Please sign in to see the page.
 
 pfy-login-enter-code-header:
-  de: Zugangs-Code
-  _: Access Code
+  de: Login Code
+  _: Login Code
 
 pfy-login-enter-code-explanation:
-  de: 'Geben Sie den "Zugangs-Code" ein, den Sie demnächst per E-Mail erhalten werden:'
-  de2: 'Gib den "Zugangs-Code" ein, den du demnächst per E-Mail erhalten wirst:'
-  _:  'Enter the "Access Code" which you should receive by e‑mail any moment:'
+  de: 'Geben Sie den "Login Code" ein, den Sie demnächst per E-Mail erhalten werden:'
+  de2: 'Gib den "Login Code" ein, den du demnächst per E-Mail erhalten wirst:'
+  _:  'Enter the "login code" which you should receive by e‑mail any moment:'
 
 
 pfy-problem-with-login-banner:
@@ -724,8 +724,73 @@ pfy-problem-with-login-banner:
     %%%
 
 
+pfy-login-code-mail-body:
+  de: |
+    Hallo %user%,
+    
+    Sie haben kürzlich einen Login Code angefordert für die Website %url%.
+    Der folgende Login Code wird für die nächsten %timeout% Minuten gültig sein:
+    
+    %code%
 
+    Falls Sie keinen Login Code angefordert haben, können Sie diese E-Mail ignorieren.
+    Kontaktieren Sie den %webmaster%, wenn Sie Fragen haben.
+    Aus Sicherheitsgründen sollten Sie diese E-Mail bitte NICHT weiterleiten.
+  de2: |
+    Hallo %user%,
+    
+    Du hast kürzlich einen Login Code angefordert für die Website %url%.
+    Der folgende Login Code wird für die nächsten %timeout% Minuten gültig sein:
+    
+    %code%
 
+    Falls du keinen Login Code angefordert hast, kannst du diese E-Mail ignorieren.
+    Kontaktiere den %webmaster%, wenn du Fragen hast.
+    Aus Sicherheitsgründen solltest du diese E-Mail bitte NICHT weiterleiten.
+  _:  |
+    Hi %user%,
+    
+    You recently requested a login code for the website %url%.
+    The following login code will be valid for %timeout% minutes:
+    
+    %code%
+    
+    If you did not request a login code, please ignore this email or contact your administrator if you have questions.
+    For security, please DO NOT forward this email.
+
+pfy-login-pw-reset-mail-body:
+  de: |
+    Hallo %user%,
+    
+    Sie haben kürzlich einen Passwort Reset angefordert für die Website %url%.
+    Der folgende Passwort Reset Code wird für die nächsten %timeout% Minuten gültig sein:
+    
+    %code%
+
+    Falls Sie keinen Passwort Reset angefordert haben, können Sie diese E-Mail ignorieren.
+    Kontaktieren Sie den %webmaster%, wenn Sie Fragen haben.
+    Aus Sicherheitsgründen sollten Sie diese E-Mail bitte NICHT weiterleiten.
+  de2: |
+    Hallo %user%,
+    
+    Du hast kürzlich einen Passwort Reset angefordert für die Website %url%.
+    Der folgende Passwort Reset Code wird für die nächsten %timeout% Minuten gültig sein:
+    
+    %code%
+
+    Falls du keinen Passwort Reset angefordert hast, kannst du diese E-Mail ignorieren.
+    Kontaktiere den %webmaster%, wenn du Fragen hast.
+    Aus Sicherheitsgründen solltest du diese E-Mail bitte NICHT weiterleiten.
+  _:  |
+    Hi %user%,
+    
+    You recently requested a password reset code for the website %url%.
+    The following password reset code will be valid for %timeout% minutes:
+    
+    %code%
+    
+    If you did not request a password reset code, please ignore this email or contact your administrator if you have questions.
+    For security, please DO NOT forward this email.
 
 # === Events ==========================================
 

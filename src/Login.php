@@ -204,11 +204,11 @@ EOT;
             try {
                 kirby()->auth()->verifyChallenge($code);
                 $str = self::renderMsg('pfy-login-success');
-                mylog("Access code '$code' successfully verified", LOGIN_LOG_FILE);
+                mylog("Login Code '$code' successfully verified", LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, $str);
 
             } catch (\Exception $e) {
-                mylog("Access code '$code' failed");
+                mylog("Login Code '$code' failed");
                 reloadAgent(self::$nextPage, '{{ pfy-login-failed }}', LOGIN_LOG_FILE);
             }
 
@@ -233,10 +233,10 @@ EOT;
                     $status = kirby()->auth()->createChallenge($email, mode: 'login');
                     if ($status->status() === 'pending') {
                         self::$challengePending = true;
-                        mylog("Access code sent to '$email'", LOGIN_LOG_FILE);
+                        mylog("Login Code sent to '$email'", LOGIN_LOG_FILE);
                     }
                 } catch (\Exception $e) {
-                    mylog("Sending access code to '$email' failed", LOGIN_LOG_FILE);
+                    mylog("Sending login code to '$email' failed", LOGIN_LOG_FILE);
                     reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
                 }
             }
