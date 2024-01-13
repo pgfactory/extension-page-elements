@@ -65,10 +65,12 @@ class Login
                     $wrapperClass = 'pfy-login-unpw';
                     break;
                 case 'passwordless':
+                    self::checkCodeLoginEnabled();
                     $html = self::renderCombinedLoginForm($message);
                     $wrapperClass = 'pfy-login-otc';
                     break;
                 default: // 'combined login'
+                    self::checkCodeLoginEnabled();
                     $html = self::renderCombinedLoginForm($message);
                     $wrapperClass = 'pfy-login-unpw';
                     break;
@@ -195,6 +197,7 @@ EOT;
      * Callback invoked from PfyForm, when login form gets evaluated.
      * @param array $data
      * @return string|false
+     * @throws \Exception
      */
     private static function loginCallback(array $data): string|bool
     {
@@ -203,7 +206,8 @@ EOT;
             // 'code' received -> validate:
             try {
                 kirby()->auth()->verifyChallenge($code);
-                $str = self::renderMsg('pfy-login-success');
+                $email = self::getUsersEmail($data);
+                $str = self::renderMsg('pfy-login-success', $email);
                 mylog("Login Code '$code' successfully verified", LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, $str);
 
@@ -306,4 +310,13 @@ EOT;
         return $html;
     } // renderAccountAdminForm
 
+
+    private static function checkCodeLoginEnabled(): void
+    {
+        $authMethods = kirby()->option('auth.methods');
+        $codeLoginEnabled = (is_array($authMethods) && in_array('code', $authMethods));
+        if (!$codeLoginEnabled) {
+            throw new \Exception('Error: "code login" not enabled, please add "auth"-options to config.php');
+        }
+    } // checkCodeLoginEnabled
 } // Login
