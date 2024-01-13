@@ -676,20 +676,20 @@ pfy-back:
   _:  Go back
 
 
+pfy-restricted-page:
+  de:  Diese Seite ist nicht allgemein zugänglich.<br>Melden Sie sich bitte an.
+  de2: Diese Seite ist nicht allgemein zugänglich.<br>Melde dich bitte an.
+  _:   This page is not publicly accessible.<br>Please sign in to see the page.
+
 pfy-login-enter-code-header:
   de: Zugangs-Code
   _: Access Code
 
 pfy-login-enter-code-explanation:
-  de: 'Zugangs-Code, den Sie demnächst per E-Mail erhalten werden:'
-  de2: 'Zugangs-Code, den du demnächst per E-Mail erhalten wirst:'
-  _:  'Access Code which you should receive any moment by e-mail:'
+  de: 'Geben Sie den "Zugangs-Code" ein, den Sie demnächst per E-Mail erhalten werden:'
+  de2: 'Gib den "Zugangs-Code" ein, den du demnächst per E-Mail erhalten wirst:'
+  _:  'Enter the "Access Code" which you should receive by e‑mail any moment:'
 
-
-pfy-restricted-page:
-  de: Diese Seite ist nicht allgemein zugänglich.<br>Melden Sie sich bitte zuerst an.
-  de2: Diese Seite ist nicht allgemein zugänglich.<br>Melde dich bitte zuerst an.
-  _:   This page is not publicly accessible.<br>Please sign in to see the page.
 
 
 

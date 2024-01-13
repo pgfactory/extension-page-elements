@@ -63,7 +63,7 @@ columns:
         type: text
         icon: instagram
         placeholder: username
-      accesskey:
-        label: AccessKey
+      accesscode:
+        label: AccessCode
         type: text
         width: 1/4

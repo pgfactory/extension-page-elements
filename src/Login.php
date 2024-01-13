@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
@@ -108,7 +109,7 @@ EOT;
             'class'              => 'pfy-form-colored',
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
-            'formTop'            => $message,
+            'formTop'            => "<span class='pfy-login-otc-unpw'>$message</span>",
         ];
 
         $formOptions['formTop']  .= '<span class="pfy-login-code">{{ pfy-login-enter-code-explanation }}</span>';
@@ -195,10 +196,7 @@ EOT;
      */
     private static function loginCallback(array $data): string|bool
     {
-        $email = self::getUsersEmail($data);
-        $password = $data['password']??false;
         $code = $data['code']??false;
-
         if ($code) {
             // 'code' received -> validate:
             try {
@@ -212,29 +210,33 @@ EOT;
                 reloadAgent(self::$nextPage, '{{ pfy-login-failed }}', LOGIN_LOG_FILE);
             }
 
-        } elseif ($password) {
-            // 'password' received -> validate:
-            try {
-                kirby()->auth()->login($email, $password);
-                $str = self::renderMsg('pfy-login-success', $email);
-                mylog("$email successfully logged in", LOGIN_LOG_FILE);
-                reloadAgent(self::$nextPage, $str);
+        } elseif ($email = self::getUsersEmail($data)) {
+            if ($password = ($data['password'] ?? false)) {
+                // 'password' received -> validate:
+                try {
+                    // verify credentials:
+                    $email = self::getUsersEmail($data);
+                    kirby()->auth()->login($email, $password);
+                    $str = self::renderMsg('pfy-login-success', $email);
+                    mylog("$email successfully logged in", LOGIN_LOG_FILE);
+                    reloadAgent(self::$nextPage, $str);
 
-            } catch (\Exception $e) {
-                mylog("$email login failed", LOGIN_LOG_FILE);
-                reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
-            }
-
-        } else {
-            try {
-                $status = kirby()->auth()->createChallenge($email, mode: 'login');
-                if ($status->status() === 'pending') {
-                    self::$challengePending = true;
-                    mylog("Access code sent to '$email'", LOGIN_LOG_FILE);
+                } catch (\Exception $e) {
+                    mylog("$email login failed", LOGIN_LOG_FILE);
+                    reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
                 }
-            } catch (\Exception $e) {
-                mylog("Sending access code to '$email' failed", LOGIN_LOG_FILE);
-                reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
+
+            } else {
+                try {
+                    $status = kirby()->auth()->createChallenge($email, mode: 'login');
+                    if ($status->status() === 'pending') {
+                        self::$challengePending = true;
+                        mylog("Access code sent to '$email'", LOGIN_LOG_FILE);
+                    }
+                } catch (\Exception $e) {
+                    mylog("Sending access code to '$email' failed", LOGIN_LOG_FILE);
+                    reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
+                }
             }
         }
         return false;
@@ -261,20 +263,10 @@ EOT;
      */
     private static function getUsersEmail(array $data): string|false
     {
-        if (!$email = ($data['email']??false)) {
-            return false;
+        if ($email = ($data['email']??false)) {
+            return Permission::findUsersEmail($email);
         }
-        if (!str_contains($email, '@')) {
-            $users = kirby()->users();
-            foreach ($users as $user) {
-                $name = $user->name()->value();
-                if ($name === $email) {
-                    $email = $user->email();
-                    break;
-                }
-            }
-        }
-        return $email;
+        return false;
     } // getUsersEmail
 
 
