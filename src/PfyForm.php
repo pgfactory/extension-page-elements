@@ -1677,10 +1677,13 @@ EOT;
     protected function renderProblemWithFormBanner(): string
     {
         $html = '';
-        if ($this->formOptions['problemWithFormBanner'] ?? false) {
-            $banner = TransVars::getVariable('pfy-problem-with-form-banner');
-            $banner = markdown($banner);
-            $html .= "\n$banner\n";
+        if ($text = ($this->formOptions['problemWithFormBanner'] ?? false)) {
+            $var = ($text === true)? 'pfy-problem-with-form-banner' : $text;
+            $banner = TransVars::getVariable($var);
+            if ($banner) {
+                $banner = markdown($banner);
+                $html .= "\n$banner\n";
+            }
         }
         return $html;
     } // renderProblemWithFormBanner

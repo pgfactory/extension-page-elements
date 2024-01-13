@@ -110,6 +110,7 @@ EOT;
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => "<span class='pfy-login-otc-unpw'>$message</span>",
+            'problemWithFormBanner' => 'pfy-problem-with-login-banner',
         ];
 
         $formOptions['formTop']  .= '<span class="pfy-login-code">{{ pfy-login-enter-code-explanation }}</span>';

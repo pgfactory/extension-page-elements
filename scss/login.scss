@@ -30,13 +30,6 @@
     }
 
     --pfy-form-label-width: 8em;
-    > div {
-      padding: 1em 3em;
-      border: 1px solid #ddd;
-    }
-    .pfy-form {
-      width: 23em;
-    }
     .pfy-login-mode-links {
       font-size: 86%;
       span {
@@ -67,6 +60,18 @@
     }
     .pfy-cancel {
       margin-right: 0.3em;
+    }
+  }
+
+  &.pfy-large-screen {
+    .pfy-form {
+      width: 23em;
+    }
+    .pfy-login-wrapper {
+      > div {
+        padding: 1em 3em;
+        border: 1px solid #ddd;
+      }
     }
   }
 
