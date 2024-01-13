@@ -640,19 +640,27 @@ pfy-login-otc-info:
 pfy-login-passwordless-info:
   de: |
     Wir werden Ihnen einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
-    &rarr; Wechseln Sie zu Ihrer E-Mail App und kopieren Sie den zugesandten Code ins Eingabefeld auf der 
-    folgenden Seite.<br><br>
+    &rarr; Wechseln Sie zu Ihrer E-Mail App und kopieren Sie den zugesendeten <strong>Zugangs-Code</strong> 
+    in das hier folgende Eingabefeld.<br><br>
     <em>Achtung:Ihre E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
   de2: |
     Wir werden dir einen <strong>Zugangs-Code</strong> an diese E-Mail Adresse zusenden.</br>
-    &rarr; Wechsele zu deiner E-Mail App und kopiere den zugesandten Code ins Eingabefeld auf der 
-    folgenden Seite.<br><br>
+    &rarr; Wechsele zu deiner E-Mail App und kopiere den zugesendeten <strong>Zugangs-Code</strong> in das 
+    hier folgende Eingabefeld.<br><br>
     <em>Achtung:Deine E-Mail Adresse muss vorgängig bei uns registriert worden sein.</em>
   _:  |
     We will send an <strong>access code</strong> to this e-mail address.<br>
-    &rarr; switch to your e-mail app and copy that code to the input field opening up in this page next.<br><br>
+    &rarr; switch to your e-mail app and copy that <strong>access code</strong> to the input field opening up 
+    next.<br><br>
     <em>Note: use your e-mail address that has been registered with this website previously.</em>
 
+pfy-login-code-info:
+  de: |
+    Geben Sie hier den <strong>Zugangs-Code</strong> ein, den wir Ihnen per E-Mail zugesendet haben.
+  de2: |
+    Gib hier den <strong>Zugangs-Code</strong> ein, den wir dir per E-Mail zugesendet haben.
+  _: |
+    Enter here the <strong>access code</strong> which we sent you by e-mail.
 
 pfy-login-username-info:
   de: Ihre E-Mail Adresse oder Ihr Benutzername
@@ -696,13 +704,23 @@ pfy-problem-with-login-banner:
     %%% .pfy-problem-with-form-hint.pfy-screen-only
     Problem mit dem Login?
 
+    %%%% .pfy-login-code
+    → bitte **Spam-Ordner** prüfen.<br>
+    Dann den {{ webmaster_link }} benachrichtigen. Danke.
+    %%%% .pfy-login-both
     → bitte den {{ webmaster_link }} benachrichtigen. Danke.
+    %%%%
     %%%
   _: |
     %%% .pfy-problem-with-form-hint.pfy-screen-only
     Problems with login?
 
+    %%%% .pfy-login-code
+    → Please check your **Spam folder**.<br>
+    Then contact the {{ webmaster_link }}. Thank you.
+    %%%% .pfy-login-both
     → Please contact the {{ webmaster_link }}. Thank you.
+    %%%%
     %%%
 
 

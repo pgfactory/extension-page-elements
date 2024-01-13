@@ -122,13 +122,14 @@ EOT;
         $labelLoginPwLess = '{{ pfy-login-with-otc }}';
         $infoEmail  = '<span class="pfy-login-unpw">{{ pfy-login-username-info }}</span>';
         $infoEmail .= '<span class="pfy-login-otc">{{ pfy-login-passwordless-info }}</span>';
+        $infoOnCode  = '<span class="pfy-login-code">{{ pfy-login-code-info }}</span>';
 
         $labelLoginUnPw = '{{ pfy-login-default }}';
 
         $formElements = [
             'email'     => ['label' => '{{ pfy-login-email }}:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
             'password'  => ['label' => '{{ pfy-login-password }}:', 'name' => 'pfy-login-password', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
-            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfy-login-code',      'class' => 'pfy-login-code'],
+            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfy-login-code', 'info' => $infoOnCode, 'class' => 'pfy-login-code'],
             'cancel'    => ['next' => self::$nextPage],
             'subm-unpw' => ['type' => 'submit', 'label' => '{{ pfy-login-button }}', 'class' => 'pfy-login-unpw'],
             'subm-otc'  => ['type' => 'submit', 'label' => '{{ pfy-login-pwless-button }}', 'class' => 'pfy-login-otc'],
