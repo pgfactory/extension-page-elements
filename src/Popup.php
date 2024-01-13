@@ -7,7 +7,7 @@ class Popup extends PageElements
 {
     public static $inx = 1;
 
-    public function render($msg, $mdCompile)
+    public function render(string $msg, string $header = '&nbsp;', bool $mdCompile = false): string
     {
         $html = '';
         if ($msg) {
@@ -19,8 +19,8 @@ class Popup extends PageElements
             }
 
             $inx = self::$inx++;
-            $html = "\t\t<div id='pfy-popup-$inx' class='pfy-popup'>$msg</div>\n";
-            $jq = "pfyPopup({contentFrom: '#pfy-popup-$inx', header:'&nbsp;', draggable: true})";
+            $html = "\t\t<div class='pfy-popup-src pfy-popup-src-$inx'><div class='pfy-popup'>$msg</div></div>\n";
+            $jq = "pfyPopup({contentFrom: '.pfy-popup-src-$inx .pfy-popup', header:'$header', draggable: true})";
             $this->pg->addJq($jq);
             $this->addAssets('POPUPS');
         }
@@ -29,9 +29,9 @@ class Popup extends PageElements
 
 
 
-    public function set(string $str, $mdCompile = false): void
+    public function set(string $str, string $header, $mdCompile = false): void
     {
-        $str = $this->render($str, $mdCompile);
+        $str = $this->render($str, $header, $mdCompile);
         $this->pg->addBodyEndInjections($str);
     } // set
 
