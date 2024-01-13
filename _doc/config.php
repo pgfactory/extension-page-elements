@@ -1,4 +1,6 @@
 
+// 'auth.challenge.email.from' => 'webmaster@domain.net',
+
     'pgfactory.pagefactory-elements.options' => [
         'allowChangePassword' => true,
 //        'initCode' => 'init.php',         // run init code in site/custom/code/
