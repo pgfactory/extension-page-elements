@@ -36,4 +36,13 @@ window.addEventListener("load", (event) => {
     });
   }
 
+  // auto-focus on input field:
+  const loginWrapper = document.querySelector('.pfy-login-wrapper');
+  if (loginWrapper) {
+    setTimeout(function () {
+      const input = loginWrapper.querySelector('input[name=email]');
+      input.focus();
+    }, 50);
+  }
+
 });
