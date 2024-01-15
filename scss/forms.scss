@@ -38,7 +38,7 @@
 $inputHeight:           var(--pfy-form-input-height, 2.2em);
 $shortWidth:            var(--pfy-form-input-medium-width, 4em);
 $mediumWidth:           var(--pfy-form-input-medium-width, 10em);
-$choiceOptionWidth:     var(--pfy-form-choice-option-width, 6em);
+$choiceOptionWidth:     var(--pfy-form-choice-option-width, 5.8em);
 $labelWidth:            var(--pfy-form-label-width, 6em);
 $reversedLabelWidth:    var(--pfy-form-reversed-label-width, 12em);
 $inputWidth:            var(--pfy-form-input-width, 22em);
@@ -166,7 +166,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-input-wrapper {
-    width: calc(100% - #{$labelWidth} - 0.25em);
+    width: calc(100% - #{$labelWidth} - 0.3em);
+    // width: calc(100% - #{$labelWidth} - 0.25em);
     max-width: $inputWidth;
 
     input, textarea {
@@ -406,11 +407,16 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     padding-right: 1em;
   }
 
+
+  // === large screen ========================================
   &.pfy-large-screen {
     .pfy-elem-wrapper.button {
       margin-right: 3px;
     }
   }
+
+
+  // === small screen ========================================
   &.pfy-small-screen {
     .pfy-form {
       .pfy-elem-wrapper:not(.short) {
@@ -423,13 +429,25 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
           width: 100%;
         }
       }
+      .pfy-elem-wrapper.pfy-choice .pfy-choice-wrapper {
+        input {
+          width: 1em;
+        }
+        label {
+          width: calc(100% - 1.5em);
+        }
+
+      }
+    
       .pfy-submit .pfy-input-wrapper {
         input.button {
           max-width: 49%;
         }
       }
     }
-  }
+  } // pfy-small-screen
+
+
 
   .pfy-input-wrapper {
     label {
