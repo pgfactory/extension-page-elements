@@ -3,9 +3,11 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Link;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\shieldStr;
 use function PgFactory\PageFactory\mylog;
@@ -104,6 +106,10 @@ EOT;
      */
     private static function renderCombinedLoginForm(string $message = ''): string
     {
+        // get required var defined:
+        if (!TransVars::getVariable('pfy-webmaster-link')) {
+            Utils::prepareStandardVariables();
+        }
 
         $formOptions = [
             'action'             => self::$selfLink,
@@ -148,6 +154,7 @@ EOT;
         // now render the form:
         $form = new PfyForm($formOptions);
         $html = $form->renderForm($formElements);
+
         $html = $loginHeader."\n$html";
         return $html;
     } // renderCombinedLoginForm
