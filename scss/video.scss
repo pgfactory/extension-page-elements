@@ -1,0 +1,13 @@
+
+// === Video ===========================================
+#pfy.pfy-default-styling ,
+.pfy-default-styling {
+
+  .pfy-video-wrapper video {
+    max-width: -webkit-fill-available;
+    max-height: inherit;
+    height: auto;
+  }
+}
+
+
