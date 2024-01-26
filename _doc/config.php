@@ -2,7 +2,7 @@
 // 'auth.challenge.email.from' => 'webmaster@domain.net',
 
     'pgfactory.pagefactory-elements.options' => [
-        'allowChangePassword' => true,
+//        'allowChangePassword' => true,
 //        'initCode' => 'init.php',         // run init code in site/custom/code/
 //        'login-mode' => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
 //        'activatePresentationSupport' => true,
