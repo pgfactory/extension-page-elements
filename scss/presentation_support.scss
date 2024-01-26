@@ -20,7 +20,10 @@ $headerBgColor:   var(--pfy-presi-header-bg-color, #eee);
 $bodyTextColor: var(--pfy-presi-body-txt-color, black);
 $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
 
-.pfy-presentation-support:not(.pfy-small-screen) {
+
+
+
+.pfy-default-styling.pfy-presentation-active:not(.pfy-small-screen) {
 // === Debug ====================
 /*
   &.debug {
@@ -46,11 +49,12 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     }
   }
 */
+
   .web-mode-only {
     display: none;
   }
   .pfy-presentation-only {
-    display: unset!important;
+    display: unset;
   }
 
   // body:
@@ -107,7 +111,7 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     max-height: calc( 100vh - #{$headerHeight} - #{$sectionPaddingBottom} );
 
     color:      $bodyTextColor;
-    background: $bodyBgColor;
+//    background: $bodyBgColor;
   }
 
 
@@ -126,43 +130,35 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     }
     > .pfy-section-inner {
       height: 100%;
-      display: flex;
-      flex-direction: column;
+//      display: flex;
+//      flex-direction: column;
     }
   } // .pfy-presentation-section
 
 
   // === layout ========================================
+  .flex-cols,
   .cols {
     display: flex;
     align-items: stretch;
     gap: 1rem;
     height: -webkit-fill-available;
+    .col {
+      //outline: 1px dotted red;
+      outline-offset: -1px;
+      height: inherit;
+      width: 50%;
+    }
   }
   .col {
-    //outline: 1px dotted red;
-    outline-offset: -1px;
-    height: inherit;
-    width: 50%;
-  }
-
-  .pfy-slide-body {
-    height: -webkit-fill-available;
-    &.pfy-centered {
-      display: flex;
-      > div {
-        margin: auto;
-      }
-    }
+    display: inline-block;
+    width: calc(50% - 0.3em);
+    vertical-align: top;
   }
 
   .centered,
   .pfy-centered {
-    display: flex;
-    height: 100%;
-    > div {
-      margin: auto;
-    }
+    margin: 0 auto;
   }
 
 
@@ -179,8 +175,8 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
   }
 
   .pfy-flex-centered {
+    display: flex;
     justify-content: center;
-//    align-items: center; // -> killt Hoehenbegrenzung des Img...
   }
   .pfy-flex-right {
     justify-content: flex-end;
@@ -189,44 +185,20 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
   // === Images ===============================
   .pfy-img-wrapper {
     max-width: 100%;
-    max-height: 100%;
+    max-height: calc( #{$height} - #{$headerHeight} - 13vw);
     img {
       max-width: inherit;
       max-height: inherit;
     }
-  }
+  } // pfy-img-wrapper
 
 
   .pfy-figure {
     height: calc(100% - var(--pfy-caption-font-size, 1rem) - 0.7rem);
-    //height: calc(100% - 1.7rem);
     figcaption {
       font-size: var(--pfy-caption-font-size, 1rem);
     }
   }
-
-
-  //.pfy-img-wrapper {
-  //  //width: fit-content;
-  //  //height: fit-content;
-  //  //max-width: 100%;
-  //  //max-height: 100%;
-  //  //margin: auto auto;
-  //  figcaption {
-  //    font-size: 1rem;
-  //    display: block;
-  //  }
-  //  img {
-  //    max-width: fit-content;
-  //    max-height: 100%;
-  //  }
-  //}
-  //figure.pfy-img-wrapper {
-  //  img {
-  //    max-width: fit-content;
-  //    max-height: calc(100% - 1rem);
-  //  }
-  //}
 
 
 
@@ -260,11 +232,6 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
         opacity: 0;
       }
     }
-
-    //.pfy-elem-visible:not(.pfy-current-element) {
-    //  opacity: 0.5;
-    //}
-
   } // section
 
 
@@ -288,22 +255,10 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
       line-height: 1.15em;
     }
   }
-  //.pfy-img {
-  //  max-width: 90%;
-  //}
 
   .hl {
     color: red;
   }
-  //pre code,
-  //pre,
-  //code {
-  //  color: navy;
-  //}
-  //samp {
-  //  background: unset;
-  //}
-
 
   // === Screen Off '.'========================
   transition: background 0.3s, blur 0.3s, brightness 0.3s;
@@ -313,26 +268,27 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     transition: background 0.3s, blur 0.3s, brightness 0.3s;
   }
 
-  // === Option/Alt key pressed -> allow selecting text:
-  &:not(.pfy-selectable) {
-    user-select: none;
-  }
 
 
+  .pfy-slide-nr {
+    font-size: 60%;
+    font-weight: normal;
+    color: gray;
+    margin-right: 0.5em;
+    border-bottom: none;
+  }
 
-  // === page numbers ===============
-  #page-nr-wrapper {
-    position: absolute;
-    bottom: 0.25em;
-    right: 0.25em;
-    font-size: 1.2vmin;
-    color:      $bodyTextColor;
+  .pfy-toc > ol > li {
+    list-style-type: none;
   }
-  #page-nr-wrapper {
-    #pfy-slide-nr::before {
-      content: ".";
-    }
+
+  // === Speaker Notes ==========================
+  .notes,
+  .speaker-notes,
+  .pfy-speaker-notes {
+    display: none;
   }
+
 
   // === Content to hide during presentation: ====
   .pfy-footer,
@@ -424,13 +380,13 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
     animation-duration: 2s;
   }
 
-} // .pfy-presentation-support
+} // .pfy-presentation-active
 
 
 
 
 @media print {
-  .pfy-presentation-support {
+  .pfy-default-styling.pfy-presentation-active {
     .pfy-next-prev-page-links,
     .invisible,
     .skiplinks,
@@ -453,8 +409,8 @@ $bodyBgColor:   var(--pfy-presi-body-bg-color, white);
       opacity: 1 !important;
       display: initial;
     }
-  }
-}
+  } // .pfy-presentation-active
+} // print
 
 
 

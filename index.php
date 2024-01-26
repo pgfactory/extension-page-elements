@@ -39,6 +39,11 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
                     require_once __DIR__ . "/src/AjaxHandler.php";
                     AjaxHandler::exec($result);
                 }
+
+            } elseif (str_ends_with($path, 'presentation_speaker_notes')) {
+                // render speaker notes without Pagefactory overhead:
+                $html = file_get_contents('site/plugins/pagefactory-pageelements/aux/presentation_speaker_notes.html');
+                exit($html);
             }
             return $result;
         }

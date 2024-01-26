@@ -7,6 +7,7 @@
 //        'login-mode' => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
 //        'activatePresentationSupport' => true,
 //        'presentationAutoSizing'      => true,
+//        'autoSlideNumbering'          => true, // false, true or 'toc' (= first slide per page is TOC)
 //        'presentationDefaultSize'     => '1.8vw',
     ],
 

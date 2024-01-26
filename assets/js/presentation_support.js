@@ -12,9 +12,11 @@ const debug = false; //document.body.classList.contains('debug');
 function PfyPresentationSupport() {
   this.currentSlide = 1;
   this.nSections = 0;
+  this.nElements = 0;
   this.mouseTimer = 0;
-  this.$slideNr = null;
   this.mainHavail = 0;
+  this.moved = false;
+  this.speakerWindow;
 
   this.init = function () {
     if (!document.querySelector('.pfy-large-screen')) {
@@ -32,10 +34,17 @@ function PfyPresentationSupport() {
     }
 
     this.preparePresentation();
+    if (!presentationActive) {
+      return;
+    }
+    this.openSpeakerNotes();
     this.initPresiElements();
     this.initEventHandlers();
     this.resizeSections();
-    this.revealPresentationElement();
+    const parent = this;
+    setTimeout(function () {
+      parent.revealPresentationElement();
+    }, 500);
   }; // init
 
 
@@ -48,18 +57,6 @@ function PfyPresentationSupport() {
     cursorMark.setAttribute('id', 'pfy-cursor-click-highlighter');
     cursorMark.style.display =  'none';
     document.body.appendChild(cursorMark);
-
-    // inject page/slide nr elements:
-    const currPgNrElem = document.querySelector('[data-currpagenr]');
-    const currPageNr = currPgNrElem ? currPgNrElem.dataset.currpagenr : '';
-    const pageNrElem = document.createElement('div');
-    pageNrElem.setAttribute('id', 'page-nr-wrapper');
-    pageNrElem.classList.add('presentation-only');
-    pageNrElem.innerHTML  = '<span id="pfy-page-nr">' + currPageNr + '</span><span id="pfy-slide-nr">1</span>';
-    const pfyPage = document.querySelector('.pfy-page');
-    pfyPage.appendChild(pageNrElem);
-    this.$slideNr = document.getElementById('pfy-slide-nr');
-
   }; // preparePresentation
 
 
@@ -74,8 +71,9 @@ function PfyPresentationSupport() {
     this.nSections = sections.length;
     mylog('Presentation support -> sections: ' + this.nSections);
 
-    var i = 1;
+    var i = 0;
     var elInx = 1;
+    const parent = this;
 
     // loop over presentation-sections:
     sections.forEach(function (section) {
@@ -96,15 +94,15 @@ function PfyPresentationSupport() {
           }
         });
       }
-      // mylog('Section ' + i + ': elements: ' + nElements);
       i++;
     });
+    this.nElements = elInx-1;
   }; // initPresiElements
 
 
   this.initEventHandlers = function () {
     const parent = this;
-    const body = document.querySelector('.pfy-presentation-support');
+    const body = document.querySelector('.pfy-presentation-active');
 
     const prevPageLink = document.querySelector('.pfy-previous-page-link a');
     if (prevPageLink) {
@@ -190,17 +188,6 @@ function PfyPresentationSupport() {
         e.stopPropagation();
         e.stopImmediatePropagation();
         document.body.classList.toggle('pfy-screen-off');
-
-      } else if (keycode === 'Alt') {
-        // make page selectable while Option key is pressed:
-        document.body.classList.add('pfy-selectable');
-      }
-    });
-
-    document.body.addEventListener('keyup', function (e) {
-      // stop selectable when Option key is released:
-      if (e.key === 'Alt') {
-        document.body.classList.remove('pfy-selectable');
       }
     });
   }; // initKeyHandlers
@@ -208,26 +195,27 @@ function PfyPresentationSupport() {
 
   this.revealPresentationElement = function (which) {
     // figure out which element to show next:
-    var currentSlideNr = this.determineNext(which);
+    const currentSlideNr = this.determineNext(which);
     if (!currentSlideNr) {
       return false;
     }
     mylog('revealing ' + currentSlideNr);
 
     // hide all sections:
-    var elements = document.querySelectorAll('.pfy-presentation-element');
+    const elements = document.querySelectorAll('.pfy-presentation-element');
+    if (elements) {
+      elements.forEach(function (element) {
+        element.classList.remove('pfy-elem-visible', 'pfy-current-element');
+      });
+    }
 
-    elements.forEach(function (element) {
-      element.classList.remove('pfy-elem-visible', 'pfy-current-element');
-    });
-
-    var currElement = document.querySelector('.pfy-presentation-element-' + currentSlideNr);
+    const currElement = document.querySelector('.pfy-presentation-element-' + currentSlideNr);
     if (!currElement) {
       return;
     }
-    var currSection = currElement.closest('.pfy-presentation-section');
-    var m = currSection.className.match(/pfy-presentation-element-(\d+)/);
-    var currSectionNr = m[1];
+    const currSection = currElement.closest('.pfy-presentation-section');
+    const m = currSection.className.match(/pfy-presentation-element-(\d+)/);
+    const currSectionNr = m[1];
 
     // inject page and slide numbers:
     const pageNrElem = currSection.querySelector('.pfy-page-index');
@@ -244,13 +232,63 @@ function PfyPresentationSupport() {
     // make current element and surrounding section visible:
     currSection.classList.add('pfy-elem-visible');
     currElement.classList.add('pfy-elem-visible', 'pfy-current-element');
+    this.sendSpeakerNotes(currSection, currElement);
+
+    // set browser address:
+    const h1Elem = currSection.querySelector('h1');
+    const sectionNr = h1Elem.getAttribute('id');
+    if (!sectionNr) {
+      return;
+    }
+    const slideNr = (i - currSectionNr + 1);
+    const url = window.location.href.replace(/#.*/, '');
+    let hash = '';
+    if (slideNr === 0) {
+      hash = '#' + sectionNr;
+    } else {
+      hash = '#' + sectionNr + '.' + slideNr;
+    }
+    window.history.replaceState({}, '', url + hash);
   }; // revealPresentationElement
 
 
   this.determineNext = function (which) {
     if (typeof which === 'undefined') {
       if (window.location.hash) {
-        this.currentSlide = parseInt(window.location.hash.substring(1)) + 1;
+        this.currentSlide = 0;
+        const hash = window.location.hash;
+        if (hash === '#-1') {
+          this.currentSlide = this.nElements;
+          const url = window.location.href.replace(/#.*/, '');
+          window.history.replaceState({}, '', url);
+          return this.currentSlide;
+        }
+        let  id;
+        let  subInx = false;
+
+        // check for pattern url#x.y:
+        const m = hash.match(/#(\d+)(\.(\d+))?/);
+        if (m) {
+          id = m[1];
+          subInx = parseInt(m[3]) - 1;
+        } else {
+          id = hash.substring(1);
+        }
+
+        const aElem = document.getElementById(id);
+        if (aElem) {
+          const parentSection = aElem.closest('.pfy-section-wrapper');
+          if (parentSection) {
+            const styles = parentSection.classList.value;
+            const m = styles.match(/pfy-presentation-element-(\d+)/);
+            if (m[1]) {
+              this.currentSlide = parseInt(m[1]);
+              if (subInx) { // add optional sub-index
+                this.currentSlide += subInx;
+              }
+            }
+          }
+        }
         if (this.currentSlide < 1) {
           mylog('Error: unknown element number: ' + this.currentSlide);
           return false;
@@ -258,6 +296,8 @@ function PfyPresentationSupport() {
       } else {
         this.currentSlide = 1;
       }
+
+    // case move to next:
     } else if (which > 0) {
       // next
       this.currentSlide++;
@@ -274,15 +314,17 @@ function PfyPresentationSupport() {
           this.currentSlide--;
         }
       }
+
+    // case move to prev:
     } else if (which < 0) {
       // previous
       this.currentSlide--;
       if (this.currentSlide <= 0) {
         const prevLink = document.querySelector('.pfy-previous-page-link a');
         if (prevLink) {
-          var url = prevLink.getAttribute('href');
+          const url = prevLink.getAttribute('href') + '#-1';
           mylog('go to prev page: ' + url);
-          pfyReloadPost(url, {pfySlideElem: -1});
+          window.location.href = url;
         } else {
           beep(50, 200, 20);
           this.currentSlide++;
@@ -290,7 +332,6 @@ function PfyPresentationSupport() {
         return false;
       }
     }
-    this.$slideNr.textContent = this.currentSlide-1;
     return this.currentSlide;
   }; // determineNext
 
@@ -349,9 +390,12 @@ function PfyPresentationSupport() {
 
 
   this.doResizeSection = function (section) {
+    const title = section.querySelector('h1');
+    let startFSize = presentationMaxFSize;
     // check whether section already has a font-size applied:
     if (section.style.fontSize) {
-      return;
+      startFSize = section.style.fontSize;
+      startFSize = parseInt(startFSize.replace(/\D/g,''));
     }
 
     const mainHavail = this.mainHavail;
@@ -367,18 +411,20 @@ function PfyPresentationSupport() {
 
     if (contentH > mainHavail) { // case 1: content too big for smallest fontsize
       mylog(`Fontsize: ${fSize} (smallest fontsize)`);
-      // mylog("Too much content - scrolling will be necessary");
+      const mainWrapper = document.querySelector('.pfy-main');
+      if (mainWrapper) {
+        mainWrapper.classList.add('pfy-scroll-hints');
+      }
 
     } else {
-      fSize = presentationMaxFSize;
+      fSize = startFSize;
       section.style.fontSize = fSize + 'vw';
       contentH = section.offsetHeight;
       if (contentH < mainHavail) { // case 2: content too small to fill space
         mylog(`Fontsize: ${fSize} (largest fontsize)`);
-        // mylog("Little content - using largest possible fontsize");
 
       } else {
-        let step = (presentationMaxFSize - presentationMinFSize) / 2;
+        let step = (startFSize - presentationMinFSize) / 2;
         let diff = mainHavail - contentH;
         let absDiff = Math.abs(diff);
         let prevDiff = 99999;
@@ -437,7 +483,7 @@ function PfyPresentationSupport() {
       this.hideImages(section);
       const parent = this;
       images.forEach(function(image) {
-//        parent.resizeImage(section, image);
+        parent.resizeImage(section, image);
       });
       this.unhideImages(section);
     }
@@ -466,7 +512,9 @@ function PfyPresentationSupport() {
       // containerHeight = parentNode.offsetHeight;
       // image.style.display = 'block';
       const caption = parentNode.querySelector('figcaption');
-      captionHeight = caption.offsetHeight;
+      if (caption) {
+        captionHeight = caption.offsetHeight;
+      }
     }
 
     // determine height of wrapper without image interfering:
@@ -480,7 +528,6 @@ function PfyPresentationSupport() {
 
     image.style.maxWidth = containerWidth + 'px';
     image.style.maxHeight = (containerHeight - captionHeight) + 'px';
-    // image.style.height = (containerHeight - captionHeight) + 'px';
   }; // resizeImage
 
 
@@ -491,123 +538,64 @@ function PfyPresentationSupport() {
     }
   }; // wrap
 
-// this.resizeImage = function (section, image) {
-  //   image.style.display = 'none';
-  //   const node = document.createElement("div");
-  //   const content = image.outerHTML;
-  //
-  //   const container = image.parentNode;
-  //   container.appendChild(node);
-  //   const div = container.querySelector('div');
-  //   div.innerHTML = content;
-  //   div.classList.add('pfy-img-outer-wrapper');
-  //   image.remove();
-  //   image = div.querySelector('.pfy-img-wrapper');
-  //
-  //   const containerWidth = container.offsetWidth;
-  //   const containerHeight = container.offsetHeight;
-  //
-  //   // const img = image.querySelector('img');
-  //   // if (img) {
-  //   //   image.style.width = containerWidth + 'px';
-  //   //   image.style.height = containerHeight + 'px';
-  //   //   // img.style.maxWidth = '100%';
-  //   //   // img.style.maxHeight = '100%';
-  //   // } else {
-  //   //   image.style.maxWidth = containerWidth + 'px';
-  //   //   image.style.maxHeight = containerHeight + 'px';
-  //   // }
-  //   // image.style.maxWidth = containerWidth + 'px';
-  //   // image.style.maxHeight = containerHeight + 'px';
-  //   div.style.width = containerWidth + 'px';
-  //   div.style.height = containerHeight + 'px';
-  //   const figcaption = image.querySelector('figcaption');
-  //   if (figcaption) {
-  //     figcaption.style.width = containerWidth + 'px';
-  //   }
-  //
-  //   image.style.display = 'block';
-  //   mylog(`containerWidth: ${containerWidth}  containerHeight: ${containerHeight}`);
-  // }; // resizeImage
-
-  // this.resizeImage = function (section, image) {
-  //   const mainHavail = this.mainHavail;
-  //   let maxHeight = mainHavail * 0.4;
-  //   const step = mainHavail * 0.04;
-  //   // const step = mainHavail * 0.02;
-  //   const contentH0 = section.offsetHeight;
-  //   let contentH = 0;
-  //   let lastMaxHeight = maxHeight;
-  //
-  //   image.style.display = 'block';
-  //   image.style.maxHeight = maxHeight + 'px';
-  //
-  //
-  //   for (var i = 0; i < 30; i++) {
-  //     contentH = section.offsetHeight;
-  //     if (contentH <= contentH0) {
-  //       lastMaxHeight = maxHeight;
-  //       maxHeight += step;
-  //       image.style.maxHeight = maxHeight + 'px';
-  //     } else {
-  //       break;
-  //     }
-  //   }
-  //   mylog(`image resized in ${i} steps`);
-  //   image.style.maxHeight = lastMaxHeight + 'px';
-  // }; // resizeImage
-
 
   this.activateClickMarker = function () {
     // Highlight mouse clicks
-    document.body.addEventListener('click', function (e) {
-      if (document.body.classList.contains('pfy-selectable')) {
-        return;
+    const parent = this;
+    document.body.addEventListener('mousedown', () => {
+      parent.moved = false
+    })
+    document.body.addEventListener('mousemove', () => {
+      parent.moved = true
+    })
+    document.body.addEventListener('mouseup', (event) => {
+      if (!parent.moved) {
+        parent.showClickMarker(event);
       }
-
-      let pfyCursorMark = document.querySelector('#pfy-cursor-click-highlighter');
-      if (pfyCursorMark) {
-        pfyCursorMark.style.display = 'block';
-        pfyCursorMark.style.top = e.pageY - 24 + 'px';
-        pfyCursorMark.style.left = e.pageX - 24 + 'px';
-        pfyCursorMark.classList.add('pfy-wobble-cursor');
-
-        setTimeout(function () {
-          pfyCursorMark.classList.remove('pfy-wobble-cursor');
-          pfyCursorMark.style.display = 'none';
-        }, 700);
-      }
-    });
+    })
   }; // activateClickMarker
+
+
+  this.showClickMarker = function (event) {
+    let pfyCursorMark = document.querySelector('#pfy-cursor-click-highlighter');
+    if (pfyCursorMark) {
+      pfyCursorMark.style.display = 'block';
+      pfyCursorMark.style.top = event.pageY - 24 + 'px';
+      pfyCursorMark.style.left = event.pageX - 24 + 'px';
+      pfyCursorMark.classList.add('pfy-wobble-cursor');
+
+      setTimeout(function () {
+        pfyCursorMark.classList.remove('pfy-wobble-cursor');
+        pfyCursorMark.style.display = 'none';
+      }, 700);
+    }
+  }; // showClickMarker
+
+
+  this.openSpeakerNotes = function () {
+    const url = hostUrl + 'presentation_speaker_notes/'; // corresponds to index.php
+    this.speakerWindow = window.open(url, "SpeakerNotes", "width=800,height=600");
+    if (!this.speakerWindow) {
+      alert("Problem opening speakerWindow.\nPoss. Popup is inhibited by browser.");
+    }
+  }; // openSpeakerNotes
+
+
+  this.sendSpeakerNotes = function (currSection, currElement) {
+    const notesElem = currElement.querySelector('.notes');
+    if (notesElem) {
+      const content = notesElem.innerHTML;
+      this.speakerWindow.postMessage(content, "*");
+    }
+  }; // sendSpeakerNotes
 
 } // PfyPresentationSupport
 
 
 
-function pfyReloadPost(url, data) {
-  var form = '';
-
-  if (typeof data === 'string') {
-    form = '<form id="lzy-tmp-form" method="post" action="' + url + '" style="display:none"><input type="hidden" name="lzy-tmp-value" value="' + data + '"></form>';
-  } else if (typeof data === 'object') {
-    form = '<form id="lzy-tmp-form" method="post" action="' + url + '" style="display:none">';
-
-    for (var key in data) {
-      var val = data[key];
-      form += '<input type="hidden" name="' + key + '" value="' + val + '">';
-    }
-
-    form += '</form>';
-  }
-
-  document.body.insertAdjacentHTML('beforeend', form);
-  document.getElementById('lzy-tmp-form').submit();
-} // pfyReloadPost
-
-
 // when page ready -> initialize:
 document.addEventListener('DOMContentLoaded', function () {
-  if (document.querySelector('.pfy-presentation-support')) {
+  if (document.querySelector('.pfy-presentation-active')) {
     var presi = new PfyPresentationSupport();
     presi.init();
   }
