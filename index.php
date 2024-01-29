@@ -3,12 +3,11 @@
 /**
  *
  * PageElements
- *      PageFactory-Extension for Kirby 3
+ *      PageFactory-Extension for Kirby
  *
  */
 
 use Kirby\Cms\App as Kirby;
-use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactoryElements\AjaxHandler;
 
 const LOG_FOLDER = 'site/logs/';
@@ -40,10 +39,6 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
                     AjaxHandler::exec($result);
                 }
 
-            } elseif (str_ends_with($path, 'presentation_speaker_notes')) {
-                // render speaker notes without Pagefactory overhead:
-                $html = file_get_contents('site/plugins/pagefactory-pageelements/aux/presentation_speaker_notes.html');
-                exit($html);
             }
             return $result;
         }

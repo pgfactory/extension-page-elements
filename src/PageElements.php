@@ -5,7 +5,6 @@ use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
 use function PgFactory\PageFactory\createHash;
 use function \PgFactory\PageFactory\getDir;
-use function \PgFactory\PageFactory\getStaticUrlArg;
 use function \PgFactory\PageFactory\rrmdir;
 
 
@@ -30,7 +29,6 @@ class PageElements
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
         $this->updateScss();
-        $this->initPresentationSupport();
         $this->handleCssRefactor();
         $this->cleanDownloadFolder();
     } // __construct
@@ -49,15 +47,6 @@ class PageElements
         }
     } // initMacros
 
-
-
-    private function initPresentationSupport()
-    {
-        $activatePresentationSupport = kirby()->option('pgfactory.pagefactory-elements.options.activatePresentationSupport');
-        if ($activatePresentationSupport) {
-            new Presentation();
-        }
-    } // initPresentationSupport
 
 
     /**
