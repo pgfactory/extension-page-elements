@@ -224,39 +224,43 @@ To activate the anti-spam mechanism, you need to add an additional text field to
 where *Name* is the field-name of another field in your form. This will insert an invisible honeypot field.
 
 #### CSS-Variables:
-- -\-pfy-form-width		(28em)
-- -\-pfy-form-label-width		(6em)
-- -\-pfy-form-input-width		(22em)
-- -\-pfy-form-row-gap-height		(1em)
+- `-\-pfy-form-width`		(28em)
+- `-\-pfy-form-label-width`		(6em)
+- `-\-pfy-form-input-width`		(22em)
+- `-\-pfy-form-row-gap-height`		(1em)
 
-- -\-pfy-form-input-height		(2.2em)
-- -\-pfy-form-input-medium-width		(4em)
-- -\-pfy-form-input-medium-width		(10em)
-- -\-pfy-form-choice-option-width		(6em)
+- `-\-pfy-form-input-height`		(2.2em)
+- `-\-pfy-form-input-medium-width`		(4em)
+- `-\-pfy-form-input-medium-width`		(10em)
+- `-\-pfy-form-choice-option-width`		(6em)
 
-- -\-pfy-form-input-color		(inherit)
-- -\-pfy-form-field-background-color		(#fffff6)
-- -\-pfy-form-field-border		(1px solid #b4b3b3)
-- -\-pfy-form-readonly-field-bg		(#f8f8f8)
+- `-\-pfy-form-input-color`		(inherit)
+- `-\-pfy-form-field-background-color`		(#fffff6)
+- `-\-pfy-form-field-border`		(1px solid #b4b3b3)
+- `-\-pfy-form-readonly-field-bg`		(#f8f8f8)
 
-- -\-pfy-form-required-marker-color		(orange)
-- -\-pfy-form-tooltip-anker-color		(inherit)
-- -\-pfy-form-field-description-color		(inherit)
-- -\-pfy-form-tooltip-color		(#222)
-- -\-pfy-form-tooltip-bg		(#fef5e0)
-- -\-pfy-form-error-color-base		(20deg, 100%)
+- `-\-pfy-form-required-marker-color`		(orange)
+- `-\-pfy-form-tooltip-anker-color`		(inherit)
+- `-\-pfy-form-field-description-color`		(inherit)
+- `-\-pfy-form-tooltip-color`		(#222)
+- `-\-pfy-form-tooltip-bg`		(#fef5e0)
+- `-\-pfy-form-error-color-base`		(20deg, 100%)
 
-- -\-pfy-form-reveal-controller-bg
-- -\-pfy-form-reveal-controller-border		(1px solid #eee)
-- -\-pfy-form-reveal-container-bg
-- -\-pfy-form-reveal-container-border		(1px solid #eee)
-- -\-pfy-form-reveal-padding		(0)
+- `-\-pfy-form-reveal-controller-bg`
+- `-\-pfy-form-reveal-controller-border`		(1px solid #eee)
+- `-\-pfy-form-reveal-container-bg`
+- `-\-pfy-form-reveal-container-border`		(1px solid #eee)
+- `-\-pfy-form-reveal-padding`		(0)
 
-- -\-pfy-problem-with-pfy-form-bg		(#fff9ee)
-- -\-pfy-problem-with-pfy-form-border		(orange)
+- `-\-pfy-problem-with-pfy-form-bg`		(#fff9ee)
+- `-\-pfy-problem-with-pfy-form-border`		(orange)
 
 Note: colors only active if `.pfy-form-colored` is applied to the form.
- 
+
+#### Classes
+
+- `.pfy-show-unless-form-data-received`  -> hide content when data received
+    
 <div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
 EOT,

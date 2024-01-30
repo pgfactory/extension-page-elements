@@ -438,7 +438,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
         }
 
       }
-    
+
       .pfy-submit .pfy-input-wrapper {
         input.button {
           max-width: 49%;
@@ -656,6 +656,11 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 
   .pfy-form-admin {
     @include _striped(251, 50%);
+  }
+
+  &.debug.pfy-form-data-received .pfy-show-unless-form-data-received {
+    @include _striped(40, 50%);
+    display: block !important;
   }
 
 } // .pfy-default-styling

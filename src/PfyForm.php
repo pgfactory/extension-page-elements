@@ -183,8 +183,8 @@ class PfyForm extends Form
         }
 
         if ($formResponse) {
+            $this->injectNoShowCssRule();
             if (!$this->isFormAdmin) {
-                $this->injectNoShowCssRule();
                 return $formResponse;
             }
             if ($this->formResponse) {
@@ -2028,6 +2028,10 @@ EOT;
                 $subject = '{{ pfy-form-confirmation-email-subject }}';
             }
         }
+
+        // handle pattern %varname% -> transform into {{ _varname_ }}:
+        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
+        $template = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $template);
         return [$subject, $template];
     } // getEmailComponents
 
@@ -2311,6 +2315,7 @@ EOT;
             ".pfy-show-unless-form-data-received,\n" .
             ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
         PageFactory::$pg->addCss($css);
+        PageFactory::$pg->addBodyTagClass('pfy-form-data-received');
         $this->noShowOpened = true;
         return "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
     } // injectNoShowCssRule
