@@ -45,6 +45,6 @@ EOT,
         $str .= 'not logged in';
     }
 
-    return $str; // return [$str]; if result needs to be shielded
+    return $str;
 }
 

@@ -88,6 +88,6 @@ EOT,
     $ds = new DataTable($file, $args);
     $str .= $ds->render();
 
-    return [$str];
+    return $str;
 }
 

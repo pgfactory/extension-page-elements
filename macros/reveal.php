@@ -109,6 +109,6 @@ EOT;
 
     $out = "\t<div class='pfy-reveal-controller-wrapper-$inx pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
 
-    return [$out];
+    return $out;
 }
 

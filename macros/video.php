@@ -49,8 +49,6 @@ EOT;
         ]);
     }
 
-    $str = shieldStr($str);
-
     return $str; // return [$str]; if result needs to be shielded
 }
 

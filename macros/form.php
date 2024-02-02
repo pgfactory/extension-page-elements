@@ -294,9 +294,6 @@ EOT,
         }
     }
 
-    if ($html) {
-        $html = shieldStr($html);
-    }
     return $html;
 } // form
 
