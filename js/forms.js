@@ -151,7 +151,8 @@ const pfyFormsHelper = {
             reloadAgent('', next);
           }
 
-          const hasErrors = form.classList.contains('pfy-form-has-errors');
+          const hasErrors = form.classList.contains('pfy-form-has-errors') ||
+              form.querySelector('.pfy-form-elem-alert');
           if (hasErrors) {
             reloadAgent();
           }
@@ -181,6 +182,29 @@ const pfyFormsHelper = {
       if (!check) {
         e.stopPropagation();
         return;
+      }
+
+      const enablesubmitElems = form.querySelectorAll('[data-enablesubmit]');
+      if (enablesubmitElems) {
+        let goOn = true;
+        enablesubmitElems.forEach(function (elem) {
+          if (!elem.checked) {
+            goOn = false;
+            const wrapper = elem.closest('.pfy-elem-wrapper');
+            if (!wrapper.querySelector('.pfy-form-elem-alert')) {
+              let div = document.createElement("div");
+              div.innerText = `{{ pfy-form-enablesubmit-elem-not-checked }}`;
+              div.classList.add('pfy-form-elem-alert');
+              wrapper.appendChild(div);
+            } else {
+              wrapper.classList.add('pfy-form-elem-alert');
+            }
+          }
+        });
+        if (!goOn) {
+          e.stopPropagation();
+          return;
+        }
       }
 
       pfyFormsHelper.disableForm(form);

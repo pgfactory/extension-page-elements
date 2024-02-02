@@ -297,11 +297,14 @@ class PfyForm extends Form
             }
         }
         $label = (string)$elem->getLabel();
+        $label = str_replace(['&lt;','&gt;'], ['<','>'], $label);
+
         if (str_contains(($rec['label'] ?? ''), '*')) {
             $rec['required'] = true;
         }
         $label = "<span class='pfy-label-wrapper'>$label</span>";
         $input = (string)$elem->getControl();
+        $input = str_replace(['&lt;','&gt;'], ['<','>'], $input);
 
         // fix for NetteForm's quirk: input outside of label in choice fields
         if (str_contains($input, 'type="radio"') || str_contains($input, 'type="checkbox"')) {
@@ -544,6 +547,11 @@ EOT;
         // handle 'disabled' option:
         if (($elemOptions['disabled']??false) !== false) {
             $elem->setDisabled();
+        }
+
+        // handle 'enableSubmit' option:
+        if (($elemOptions['enableSubmit']??false) !== false) {
+            $elem->setHtmlAttribute('data-enablesubmit', true);
         }
 
         // handle 'readonly' option:

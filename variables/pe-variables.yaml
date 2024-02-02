@@ -309,6 +309,9 @@ pfy-form-reload-btn:
 
 pfy-show-source-code: Show Source Code
 
+pfy-form-enablesubmit-elem-not-checked:
+  de: Bitte zustimmen, bevor Sie das Formular absenden
+  _:  Please confirm before sumbitting this form
 
 // ex. pfy-form-problem-banner:
 pfy-problem-with-form-banner:

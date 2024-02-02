@@ -352,8 +352,14 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       min-width: $mediumWidth;
       max-width: 100%;
     }
-    .pfy-single-checkbox .pfy-label-wrapper {
-      display: none;
+    .pfy-single-checkbox {
+      .pfy-label-wrapper {
+        display: none;
+      }
+      input {
+        vertical-align: top;
+        margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.7em) / 2);
+      }
     }
     .error,
     .pfy-input-wrapper input + span {
@@ -368,6 +374,14 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-form-field-description {
     padding: 0.4em 0 0.2em 0.5em;
     display: inline-block;
+  }
+
+  .pfy-form-elem-alert {
+    padding: 0.5em;
+    margin: 0 0 1em 0;
+
+    border: 1px solid red;
+    background: #fee;
   }
 
   .pfy-elem-wrapper.button {
