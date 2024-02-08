@@ -111,6 +111,11 @@ class Data2DSet extends DataSet
                         }
                         $newRec[$key] = is_bool($v) ? ($v?'1':'0'): $v;
 
+                    // check whether indirect data access via $headerElems works:
+                    } elseif (isset($rec[$headerElems[$key]])) {
+                        $newRec[$key] = $rec[$headerElems[$key]];
+
+
                     // no matching data found -> mark as unknown
                     } else {
                         $newRec[$key] = $placeholderForUndefined;
