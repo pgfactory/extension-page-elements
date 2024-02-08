@@ -125,7 +125,7 @@ EOT,
         PageFactory::$pg->applyRobotsAttrib();
     }
 
-    return [$html];
+    return $html;
 } // form
 
 

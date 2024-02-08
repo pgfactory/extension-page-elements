@@ -427,8 +427,9 @@ pfy-enlist-popup-del-help:
 
 
 pfy-enlist-error-rec-exists:
-  de: 'Ein Eintrag mit diesem Namen existiert bereits, aber die E-Mail Adresse stimmt nicht überein.'
-  _:  'An entry with this name already exists, but your e-mail address does not match.'
+  de: 'Ein Eintrag mit diesem Namen existiert bereits, Sie können sich nur einmal in eine Liste eintragen.'
+  de2: 'Ein Eintrag mit diesem Namen existiert bereits, Du kannst dich nur einmal in eine Liste eintragen.'
+  _:  'An entry with this name already exists. Your input was ignored.'
 
 
 pfy-enlist-error-deadline-expired:
@@ -566,6 +567,10 @@ pfy-enlist-del-freeze-time-expired:
 pfy-enlist-data-outdated:
   de: Die Seite musste erst neu geladen werden. Bitte noch einmal versuchen.
   _:  Page was outdated and had to be reloaded first. Please try again.
+
+pfy-enlist-timed-out:
+  de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
+  _:  The page timed out.<br>Click Ok to reload and try again.
 
 
 #--- Login ------------------------------

@@ -78,7 +78,7 @@ const Enlist = {
   openPopup: function(elem, mode) {
     // check whether page timed out:
     if (pageLoaded < (Math.floor(Date.now()/1000) - 600)) {
-      pfyConfirm({text: `{{ pfy-form-timed-out }}`})
+      pfyConfirm({text: `{{ pfy-enlist-timed-out }}`})
         .then(function () {
           reloadAgent();
         });
@@ -101,6 +101,7 @@ const Enlist = {
     const form = document.querySelector('.pfy-popup-container .pfy-form');
     if (form) {
       pfyFormsHelper.setupModifiedMonitor(form);
+      this.setupCancelHandler(form);
     }
   }, // openPopup
 
@@ -149,14 +150,31 @@ const Enlist = {
     }
 
     const nameField = $form.querySelector('[name=Name]');
+    const presetUser = (typeof doodlePreset !== 'undefined') && (!name || (name === doodlePreset.name));
 
-    this.setupModifiedMonitor($form);
+    // handle user preset email:
+    if (presetUser) {
+      const emailField = $form.querySelector('[name=Email]');
+      emailField.setAttribute('value', doodlePreset.email);
+
+      const $submit = $form.querySelector('[type="submit"]');
+      $submit.disabled = false;
+      $form.dataset.changed = true;
+
+    } else {
+      this.setupModifiedMonitor($form);
+    }
 
     // === add mode =========================================
     if (mode === 'add') {
       $form.classList.add('pfy-enlist-add-mode');
       $submit.setAttribute('value', `{{ pfy-enlist-add-btn }}`);
       $submit.setAttribute('name', 'add');
+
+      // handle user preset name:
+      if (presetUser) {
+        nameField.setAttribute('value', doodlePreset.name);
+      }
 
       if ($deleteChoice) {
         $deleteChoice.style.display = 'none';
@@ -304,6 +322,25 @@ const Enlist = {
   }, // fillFormValues
 
 
-};
+  setupCancelHandler: function ($form) {
+    const cancelBtn = $form.querySelector('input.pfy-cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', function (e) {
+        const modified = $form.dataset.changed;
+        if (modified === 'true') {
+          e.stopPropagation();
+          const $listName = $form.querySelector('[name=setname]');
+          const listName = $listName.value;
+          pfyFormsHelper.presetForm($form);
+          $listName.value = listName;
+          $form.dataset.changed = false;
+        } else {
+          pfyPopupClose();
+        }
+      });
+    }
+  }, // setupCancelHandler
+
+}; // Enlist
 
 Enlist.init();

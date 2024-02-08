@@ -85,6 +85,8 @@ class Enlist
     private static bool|null $_editable = null;
     private array|false $events = false;
 
+    private static bool $userPreset = false;
+
     /**
      * @var string
      */
@@ -100,9 +102,8 @@ class Enlist
         $this->pagePath = substr(page()->url(), strlen(site()->url()) + 1) ?: 'home';
         $this->pageId = str_replace('/', '_', $this->pagePath);
 
-        $pageId = page()->id();
         self::$session = kirby()->session();
-        self::$obfuscateSessKey = "obfuscate:$pageId:elemKeys";
+        self::$obfuscateSessKey = "obfuscate:$this->pageId:elemKeys";
 
         if ($options['description'] ?? false) {
             $options['info'] = $options['description'];
@@ -159,6 +160,9 @@ class Enlist
 
         $this->openDb();
         PageFactory::$pg->addAssets('FORMS');
+
+        $this->handleUserPreset();
+
     } // __construct
 
 
@@ -834,6 +838,34 @@ EOT;
     } // countEntries
 
 
+    private function handleUserPreset(): void
+    {
+        if (self::$userPreset) {
+            return;
+        }
+        self::$userPreset = true;
+
+        $namePreset = self::$session->get('pfy.enlist.name', false);
+        $emailPreset = self::$session->get('pfy.enlist.email', false);
+
+        if (!$namePreset && ($user = PageFactory::$user)) {
+            $namePreset = $user->firstName() . ' ' . $user->lastName();
+            $emailPreset = $user->email();
+        }
+
+        if (!$namePreset) {
+            return;
+        }
+
+        $js = <<<EOT
+const doodlePreset = {
+    name: '$namePreset',
+    email: '$emailPreset',
+};
+EOT;
+        PageFactory::$pg->addJs($js);
+    } // handleUserPreset
+
 
     // === Callback: handle user response ==========================
     /**
@@ -877,6 +909,8 @@ EOT;
 
         if ($elemId === '' || $elemId === 'undefined') {
             // new entry:
+            self::$session->set('pfy.enlist.name', $data['Name']);
+            self::$session->set('pfy.enlist.email', $data['Email']);
             $this->handleNewEntry($data, $dataset, $context, $setName, $message);
 
         } else {
@@ -906,7 +940,7 @@ EOT;
             $prevElemId = array_keys($exists)[0];
             $email = $data['Email'] ?? '#####';
             $email0 = $dataset[$prevElemId]['Email'];
-            if ($email0 !== $email) {
+            if ($email0 === $email) {
                 mylog("EnList error Rec exists: {$data['Name']} {$data['Email']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
             }
