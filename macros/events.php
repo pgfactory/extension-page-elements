@@ -32,7 +32,6 @@ function events($args = '')
                 'If that still doesn\'t lead to a hit, the default template identified as  ``_:`` is selected.', false],
             'templateBasename' => ['[string] If defined, ``templateBasename-`` will be prepended to the *category* name '.
                 'before selecting the template.', ''],
-            'markdown' => ['[bool] If true, result will be md-compiled.', true],
             'wrap' => ['[bool] If false, omits the normally applied DIV wrapper, i.e. renders just as stated in the template.', true],
         ],
         'summary' => <<<EOT
@@ -111,10 +110,6 @@ EOT;
 
     }
 
-    if ($options['markdown']) {
-        return [$str]; // return [$str]; if result needs to be shielded
-    } else {
-        return $str;
-    }
+    return $str;
 } // events
 
