@@ -81,6 +81,7 @@ class PfyForm extends Form
 
         $tableOptions['showData']           = $formOptions['showData']??false;
         $tableOptions['editTable']          = $formOptions['editData']??false;
+        $tableOptions['permission']         = $formOptions['permission']??false;
         $tableOptions['tableButtons']       = $formOptions['tableButtons']??false;
         $tableOptions['serviceColumns']     = $formOptions['serviceColumns']??false;
         $tableOptions['sort']               = $formOptions['sortData']??false;
@@ -1243,11 +1244,12 @@ EOT;
     private function parseTableOptions(array $tableOptions): array
     {
         $tableOptions['file'] = $this->formOptions['file']??false;
-        $tableOptions['permission'] = false;
-        $tableOptions['tableButtons'] = false;
-        $tableOptions['serviceColumns'] = false;
-        $tableOptions['editMode'] = false;
+        $tableOptions['permission'] = $tableOptions['permission']??false;
+        $tableOptions['tableButtons'] = $tableOptions['tableButtons']??false;
+        $tableOptions['serviceColumns'] = $tableOptions['serviceColumns']??false;
+        $tableOptions['editMode'] = $tableOptions['editMode']??false;
         $showData = $tableOptions['showData'];
+
         $editTable = $tableOptions['editTable'];
         if (!$tableOptions['file'] || (!$showData && !$editTable)) {
             return $tableOptions;
@@ -1265,10 +1267,12 @@ EOT;
                 $tableOptions['tableButtons'] = 'delete,download,add';
                 $tableOptions['serviceColumns'] = 'select,num,edit';
                 $tableOptions['editMode'] = 'popup';
-            } else {
+            } elseif (is_array($editTable)) {
                 $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
                 $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
                 $tableOptions['serviceColumns'] = $editTable['serviceColumns'] ?? 'select,num';
+                $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
+            } else {
                 $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
             }
 
