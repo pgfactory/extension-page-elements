@@ -8,6 +8,7 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
+use function PgFactory\PageFactory\isLocalhost;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\shieldStr;
 use function PgFactory\PageFactory\mylog;
@@ -61,6 +62,10 @@ class Login
             }
 
         } else {
+            if (!self::checkUsersDefined()) {
+                return '';
+            }
+
             switch (self::$loginMode) {
                 case 'username-password-only':
                     $html = self::renderLoginForm($message);
@@ -219,8 +224,8 @@ EOT;
                 reloadAgent(self::$nextPage, $str);
 
             } catch (\Exception $e) {
-                mylog("Login Code '$code' failed");
-                reloadAgent(self::$nextPage, '{{ pfy-login-failed }}', LOGIN_LOG_FILE);
+                mylog("Login Code '$code' failed", LOGIN_LOG_FILE);
+                reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
             }
 
         } elseif ($email = self::getUsersEmail($data)) {
@@ -318,12 +323,38 @@ EOT;
     } // renderAccountAdminForm
 
 
+    /**
+     * Checks whether 'auth' element is defined in config.php
+     * @return void
+     * @throws \Exception
+     */
     private static function checkCodeLoginEnabled(): void
     {
         $authMethods = kirby()->option('auth.methods');
         $codeLoginEnabled = (is_array($authMethods) && in_array('code', $authMethods));
         if (!$codeLoginEnabled) {
-            throw new \Exception('Error: "code login" not enabled, please add "auth"-options to config.php');
+            throw new \Exception('Warning: "code login" not enabled, please add "auth"-options to config.php');
         }
     } // checkCodeLoginEnabled
+
+
+    /**
+     * checks whether users have been defined. If not:
+     *      throws exception on localhost, otherwise silently ignores the request
+     * @return bool
+     * @throws \Exception
+     */
+    private static function checkUsersDefined(): bool
+    {
+        $users = kirby()->users();
+        if (!$users->data()) {
+            if (isLocalhost()) {
+                throw new \Exception('Warning: no users defined yet');
+            } else {
+                return false;
+            }
+        }
+        return true;
+    } // checkUsersDefined
+
 } // Login

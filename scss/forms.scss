@@ -211,7 +211,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       width: 100%;
     }
     label {
-      width: calc(100% - 1.5em);
+      width: calc(100% - 1.6em);
     }
 
     &.reversed {
@@ -448,7 +448,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
           width: 1em;
         }
         label {
-          width: calc(100% - 1.5em);
+          width: calc(100% - 1.6em);
         }
 
       }

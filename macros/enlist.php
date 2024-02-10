@@ -106,6 +106,9 @@ EOT,
     if ($options['adminMail']) {
         $options['adminEmail'] = $options['adminMail'];
     }
+    if ($options['adminEmail'] === null) {
+        $options['adminEmail'] = PageFactory::$webmasterEmail;
+    }
     // file -> remove extension if contained:
     if ($options['file'] && (fileExt($options['file']))) {
         $options['file'] = fileExt($options['file'], true);

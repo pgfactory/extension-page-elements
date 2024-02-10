@@ -82,6 +82,9 @@ class PageElements
     } // getAssetGroups
 
 
+    /**
+     * @return void
+     */
     private function handleCssRefactor()
     {
         $file = $_GET['cssrefactor']??false;
@@ -113,6 +116,9 @@ class PageElements
     } // handleCssRefactor
 
 
+    /**
+     * @return void
+     */
     private function cleanDownloadFolder()
     {
         $dir = glob(TEMP_DOWNLOAD_PATH.'*');
@@ -136,6 +142,10 @@ class PageElements
     } // addAssets
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     private function handleCreateHashRequest(): void
     {
         if (isset($_GET['hash'])) {
@@ -145,9 +155,14 @@ class PageElements
     } // handleCreateHashRequest
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     public function handleUrlRequests(): void
     {
         // handle ?login:
+        //   => request later handled by Login::loginCallback()
         if (isset($_GET['login'])) {
             Login::init(['as-popup' => true]);
             $html = Login::render();

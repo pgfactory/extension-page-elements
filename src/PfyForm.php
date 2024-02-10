@@ -839,7 +839,7 @@ EOT;
         }
 
         $html = false;
-        $dataRec = $this->getValues(true);
+        $dataRec = $this->getValues('array');
 
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
