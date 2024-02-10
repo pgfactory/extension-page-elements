@@ -64,6 +64,7 @@ function enlist($args = '')
 
             'output' =>	['[bool] If true, no output is rendered -> used to set persisent options: '.
                 '[freezeTime,sendConfirmation,notifyOwner,obfuscate,admin,adminEmail,class,deadline].', true],
+            'rejectRobots' => ['If true, instructions are added to the head tag to reject search-engine robots.', true],
         ],
         'summary' => <<<EOT
 
