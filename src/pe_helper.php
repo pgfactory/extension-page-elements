@@ -104,7 +104,7 @@ function handleUrlToken(): bool
     }
 
     // remove the urlToken:
-    $target = PageFactory::$appUrl . PageFactory::$pageId;
+    $target = PageFactory::$absPageUrl;
     \PgFactory\PageFactory\reloadAgent($target);
     return false;
 } // handleUrlToken
