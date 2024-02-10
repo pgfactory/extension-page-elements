@@ -858,7 +858,7 @@ EOT;
         }
 
         $js = <<<EOT
-const doodlePreset = {
+const userPreset = {
     name: '$namePreset',
     email: '$emailPreset',
 };

@@ -150,12 +150,12 @@ const Enlist = {
     }
 
     const nameField = $form.querySelector('[name=Name]');
-    const presetUser = (typeof doodlePreset !== 'undefined') && (!name || (name === doodlePreset.name));
+    const presetUser = (typeof userPreset !== 'undefined') && (!name || (name === userPreset.name));
 
     // handle user preset email:
     if (presetUser) {
       const emailField = $form.querySelector('[name=Email]');
-      emailField.setAttribute('value', doodlePreset.email);
+      emailField.setAttribute('value', userPreset.email);
 
       const $submit = $form.querySelector('[type="submit"]');
       $submit.disabled = false;
@@ -173,7 +173,7 @@ const Enlist = {
 
       // handle user preset name:
       if (presetUser) {
-        nameField.setAttribute('value', doodlePreset.name);
+        nameField.setAttribute('value', userPreset.name);
       }
 
       if ($deleteChoice) {
