@@ -78,7 +78,7 @@ class Calendar
         $this->inx =     $args['inx'];
         $this->fields =  $this->fixCategories($fields);
         $this->options = $args;
-        $pageId = PageFactory::$pageId;
+        $pageId =        PageFactory::$pageId;
 
         // get persistent data stored in session rec:
         $this->sessCalRecKey = "pfy.cal.$pageId:$this->inx"; // corresponds to key defined in class Calendar
