@@ -133,19 +133,23 @@ pfy-form-success-continue:
   de: 'Weiter...'
   _:  'Continue...'
 
+pfy-form-owner-notification-label: #Neue Anemldung auf host.net
+  de: Anmeldung
+  _:  sign-up
+
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
-  de: Neue Anmeldung auf %host%
-  _:  New sign-up on %host%
+  de: Neue {{ pfy-form-owner-notification-label }} auf %host%
+  _:  New {{ pfy-form-owner-notification-label }} on %host%
 
 pfy-form-owner-notification-body:
   de: |
     Guten Tag\n
-    Es gibt eine neue Anmeldung:\n
+    Es gibt eine neue {{ pfy-form-owner-notification-label }}:\n
     %data%\n
     Beste Grüsse, der Webmaster
   _:  |
     Hello\n
-    We received a new sign-up:\n
+    We received a new {{ pfy-form-owner-notification-label }}:\n
     %data%\n
     Best regards, the webmaster
 

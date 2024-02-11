@@ -35,7 +35,10 @@ function form($args = '')
 
             'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
-            'mailTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
+            'ownerNotificationTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
+            'mailTo' =>	['Synonym for "ownerNotificationTo".', false],
+
+            'ownerNotificationLabel' =>	['If set, is used in owner notifications as a brief form description.', false],
 
             'mailFrom' =>	['The address from which service emails are sent. (default: "{{ webmaster_email }}").', false],
             'mailFromName' =>	['Name from which service emails are sent.', ''],
@@ -274,6 +277,11 @@ EOT,
         $html = $sourceCode;
     }
 
+    // ownerNotificationTo synonyme for mailTo:
+    if ($options['ownerNotificationTo']??false) {
+        $options['mailTo'] = $options['ownerNotificationTo'];
+    }
+
     if ($options['maxCount'] && !$options['minRows']) {
         $options['minRows'] = $options['maxCount'];
     }
@@ -427,7 +435,6 @@ class PfyFormSplitSyntax extends PfyForm
                 $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
                 $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
-                $this->activateWindowFreeze();
             }
 
             $html .= $this->injectNoSHowEnd();

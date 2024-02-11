@@ -67,6 +67,7 @@ class PfyForm extends Form
     protected    mixed $formResponse = '';
     protected  bool $isFormAdmin = false;
     protected bool $showForm = true;
+    private static bool $initialized = false;
 
     /**
      * @param $formOptions
@@ -153,15 +154,20 @@ class PfyForm extends Form
         }
         parent::__construct();
 
-        if ($this->tableOptions['editMode']) {
-            PageFactory::$pg->addAssets('POPUPS');
-        }
-        PageFactory::$pg->addAssets('POPUPS');
-        PageFactory::$pg->addAssets('REVEAL');
-        PageFactory::$pg->addAssets('FORMS');
+        if (!self::$initialized) {
+            self::$initialized = true;
 
-        if ($formOptions['init']??true) {
-            PageFactory::$pg->addJsReady('pfyFormsHelper.init();');
+            if ($this->tableOptions['editMode']) {
+                PageFactory::$pg->addAssets('POPUPS');
+            }
+            PageFactory::$pg->addAssets('POPUPS');
+            PageFactory::$pg->addAssets('REVEAL');
+            PageFactory::$pg->addAssets('FORMS');
+
+            if ($formOptions['init'] ?? true) {
+                PageFactory::$pg->addJsReady('pfyFormsHelper.init();');
+            }
+            $this->activateWindowFreeze();
         }
     } // __construct
 
@@ -217,7 +223,6 @@ class PfyForm extends Form
 
         $html .= $this->injectNoShowEnd();
         $html .= "<!-- === /pfy form widget === -->\n\n";
-        $this->activateWindowFreeze();
         return $html;
     } // renderForm
 
@@ -1192,13 +1197,14 @@ EOT;
             $out .= "$key$value\n";
         }
 
-        $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
-        if (str_contains($subject, '%host%')) {
-            $subject = str_replace('%host%', PageFactory::$hostUrl, $subject);
+        if (!($label = ($this->formOptions['ownerNotificationLabel']??''))) {
+            $label = TransVars::getVariable('pfy-form-owner-notification-label');
         }
+        $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
+        $subject = str_replace(['%host%', '{{ pfy-form-owner-notification-label }}'], [PageFactory::$hostUrl, $label], $subject);
 
         $body = TransVars::getVariable('pfy-form-owner-notification-body');
-        $body = str_replace(['%data%', '%host%', '\n'], [$out, PageFactory::$hostUrl, "\n"], $body);
+        $body = str_replace(['%data%', '%host%', '\n', '{{ pfy-form-owner-notification-label }}'], [$out, PageFactory::$hostUrl, "\n", $label], $body);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
         $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
