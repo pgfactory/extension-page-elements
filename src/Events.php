@@ -78,7 +78,7 @@ class Events extends DataSet
         $mdStr = $this->cleanup($mdStr);
 
         // md-compile:
-        if ($options['markdown']) {
+        if ($options['markdown']??true) {
             return markdown($mdStr);
         } else {
             return $mdStr;
