@@ -69,6 +69,10 @@ class DataTable
     private array $rowClasses;
     private array $rowIds;
     private string $placeholderForUndefined;
+    /**
+     * @var false|mixed
+     */
+    private mixed $shieldCellContent;
 
     /**
      * @param string|array $dataSrc
@@ -134,6 +138,8 @@ class DataTable
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->markLocked = $options['markLocked'] ?? false;
         $this->placeholderForUndefined = $options['placeholderForUndefined'] ?? '?';
+
+        $this->shieldCellContent = $options['shieldCellContent'] ?? false;
 
         if ($permission === true) {
             $permission = 'localhost|loggedin';
@@ -454,6 +460,9 @@ class DataTable
                 if ($serviceRow) {
                     $class .= ' pfy-service-row';
                 } else {
+                    if ($this->shieldCellContent) {
+                        $v = htmlspecialchars($v);
+                    }
                     $v = "<div$tdClass>$v</div>";
                 }
                 $class = $class? "$class $serviceRow": $serviceRow;
