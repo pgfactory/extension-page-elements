@@ -105,6 +105,8 @@ function form($args = '')
                 'If option ``schedule`` is active, placeholders of type `%key%` are replaced with values from the '.
                 'event record', false],
 
+            'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', null],
+
             'tableFooters' =>	['(recId:\'%sum%\' or \'%count%\' or \'string\') '.
                 'Adds a footer row to the table showing counts and sums for specified columns..', false],
 

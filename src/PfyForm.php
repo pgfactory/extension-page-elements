@@ -113,6 +113,7 @@ class PfyForm extends Form
         $formOptions['action']              = $formOptions['action']??false;
         $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
+        $formOptions['tableOptions']        = $formOptions['tableOptions']??[];
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
         $formOptions['dbOptions']['keepDataDuration']   = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
         $formOptions['dbOptions']['keepDataOnField']    = $formOptions['dbOptions']['keepDataOnField']?? false;
@@ -1235,6 +1236,7 @@ EOT;
         $tableOptions['tdClass']              = 'pfy-scroll-hints';
         $tableOptions['markLocked']           = true;
         $tableOptions['obfuscateRecKeys']     = true;
+        $tableOptions['shieldCellContent']    = $this->formOptions['tableOptions']['shieldCellContent']??false;
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
