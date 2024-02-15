@@ -3,78 +3,160 @@
 namespace PgFactory\PageFactoryElements;
 
 use IntlDateFormatter;
+use Kirby\Exception\Exception;
 use PgFactory\PageFactory\PageFactory;
-
-// ToDo: option to import translations table from a file
-const TRANSLATIONS = [
-    'Monday' => ['en' => 'Monday', 'de' => 'Montag', 'fr'=> 'Lundi', 'it'=> 'Lunedì',],
-    'Tuesday' => ['en' => 'Tuesday', 'de' => 'Dienstag', 'fr'=> 'Mardi' ,'it'=> 'Martedì',],
-    'Wednesday' => ['en' => 'Wednesday', 'de' => 'Mittwoch', 'fr'=> 'Mercredi' ,'it'=> 'Mercoledì',],
-    'Thursday' => ['en' => 'Thursday', 'de' => 'Donnerstag', 'fr'=> 'Jeudi' ,'it'=> 'Giovedì',],
-    'Friday' => ['en' => 'Friday', 'de' => 'Freitag', 'fr'=> 'Vendredi' ,'it'=> 'Venerdì',],
-    'Saturday' => ['en' => 'Saturday', 'de' => 'Samstag', 'fr'=> 'Samedi' ,'it'=> 'Sabato',],
-    'Sunday' => ['en' => 'Sunday', 'de' => 'Sonntag', 'fr'=> 'Dimanche' ,'it'=> 'Domenica',],
-
-    'January' => ['en' => 'January', 'de' => 'Januar', 'fr'=> 'janvier ' ,'it'=> 'gennaio',],
-    'February' => ['en' => 'February', 'de' => 'Februar', 'fr'=> 'février' ,'it'=> 'febbraio',],
-    'March' => ['en' => 'March', 'de' => 'März', 'fr'=> 'mars' ,'it'=> 'marzo',],
-    'April' => ['en' => 'April', 'de' => 'April', 'fr'=> 'avril' ,'it'=> 'aprile',],
-    'May' => ['en' => 'May', 'de' => 'Mai', 'fr'=> 'mai' ,'it'=> 'maggio',],
-    'June' => ['en' => 'June', 'de' => 'Juni', 'fr'=> 'juin' ,'it'=> 'giugno',],
-    'July' => ['en' => 'July', 'de' => 'Juli', 'fr'=> 'juillet' ,'it'=> 'luglio',],
-    'August' => ['en' => 'August', 'de' => 'August', 'fr'=> 'août' ,'it'=> 'agosto',],
-    'September' => ['en' => 'September', 'de' => 'September', 'fr'=> 'septembre' ,'it'=> 'settembre',],
-    'October' => ['en' => 'October', 'de' => 'Oktober', 'fr'=> 'octobre' ,'it'=> 'ottobre',],
-    'November' => ['en' => 'November', 'de' => 'November', 'fr'=> 'novembre' ,'it'=> 'novembre',],
-    'December' => ['en' => 'December', 'de' => 'Dezember', 'fr'=> 'décembre' ,'it'=> 'dicembre',],
-
-    'OCLOCK' => ['en' => 'h', 'de' => 'Uhr', 'fr'=> 'heures' ,'it'=> 'ore',],
-];
+use function PgFactory\PageFactory\isLocalhost;
 
 const YEAR_THRESHOLD = 10;
 
 
 /**
- * @param string $str
+ * Twig-filter wrapper for  intlDate()
+ * -> compiles "date()-style" (eg. Y-m-d) format and translates to local language.
+ * @param string $arg
+ * @param string $format
  * @return string
  */
-function translateDateTimes(string $str):string
+function twigIntlDateFilter($arg, string $format): string
 {
-    $lang = PageFactory::$langCode;
-    $translations = TRANSLATIONS;
-    $e0 = reset($translations);
-    if (!isset($e0[$lang])) {
-        return $str; // language not found, skip translation
+    if (!$arg) {
+        if (isLocalhost()) {
+            throw new Exception("Error: value missing (for twigIntlDateFilter($format)");
+        } else {
+            return '???';
+        }
     }
-    $to = array_map(function ($e) use($lang) {
-        return $e[$lang]??'???';
-    }, array_values(TRANSLATIONS));
-    $str = str_replace(array_keys($translations), $to, $str);
-    $str = preg_replace('/([–-]) 00([.:])00/', "$1 24$2&#48;&#48;", $str);
-    return $str;
-} // translateDateTimes
+    $time = strtotime($arg);
+    return intlDate($format, $time);
+} // twigIntlDateFilter
 
 
 /**
- * @param string|int|null $t
+ * Twig-filter wrapper for  intlDateFormat()
+ * -> compiles "intlDate()-style" (eg. YYYY-MMM-dd) format and translates to local language.
+ * @param string $arg
+ * @param string $format
  * @return string
  */
-function intlDateTime(string|int $t = null, $dateFormat = IntlDateFormatter::LONG, $timeFormat = IntlDateFormatter::SHORT): string
+function twigIntlDateFormatFilter(string $arg, string $format): string
 {
-    if ($t === null) {
-        $t = time();
-    } elseif (is_string($t)) {
-        $t = strtotime($t);
+    $time = strtotime($arg);
+    return intlDateFormat($format, $time);
+} // twigIntlDateFilter
+
+
+/**
+ * Compiles "date()-style" (eg. Y-m-d) format and translates to local language.
+ * @param string $format
+ * @param mixed $time
+ * @return string
+ */
+function intlDate(string $format, mixed $time = false): string
+{
+    $time = $time ?: time();
+    if (is_string($time)) {
+        $time = strtotime($time);
     }
+
+    // simple ISO format:
+    if (!$format || $format === 'ISO') {
+        return date('Y-m-d H:i', $time);
+    } elseif ($format === 'ISOT') {
+        return date('Y-m-d\TH:i', $time);
+    }
+
+    $replacements = [
+        'j' => 'd', // 1
+        'd' => 'dd', // 01
+
+        'n' => 'M',
+        'm' => 'MM',
+        'M' => 'MMM',
+        'F' => 'MMMM',
+
+        'y' => 'yy',
+        'Y' => 'yyyy',
+
+        'g' => 'H',
+        'G' => 'H',
+        'H' => 'HH',
+        'i' => 'mm',
+        's' => 'ss',
+
+        'N' => 'e', // day in week
+        'D' => 'E', // Mon
+        'l' => 'EEEE', // Monday
+
+        'W' => 'w', // week in year
+        'e' => 'z', // timezone
+        'T' => 'z',
+        'c' => 'YYYY-MM-dd\'T\'HH:mm', // ISO 8601 date, e.g. 2004-02-12T15:19:21+00:00
+    ];
+    $format1 = '';
+    for ($i=0; $i<strlen($format); $i++) {
+        $char = $format[$i];
+        if (isset($replacements[$char])) {
+            $format1 .= $replacements[$char];
+        } else {
+            $format1 .= $char;
+        }
+    }
+    return intlDateFormat($format1, $time);
+} // intlDate
+
+
+/**
+ * Compiles "intlDate()-style" (eg. YYYY-MMM-dd) format and translates to local language.
+ *   Alternative format: "XXX,YYY", where XXX resp. YYY are one of FULL|LONG|MEDIUM|SHORT|NONE
+ * @param string $format
+ * @param mixed $time
+ * @return string
+ */
+function intlDateFormat(string $format, mixed $time = false): string
+{
+    $time = $time ?: time();
+    if (is_string($time)) {
+        $time = strtotime($time);
+    }
+
+    $dateFormat = false;
+    $timeFormat = false;
+    if (preg_match('/(FULL|LONG|MEDIUM|SHORT|NONE)/', $format)) {
+        list($dateFormat, $timeFormat) = explode(',', $format);
+        $format = '';
+    }
+
+    switch ($dateFormat) {
+        case 'FULL':   $dateFormat = IntlDateFormatter::FULL; break;
+        case 'LONG':   $dateFormat = IntlDateFormatter::LONG; break;
+        case 'MEDIUM': $dateFormat = IntlDateFormatter::MEDIUM; break;
+        case 'SHORT':  $dateFormat = IntlDateFormatter::SHORT; break;
+        case 'RELATIVE_LONG':   $dateFormat = IntlDateFormatter::RELATIVE_LONG; break;
+        case 'RELATIVE_MEDIUM': $dateFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
+        case 'RELATIVE_SHORT':  $dateFormat = IntlDateFormatter::RELATIVE_SHORT; break;
+        case 'NONE':   $dateFormat = IntlDateFormatter::NONE; break;
+    }
+    switch ($timeFormat) {
+        case 'FULL':   $timeFormat = IntlDateFormatter::FULL; break;
+        case 'LONG':   $timeFormat = IntlDateFormatter::LONG; break;
+        case 'MEDIUM': $timeFormat = IntlDateFormatter::MEDIUM; break;
+        case 'SHORT':  $timeFormat = IntlDateFormatter::SHORT; break;
+        case 'RELATIVE_LONG':   $timeFormat = IntlDateFormatter::RELATIVE_LONG; break;
+        case 'RELATIVE_MEDIUM': $timeFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
+        case 'RELATIVE_SHORT':  $timeFormat = IntlDateFormatter::RELATIVE_SHORT; break;
+        case 'NONE':   $timeFormat = IntlDateFormatter::NONE; break;
+    }
+
     $fmt = datefmt_create(
         PageFactory::$locale,
         $dateFormat,
         $timeFormat,
         PageFactory::$timezone,
-        IntlDateFormatter::GREGORIAN
+        IntlDateFormatter::GREGORIAN,
+        $format
     );
-    return datefmt_format( $fmt , $t);
-} // intlDateTime
+    return datefmt_format($fmt , $time);
+} // intlDateFormat
 
 
 /**
