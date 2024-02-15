@@ -1,7 +1,8 @@
 <?php
+
 namespace PgFactory\PageFactory;
-use function PgFactory\PageFactoryElements\intlDateTime;
-use function PgFactory\PageFactoryElements\translateDateTimes as translateDateTimes;
+use function PgFactory\PageFactoryElements\intlDate;
+
 /*
  * PageFactory Macro (and Twig Function)
  */
@@ -12,16 +13,18 @@ function datetime($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'datetime' => ['[int,string] The date and/or time either in ISO-notation or as a Unix timestamp. '.
-                'Default is "now".', false],
             'format' => ['[string] The format to be applied according to '.
                 '<a href="https://www.php.net/manual/en/datetime.format.php" target="_blank">PHP Doc</a>.', 'Y-m-d H:i'],
+            'datetime' => ['[int,string] The date and/or time either in ISO-notation or as a Unix timestamp. '.
+                'Default is "now".', false],
         ],
         'summary' => <<<EOT
 
 # $funcName()
 
 Renders a date and/or time converted to a string as defined by given format.
+
+Textual output (e.g. name of month) is automatically translated to current language.
 
 ## Typical Codes:
 |===
@@ -72,18 +75,23 @@ EOT,
         $str = $sourceCode;
     }
 
-    // assemble output:
-    $dateTime = $options['datetime'];
     $format = $options['format'];
+    $dateTime = $options['datetime'];
 
     if (!$dateTime) {
         $dateTime = time();
     } elseif (!is_numeric($dateTime)) {
         $dateTime = strtotime($dateTime);
     }
-    $out = intlDateTime($dateTime);
-//    $out  = date($format, $dateTime);
-//    $out = translateDateTimes($out);
+
+    // simple ISO formats:
+    if ($format === 'ISO') {
+        return date('Y-m-d H:i', $dateTime);
+    } elseif ($format === 'ISOT') {
+        return date('Y-m-d\TH:i', $dateTime);
+    }
+
+    $out = intlDate($format, $dateTime);
     $str .= $out;
 
     return $str; // return [$str]; if result needs to be shielded
