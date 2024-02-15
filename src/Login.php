@@ -96,7 +96,6 @@ $html
 </div><!-- /pfy-login-wrapper -->
 EOT;
 
-        $html = TransVars::resolveVariables($html);
         $html = shieldStr($html);
         PageFactory::$pg->addAssets('LOGIN');
         return $html;
