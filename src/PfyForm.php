@@ -1928,8 +1928,8 @@ EOT;
         }
         $this->matchingEventAvailable = false;
 
-        unset($eventOptions['file']);
-        $sched = new Events($src, $eventOptions);
+        $eventOptions['file'] = $src;
+        $sched = new Events($eventOptions);
         $nextEvent = $sched->getNextEvent();
 
         if ($nextEvent === false) {

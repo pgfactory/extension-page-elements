@@ -4,49 +4,56 @@
  * Events
  *
  * See https://twig.symfony.com/doc/3.x/filters/index.html for reference on Twig
+ *
+ * Recurring Events:
+ *  -> RRULE
+ * https://icalendar.org/rrule-tool.html
+ *
  */
 
 
 namespace PgFactory\PageFactoryElements;
 
+
 use PgFactory\PageFactory\DataSet as DataSet;
 use PgFactory\PageFactory\PageFactory;
 use function PgFactory\PageFactory\explodeTrim;
-use function PgFactory\PageFactory\fileExt;
-use function PgFactory\PageFactory\fileGetContents;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\translateToClassName;
-
- // Optional support for propre localization of dates -> requires twig/intl-extra
- //use Twig\Extra\Intl\IntlExtension; // -> composer require twig/intl-extra
+use RRule\RRule;
+use IntlDateFormatter;
 
 
 class Events extends DataSet
 {
     public $filetime;
-    private array $timePatterns;
+    private static array $timePlaceholders = [];
     private mixed $templates = null;
 
     /**
-     * @param string $file
+    //     * @param string $file
      * @param array $options
      * @throws \Exception
      */
-    public function __construct(string $file, array $options = [])
+    public function __construct(array $options = [])
     {
         $options['masterFileRecKeyType'] = 'index';
+
+        $file = ($options['file']??false);
+
         parent::__construct($file, $options);
 
-        if (($ftime = fileTime(resolvePath($file)))) {
-            $this->filetime = date("d.F Y", $ftime);
-        } else {
-            $this->filetime = '{! pfy-event-source-filetime-unknown !}';
+        if ($file) {
+            if (($ftime = fileTime(resolvePath($file)))) {
+                $this->filetime = date("d.F Y", $ftime);
+            } else {
+                $this->filetime = '{! pfy-event-source-filetime-unknown !}';
+            }
         }
-
-        $this->prepareTimePatterns();
+        $this->options = $options;
     } // __construct
 
 
@@ -62,14 +69,25 @@ class Events extends DataSet
             $options = $this->options;
         }
 
-        // get data filtered by category:
-        $sortedData = $this->getData($options['category']);
+        if ($options['rrule']??false || $options['timePattern']??false) {
+            $events = $this->renderTimePattern();
+            if (is_string($events)) {
+                return $events;
+            }
+        } else {
 
-        // select events according to from, till and count parameters. If from missing, time() is assumed:
-        $events = $this->selectEvents($sortedData);
+            // get data filtered by category:
+            $sortedData = $this->getData($options['category']);
+
+            // select events according to from, till and count parameters. If from missing, time() is assumed:
+            $events = $this->selectEvents($sortedData);
+        }
+
         if (!$events) {
             return '{{ pfy-no-event-found }}';
         }
+
+        $events = $this->handleExpections($events);
 
         // find the appropriate template taking into account category and language:
         $mdStr = $this->compile($events);
@@ -84,6 +102,127 @@ class Events extends DataSet
             return $mdStr;
         }
     } // render
+
+
+    // 0 (Sun) bis 6 (Sat)
+    private function renderTimePattern(): mixed
+    {
+        // simple pattern, such as current year (='Y'):
+        if ($this->options['timePattern']??false) {
+            return $this->resolveTimePlaceholders($this->options['timePattern'], false);
+        }
+
+        $options = $this->options;
+
+        // parse rrule:
+        if ($rrule = ($options['rrule'] ?? '')) {
+            $rruleElems = explodeTrim(';', $rrule);
+            $rRules = [];
+            foreach ($rruleElems as $rule) {
+                list($k, $v) = explode('=', $rule);
+                $rRules[$k] = $v;
+            }
+        }
+
+        $duration = ($options['duration']??false) ? intval($options['duration']) * 60 : 3600; // s
+        $startTime = $options['startTime']??'12:00';
+        if ($endTime = ($options['endTime']??false)) {
+            $startT = strtotime('1970-01-01 '.$startTime);
+            $endT = strtotime('1970-01-01 '.$endTime);
+            $duration = $endT - $startT;
+        }
+
+        // start and end dates, resp. count (optional):
+        $from = ($options['from']??false)? $this->resolveTimePlaceholders($options['from'], false) : strtotime('Y-m-d');
+        $till = ($options['till']??false)? $this->resolveTimePlaceholders($options['till'], false) : false;
+
+        if ($from) {
+            $rRules['DTSTART'] = $this->convertDatetime($from);
+        }
+        if ($till) {
+            $rRules['UNTIL'] = $this->convertDatetime($till);
+        } elseif ($count = ($options['count']??false)) {
+            $rRules['COUNT'] = $count;
+        }
+
+        // compile rrule:
+        try {
+            $rrule = new RRule($rRules);
+
+            $event = $options['eventValues'] ?? [];
+            $events = [];
+
+            foreach ($rrule as $occurrence) {
+                $event['start'] = $occurrence->format('Y-m-d ') . $startTime;
+                $event['end'] = date('Y-m-d H:i', strtotime($event['start']) + $duration);
+                $events[] = $event;
+            }
+        } catch (\Exception $e) {
+            throw new \Exception("Error: improple date/time format in Events (".$e->getMessage().")");
+        }
+
+        return $events;
+    } // renderTimePattern
+
+
+    private function convertDatetime(string $str): string
+    {
+        $date = str_replace('-', '', substr($str, 0, 10));
+        $time = str_pad(str_replace(':','', substr($str, 11, 5)), 6, '0');
+        return "{$date}T{$time}Z";
+    } // convertDatetime
+
+
+    private function handleExpections(array $events): array
+    {
+        $exceptions = [];
+        // get exceptions definition:
+        $exceptionsStr = ($this->options['exceptions']??'');
+        // get exceptions definition from file:
+        if ($file = ($this->options['exceptionsFile']??false)) {
+            if ($exceptionsStr) {
+                $exceptionsStr .= ',';
+            }
+            $exceptionsStr .= str_replace("\n", ',', loadFile($file, 'c,h,e'));
+        }
+        $exceptionsStr = rtrim($exceptionsStr, ',');
+
+        // parse exceptions definition:
+        if ($exceptionsStr) {
+            $rawExceptions = explodeTrim(',;', $exceptionsStr);
+            foreach ($rawExceptions as $rawException) {
+                $exception = $this->resolveTimePlaceholders($rawException, false);
+                if (str_contains($exception, ' - ')) {
+                    list($from, $till) = explode(' - ', $exception);
+                    $from = strtotime($from);
+                    $till = strtotime($till);
+                } else {
+                    $from = strtotime($exception);
+                    if (strlen($exception) < 10) {
+                        $till = strtotime('+1month', $from);
+                    } else {
+                        $till = strtotime('+1day', $from);
+                    }
+                }
+                $exceptions[] = [$from, $till];
+            }
+        }
+
+        // apply exceptions:
+        if ($exceptions) {
+            foreach ($events as $key => $event) {
+                $evFrom = strtotime($event['start']);
+                $evTill = strtotime($event['end']);
+                foreach ($exceptions as $exception) {
+                    if ($evFrom > $exception[0] && $evTill < $exception[1]) {
+                        unset($events[$key]);
+                        break;
+                    }
+                }
+            }
+        }
+        return $events;
+    } // handleExpections
 
 
     /**
@@ -145,7 +284,7 @@ class Events extends DataSet
         $from = $options['from']??0;
 
         if ($from) {
-            $targetDateT = $this->parseTime($from);
+            $targetDateT = $this->resolveTimePlaceholders($from);
         } else {
             $targetDateT = strtotime(date('Y-m-d ')); // round down to last midnight
         }
@@ -185,7 +324,7 @@ class Events extends DataSet
         $till = $this->options['till'];
         if ($till) {
             if (is_string($till)) {
-                $till = $this->parseTime($till);
+                $till = $this->resolveTimePlaceholders($till);
             }
             $count = 999;
         } else {
@@ -337,19 +476,42 @@ class Events extends DataSet
             'index' => $template,
         ]);
         $twig = new \Twig\Environment($loader);
+        $twig->addFilter(new \Twig\TwigFilter('intlDate', 'PgFactory\PageFactoryElements\twigIntlDateFilter'));
+        $twig->addFilter(new \Twig\TwigFilter('intlDateFormat', 'PgFactory\PageFactoryElements\twigIntlDateFormatFilter'));
         return $twig->render('index', $vars);
     } // compileTemplate
 
 
     /**
+     * Resolves a format string to current values.
+     *   Supports date() type arguments (e.g. 'Y-m-d' or 'Y2-m-d').
+     *   Special case: 'Yn' (where n=number) -> flips year to next year when month is greater than 12-n.
+     *   Example: Y2 returns next year when called in November or December, otherwise the current year.
+     *   Values M (=Jan), F (=January), D (=Mon), l (=Monday) are translated to local language
      * @param $str
      * @return false|int
      */
-    private function parseTime($str) {
+    private function resolveTimePlaceholders(string $str, $strtotime = true): string
+    {
+        if (preg_match('/Y(\d+)/', $str, $m)) {
+            $y = date('Y');
+            $d = intval($m[1]);
+            if ($d) {
+                $dayOfYear = intval(date('z'));
+                if ($dayOfYear > (365 - $d)) {
+                    $y += 1;
+                }
+            }
+            $str = str_replace($m[0], (string)$y, $str);
+        }
+        $str = intlDate($str);
 
-        $str = str_replace($this->timePatterns['patterns'], $this->timePatterns['values'], $str);
-        return strtotime($str);
-    } // parseTime
+        if ($strtotime) {
+            return strtotime($str);
+        } else {
+            return $str;
+        }
+    } // resolveTimePlaceholders
 
 
     /**
@@ -358,37 +520,10 @@ class Events extends DataSet
      */
     private function cleanup(string $str): string
     {
-        $str = translateDateTimes($str);
-
         $str = str_replace(['{!', '!}'], ['{{', '}}'], $str);
         return $str;
     } // cleanup
 
-
-    /**
-     * @return void
-     */
-    private function prepareTimePatterns(): void
-    {
-        $patterns = [
-            'Y1', 'Y2', 'Y', 'n', 'm', 'M', 'F', 'd', 'l', 'D'
-        ];
-        $values = [];
-        foreach ($patterns as $v) {
-            $v = preg_replace('/\d/', '', $v);
-            $values[] = date($v);
-        }
-
-        // for the last month in a year, we assume the user wants to see the coming year:
-        if ($values[3] > 11) {
-            $values[0]++;
-        }
-        if ($values[3] > 10) {
-            $values[1]++;
-        }
-
-        $this->timePatterns = ['patterns' => $patterns, 'values' => $values];
-    }
 
     /**
      * @param string $template
@@ -500,19 +635,15 @@ class Events extends DataSet
      */
     private function loadTemplates(string|false $file = false): void
     {
+        if ($template = ($this->options['template']??false)) {
+            $this->templates = $template;
+            return;
+        }
         $file = $file ?: ($this->options['templatesFile']??false);
         if (!$file) {
             throw new \Exception("Error: events file '$file' not found.");
         }
-        $ext = fileExt($file);
-        switch ($ext) {
-            case 'txt':
-                $this->templates = loadFile($file);
-                break;
-            case 'yaml':
-                $this->templates = loadFile($file);
-                break;
-        }
+        $this->templates = loadFile($file);
     } // loadTemplates
 
 } // Events

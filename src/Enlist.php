@@ -274,9 +274,8 @@ EOT;
         $deadlineStr = $this->prepStaticOption('deadline');
         $deadline = false;
         if ($deadlineStr) {
-            $deadlineStr = intlDateTime($deadlineStr, IntlDateFormatter::RELATIVE_LONG, false);
-            $title0 = str_replace('%deadline%', $deadlineStr, $title);
-            $title = translateDateTimes($title0);
+            $deadlineStr = intlDate('Y-m-d', $deadlineStr);
+            $title = str_replace('%deadline%', $deadlineStr, $title);
         }
 
         $this->title = $title;
@@ -695,7 +694,7 @@ EOT;
         if ($this->freezeTime) {
             $addHelp = TransVars::getVariable('pfy-enlist-popup-add-help');
             // translate freezeTime:
-            $s = intlDateTime(time() + $this->freezeTime, IntlDateFormatter::MEDIUM);
+            $s = intlDateFormat('RELATIVE_MEDIUM,SHORT', time() + $this->freezeTime);
             $addHelp = str_replace('%freezetime%', $s, $addHelp);
         } else {
             $addHelp = TransVars::getVariable('pfy-enlist-popup-add-nofreeze-help');
@@ -1301,8 +1300,8 @@ EOT;
             }
         }
 
-        unset($eventOptions['file']);
-        $sched = new Events($src, $eventOptions);
+        $eventOptions['file'] = $src;
+        $sched = new Events($eventOptions);
         $count = $eventOptions['count']??false;
         $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;

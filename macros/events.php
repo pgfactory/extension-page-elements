@@ -23,8 +23,8 @@ function events($args = '')
                 '(If not set, "unlimited" will be assumed)', false],
             'count' => ['[int] Defines the number of events to be rendered at most.', 1],
             'offset' => ['[int] Selects events relative to "from". "0" means next event etc. ', 0],
-            'template' => ['[.txt file-name] File should contain MarkdownPlus defining how data records will '.
-                'be presented.<br>Inject values as \{{ key }}, where key is the name of a data element in the data record.', true],
+            'template' => ['[string] Text (in MarkdownPlus format) defining how data records will '.
+                'be presented.<br>Inject values as \{{ key }}, where key is the name of a data element in the data record.', null],
             'templatesFile' => ['[.yaml file-name] For category specific templates. '.
                 'Syntax:<br>``category: |``<br>&nbsp;&nbsp;``markdown ...`` (like above, but with leading blanks)<br>'.
                 'If no template is found that directly matches the *category* name, alternatives are tried:<br> '.
@@ -32,6 +32,20 @@ function events($args = '')
                 'If that still doesn\'t lead to a hit, the default template identified as  ``_:`` is selected.', false],
             'templateBasename' => ['[string] If defined, ``templateBasename-`` will be prepended to the *category* name '.
                 'before selecting the template.', ''],
+            'rrule' => ['[string] Defition string for recurring events. Uses the RRULE syntax (see [icalendar.org](https://icalendar.org)). '.
+                ' -> Use tool to assemble RRULE string: [icalendar.org/rrule-tool.html](https://icalendar.org/rrule-tool.html).', null],
+            'exceptions' => ['[string] Defines dates and ranges to exclude. Examples: `2024-12-24,2024-12-31` or `Y-02-15, Y-04 - Y-06` etc. '.
+                'If day is omitted in ISO-Date string, the entire month is excluded.', null],
+            'exceptionsFile' => ['[filename] Retrieves dates and ranges to exclude from a .txt file. '.
+                'Syntax same as above, plus newlines as separators.', null],
+            'startTime' => ['[string] Start time for recurring events.', null],
+            'duration' => ['[string] Duration (in minutes) for recurring events.', null],
+            'endTime' => ['[string]  End time for recurring events (instead of `duration`).', null],
+            'eventValues' => ['[array] Additional values for rendering events -> used to replace variables in a Twig-template. '.
+                'Example: `eventValues: {Topic:XY, Location: UV}`.', null],
+            'timePattern' => ['[string] Alternative to all of the above: allows to render simple values, such as the '.
+                'current year or month etc. Example: `timePattern: Y` or `timePattern: l` .'.
+                'Values `M` (=Jan), `F` (=January), `D` (=Mon), `l` (=Monday) are translated to local language.', null],
             'wrap' => ['[bool] If false, omits the normally applied DIV wrapper, i.e. renders just as stated in the template.', true],
         ],
         'summary' => <<<EOT
@@ -62,6 +76,9 @@ offers a variety of filters and more, see
 In arguments ``from`` and ``till`` you can use letters for rolling values, e.g. "Y" for the current year.  
 See <a href='https://www.php.net/manual/en/datetime.format.php' target="_blank">PHP date()</a> for reference.
 
+In some cases, e.g. towards the end of the year, you may want to show events of the next year. 
+For this use the special format `Yn`, where n is the number of days to switch earlier. 
+
 ## Variables: {:.h3}
 - \{{ pfy-no-event-found }}
 - \{{ pfy-no-event-template-found }}
@@ -83,20 +100,10 @@ EOT,
         PageFactory::$pg->addAssets('EVENTS');
     }
 
-    if (!$options['file']) {
-        return '';
-    }
-
-    if (isset($options['template'])) {
-        $options['templatesFile'] = $options['template'];
-    }
-
     // assemble output:
     $str .= '';
 
-    $file = $options['file']??false;
-
-    $ev = new Events($file, $options);
+    $ev = new Events($options);
     $str .= $ev->render();
 
     if ($options['wrap']) {
