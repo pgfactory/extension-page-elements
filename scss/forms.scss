@@ -302,7 +302,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     position: relative;
   }
 
-  .pfy-tooltip-anker {
+  .pfy-form-tooltip-anker {
     border: none;
     background: none;
     padding: 0;
@@ -313,12 +313,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     opacity: 0.8;
   }
 
-  .pfy-tooltip-anker:hover,
-  .pfy-tooltip-anker:hover {
+  .pfy-form-tooltip-anker:hover,
+  .pfy-form-tooltip-anker:hover {
     opacity: 1;
   }
 
-  .pfy-tooltip {
+  .pfy-form-tooltip {
     display: none;
     position: absolute;
     top: 0;
@@ -334,8 +334,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     box-shadow: 0 0 5px #888;
   }
 
-  .pfy-tooltip-anker:focus + .pfy-tooltip,
-  .pfy-tooltip-anker:hover + .pfy-tooltip {
+  .pfy-form-tooltip-anker:focus + .pfy-form-tooltip,
+  .pfy-form-tooltip-anker:hover + .pfy-form-tooltip {
     display: block;
   }
 

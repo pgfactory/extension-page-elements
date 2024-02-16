@@ -1341,8 +1341,8 @@ EOT;
 
         // handle 'info' option:
         if ($info = ($elemOptions['info'] ?? false)) {
-            $label .= "<button type='button' class='pfy-tooltip-anker'>".INFO_ICON.
-                "</button><span class='pfy-tooltip'>$info</span>";
+            $label .= "<button type='button' class='pfy-form-tooltip-anker'>".INFO_ICON.
+                "</button><span class='pfy-form-tooltip'>$info</span>";
         }
 
         // if label contains HTML, we need to transform it:
