@@ -143,11 +143,11 @@ class PageElements
         PageFactory::$pg->addAssets('TOOLTIPS');
         $js = <<<EOT
 
-if (document.querySelector('.tooltip')) {
-    tippy('.tooltip', {
+if (document.querySelector('.pfy-tippy')) {
+    tippy('.pfy-tippy', {
       content: (reference) => reference.getAttribute('title'),
       allowHTML: true,
-      delay: 100,
+      delay: 200,
       theme: 'light',
     });
 }
