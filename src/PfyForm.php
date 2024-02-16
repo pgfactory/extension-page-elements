@@ -77,7 +77,7 @@ class PfyForm extends Form
     {
         self::$formInx++;
         $this->formOptions = &$formOptions;
-        $tableOptions = [];
+        $tableOptions = $formOptions['tableOptions']??[];
         $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
 
         $tableOptions['showData']           = $formOptions['showData']??false;
@@ -1224,6 +1224,9 @@ EOT;
         }
 
         $tableOptions = $this->tableOptions;
+        if ($this->formOptions['tableOptions']??false) {
+            $tableOptions = array_merge($tableOptions, $this->formOptions['tableOptions']);
+        }
 
         $file = resolvePath($this->formOptions['file'], relativeToPage: true);
 

@@ -94,6 +94,8 @@ function form($args = '')
                 '``permission:\'loggedin,group,localhost\'``,<br>``mode:popup<br>``'.
                 '("editData:true" is shorthand for typical set of options.)', false],
 
+            'edit' =>	['Synonym for "editData".', null],
+
             'recLocking' =>	['[bool] Defines, whether record-locking shall be activated while editing a record.', false],
 
             'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
@@ -277,6 +279,10 @@ EOT,
     } else {
         list($options, $sourceCode, $inx, $macroName, $auxOptions) = $res;
         $html = $sourceCode;
+    }
+
+    if ($options['edit']??false) {
+        $options['editData'] = $options['edit'];
     }
 
     // ownerNotificationTo synonyme for mailTo:
