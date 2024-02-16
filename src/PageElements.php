@@ -1,6 +1,7 @@
 <?php
 
 namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
 use function PgFactory\PageFactory\createHash;
@@ -24,12 +25,16 @@ class PageElements
         $this->pg = PageFactory::$pg;
         $this->assets = PageFactory::$assets;
 
+        // register PE asset definitions:
+        Page::$definitions = array_merge_recursive(Page::$definitions, ['assets' => PE_URL_DEFINITIONS]);
+
         $this->handleCreateHashRequest();
 
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
         $this->updateScss();
         $this->handleCssRefactor();
+        $this->initTooltips();
         $this->cleanDownloadFolder();
     } // __construct
 
@@ -62,15 +67,6 @@ class PageElements
             }
         }
     } // updateScss
-
-
-    /**
-     * @return array
-     */
-    public function getAssetDefs(): array
-    {
-        return PE_URL_DEFINITIONS;
-    } // getAssetDefs
 
 
     /**
@@ -140,6 +136,25 @@ class PageElements
     {
         $this->assets->addAssets($assets);
     } // addAssets
+
+
+    protected function initTooltips(): void
+    {
+        PageFactory::$pg->addAssets('TOOLTIPS');
+        $js = <<<EOT
+
+if (document.querySelector('.tooltip')) {
+    tippy('.tooltip', {
+      content: (reference) => reference.getAttribute('title'),
+      allowHTML: true,
+      delay: 100,
+      theme: 'light',
+    });
+}
+
+EOT;
+        PageFactory::$pg->addJsReady($js);
+    } // initTooltips
 
 
     /**
