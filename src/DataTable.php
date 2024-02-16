@@ -137,7 +137,7 @@ class DataTable
         $this->export = $options['export'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
         $this->markLocked = $options['markLocked'] ?? false;
-        $this->placeholderForUndefined = $options['placeholderForUndefined'] ?? '?';
+        $this->placeholderForUndefined = ($options['placeholderForUndefined']??'?');
 
         $this->shieldCellContent = $options['shieldCellContent'] ?? false;
 
@@ -234,10 +234,25 @@ class DataTable
         } else {
             $this->tableData = Data2DSet::normalizeData($this->tableData, $this->tableHeaders, $this->placeholderForUndefined);
         }
+        if ($this->sort) {
+            $this->sortTableData();
+        }
     } // prepareTableData
 
 
-
+    /**
+     * @return void
+     */
+    private function sortTableData(): void
+    {
+        $table = $this->tableData;
+        $this->tableData = [];
+        $this->tableData['_hdr'] = array_shift($table);
+        uasort($table, function ($a,$b) {
+            return strcmp($a[$this->sort], $b[$this->sort]);
+        });
+        $this->tableData = $this->tableData + $table;
+    } // sortTableData
 
 
     /**
@@ -708,6 +723,11 @@ EOT;
     } // exportDownloadDocs
 
 
+    /**
+     * @param $key
+     * @return void
+     * @throws \Exception
+     */
     private function archive($key) {
         $dataRec = $this->data2Dset->find($key);
         // in case data was empty and we added an empty rec, remove it again here:
@@ -753,6 +773,10 @@ EOT;
     } // parseArrayArg
 
 
+    /**
+     * @return int|false
+     * @throws \Exception
+     */
     public function getSize(): int|false
     {
         if ($this->data2Dset) {
@@ -763,6 +787,10 @@ EOT;
     } // getSize
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     public function purge(): void
     {
         if ($this->data2Dset) {
@@ -773,6 +801,13 @@ EOT;
     } // purge
 
 
+    /**
+     * @param array $rec
+     * @param bool $flush
+     * @param $recKeyToUse
+     * @return void
+     * @throws \Exception
+     */
     public function addRec(array $rec, bool $flush = true, $recKeyToUse = false)
     {
         if ($this->data2Dset) {

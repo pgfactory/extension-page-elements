@@ -34,8 +34,8 @@ class Data2DSet extends DataSet
     {
         $this->markLocked = $options['markLocked'] ?? false;
         parent::__construct($file, $options);
-
-        if ($unknown = $options['unknownValue']??false) {
+        $unknown = $options['unknownValue'] ?? ($options['placeholderForUndefined']??false);
+        if ($unknown !== false) {
             self::$placeholderForUndefined = $unknown;
         }
     } // __construct
