@@ -93,21 +93,32 @@
     position: relative;
     border: 1px solid #aaa;
     display: flex;
-    justify-content: space-between;
     background-color: var(--pfy-enlist-title-bg, inherit);
 
-    span:first-child {
+    > div:first-child {
       padding: 5px;
       font-weight: bold;
-    }
-    .pfy-tooltip {
-      font-weight: normal;
+      flex: 1 0 auto;
     }
 
     button {
       width: 1.5em;
       height: 1.5em;
     }
+
+    .pfy-enlist-tooltip-anker {
+      font-size: 120%;
+      padding: 0.3em 0.3em 0 0;
+      flex: 0 0 1.5em;
+      height: 1.5em;
+      text-align: center;
+      user-select: none;
+      cursor: pointer;
+    }
+  }
+
+  .pfy-enlist-tooltip-content {
+    display: none;
   }
 
   .pfy-enlist-head-buttons {

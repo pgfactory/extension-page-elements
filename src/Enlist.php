@@ -160,9 +160,18 @@ class Enlist
         $this->fieldNames[] = '&nbsp; ';
 
         $this->openDb();
+
         if (!self::$initialized) {
             self::$initialized = true;
             PageFactory::$pg->addAssets('FORMS');
+
+            $adminEmail = $this->options['adminEmail'];
+            if ($adminEmail === true) {
+                $adminEmail = PageFactory::$webmasterEmail;
+            }
+            if ($adminEmail) {
+                PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+            }
         }
 
         $this->handleUserPreset();
@@ -180,6 +189,7 @@ class Enlist
             foreach ($this->events as $event) {
                 $this->title = $event['eventBanner'];
                 $this->datasetName = $event['start'];
+                $this->info = $event['info']??false;
                 $this->nSlots = intval($event['nSlots']?? 1);
                 $this->nReserveSlots = intval($event['nReserveSlots']?? 0);
                 $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
@@ -206,15 +216,6 @@ class Enlist
         $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->inx " . $this->class);
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
-
-            if ($this->inx === 1) {
-                if ($this->adminEmail === true) {
-                    $adminEmail = PageFactory::$webmasterEmail;
-                    PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
-                } elseif ($this->adminEmail) {
-                    PageFactory::$pg->addJs("const adminEmail = '$this->adminEmail';");
-                }
-            }
         }
 
         // add class to show that list is frozen (even if isEnlistAdmin):
@@ -226,7 +227,7 @@ class Enlist
             $this->titleClass = ' pfy-empty-title';
         }
 
-        $this->renderInfoButton();
+        $info = $this->renderInfoButton();
 
         $headButtons = $this->renderSendMailToAllButton();
 
@@ -235,7 +236,7 @@ class Enlist
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setname="$this->datasetName"$attrib>
-<div class='pfy-enlist-title$this->titleClass'><span>$this->title</span>$headButtons</div>
+<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$info$headButtons</div>
 $html
 </div>
 EOT;
@@ -681,14 +682,16 @@ EOT;
 
 
     /**
-     * @return void
+     * @return string
      */
-    private function renderInfoButton(): void
+    private function renderInfoButton(): string
     {
+        $info = '';
         if ($this->info) {
-            $this->title .= "<span tabindex='0' class='pfy-tooltip-anker'>" . ENLIST_INFO_ICON .
-                "</span><span class='pfy-tooltip'>$this->info</span>";
+            $info = "<div tabindex='0' class='pfy-enlist-tooltip-anker'>" . ENLIST_INFO_ICON .
+                "</div><div class='pfy-enlist-tooltip-content'>$this->info</div>";
         }
+        return $info;
     } // renderInfoButton
 
 

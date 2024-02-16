@@ -9,6 +9,7 @@ const Enlist = {
 
   init: function() {
     this.addEventListeners();
+    this.initTooltips();
   }, // init
 
   addEventListeners: function() {
@@ -73,6 +74,27 @@ const Enlist = {
       });
     } // sendToAllBtns
   }, // addEventListeners
+
+
+  initTooltips: function() {
+    const tooltips = document.querySelectorAll('.pfy-enlist-tooltip-anker');
+    if (tooltips) {
+      tooltips.forEach(function (el) {
+        const parentEl = el.parentElement;
+        const textEl = parentEl.querySelector('.pfy-enlist-tooltip-content');
+        if (textEl) {
+          const text = textEl.innerHTML;
+          tippy('.pfy-enlist-tooltip-anker', {
+            content: text,
+            allowHTML: true,
+            delay: 200,
+            theme: 'light',
+            trigger: 'mouseenter click focus',
+          });
+        }
+      });
+    }
+  }, // initTooltips
 
 
   openPopup: function(elem, mode) {
