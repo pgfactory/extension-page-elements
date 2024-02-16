@@ -55,11 +55,11 @@ function enlist($args = '')
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people. (default: false)', null],
             'adminMail' =>	['[string] Synonyme for adminEmail.', null],
-            'schedule' => ['{options} If defined, Events class is invoked to determine the next event and .'.
+            'schedule' => ['{options} If defined, the Events module is invoked to determine the next event and '.
                 'based on that, presets "file", "maxCount" and "minRows". '.
                 'The event\'s rendered output becomes available as "%eventBanner%" to form banners.'.
-                '(E.g. formTop: "\<div>%eventBanner%\</div>").<br>'.
-                'Moreover, all values of found event are made available to form banners as "%key%". '.
+                '(E.g. `formTop: "\<div>%eventBanner%\</div>"`).<br>'.
+                'Moreover, all values of found event are made available to form banners as `%key%`. '.
                 '(For ref see macro *events()*).', false],
 
             'output' =>	['[bool] If true, no output is rendered -> used to set persisent options: '.
@@ -74,10 +74,26 @@ Endlist is a tool designed for situations in which you want to organize an event
 
 For each task you can define the number of people you need (as well as number of reserve helpers).
 
-By default, the tool requests name and e-mail addres for each entry. People can delete their entry later on, if 
+By default, the tool requests name and e-mail address for each entry. People can delete their entry later on, if 
 configured accordingly. The time during which they can delete their entry can be limited, e.g. to 24 hours.
 
+Example:
+    \{{ enlist(
+        nSlots: 3
+        nReserveSlots: 2
+        title: TITLE
+        schedule:{src:'\~config/events.yaml', templatesFile: \~page/template.txt},
+    ) }}
+
+### Custom Fields
 If desired, you can define custom fields which will also be presented in the list.
+
+Example:
+    \{{ enlist(
+        \...
+        Bring: {label:'I bring:', type:textarea}
+    ) }}
+
 
 ### Presetting Persistent Options
 

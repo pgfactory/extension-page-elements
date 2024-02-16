@@ -399,7 +399,15 @@ class AjaxHandler
         if (self::$templates) {
             return self::$templates;
         }
-        return self::$templates = loadFile(self::$sessRec['template']);
+        if ($templateFile = (self::$sessRec['template']??false)) {
+            return self::$templates = loadFile($templateFile);
+        } else {
+            return <<<EOT
+<span class='time-range'>%time-range%</span>
+<span class='category'>%category%</span>
+<span class='description'>%Title%</span>
+EOT;
+        }
     } // getTemplates
 
 

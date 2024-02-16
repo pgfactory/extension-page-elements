@@ -27,6 +27,7 @@ const ENLIST_DELETE_ICON = '−';
 
 class Enlist
 {
+    private static $initialized = false;
     private $options;
     private $inx;
     private $presetOptionsMode = false;
@@ -159,7 +160,10 @@ class Enlist
         $this->fieldNames[] = '&nbsp; ';
 
         $this->openDb();
-        PageFactory::$pg->addAssets('FORMS');
+        if (!self::$initialized) {
+            self::$initialized = true;
+            PageFactory::$pg->addAssets('FORMS');
+        }
 
         $this->handleUserPreset();
 
@@ -176,6 +180,9 @@ class Enlist
             foreach ($this->events as $event) {
                 $this->title = $event['eventBanner'];
                 $this->datasetName = $event['start'];
+                $this->nSlots = intval($event['nSlots']?? 1);
+                $this->nReserveSlots = intval($event['nReserveSlots']?? 0);
+                $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
                 $html .= $this->renderElement();
             }
 
