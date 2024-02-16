@@ -79,19 +79,20 @@ const Enlist = {
   initTooltips: function() {
     const tooltips = document.querySelectorAll('.pfy-enlist-tooltip-anker');
     if (tooltips) {
-      tooltips.forEach(function (el) {
-        const parentEl = el.parentElement;
-        const textEl = parentEl.querySelector('.pfy-enlist-tooltip-content');
-        if (textEl) {
-          const text = textEl.innerHTML;
-          tippy('.pfy-enlist-tooltip-anker', {
-            content: text,
-            allowHTML: true,
-            delay: 200,
-            theme: 'light',
-            trigger: 'mouseenter click focus',
-          });
-        }
+      tippy('.pfy-enlist-tooltip-anker', {
+        content: (el) => {
+          const parentEl = el.parentElement;
+          const textEl = parentEl.querySelector('.pfy-enlist-tooltip-content');
+          let text = '';
+          if (textEl) {
+            text = textEl.innerHTML;
+          }
+          return text;
+        },
+        allowHTML: true,
+        delay: 200,
+        theme: 'light',
+        trigger: 'mouseenter click focus',
       });
     }
   }, // initTooltips

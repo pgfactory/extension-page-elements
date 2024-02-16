@@ -59,6 +59,7 @@ class Enlist
     private static $_nReserveSlots = null;
     private $file;
     private static $_file = null;
+    private $info0;
     private $info;
     private static $_info = null;
     private $freezeTime = false;
@@ -92,6 +93,7 @@ class Enlist
      * @var string
      */
     protected static $obfuscateSessKey;
+    private mixed $event;
 
     /**
      * @param $options
@@ -187,9 +189,14 @@ class Enlist
         if ($this->events) {
             $html = '';
             foreach ($this->events as $event) {
+                $this->event = $event;
                 $this->title = $event['eventBanner'];
                 $this->datasetName = $event['start'];
-                $this->info = $event['info']??false;
+                if ($event['info']??false) {
+                    $this->info = $event['info'];
+                } else {
+                    $this->info = $this->info0;
+                }
                 $this->nSlots = intval($event['nSlots']?? 1);
                 $this->nReserveSlots = intval($event['nReserveSlots']?? 0);
                 $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
@@ -268,6 +275,7 @@ EOT;
         $this->prepStaticOption('nSlots', 1);
         $this->prepStaticOption('nReserveSlots', 0);
         $this->prepStaticOption('info');
+        $this->info0 = $this->info;
         $this->prepStaticOption('file');
         $this->prepStaticOption('freezeTime');
         $this->prepStaticOption('sendConfirmation');
@@ -686,10 +694,15 @@ EOT;
      */
     private function renderInfoButton(): string
     {
-        $info = '';
-        if ($this->info) {
+        $info = $this->info??'';
+        if ($info) {
+            if ((str_contains($info, '%')) && ($event = ($this->event??false))) {
+                foreach ($event as $key => $value) {
+                    $info = str_replace("%$key%", $value, $info);
+                }
+            }
             $info = "<div tabindex='0' class='pfy-enlist-tooltip-anker'>" . ENLIST_INFO_ICON .
-                "</div><div class='pfy-enlist-tooltip-content'>$this->info</div>";
+                "</div><div class='pfy-enlist-tooltip-content'>$info</div>";
         }
         return $info;
     } // renderInfoButton
