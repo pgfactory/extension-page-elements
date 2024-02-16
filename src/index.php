@@ -56,6 +56,11 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'js/login.js',
         PAGE_ELEMENTS_URL.'css/-login.css',
     ],
+    'TOOLTIPS' => [
+        PAGE_ELEMENTS_URL.'css/tippy.min.css',
+        PAGE_ELEMENTS_URL.'js/popper.min.js',
+        PAGE_ELEMENTS_URL.'js/tippy-bundle.umd.min.js',
+    ],
     'CALENDAR' => [
         PAGE_ELEMENTS_URL.'js/swipe.js',
         PAGE_ELEMENTS_URL.'js/popper.min.js',
