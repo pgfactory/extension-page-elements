@@ -69,10 +69,9 @@ class DataTable
     private array $rowClasses;
     private array $rowIds;
     private string $placeholderForUndefined;
-    /**
-     * @var false|mixed
-     */
     private mixed $shieldCellContent;
+    private static int $tableInx = 0;
+    private static bool $interactiveInitializee = false;
 
     /**
      * @param string|array $dataSrc
@@ -81,13 +80,9 @@ class DataTable
      */
     public function __construct(string|array $dataSrc, array $options = [])
     {
-        if (isset($GLOBALS['tableInx'])) {
-            $GLOBALS['tableInx']++;
-            $this->inx = $GLOBALS['tableInx'];
-        } else {
-            $this->inx = $GLOBALS['tableInx'] = 1;
-            PageFactory::$pg->addAssets('TABLES');
-        }
+        self::$tableInx++;
+        $this->inx = self::$tableInx;
+
         if (!isset($options['headers'])) {
             $options['headers'] = true;
         }
@@ -174,6 +169,12 @@ class DataTable
         // table footers:
         if ($this->footers && !is_array($this->footers)) {
             $this->parseArrayArg('footers');
+        }
+
+        // interactive option (=> DataTables.js):
+        if ($this->interactive && !self::$interactiveInitializee) {
+            self::$interactiveInitializee = true;
+            PageFactory::$pg->addJs('var pfyDataTable = [];');
         }
     } // __construct
 
@@ -644,7 +645,7 @@ EOT;
 
         $jq = <<<EOT
 
-new DataTable('#$this->tableId', {
+pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
   language: {
     search: '$searchButtonLabel:',
     info: '_TOTAL_ $pfyDatatablesRecords'
