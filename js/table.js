@@ -391,6 +391,17 @@ const tableHelper = {
     }
   }, // unlockRecs
 
+
+  filter: function (table, filterStr) {
+    let tableInx = 1;
+    if (typeof table === 'object') {
+      tableInx = table.dataset.tableinx;
+    } else if (typeof table === 'number') {
+      tableInx = table;
+    }
+    pfyDataTable[tableInx].search( filterStr ).draw();
+  }, // filter
+
 }; // tableHelper
 
 
