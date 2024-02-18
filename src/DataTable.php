@@ -148,8 +148,7 @@ class DataTable
             $this->dataReference = true;
         }
 
-        if ((str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive'))
-            && !str_contains($serviceColumns, 'select')) {
+        if (str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive')) {
             $serviceColumns = "select,$serviceColumns";
             PageFactory::$assets->addAssets('POPUPS, TABLES');
         }
@@ -175,6 +174,7 @@ class DataTable
         if ($this->interactive && !self::$interactiveInitializee) {
             self::$interactiveInitializee = true;
             PageFactory::$pg->addJs('var pfyDataTable = [];');
+            PageFactory::$pg->addAssets('JQUERY');
         }
     } // __construct
 
