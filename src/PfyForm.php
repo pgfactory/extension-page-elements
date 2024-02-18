@@ -389,6 +389,12 @@ EOT;
             $this->formButtons .= (string)$elem->getControl();
             return '';
 
+        } elseif ($type === 'button') {
+            $cls = $this->formElements[$_name]['class'] ?? '';
+            $elem->setHtmlAttribute('class', "pfy-form-button button $cls");
+            $this->formButtons .= (string)$elem->getControl();
+            return '';
+
             // all other field types (except bypassed and import):
         } elseif (!str_contains(',bypassed,@import,', ",$type,")) {
             // get errors and render them:
@@ -666,7 +672,7 @@ EOT;
         if ($revealLabel) {
             $elem->setHtmlAttribute('data-reveal-target-id', $targetId);
         }
-        $elemOptions['class'] .= 'pfy-auto-grow';
+        $elemOptions['class'] .= ' pfy-auto-grow';
         return $elem;
     } // addTextareaElem
 
