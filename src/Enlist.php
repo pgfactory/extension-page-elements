@@ -18,11 +18,16 @@ use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\explodeTrimAssoc;
+use function PgFactory\PageFactory\writeFile;
+use Spatie\IcalendarGenerator\Components\Calendar;
+use Spatie\IcalendarGenerator\Components\Event;
+use DateTime;
 
 const ENLIST_INFO_ICON = 'ⓘ';
 const ENLIST_MAIL_ICON = '✉';
 const ENLIST_ADD_ICON = '+';
 const ENLIST_DELETE_ICON = '−';
+const ENLIST_CALENDAR_ICON = '📅';
 
 
 class Enlist
@@ -236,6 +241,8 @@ class Enlist
 
         $info = $this->renderInfoButton();
 
+        $iCal = $this->renderICal();
+
         $headButtons = $this->renderSendMailToAllButton();
 
         $html = $this->renderTable();
@@ -243,7 +250,7 @@ class Enlist
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setname="$this->datasetName"$attrib>
-<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$info$headButtons</div>
+<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$iCal$info$headButtons</div>
 $html
 </div>
 EOT;
@@ -860,6 +867,9 @@ EOT;
     } // countEntries
 
 
+    /**
+     * @return void
+     */
     private function handleUserPreset(): void
     {
         if (self::$userPreset) {
@@ -1282,7 +1292,7 @@ EOT;
             array_keys($replace),
             array_values($replace),
             $body);
-
+//ToDo: email with ics attachment
         Utils::sendMail($data['Email'], $subject, $body );
         return true;
     } // handleSendConfirmation
@@ -1365,6 +1375,107 @@ EOT;
         }
         return $data;
     } // fixCustomFields
+
+
+    /**
+     *  https://github.com/spatie/icalendar-generator
+     * @return string
+     * @throws \Exception
+     */
+    private function renderICal(bool $saveToFile = true): string
+    {
+        $rec    = $this->event;
+        if (!($this->options['ical'] ?? false)) {
+            return '';
+        }
+        $start  = $rec['start'];
+        $ics = $this->createICalRecord($rec);
+
+        if ($saveToFile) {
+            $date = date('Y-m-d\TH:i', strtotime($start));
+            $file = "~download/enlist/$date.ics";
+            writeFile($file, $ics);
+        }
+
+
+        $url = Utils::resolveUrls($file);
+        $calIcon = ENLIST_CALENDAR_ICON;
+        $iCal = <<<EOT
+
+<div class='pfy-enlist-ical-wrapper'>
+<a href="$url" download="$start" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
+</div>
+
+EOT;
+
+        return $iCal;
+    } // renderICal
+
+
+    private function createICalRecord(array $rec): string
+    {
+        $title = $this->compileICalElement(($this->options['ical'] ?? ''), $rec);
+
+        $cal = Calendar::create();
+        $start  = $rec['start'];
+        $end    = $rec['end'];
+
+        $event = Event::create($title);
+        $event->startsAt(new DateTime($start));
+        $event->endsAt(new DateTime($end));
+
+        // add optional elements:
+        if (is_array($this->options['icalElements'])) {
+            foreach ($this->options['icalElements'] as $iCalName => $fieldName) {
+                $this->iCalElem($event, $rec, $iCalName, $fieldName);
+            }
+        }
+
+        // optionally add organizer field:
+        if ($organiser = ($this->options['icalOrganiser']??false)) {
+            if ($organiser === true) {
+                $organiser = $this->options['adminEmail'] ?? false;
+            }
+            if ($organiser) {
+                $event->organizer($organiser);
+            }
+        }
+
+        $cal->event($event);
+        return $cal->get();
+    } // createICalRecord
+
+
+    private function iCalElem(object &$event, array $rec, string $iCalName, string $fieldValue): void
+    {
+        if (!str_contains('uniqueIdentifier,createdAt,addressName,coordinates,attendee,transparent,fullDay', $iCalName)) {
+            mylog("iCal: unsupported element found: '$iCalName'");
+            return;
+        }
+        $fieldValue = $this->compileICalElement($fieldValue, $rec);
+
+        // add value to event:
+        if ($fieldValue) {
+            $event->$iCalName($fieldValue);
+        }
+    } // iCalElem
+
+
+    private function compileICalElement(string $fieldValue, array $rec): string
+    {
+        // replace %placeholders% with values from current rec:
+        while (preg_match('/%(.{2,20}?)%/', $fieldValue, $m)) {
+            // check current rec for matching field:
+            if (isset($rec[$m[1]])) {
+                $value = $rec[$m[1]]??'';
+            } else {
+                // if not found, check PFY variables:
+                $value = TransVars::getVariable($m[1]);
+            }
+            $fieldValue = str_replace($m[0], $value, $fieldValue);
+        }
+        return $fieldValue;
+    } // compileICalElement
 
 
 } // Enlist

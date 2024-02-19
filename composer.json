@@ -2,6 +2,7 @@
     "require": {
         "nette/forms": "^3.1",
         "phpoffice/phpspreadsheet": "^1.28",
-        "rlanvin/php-rrule": "^2.4"
+        "rlanvin/php-rrule": "^2.4",
+        "spatie/icalendar-generator": "^2.6"
     }
 }

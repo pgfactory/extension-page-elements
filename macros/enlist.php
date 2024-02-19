@@ -34,14 +34,34 @@ function enlist($args = '')
                 'If not set, listName will be derived from title. If that\'s not set, a default name is used.', false],
 
             'info' =>	['[string] Content of info-tooltip next to title. (default: false)', null],
+
+            'ical' =>	['[string|bool] If set, a calendar icon is added to the list. Clicking on it will '.
+                'download a calendar entry (.ics). The arg\'s value is used as the event SUMMARY (aka event-title). '.
+                'Use placeholders to compose meaningful titles, e.g. `ical:"[XY] %title%"`, where `%title%` is the '.
+                'field-name in the event record.', null],
+
+            'icalElements' =>	['[assoc array] A comma-separated list of tuples like "`ical-arg`:`enlist-field-name`,". '.
+                'Supported ical-arguments: `uniqueIdentifier`, `createdAt`, `addressName`, `coordinates`, '.
+                '`attendee`, `transparent`, `fullDay`. '.
+                'Example: `{description:%Comment%, address:%Location%}`.', null],
+
+            'icalOrganiser' =>	['[string] Adds an \"organiser\" field to the iCal. The value should be an e-mail address. '.
+                ' (Default: = adminMail)', null],
+
             'description' =>	['[string] synonyme for "info".', false],
-            'editable' =>	        ['[bool] If true, users can modify their entries.', false],
-            'directlyToReserve' =>	['[bool] synonyme for "info".', false],
+
+            'editable' =>	 ['[bool] If true, users can modify their entries - as long as `freezeTime` has '.
+                'not expired.', false],
+
+            'directlyToReserve' =>	['[bool] If true, the new entry is placed in the reserved section of the list.'.
+                'Thus, other users can continue filling in the normal slots.', false],
 
             'sendConfirmation' =>	['[bool] If true, a confirmation mail is sent to the address stated when '.
                 'somebody enlists. (default: false)', null],
+
             'notifyOwner' =>	['[email] If set, a notification mail will be sent to this address when '.
                 'somebody makes a an entry/modification to the list. (default: false)', null],
+
             'notifyActivatedReserve' =>	['[bool] If true, a notification mail is sent to the person '.
                 'who becomes active from a reserve position after a position ahead of that has been deleted. '.
                 'To customize, define variables ``pfy-enlist-notify-activated-reserve-subject`` and '.

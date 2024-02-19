@@ -576,6 +576,10 @@ pfy-enlist-timed-out:
   de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
   _:  The page timed out.<br>Click Ok to reload and try again.
 
+pfy-enlist-ical-tooltip:
+  de: Kalendereintrag herunterladen/installieren.
+  _:  Download/install calendar entry.
+
 
 #--- Login ------------------------------
 pfy-login:
