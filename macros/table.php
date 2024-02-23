@@ -29,6 +29,7 @@ function table($argStr = '')
             'dataReference' => ["If true, rec-keys (as 'data-reckey') and element-names (as 'data-elemkey') are included in table. ".
                 "If dataReference is a string, it is added to the table-wrapper div as 'data-ref'.", false],
             'interactive' => ['If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.', false],
+            'scrollable' => ['[height]', false],
             'edit' => ['[true|{options}] Shorthand for defining table-buttons, service-columns, permissions and mode.<br>'.
                 'E.g. ``edit:{tableButtons:"delete,download,custom", serviceColumns:"select,num,custom", '.
                 'permission:"admin"}``. <br>``edit:true`` activates default options.', false],
@@ -72,9 +73,9 @@ EOT,
             $args['tableButtons'] = 'delete,download';
             $args['serviceColumns'] = 'select,num';
         } else {
-            $args['permission'] = $edit['permission'];
-            $args['tableButtons'] = $edit['tableButtons'];
-            $args['serviceColumns'] = $edit['serviceColumns'];
+            $args['permission'] = $edit['permission']??'';
+            $args['tableButtons'] = $edit['tableButtons']??'';
+            $args['serviceColumns'] = $edit['serviceColumns']??'';
         }
     }
     if ($args['editableBy']) {

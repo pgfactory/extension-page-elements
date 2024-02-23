@@ -44,6 +44,7 @@ class DataTable
     private string $caption;
     private string $captionAbove;
     private string $interactive;
+    private string|bool $scrollable;
     private string $showRowNumbers;
     private mixed $showRowSelectors;
     private string $serviceColumns;
@@ -113,6 +114,7 @@ class DataTable
         $this->caption = $options['caption']??false;
         $this->captionAbove = (($options['captionPosition']??false) ?: 'b')[0] === 'a';
         $this->interactive = $options['interactive'] ?? false;
+        $this->scrollable = $options['scrollable'] ?? false;
         $tableButtons = $options['tableButtons'] ?? false;
         $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
         $this->showRowNumbers = $options['showRowNumbers'] ?? false; //??? obsolete?
@@ -632,13 +634,20 @@ EOT;
      */
     private function activateInteractiveTable(): void
     {
-        PageFactory::$pg->addAssets('DATATABLES');
+        PageFactory::$pg->addAssets('TABLES,DATATABLES');
         $this->tableWrapperClass .= ' pfy-interactive';
 
         $order = '';
         $paging = 'paging: false,';
         $pageLength = '';
         $orderable = '';
+        $scrollable = '';
+        if ($this->scrollable) {
+            $scrollable = <<<EOT
+scrollCollapse: true, scrollY: '$this->scrollable',
+
+EOT;
+        }
 
         $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
         $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
@@ -650,7 +659,7 @@ pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
     search: '$searchButtonLabel:',
     info: '_TOTAL_ $pfyDatatablesRecords'
   },
-  $order$paging$pageLength$orderable
+  $scrollable$order$paging$pageLength$orderable
 });
 EOT;
         PageFactory::$pg->addJq($jq);
