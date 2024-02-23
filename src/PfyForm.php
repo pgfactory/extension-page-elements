@@ -672,7 +672,9 @@ EOT;
         if ($revealLabel) {
             $elem->setHtmlAttribute('data-reveal-target-id', $targetId);
         }
-        $elemOptions['class'] .= ' pfy-auto-grow';
+        if ($elemOptions['autoGrow']) {
+            $elemOptions['class'] .= ' pfy-auto-grow';
+        }
         return $elem;
     } // addTextareaElem
 
@@ -1334,7 +1336,9 @@ EOT;
                     $label = ($elemOptions['origName']??false) ?: '';
                     $label = html_entity_decode($label);
                 }
-                $label = ucwords(str_replace('_', ' ', $label)) . ':';
+                if ($label) {
+                    $label = ucwords(str_replace('_', ' ', $label)) . ':';
+                }
             }
         }
 
@@ -1408,6 +1412,8 @@ EOT;
         } elseif (!is_array($elemOptions['options'])) {
             throw new \Exception("Error: Form argument 'options' must be of type string or array.");
         }
+
+        $elemOptions['autoGrow'] = $elemOptions['autoGrow']??true;
 
         return array($label, $name, $type);
     } // parseOptions
