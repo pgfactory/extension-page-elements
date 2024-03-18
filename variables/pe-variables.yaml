@@ -583,7 +583,6 @@ pfy-enlist-ical-tooltip:
 
 #--- Login ------------------------------
 pfy-login:
-  de: 'Anmelden'
   _:  Login
 
 pfy-logout:
@@ -623,16 +622,11 @@ pfy-login-reset-pw:
   _:  'Change or reset password'
 
 pfy-login-header:
-  de: |
-    Anmelden
-  _:  |
-    Login
+  _:  Login
 
 pfy-login-passwordless-header:
-  de: |
-    Anmelden ohne Passwort
-  _:  |
-    Passwordless Login
+  de: Anmelden ohne Passwort
+  _:  Passwordless Login
 
 pfy-login-success:
   de: 'Sie sind jetzt angemeldet als {{ username }}.'
@@ -684,7 +678,6 @@ pfy-login-username-info:
   _:  Your e-mail or username
 
 pfy-login-button:
-  de: Anmelden
   _:  Login
 
 pfy-login-pwless-button:
