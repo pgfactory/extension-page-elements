@@ -420,14 +420,14 @@ pfy-enlist-popup-add-help:
   en: '<p><strong>Comment</strong>:</p><p>You can delete this entry until %freezetime%.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
 
 pfy-enlist-popup-modify-help:
-  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag ändern?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
-  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag ändern?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
-  en: '<p><strong>Comment</strong>:</p><p>Do you want to modify this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag ändern?<br>Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag ändern?<br>Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to modify this entry?<br>To do so you need to enter your e-mail address which you provided before. </p>'
 
 pfy-enlist-popup-del-help:
-  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br />Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
-  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br />Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
-  en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br />To do so you need to enter your e-mail address which you provided before. </p>'
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br>Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br>Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br>To do so you need to enter your e-mail address which you provided before. </p>'
 
 
 pfy-enlist-error-rec-exists:
