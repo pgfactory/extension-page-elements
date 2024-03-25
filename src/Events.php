@@ -592,7 +592,18 @@ class Events extends DataSet
         if ($templatesFile) {
             $this->loadTemplates($templatesFile);
         }
-        $sortedData = $this->getData($category);
+
+        // handle case where rrule is specified, rather than events from DB:
+        if (($this->options['rrule']??false) || ($this->options['timePattern']??false)) {
+            $sortedData = $this->renderTimePattern();
+            if (is_string($sortedData)) {
+                throw new \Exception("Error in Events: getNextEvents() with rrule returned string instead of array");
+            }
+        } else {
+            // get events from DB:
+            $sortedData = $this->getData($category);
+        }
+
 
         // case multiple categories -> extract first for further processing:
         if (is_string($category) && str_contains($category, '|')) {
