@@ -1,6 +1,8 @@
 <?php
 namespace PgFactory\PageFactory;
 
+use PgFactory\MarkdownPlus\Permission;
+
 
 const VISITS_FILE       = 'site/logs/visits.yaml';
 const VISITS_SINCE_FILE = 'site/logs/visits-since.txt';
@@ -12,8 +14,8 @@ function countvisits($argStr = '')
     $config =  [
         'options' => [
             'show'      => ['[false|loggedin] Whether to show result or record it silently.', true],
-            'prefix'    => ['What to put in front of result', ''],
-            'postfix'   => ['What to put behind result', ''],
+            'prefix'    => ['What to put in front of result.', null],
+            'postfix'   => ['What to put behind result.', null],
         ],
         'summary' => <<<EOT
 # countvisits()
@@ -60,8 +62,8 @@ class CountVisits
         $prefix = $args['prefix'].' ';
         $postfix = ' '.$args['postfix'];
         $show = $args['show'];
-        if ($show[0]??'' === 'l') {
-            $show = isLoggedinOrLocalhost();
+        if (is_string($show)) {
+            $show = Permission::evaluate($show);
         }
         $visits = $this->countVisits();
         if ($show) {

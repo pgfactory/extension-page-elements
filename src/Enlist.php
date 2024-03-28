@@ -202,8 +202,8 @@ class Enlist
                 } else {
                     $this->info = $this->info0;
                 }
-                $this->nSlots = intval($event['nSlots']?? 1);
-                $this->nReserveSlots = intval($event['nReserveSlots']?? 0);
+                $this->nSlots = intval($event['nSlots']?? ($this->nSlots ?: 1));
+                $this->nReserveSlots = intval($event['nReserveSlots']?? ($this->nReserveSlots ?: 0));
                 $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
                 $html .= $this->renderElement();
             }
@@ -1327,13 +1327,12 @@ EOT;
         if (!($eventOptions = $this->options['schedule']??false)) {
             return false;
         }
-        if (!($src = $eventOptions['src']??false)) {
-            if (!($src = $eventOptions['file']??false)) { // allow 'file' as synonyme for 'src'
-                throw new \Exception("Form: option 'schedule' without option 'src'.");
-            }
-        }
 
+        if (!($src = ($eventOptions['src']??false))) {
+            $src = $eventOptions['file']??false;
+        }
         $eventOptions['file'] = $src;
+
         $sched = new Events($eventOptions);
         $count = $eventOptions['count']??false;
         $nextEvents = $sched->getNextEvents(count: $count);
@@ -1384,6 +1383,10 @@ EOT;
      */
     private function renderICal(bool $saveToFile = true): string
     {
+        if (!($this->event??false)) {
+            return '';
+        }
+
         $rec    = $this->event;
         if (!($this->options['ical'] ?? false)) {
             return '';
