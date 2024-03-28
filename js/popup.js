@@ -2,6 +2,16 @@
 * pfyPopup
 * to see help, invoke
 *   pfyPopup({text: 'help'});
+*
+* Usage:
+  pfyConfirm('Continue...?').then(
+    function(value) {
+      mylog('Ok');
+    },
+    function(error) {
+      mylog('Canceled');
+    }
+  );
 */
 
 "use strict";
