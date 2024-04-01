@@ -151,7 +151,9 @@ class DataTable
         }
 
         if (str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive')) {
-            $serviceColumns = "select,$serviceColumns";
+            if (!str_contains($serviceColumns, 'select')) {
+                $serviceColumns = "select,$serviceColumns";
+            }
             PageFactory::$assets->addAssets('POPUPS, TABLES');
         }
         $this->serviceColumns = $serviceColumns;
