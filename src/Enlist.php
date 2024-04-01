@@ -193,10 +193,16 @@ class Enlist
     {
         if ($this->events) {
             $html = '';
-            foreach ($this->events as $event) {
+            foreach ($this->events as $i => $event) {
                 $this->event = $event;
                 $this->title = $event['eventBanner'];
                 $this->datasetName = $event['start'];
+                // normalize dataset name, e.g. 2024-04-01 12:34 to "2024-04-01T12:34"
+                if (preg_match('/(\d{4}-\d\d-\d\d).(\d\d:\d\d)/', $this->datasetName, $m)) {
+                    $this->datasetName = str_replace($m[0], $m[1].'T'.$m[2], $this->datasetName);
+                }
+                // prepend index to make unique:
+                $this->datasetName = "$this->inx.".($i+1).":$this->datasetName";
                 if ($event['info']??false) {
                     $this->info = $event['info'];
                 } else {
