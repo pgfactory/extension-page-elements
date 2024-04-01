@@ -88,7 +88,9 @@ class PfyForm extends Form
         $tableOptions['sort']               = $formOptions['sortData']??false;
         $tableOptions['footers']            = $formOptions['tableFooters']??false;
         $tableOptions['minRows']            = $formOptions['minRows']??false;
-        $tableOptions['interactive']        = $formOptions['interactiveTable']??false;
+        if ($formOptions['interactiveTable']??false) {
+            $tableOptions['interactive']    = $formOptions['interactiveTable'];
+        }
         $tableOptions['includeSystemFields']= $formOptions['includeSystemFields']??false;
         $this->tableOptions                 = $this->parseTableOptions($tableOptions);
         unset($tableOptions);
