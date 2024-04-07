@@ -1964,6 +1964,9 @@ EOT;
             }
             $this->auxBannerValues[$key] = $value;
             if ($this->tableTitle) {
+                if (preg_match('/(\d{4}-\d\d-\d\d)T(\d\d:\d\d)/', $value, $m)) {
+                    $value = str_replace($m[0], "{$m[1]} {$m[2]}", $value);
+                }
                 $this->tableTitle = str_replace("%$key%", $value, $this->tableTitle);
             }
         }
