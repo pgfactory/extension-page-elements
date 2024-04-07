@@ -1135,7 +1135,7 @@ EOT;
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
             $sessKey = "db:" . PageFactory::$pageId . ":$this->formIndex:file";
-            kirby()->session()->set($sessKey, $this->formOptions['file']);
+            kirby()->session()->set($sessKey, resolvePath($this->formOptions['file']));
         }
         return $this->db;
     } // openDB
