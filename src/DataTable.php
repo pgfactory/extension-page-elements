@@ -73,6 +73,14 @@ class DataTable
     private mixed $shieldCellContent;
     private static int $tableInx = 0;
     private static bool $interactiveInitializee = false;
+    /**
+     * @var false|mixed
+     */
+    private mixed $mailFrom;
+    /**
+     * @var false|mixed
+     */
+    private mixed $mailFieldName;
 
     /**
      * @param string|array $dataSrc
@@ -137,6 +145,9 @@ class DataTable
         $this->placeholderForUndefined = ($options['placeholderForUndefined']??'?');
 
         $this->shieldCellContent = $options['shieldCellContent'] ?? false;
+
+        $this->mailFieldName = $options['mailFieldName'] ?? false;
+        $this->mailFrom = $options['mailFrom'] ?? false;
 
         if ($permission === true) {
             $permission = 'localhost|loggedin';
@@ -600,6 +611,16 @@ class DataTable
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
                         "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
                     PageFactory::$pg->addAssets('POPUPS');
+                    break;
+
+                case 'email':
+                case 'mail':
+                    $icon = renderIcon('mail');
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-mail-open-dialog' ".
+                        "type='button' title='{{ pfy-table-create-mail-title }}'>$icon</button>\n";
+                    PageFactory::$pg->addAssets('POPUPS');
+                    $mailFieldSelector = 'td-'.translateToClassName($this->mailFieldName);
+                    PageFactory::$pg->addJs("const formOwnerEmail = '$this->mailFrom';\nconst mailFieldSelector = '$mailFieldSelector';");
                     break;
 
                 case 'download':

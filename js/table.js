@@ -18,6 +18,7 @@ const tableHelper = {
         const tableInx = table.dataset.tableinx;
         tableHelper.setupPropagateCheckbox(table);
         tableHelper.setupOpenDeleteRecordsDialog(table);
+        tableHelper.setupOpenCreateMailDialog(table);
         tableHelper.setupOpenArchiveRecordsDialog(table);
         tableHelper.setupEditButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
@@ -114,6 +115,45 @@ const tableHelper = {
       });
     }
   }, // setupOpenDeleteRecordsDialog
+
+
+  setupOpenCreateMailDialog: function (table) {
+    const parent = this;
+    const wrapper = table.closest('.pfy-table-wrapper');
+    const form = wrapper.querySelector('form');
+    if (!form) {
+      return;
+    }
+    const mailButton = form.querySelector('.pfy-table-mail-open-dialog');
+    if (mailButton) {
+      mailButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        let mailAddresses = '';
+        let selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
+        if (!selected.length) {
+          // -> if none selected, include all
+          selected = table.querySelectorAll('tbody .pfy-row-selector input');
+        }
+        if (selected.length) {
+          let selector = '';
+          selected.forEach(function (el) {
+            const row = el.closest('tr');
+            el = row.querySelector('.'+mailFieldSelector);
+            if (el) {
+              const email = el.innerText;
+              mailAddresses += ',' + email;
+            }
+          });
+        }
+
+        mailAddresses = mailAddresses.replace(/^[,;]/, '');
+        mylog('MailTo: ' + mailAddresses);
+        const to = (typeof formOwnerEmail !== 'undefined') ? formOwnerEmail : 'me@domain.net';
+        const url = `mailto:${to}?bcc=${mailAddresses}`;
+        window.open(url,"_blank");
+      });
+    }
+  }, // setupOpenCreateMailDialog
 
 
   setupOpenArchiveRecordsDialog: function (table) {

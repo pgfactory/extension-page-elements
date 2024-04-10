@@ -108,7 +108,8 @@ class PfyForm extends Form
         $formOptions['formTop']             = $formOptions['formTop']??false;
         $formOptions['formHint']            = $formOptions['formHint']??false;
         $formOptions['formBottom']          = $formOptions['formBottom']??false;
-        $formOptions['confirmationEmail']   = $formOptions['confirmationEmail']??false;
+        $formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
+        $formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
         $formOptions['mailFrom']            = $formOptions['mailFrom']??false;
         $formOptions['mailFromName']        = $formOptions['mailFromName']??false;
         $formOptions['deadline']            = $formOptions['deadline']??false;
@@ -1253,6 +1254,8 @@ EOT;
         $tableOptions['markLocked']           = true;
         $tableOptions['obfuscateRecKeys']     = true;
         $tableOptions['shieldCellContent']    = $this->formOptions['tableOptions']['shieldCellContent']??false;
+        $tableOptions['mailFrom']             = ($this->formOptions['mailFrom']??false) ?: PageFactory::$webmasterEmail;
+        $tableOptions['mailFieldName']        = ($this->formOptions['confirmationEmail']??false) ?: $this->formOptions['emailFieldName']??false;
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
@@ -1449,6 +1452,20 @@ EOT;
     protected function renderFormHead(): string
     {
         $html = '';
+
+        // case confirmationEmail: check whether corresponding field is defined:
+        if ($confirmationEmail = $this->formOptions['confirmationEmail']) {
+            $found = false;
+            foreach ($this->formElements as $rec) {
+                if ($rec['name'] === $confirmationEmail) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                throw new \Exception("Error: form option confirmationEmail refers to a field that is not defined: '$confirmationEmail'");
+            }
+        }
 
         // schedule option may have found no matching event, in this case show message:
         if ($this->matchingEventAvailable === false) {

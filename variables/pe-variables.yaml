@@ -8,6 +8,10 @@ pfy-opens-new-rec:
   de: Neuen Datensatz eingeben
   _:  Create new data record
 
+pfy-table-create-mail-title:
+  de: E-Mail an (selektierte) Datensätze senden
+  _:  Send e-mail to (selected) data records
+
 pfy-table-delete-recs-title:
   de: Selektierte Datensätze löschen
   _:  Delete selected data records
