@@ -127,6 +127,9 @@ function form($args = '')
                 'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;fieldName&#95;</strong> }}`` '
                 , true],
 
+            'emailFieldName' =>	['[name-of-email-field] Replaces option "confirmationEmail", if that is not used. '.
+                'Identifies the field containing an e-mail address within the dataset. It is used by tableOptions "mail"', false],
+
             'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
 
