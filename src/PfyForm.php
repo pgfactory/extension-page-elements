@@ -16,6 +16,7 @@ use PgFactory\PageFactoryElements\Events as Events;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 use function PgFactory\PageFactory\var_r as var_r;
 use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
+use function PgFactory\PageFactoryElements\intlDateFormat as intlDateFormat;
 
 define('ARRAY_SUMMARY_NAME', '_');
 const FORMS_SUPPORTED_TYPES =
@@ -68,6 +69,8 @@ class PfyForm extends Form
     protected  bool $isFormAdmin = false;
     protected bool $showForm = true;
     private static bool $initialized = false;
+
+    private static array $scheduleRecs = [];
 
     /**
      * @param $formOptions
@@ -1976,6 +1979,8 @@ EOT;
             $this->tableOptions['minRows'] = $maxCount;
         }
 
+        self::$scheduleRecs[self::$formInx] = $nextEvent;
+
         $this->matchingEventAvailable = true;
     } // handleScheduleOption
 
@@ -2052,8 +2057,8 @@ EOT;
     {
         $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
         if ($confirmationEmailTemplate === true) {
-            $subject = '{{ pfy-confirmation-response-subject }}';
-            $template = '{{ pfy-confirmation-response-message }}';
+            $subject = TransVars::getVariable('pfy-confirmation-response-subject');
+            $template = TransVars::getVariable('pfy-confirmation-response-message');
 
         } else {
             $confirmationEmailTemplate1 = resolvePath($confirmationEmailTemplate, relativeToPage: true);
@@ -2082,6 +2087,12 @@ EOT;
      */
     private function propagateDataToVariables(array $dataRec): string
     {
+        if ($schedRec = (self::$scheduleRecs[self::$formInx]??false)) {
+            $schedRec['start'] = intlDateFormat('RELATIVE_MEDIUM', $schedRec['start']);
+            $schedRec['end'] = intlDateFormat('RELATIVE_MEDIUM', $schedRec['end']);
+            $dataRec += $schedRec;
+        }
+
         $to = false;
         $emailFieldName = $this->formOptions['confirmationEmail'];
         // add variables for all form values, so they can be used in mail-template:
@@ -2095,6 +2106,7 @@ EOT;
             $value = $value?: TransVars::getVariable('pfy-confirmation-response-element-empty');
             TransVars::setVariable("_{$key}_", $value);
         }
+
         return $to;
     } // propagateDataToVariables
 
