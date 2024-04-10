@@ -125,7 +125,6 @@ $this->fullCalendarOptions
     },
 EOT;
 
-        // append the call to invole lzyCalendar:
         $jq = <<<EOT
 const calElem = document.querySelector('#pfy-calendar-$this->inx');
 if (calElem) {
