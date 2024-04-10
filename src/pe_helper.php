@@ -122,7 +122,7 @@ function intlDateFormat(string $format, mixed $time = false): string
     $dateFormat = false;
     $timeFormat = false;
     if (preg_match('/(FULL|LONG|MEDIUM|SHORT|NONE)/', $format)) {
-        list($dateFormat, $timeFormat) = explode(',', $format);
+        list($dateFormat, $timeFormat) = explode(',', "$format,NONE");
         $format = '';
     }
 
