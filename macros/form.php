@@ -58,7 +58,7 @@ function form($args = '')
             'deadlineNotice' =>	['(string) Defines the response displayed when deadline has passed.', false],
 
             'maxCount' =>	['If set, the number of sign-ups will be limited. '.
-                'If exeeded, ``\{\{ pfy-form-maxcount-reached }}`` is shown.', false],
+                'If exeeded, ``\{\{ pfy-form-maxcount-reached }}`` is shown.', null, 'scalar'],
 
             'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
 
@@ -293,10 +293,10 @@ EOT,
         $options['mailTo'] = $options['ownerNotificationTo'];
     }
 
-    if ($options['maxCount'] && !$options['minRows']) {
+    if (($options['maxCount']??false) && !($options['minRows']??false)) {
         $options['minRows'] = $options['maxCount'];
     }
-    $output = $options['output'];
+    $output = ($options['output']??false);
 
     if ($output === true) {
         // normal invocation in one junk:
