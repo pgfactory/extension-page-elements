@@ -1215,11 +1215,19 @@ EOT;
         if (!($label = ($this->formOptions['ownerNotificationLabel']??''))) {
             $label = TransVars::getVariable('pfy-form-owner-notification-label');
         }
+
+        // check whether it was a scheduled event, get the (start-)date, if so:
+        $start = '';
+        if ($ev = (self::$scheduleRecs[self::$formInx]??false)) {
+            $start = intlDateFormat('RELATIVE_MEDIUM', $ev['start']);
+            $label = str_replace('%start%', $start, $label);
+        }
+
         $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
-        $subject = str_replace(['%host%', '{{ pfy-form-owner-notification-label }}'], [PageFactory::$hostUrl, $label], $subject);
+        $subject = str_replace(['%host%', '%start%', '{{ pfy-form-owner-notification-label }}'], [PageFactory::$hostUrl, $start, $label], $subject);
 
         $body = TransVars::getVariable('pfy-form-owner-notification-body');
-        $body = str_replace(['%data%', '%host%', '\n', '{{ pfy-form-owner-notification-label }}'], [$out, PageFactory::$hostUrl, "\n", $label], $body);
+        $body = str_replace(['%data%', '%host%', '%start%', '\n', '{{ pfy-form-owner-notification-label }}'], [$out, PageFactory::$hostUrl, $start, "\n", $label], $body);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
         $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
