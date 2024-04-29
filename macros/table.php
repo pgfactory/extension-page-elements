@@ -36,7 +36,7 @@ function table($argStr = '')
             'tableButtons' => ['[list of buttons] If set, includes a row of buttons above the table to perform '.
                 'various actions.<br>Available buttons: ``delete`` or ``archive``, ``download`` or `custom`.', false],
             'serviceColumns' => ['[list of service columns] Injects service columns for various purposes: '.
-                '``select``, ``num``, or `custom`.', false],
+                '``select``, ``num``, ``edit``, ``send``, or `custom`.', false],
             'permission' => ['[none,anyone,localhost,loggedin etc.].', null],
             'editableBy' => ['Synonyme for "permission".', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],

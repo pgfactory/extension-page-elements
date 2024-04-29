@@ -90,7 +90,7 @@ function form($args = '')
 
             'editData' =>	['[true|{options}] Shows received data and defines, whether data records can be edited. '.
                 'Available options:<br>``tableButtons:\'delete,archive,new,download\'``,<br>'.
-                '``serviceColumns:\'select,num,edit\'``,<br>'.
+                '``serviceColumns:\'select,num,edit,send\'``,<br>'.
                 '``permission:\'loggedin,group,localhost\'``,<br>``mode:popup<br>``'.
                 '("editData:true" is shorthand for typical set of options.)', false],
 
