@@ -48,6 +48,10 @@ pfy-table-edit-rec-title:
   de: 'Diesen Datensatz beareiten'
   _:  'Edit this data record'
 
+pfy-table-send-rec-title:
+  de: 'Diesen Datensatz per E-Mail versenden'
+  _:  'Send this data record by e-mail'
+
 
 pfy-table-download-title:
   de: 'Diese Tabelle herunter laden'
@@ -96,6 +100,10 @@ pfy-table-data-output-header:
 pfy-row-edit-header:
   de: 'Edit'
   _:  'Edit'
+
+pfy-row-send-header:
+  de: 'Versenden'
+  _:  'Send'
 
 pfy-table-edit-rec-popup-header:
   de: 'Datensatz bearbeiten'
@@ -344,6 +352,56 @@ pfy-form-event-start-label:
 pfy-form-event-end-label:
   de: 'Bis:'
   _:  'Until:'
+
+
+#pfy-table-send-rec:
+pfy-table-send-rec-popup:
+  de: |
+    <div class='pfy-table-input-wrapper'>
+    <label for='pfy-table-send-rec-input'>E-Mail-Adresse:</label>
+    <input type='text' id='pfy-table-send-rec-input'>
+    <p>Der Datensatz wird an diese E-Mail-Adresse gesendet.</p>
+    </div>
+  _: |
+    <div class='pfy-table-input-wrapper'>
+    <label for='pfy-table-send-rec-input'>E-mail address:</label>
+    <input type='email' id='pfy-table-send-rec-input'>
+    <p>The data record will be sent to this e-mail address.</p>
+    </div>
+
+
+pfy-table-send-rec-header:
+  de: Daten zusenden
+  _:  Send data
+
+
+pfy-table-send-rec-subject:
+  de: Datensatz
+  _:  Data record
+
+
+pfy-table-send-rec-mail-template:
+  de: |
+    Hallo
+    Hier sind die angeforderten Daten:
+    
+    %data%
+    
+    Beste Grüsse, der Webmaster
+  _:  |
+    Hello
+    Here are is the requested data record:
+    
+    %data%
+    
+    Best, the webmaster
+
+
+pfy-table-send-rec-confirmation:
+  de: Datensatz wurde gesendet an %email%
+  _:  Data record has been sent to %email%
+
+
 
 
 # === Enlist =======================================

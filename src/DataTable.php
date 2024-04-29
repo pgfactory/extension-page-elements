@@ -9,7 +9,10 @@ use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
 use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\Utils;
 use function \PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\isLoggedIn;
+use function PgFactory\PageFactory\message;
 use function PgFactory\PageFactory\translateToClassName;
 use function \PgFactory\PageFactory\translateToIdentifier;
 use function \PgFactory\PageFactory\array_splice_assoc;
@@ -202,6 +205,10 @@ class DataTable
     {
         $this->prepareTableData();
 
+        if (isset($_GET['sendto']) && isLoggedIn()) {
+            $this->sendRec($_GET['sendto']??false, $_GET['recid']??false);
+        }
+
         if (sizeof($this->tableData) < 2) {
             if ($this->announceEmptyTable) {
                 return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
@@ -297,6 +304,12 @@ class DataTable
                 $hdrCell = TransVars::getVariable('pfy-row-edit-header');
                 $this->injectColumn($cell, $hdrCell, isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-edit';
+
+            } elseif (str_starts_with($elem, 'send')) {
+                $cell = "<button class='pfy-button pfy-button-lean pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>✉</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-send-header');
+                $this->injectColumn($cell, $hdrCell, isServiceCol: true);
+                $serviceColumns[$i] = 'pfy-row-send';
 
             } else {
                 if (preg_match('/^([\w\s]+):(.*)/', $elem, $m)) {
@@ -851,5 +864,30 @@ EOT;
     } // addRec
 
 
+    /**
+     * @param string $email
+     * @param string $recKey
+     * @return void
+     */
+    private function sendRec(string $email, string $recKey): void
+    {
+        if (!($this->tableData[$recKey]??false) || !isLoggedIn()) {
+            return;
+        }
+
+        $data = $this->tableData[$recKey];
+        $str = '';
+        foreach ($data as $key => $value) {
+            $str .= str_pad("$key: ", 25, '. ') . "$value\n";
+        }
+        $subject = TransVars::getVariable('pfy-table-send-rec-subject');
+        $template = TransVars::getVariable('pfy-table-send-rec-mail-template');
+        $body = str_replace('%data%', $str, $template);
+
+        Utils::sendMail($email, $subject, $body);
+        $message = TransVars::getVariable('pfy-table-send-rec-confirmation');
+        $message = str_replace('%email%', $email, $message);
+        reloadAgent('', message: $message);
+    } // sendRec
 
 } // DataTable

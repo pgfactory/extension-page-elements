@@ -21,6 +21,7 @@ const tableHelper = {
         tableHelper.setupOpenCreateMailDialog(table);
         tableHelper.setupOpenArchiveRecordsDialog(table);
         tableHelper.setupEditButtons(table, tableInx);
+        tableHelper.setupSendButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
         tableHelper.setupModifiedMonitor(table, tableInx);
       });
@@ -245,6 +246,65 @@ const tableHelper = {
       });
     }
   }, // setupEditButtons
+
+
+  setupSendButtons: function (table, tableInx) {
+    const parent = this;
+    const tableFormWrapper = table.closest('.pfy-form-and-table-wrapper');
+    if (!tableFormWrapper) {
+      return;
+    }
+    const tableForm = tableFormWrapper.querySelector('.pfy-form');
+    if (!tableForm) {
+      return;
+    }
+    const sendBtns = table.querySelectorAll('td .pfy-row-send-button');
+    if (sendBtns && sendBtns.length) {
+      sendBtns.forEach(function (sendBtn) {
+        sendBtn.addEventListener('click', function () {
+          // upon clicking one of the edit buttons:
+          tableHelper.disableEditButtons(table);
+          const tr = this.closest('tr');
+          const recKey = tr.dataset.reckey ?? '';
+
+          let options = {
+            text: `{{ pfy-table-send-rec-popup }}`,
+            triggerSource : true,
+            closeOnBgClick: true,
+            closeButton: true,
+            buttons: 'Cancel,Continue',
+            header: `{{ pfy-table-send-rec-header }}`,
+            onContinue: parent.doSendRec,
+            callbackArg: recKey,
+            onOpen: function () {
+              setTimeout(function () {
+                const input = document.getElementById('pfy-table-send-rec-input');
+                input.focus();
+              }, 50);
+            }
+          };
+          options.header = `{{ pfy-table-send-rec-header }}`;
+
+          return new Promise(function(resolve, reject) {
+            options.onOk = function() {
+              resolve( true );
+            };
+            currentlyOpenPopup = pfyPopup( options );
+          });
+        });
+      });
+    }
+  }, // setupSendButtons
+
+
+  doSendRec: function (args, recKey) {
+    const input = document.getElementById('pfy-table-send-rec-input');
+    if (input) {
+      const email = encodeURI(input.value);
+      mylog(window.location.href + '?sendto='+email+'&recId='+recKey);
+      window.location.href = window.location.href + '?sendto='+email+'&recid='+recKey;
+    }
+  }, // doSendRec
 
 
   setupNewRecButton: function (table, tableInx) {
