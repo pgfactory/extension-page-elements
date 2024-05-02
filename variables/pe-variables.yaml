@@ -169,6 +169,10 @@ pfy-form-required-info:
   de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben.'
   _:  '<span class="pfy-form-required-marker">*</span> Required input.'
 
+pfy-form-required-group-empty:
+  de: 'Bitte mindestens eines dieser Felder ausfüllen.'
+  _:  'Please fill in at least one of these fields.'
+
 pfy-form-required-group-info:
   de: 'Bitte mindestens eines dieser Felder ausfüllen.'
   _:  'Please fill in at least one of these fields.'
@@ -215,6 +219,10 @@ pfy-form-confirmation-email-sent:
   de: 'Wir haben Ihnen eine Bestätigung per E-Mail geschickt.'
   de2: 'Wir haben dir eine Bestätigung per E-Mail geschickt.'
   _:  'We have sent a confirmation to your e-mail address.'
+
+pfy-form-confirmation-email-missing:
+  de: 'Es wurde keine Bestätigung verschickt, da die E-Mail-Adresse fehlte.'
+  _:  "We didn't send a confirmation because the e-mail address was missing."
 
 pfy-confirmation-response-element-empty:
   de: '&lt; leer &gt;'
