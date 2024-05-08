@@ -45,7 +45,8 @@ class PfyForm extends Form
     private array $bypassedElements = [];
     private $db = false;
     private $dataTable = false;
-    protected int $formIndex = 0;
+    protected static $formInx = 0; // internal form count
+    protected int $formIndex = 0; // form-index used for rendering (can be overridden by arg)
     private int $elemInx = 0;
     private int $revealInx = 0;
     protected bool $inhibitAntiSpam = false;
@@ -56,7 +57,6 @@ class PfyForm extends Form
     private $addFormTableWrapper = false;
     private $eventFieldFound = false;
     private $tableTitle;
-    protected static $formInx = 0;
     private string $formButtons = '';
     private bool $noShowOpened = false;
 
@@ -198,15 +198,17 @@ class PfyForm extends Form
 
         if ($formResponse) {
             $this->injectNoShowCssRule();
+            $formTopBanner = $this->renderFormTopBanner();
+
             if (!$this->isFormAdmin) {
-                return $formResponse;
+                return "$formTopBanner\n$formResponse";
             }
             if ($this->formResponse) {
                 $formResponse .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $formResponse .= "\n\n<!-- === /pfy form widget === -->\n";
-                return $formResponse;
+                return "$formTopBanner\n$formResponse";
             }
-            $html .= $formResponse;
+            $html .= "$formTopBanner\n$formResponse";;
         }
 
         if (!$this->showForm && $this->showDirectFeedback) {
@@ -275,7 +277,7 @@ class PfyForm extends Form
 
         // standard hidden fields for internal bookkeeping:
         $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId'] ?? '', 'preset' => '']);
-        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this::$formInx, 'preset' => $this::$formInx]);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
         $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
 
         $this->fireRenderEvents();
@@ -1441,14 +1443,16 @@ EOT;
     protected function renderFormWrapperHead(): string
     {
         $html = '';
-        $formInx = self::$formInx;
+        $formInx = $this->formIndex;
+//        $formInx = self::$formInx;
 
         if ($this->addFormTableWrapper) {
             $html .= "<div class='pfy-form-and-table-wrapper'>\n";
         }
 
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
-        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
+        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
+//        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
         return $html;
     } // renderFormWrapperHead
 
