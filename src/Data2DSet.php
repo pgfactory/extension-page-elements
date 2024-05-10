@@ -128,6 +128,15 @@ class Data2DSet extends DataSet
     } // normalizeData
 
 
+    public function getRec(string $key): array|false
+    {
+        if ($rec = ($this->data[$key]??false)) {
+            return $rec->recData;
+        }
+        return false;
+    } // getRec
+
+
     /**
      * @param array $headerElems
      * @param bool $includeSystemElements
