@@ -501,11 +501,28 @@ class DataTable
             $r++;
 
             $emptyRowClass = '';
-            if ($r === 1) {
+            // for first row: check whether data rec contains but empty elements:
+            if ($r === 1 && $this->data2Dset) {
                 $rawRec = $this->data2Dset->getRec($key);
-                $tmp = implode('', $rawRec);
-                if (!$tmp) {
-                    $emptyRowClass = ' pfy-empty-row';
+                if ($rawRec && is_array($rawRec)) {
+                    $isNotEmpty = (bool)array_filter($rawRec, function ($e) {
+                        if (is_string($e)) {
+                            return (bool)$e;
+                        } elseif (is_array($e)) {
+                            return array_filter($e, function ($el) {
+                                if (is_string($el)) {
+                                    return (bool)$el;
+                                } else {
+                                    return true;
+                                }
+                            });
+                        } else {
+                            return true;
+                        }
+                    });
+                    if (!$isNotEmpty) {
+                        $emptyRowClass = ' pfy-empty-row';
+                    }
                 }
             }
 
