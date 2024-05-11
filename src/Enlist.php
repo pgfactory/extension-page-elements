@@ -211,10 +211,12 @@ class Enlist
                 $this->nSlots = intval($event['nSlots']?? ($this->nSlots ?: 1));
                 $this->nReserveSlots = intval($event['nReserveSlots']?? ($this->nReserveSlots ?: 0));
                 $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
+                $this->directlyReservePossible = $this->directlyToReserve;
                 $html .= $this->renderElement();
             }
 
         } else {
+            $this->directlyReservePossible = $this->directlyToReserve;
             $html = $this->renderElement();
         }
 
@@ -637,7 +639,7 @@ EOT;
                 }
 
                 // check whether there are free reserve slots:
-                if ($this->directlyToReserve) {
+                if ($this->directlyReservePossible) {
                     $directlyToReserve = false;
                     for ($i = 0; $i < $this->nSlots; $i++) {
                         if (!($dataset[$i]['Name'] ?? false)) {
@@ -655,7 +657,7 @@ EOT;
                         }
                     }
                     if (!$directlyToReserve) {
-                        $this->directlyToReserve = false;
+                        $this->directlyReservePossible = false;
                     }
                 }
 
@@ -764,13 +766,11 @@ EOT;
         }
 
         // option directlyToReserve:
-        if ($this->directlyToReserve) {
-            $formFields['directlyToReserve'] = [
-                'label' => '{{ pfy-enlist-directly-to-reserve }}',
-                'type' => 'checkbox',
-                'class' => 'pfy-enlist-directly',
-            ];
-        }
+        $formFields['directlyToReserve'] = [
+            'label' => '{{ pfy-enlist-directly-to-reserve }}',
+            'type' => 'checkbox',
+            'class' => 'pfy-enlist-directly',
+        ];
 
         // option editable:
         if ($this->editable) {
