@@ -255,6 +255,14 @@ const Enlist = {
       } // mode modify
     } // not add mode
 
+    // hide directreserve elem if not used/required:
+    if (!directreserve) {
+      const directlyElem = $form.querySelector('.pfy-enlist-directly');
+      directlyElem.style.display = 'none';
+      const directResInput = directlyElem.querySelector('input');
+      directResInput.disabled = true;
+    }
+
   }, // preparePopupForm
 
 

@@ -73,6 +73,10 @@
     }
   }
 
+  .pfy-enlist-name > div {
+    min-height: 1em;
+  }
+
   .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-enlist-icon-1,
   .pfy-enlist-custom-fields .pfy-enlist-icon-2 {
     display: none;
