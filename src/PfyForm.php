@@ -1213,26 +1213,24 @@ EOT;
             }
             $out .= "$key$value\n";
         }
+        TransVars::setVariable("_data_", $out);
 
         if (!($label = ($this->formOptions['ownerNotificationLabel']??''))) {
             $label = TransVars::getVariable('pfy-form-owner-notification-label');
         }
 
-        // check whether it was a scheduled event, get the (start-)date, if so:
-        $start = '';
-        if ($ev = (self::$scheduleRecs[self::$formInx]??false)) {
-            $start = intlDateFormat('RELATIVE_MEDIUM', $ev['start']);
-            $label = str_replace('%start%', $start, $label);
-        }
+        $this->propagateDataToVariables($dataRec);
 
         $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
-        $subject = str_replace(['%host%', '%start%', '{{ pfy-form-owner-notification-label }}'], [PageFactory::$hostUrl, $start, $label], $subject);
+        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
+        $subject = TransVars::translate($subject);
 
-        $body = TransVars::getVariable('pfy-form-owner-notification-body');
-        $body = str_replace(['%data%', '%host%', '%start%', '\n', '{{ pfy-form-owner-notification-label }}'], [$out, PageFactory::$hostUrl, $start, "\n", $label], $body);
+        $message = TransVars::getVariable('pfy-form-owner-notification-body');
+        $message = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $message);
+        $message = TransVars::translate($message);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
-        $this->sendMail($to, $subject, $body, 'Notification Mail to Onwer');
+        $this->sendMail($to, $subject, $message, 'Notification Mail to Onwer');
     } // notifyOwner
 
 
@@ -1305,6 +1303,7 @@ EOT;
                 $tableOptions['serviceColumns'] = 'select,num,edit';
                 $tableOptions['editMode'] = 'popup';
             } elseif (is_array($editTable)) {
+                $tableOptions = $editTable + $tableOptions;
                 $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
                 $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
                 $tableOptions['serviceColumns'] = $editTable['serviceColumns'] ?? 'select,num';
@@ -2067,7 +2066,11 @@ EOT;
 
         list($subject, $message) = $this->getEmailComponents();
         $to = $this->propagateDataToVariables($dataRec);
-//ToDo: Twig instead of TransVars?
+
+        // handle pattern %varname% -> transform into {{ _varname_ }}:
+        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
+        $message = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $message);
+
         $subject = TransVars::translate($subject);
         $message = TransVars::translate($message);
         if ($to) {
@@ -2102,10 +2105,6 @@ EOT;
                 $subject = '{{ pfy-form-confirmation-email-subject }}';
             }
         }
-
-        // handle pattern %varname% -> transform into {{ _varname_ }}:
-        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
-        $template = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $template);
         return [$subject, $template];
     } // getEmailComponents
 
@@ -2121,6 +2120,8 @@ EOT;
             $schedRec['end'] = intlDateFormat('RELATIVE_MEDIUM', $schedRec['end']);
             $dataRec += $schedRec;
         }
+
+        $dataRec['host'] = PageFactory::$hostUrl;
 
         $to = false;
         $emailFieldName = $this->formOptions['confirmationEmail'];

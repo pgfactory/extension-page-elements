@@ -680,6 +680,17 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     display: block !important;
   }
 
+
+  .pfy-form-and-table-wrapper {
+    .pfy-empty-row td:not(.pfy-row-number).pfy-service-row * {
+      display: none;
+    }
+    .pfy-table .pfy-row-button {
+      padding: 0.1em 0.3em;
+    }
+  }
+
+
 } // .pfy-default-styling
 
 

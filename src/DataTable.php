@@ -4,6 +4,7 @@ namespace PgFactory\PageFactoryElements;
 
 require_once __DIR__ . '/Data2DSet.php';
 
+use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PageFactory as PageFactory;
@@ -12,7 +13,6 @@ use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function \PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\isLoggedIn;
-use function PgFactory\PageFactory\message;
 use function PgFactory\PageFactory\translateToClassName;
 use function \PgFactory\PageFactory\translateToIdentifier;
 use function \PgFactory\PageFactory\array_splice_assoc;
@@ -295,24 +295,30 @@ class DataTable
                 $hdrCell = TransVars::getVariable('pfy-row-number-header');
                 $this->injectColumn('pfy-row-number', $hdrCell, isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-number';
+
             } elseif (str_starts_with($elem, 'select')) {
                 $this->injectColumn('pfy-row-selector', isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-selector';
 
             } elseif (str_starts_with($elem, 'edit')) {
-                $cell = "<button class='pfy-button pfy-button-lean pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>✎</button>";
+                $icon = MdPlusHelper::renderIcon('edit');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
                 $hdrCell = TransVars::getVariable('pfy-row-edit-header');
+                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
                 $this->injectColumn($cell, $hdrCell, isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-edit';
 
             } elseif (str_starts_with($elem, 'send')) {
-                $cell = "<button class='pfy-button pfy-button-lean pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>✉</button>";
+                $icon = MdPlusHelper::renderIcon('mail_send');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
                 $hdrCell = TransVars::getVariable('pfy-row-send-header');
+                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
                 $this->injectColumn($cell, $hdrCell, isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-send';
 
             } else {
-                if (preg_match('/^([\w\s]+):(.*)/', $elem, $m)) {
+                // check whether element is defined as "Header:TableCell"
+                if (preg_match('|^([\w\s/]+):(.*)|', $elem, $m)) {
                     $hdr = $m[1];
                     $elem = $m[2];
                     $serviceColumns[$i] = strtolower("pfy-row-$hdr");
@@ -321,8 +327,15 @@ class DataTable
                     $serviceColumns[$i] = 'pfy-row-'.translateToClassName($elem);
                 }
                 if (!str_contains($elem, '<')) {
+                    $title = $title1 = $this->parseForIcon($elem);
+                    if ($title1) {
+                        $title1 = " title='$title1'";
+                    }
                     $class = translateToClassName($elem);
-                    $elem = "<button class='pfy-button pfy-button-lean $class' type='button'>$elem</button>";
+                    $elem = "<button class='pfy-button pfy-row-button $class' type='button'$title1>$elem</button>";
+                }
+                if ($hdr) {
+                    $hdr = MdPlusHelper::renderIcon($hdr, $title);
                 }
                 $this->injectColumn($elem, $hdr, isServiceCol: true);
             }
@@ -331,6 +344,23 @@ class DataTable
 
         $this->serviceColArray = $serviceColumns;
     } // prependServiceColumns
+
+
+    /**
+     * Icon-name may contain title attrib as "icon_name/title text..."
+     * @param string $str
+     * @return string
+     * @throws \Exception
+     */
+    private function parseForIcon(string &$str): string
+    {
+        $title = '';
+        if (str_contains($str, '/')) {
+            list($str, $title) = explode('/', $str, 2);
+        }
+        $str = MdPlusHelper::renderIcon($str);
+        return $title;
+    } // parseForIcon
 
 
     /**
@@ -470,6 +500,15 @@ class DataTable
             $rowClass = $this->rowClasses[$r]??'';
             $r++;
 
+            $emptyRowClass = '';
+            if ($r === 1) {
+                $rawRec = $this->data2Dset->getRec($key);
+                $tmp = implode('', $rawRec);
+                if (!$tmp) {
+                    $emptyRowClass = ' pfy-empty-row';
+                }
+            }
+
             // mark record if locked:
             if ($this->markLocked) {
                 if ($rec['_locked']??false) {
@@ -478,7 +517,7 @@ class DataTable
                 unset($rec['_locked']);
             }
 
-            $out .= "    <tr class='pfy-row-$r $rowClass'$recKey>\n";
+            $out .= "    <tr class='pfy-row-$r $rowClass$emptyRowClass'$recKey>\n";
             $i = 0;
             foreach ($elemKeys as $c => $k) {
                 if ($c === '_locked') {
