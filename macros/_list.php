@@ -103,7 +103,7 @@ class ListElements
 {
     public static function renderListOfDatasources($options): string
     {
-        $reversed = ($options['order']??' ')[0] === 'r';
+        $reversed = ($options['reversed']??false);
         $path = $options['path'] ?? '';
         $template = $options['template'] ?? '';
         $templateFile = resolvePath($template);
