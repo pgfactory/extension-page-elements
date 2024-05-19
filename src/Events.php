@@ -19,6 +19,7 @@ use PgFactory\PageFactory\DataSet as DataSet;
 use PgFactory\PageFactory\PageFactory;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
+use function PgFactory\PageFactory\getFile;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use PgFactory\PageFactory\TransVars;
@@ -647,6 +648,9 @@ class Events extends DataSet
     private function loadTemplates(string|false $file = false): void
     {
         if ($template = ($this->options['template']??false)) {
+            if (file_exists($f = resolvePath($template))) {
+                $template = getFile($f);
+            }
             $this->templates = $template;
             return;
         }
