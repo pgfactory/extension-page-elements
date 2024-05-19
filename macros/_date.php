@@ -47,6 +47,11 @@ EOT,
     if (!$date = ($options['date']??false)) {
         $t = time();
     } else {
+        if ($date[0] === '-') {
+            $date = date('Y-m') . '-01 ' . $date;
+        } elseif ($date[0] !== '+') {
+            $date = '+' . $date;
+        }
         $t = strtotime($date);
     }
     if ($options['intlDateFormat']??false) {
