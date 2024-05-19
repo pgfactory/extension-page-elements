@@ -45,6 +45,7 @@ const pfyFormsHelper = {
     pfyFormsHelper.setupCancelButtonHandler(form);
     pfyFormsHelper.setupSubmitHandler(form);
     pfyFormsHelper.setupModifiedMonitor(form);
+    pfyFormsHelper.setupRevealHandler(form);
     pfyFormsHelper.setupPwTrigger(form);
     pfyFormsHelper.presetForm(form);
     pfyFormsHelper.initAutoGrow(form);
@@ -122,6 +123,32 @@ const pfyFormsHelper = {
       });
     }
   }, // setupModifiedMonitor
+
+
+  setupRevealHandler(form) {
+
+    const revealControllers = form.querySelectorAll('[data-reveal-target]');
+    if (revealControllers) {
+      revealControllers.forEach(function (revealController) {
+        const targetSel = revealController.dataset.revealTarget;
+        const revealContainer = document.querySelector(targetSel);
+        if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
+          const revealContent = revealContainer.innerHTML;
+          revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
+          revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+        }
+
+        revealController.addEventListener('change', function(el) {
+          const open = el.target.checked;
+          if (open) {
+            pfyReveal.reveal(revealContainer, revealController);
+          } else {
+            pfyReveal.unreveal(revealContainer, revealController);
+          }
+        });
+      });
+    }
+  }, // setupRevealHandler
 
 
   handleErrorInForm(form) {

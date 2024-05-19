@@ -764,6 +764,12 @@ EOT;
         $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
 
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
+
+        if ($elemOptions['revealTarget']??false) {
+            PageFactory::$pg->addAssets('REVEAL');
+            $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
+        }
+
         return $elem;
     } // addCheckboxElem
 
