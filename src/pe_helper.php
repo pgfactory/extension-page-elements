@@ -46,13 +46,15 @@ function twigIntlDateFormatFilter(string $arg, string $format): string
 
 
 /**
- * Compiles "date()-style" (eg. Y-m-d) format and translates to local language.
+ * Compiles format string to localized date string.
+ * Supports syntax 'Ynnn', where nnn is number of days to early switch to next year.
  * @param string $format
  * @param mixed $time
  * @return string
  */
 function intlDate(string $format, mixed $time = false): string
 {
+    $format = resolveYearPlaceholder($format);
     $time = $time ?: time();
     if (is_string($time)) {
         $time = strtotime($time);
@@ -157,6 +159,28 @@ function intlDateFormat(string $format, mixed $time = false): string
     );
     return datefmt_format($fmt , $time);
 } // intlDateFormat
+
+
+/**
+ * Handles format 'Ynnn', where nnn is number of days to early switch to next year
+ * @param string $str
+ * @return string
+ */
+function resolveYearPlaceholder(string $str,): string
+{
+    if (preg_match('/Y(\d+)/', $str, $m)) {
+        $y = date('Y');
+        $d = intval($m[1]);
+        if ($d) {
+            $dayOfYear = intval(date('z'));
+            if ($dayOfYear > (365 - $d)) {
+                $y += 1;
+            }
+        }
+        $str = str_replace($m[0], (string)$y, $str);
+    }
+    return $str;
+} // resolveYearPlaceholder
 
 
 /**
