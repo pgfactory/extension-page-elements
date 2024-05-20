@@ -105,11 +105,7 @@ class ListElements
     {
         $reversed = ($options['reversed']??false);
         $path = $options['path'] ?? '';
-        $template = $options['template'] ?? '';
-        $templateFile = resolvePath($template);
-        if (file_exists($templateFile)) {
-            $template = getFile($templateFile);
-        }
+        $template = self::getTemplate($options);
 
         $path = resolvePath($path);
         $dir = getDir($path);
@@ -120,14 +116,16 @@ class ListElements
 
         $out = '';
         foreach ($dir as $file) {
-            $templ = $template;
             $filename = base_name($file, false);
             $date = '';
             if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
                 $date = $m[1];
             }
-            $templ = str_replace(['%file%', '%filename%', '%date%'], ["~/$file", $filename, $date], $templ);
-            $html = self::compileTemplate($templ, $date);
+            $html = Utils::compileTemplate($template, [
+                'file' => "~/$file",
+                'filename' => $filename,
+                'date' => $date,
+                ]);
             $out .= $html . "\n\n";
         }
 
@@ -180,29 +178,47 @@ class ListElements
     public static function renderUserList($options): string
     {
         $options1 = (array)$options['options'] ?? [];
-        $options1['reversed'] = $options['reversed'];
+        $template = self::getTemplate($options);
+        $templatePrefix = $options['templatePrefix'] ?? '';
+        $templatePostfix = $options['templatePostfix'] ?? '';
+        if (is_array($template)) {
+            $templatePrefix = $template['head'] ?? '';
+            $templatePostfix = $template['tail'] ?? '';
+            $template = $template['row'] ?? '';
+        }
 
-        $str = Utils::getUsers($options1);
+        $str = $templatePrefix."\n";
+        $users = Utils::getUsers($options1);
+        foreach ($users as $user) {
+            $s = Utils::compileTemplate($template, $user);
+            $str .= "$s\n";
+        }
+        $str .= "$templatePostfix\n";
 
         if (!$str) {
             $text = TransVars::getVariable('pfy-list-empty', true);
             $str = "<div class='pfy-list-empty'>$text</div>";
-        } else {
-            $wrapperTag = $options1['wrapperTag'] ?? 'ul';
-            if ($wrapperTag) {
-                $str = "<$wrapperTag>$str</$wrapperTag>\n";
-            }
         }
-        return $str;
+        $html = markdown($str);
+        return $html;
     } // renderUserList
 
 
-    private static function compileTemplate(string $template, string $date): string
+    private static function getTemplate(array $options): string|array
     {
-        TransVars::setVariable('_date_', $date);
-        $html = TransVars::compile($template);
-        TransVars::removeVariable('_date_');
-        return $html;
-    } // compileTemplate
+        $template = $options['template'] ?? '';
+        $templateFile = resolvePath($template);
+        if (file_exists($templateFile)) {
+            $template = loadFile($templateFile);
+        }
+        if (is_array($template)) {
+            foreach ($template as $key => $elem) {
+                $template[$key] = preg_replace('/ % ([\w-]{1,20}) % /msx', "{{ $1 }}", $elem);
+            }
+        } else {
+            $template = preg_replace('/ % ([\w-]{1,20}) % /msx', "{{ $1 }}", $template);
+        }
+        return $template;
+    } // getTemplate
 
 } // ListElements
