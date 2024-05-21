@@ -371,7 +371,7 @@ class PfyForm extends Form
             $html = $input;
 
         } elseif (($type === 'textarea') && ($rec['reveal'] ?? false)) {
-            $inx = self::$formInx . "_$this->revealInx";
+            $inx = $rec['revealInx'];
             $controllerLabel = $rec['reveal'];
             $html = <<<EOT
 <div class="pfy-elem-wrapper pfy-reveal-controller">
@@ -665,10 +665,12 @@ EOT;
         $elemOptions = &$this->formElements[$name];
         if ($revealLabel = ($elemOptions['reveal']??false)) {
             $this->revealInx++;
-            $targetId = "pfy-reveal-container-{$this->formIndex}_$this->revealInx";
+            $inx = "{$this->formIndex}_$this->revealInx";
+            $elemOptions['revealInx'] = $inx;
+            $targetId = "pfy-reveal-container-$inx";
             PageFactory::$pg->addAssets('REVEAL');
 
-            $elem1 = $this->addCheckbox("CommentController{$this->formIndex}_$this->revealInx", $revealLabel);
+            $elem1 = $this->addCheckbox("CommentController$inx", $revealLabel);
             $elem1->setHtmlAttribute('class', 'pfy-reveal-controller');
             $elem1->setHtmlAttribute('aria-controls', $targetId);
             $elem1->setHtmlAttribute('data-reveal-target', "#$targetId");
