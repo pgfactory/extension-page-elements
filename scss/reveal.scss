@@ -11,11 +11,13 @@
 
 $revealControllerHeight: 2em;
 $revealArrowSize: 1em;
+$revealContainerBorderDefault: 1px solid #bbb;
+
 
 $revealControllerBg:    var(--pfy-reveal-controller-bg);
 $revealControllerBorder:var(--pfy-reveal-controller-border, var(--pfy-reveal-border));
 $revealContainerBg:     var(--pfy-reveal-container-bg);
-$revealContainerBorder: var(--pfy-reveal-container-border, var(--pfy-reveal-border));
+$revealContainerBorder: var(--pfy-reveal-container-border, var(--pfy-reveal-border, $revealContainerBorderDefault));
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
