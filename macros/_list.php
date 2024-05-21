@@ -5,6 +5,8 @@ namespace PgFactory\PageFactory;
  * Twig function
  */
 
+use PgFactory\MarkdownPlus\Permission;
+
 /**
  * @param $argStr
  * @return array|string
@@ -155,6 +157,10 @@ class ListElements
         }
 
         foreach ($pages as $page) {
+            if (!self::checkVisibility($page)) {
+                continue;
+            }
+
             $elem = $page->title()->value();
             if ($asLinks) {
                 $url = $page->url();
@@ -179,21 +185,21 @@ class ListElements
     {
         $options1 = (array)$options['options'] ?? [];
         $template = self::getTemplate($options);
-        $templatePrefix = $options['templatePrefix'] ?? '';
-        $templatePostfix = $options['templatePostfix'] ?? '';
+        $prefix = $options['prefix'] ?? '';
+        $suffix = $options['suffix'] ?? '';
         if (is_array($template)) {
-            $templatePrefix = $template['head'] ?? '';
-            $templatePostfix = $template['tail'] ?? '';
-            $template = $template['row'] ?? '';
+            $prefix = ($template['prefix'] ?? '') ?: $prefix;
+            $template = $template['element'] ?? '';
+            $suffix = ($template['suffix'] ?? '') ?: $suffix;
         }
 
-        $str = $templatePrefix."\n";
+        $str = $prefix."\n";
         $users = Utils::getUsers($options1);
         foreach ($users as $user) {
             $s = Utils::compileTemplate($template, $user);
             $str .= "$s\n";
         }
-        $str .= "$templatePostfix\n";
+        $str .= "$suffix\n";
 
         if (!$str) {
             $text = TransVars::getVariable('pfy-list-empty', true);
@@ -220,5 +226,27 @@ class ListElements
         }
         return $template;
     } // getTemplate
+
+
+    private static function checkVisibility($page): bool
+    {
+        if ($visibility = $page->visible()->value()) {
+            $visible = Permission::evaluate($visibility);
+            if (!$visible) {
+                return false;
+            }
+        }
+        if ($showFrom = $page->showfrom()->value()) {
+            if (strtotime($showFrom) > time()) {
+                return false;
+            }
+        }
+        if ($showTill = $page->showtill()->value()) {
+            if (strtotime($showTill) < time()) {
+                return false;
+            }
+        }
+        return true;
+    } // checkVisibility
 
 } // ListElements
