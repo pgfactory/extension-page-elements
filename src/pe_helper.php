@@ -256,3 +256,25 @@ function array_splice_associative($input, $key, $length, $replacement=array()) {
     return array_merge($before_slice, $replacement, $after_slice);
 } // array_splice_associative
 
+
+function sizetostr(int|string $arg, int $precision = 1): string
+{
+    if (is_string($arg)) {
+        $size = filesize($arg);
+    } else {
+        $size = $arg;
+    }
+
+    if ($size < 1024) {
+        return $size.' B';
+
+    } elseif ($size < 1048576) {
+        return round($size/1024, $precision).' kB';
+
+    } elseif ($size < 1073741824) {
+        return round($size/1048576, $precision).' MB';
+
+    } else {
+        return round($size/1073741824, $precision).' GB';
+    }
+} // sizetostr
