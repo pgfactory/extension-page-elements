@@ -1451,7 +1451,6 @@ EOT;
     {
         $html = '';
         $formInx = $this->formIndex;
-//        $formInx = self::$formInx;
 
         if ($this->addFormTableWrapper) {
             $html .= "<div class='pfy-form-and-table-wrapper'>\n";
@@ -1459,7 +1458,6 @@ EOT;
 
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
         $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
-//        $html .= "<div id='pfy-form-wrapper-$this->formIndex' class='$wrapperClass'>\n";
         return $html;
     } // renderFormWrapperHead
 
@@ -1985,6 +1983,7 @@ EOT;
         $this->matchingEventAvailable = false;
 
         $eventOptions['file'] = $src;
+        $eventOptions['macroName'] = $this->formOptions['macroName'];
         $sched = new Events($eventOptions);
         $nextEvent = $sched->getNextEvent();
 
