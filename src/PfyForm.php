@@ -205,7 +205,7 @@ class PfyForm extends Form
             }
             if ($this->formResponse) {
                 $formResponse .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
-                $formResponse .= "\n\n<!-- === /pfy form widget === -->\n";
+                $formResponse .= "<!-- === /pfy form widget === -->\n";
                 return "$formTopBanner\n$formResponse";
             }
             $html .= "$formTopBanner\n$formResponse";;
