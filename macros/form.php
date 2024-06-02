@@ -284,6 +284,8 @@ EOT,
         $html = $sourceCode;
     }
 
+    $formFields = $auxOptions;
+
     if ($options['edit']??false) {
         $options['editData'] = $options['edit'];
     }
@@ -301,12 +303,12 @@ EOT,
     if ($output === true) {
         // normal invocation in one junk:
         $form = new PfyForm($options);
-        $html .= $form->renderForm($auxOptions);
+        $html .= $form->renderForm($formFields);
 
     } else {
         if ($output === false) {
             $form = $GLOBALS['pfy.form'] = new PfyFormSplitSyntax($options);
-            $html = $form->init($auxOptions);
+            $html = $form->init($formFields);
 
         } else {
             $html .= $GLOBALS['pfy.form']->renderFormPieces(uptoWhich: $output);
