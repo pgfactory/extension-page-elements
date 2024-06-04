@@ -1,0 +1,42 @@
+/*
+ * sayTTS.js
+ */
+
+#pfy.pfy-default-styling .pfy-say-widget,
+.pfy-default-styling .pfy-say-widget {
+  position: relative;
+  .pfy-button {
+    font-size: 1em;
+    position: relative;
+    .pfy-pause-icon {
+      transform: scale(1.5);
+    }
+  }
+  .pfy-say-buttons {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  &.pfy-say-open {
+    .pfy-say-buttons {
+      display: block;
+    }
+    .pfy-say-open {
+      opacity: 0;
+    }
+  }
+
+} // .pfy-say-widget
+
+
+
+.pfy-no-webspeech {
+  .pfy-form-wrapper,
+  .hinweis,
+  .buttons {
+    display: none;
+  }
+}
+

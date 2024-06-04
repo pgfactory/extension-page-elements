@@ -1,0 +1,36 @@
+
+
+pfy-say-open:
+    de: Vorlesen
+    _: Read
+
+pfy-say-play:
+#    de: Start
+#    _: Play
+    _: <span class='pfy-play-icon' title='Play'>▶</span>
+
+pfy-say-pause:
+    #    de: Pause
+    #    _:Pause
+    _: <span class='pfy-pause-icon' title='Pause'>⏸</span>
+
+pfy-say-stop:
+#    de: Stop
+#    _: Stop
+    _: <span class='pfy-stop-icon' title='Stop'>⏹</span>
+
+#pfy-say-continue:
+#    de: Weiter
+#    _: Continue
+
+
+__END__
+▶
+▷
+⏯
+▉
+⏹
+⏸
+⬤
+⬛
+〓
