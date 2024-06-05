@@ -20,6 +20,7 @@ function say($args = '')
             'class' => ['Synonyme for "wrapperId".', null],
             'title' => ['Title attribute to apply to the widget.', null],
             'autoplay' => ['If true, speech will start automatically when clicken the open button.', true],
+            'speedset' => ['If true, .', true],
             'callback' => ['[functionName] Name of a js function which will be called upon activating the open button. '.
                 'The function is expected to return a string to be read aloud. ', null],
         ],
@@ -48,6 +49,24 @@ EOT,
     $wrapperClass = $wrapperClass? " $wrapperClass": '';
     $wrapperClass .= $options['autoplay']? ' pfy-say-autoplay' : '';
 
+    $speedset = $options['speedset'] ?: '';
+    if ($speedset) {
+        $speedset = <<<EOT
+
+<div class="pfy-say-speed-wrapper">
+<label class='pfy-invisible'>{{ pfy-say-speed-label }}</label>
+<span class="pfy-say-speed-wrapper" title="{{ pfy-say-speed-title }}">
+<label><input type="radio" name="speed" value="0.8x"><span>0.8x</span></label>
+<label><input type="radio" name="speed" value="1x"><span>1x</span></label>
+<label><input type="radio" name="speed" value="1.15x"><span>1.15x</span></label>
+<label><input type="radio" name="speed" value="1.3x"><span>1.3x</span></label>
+</span>
+</div>
+
+EOT;
+
+    }
+
     $callback = $options['callback'];
     if ($callback) {
         $callback = " data-callback='$callback'";
@@ -63,6 +82,7 @@ EOT,
         <button id="pfy-button-pause-$inx" class="pfy-button pfy-say-pause" aria-pressed="false">{{ pfy-say-pause }}</button>
         <button id="pfy-button-stop-$inx" class="pfy-button pfy-say-stop" aria-pressed="false">{{ pfy-say-stop }}</button>
     </div><!--/.pfy-say-buttons-->
+$speedset
 </div><!--/.pfy-say-widget-->
 
 EOT;

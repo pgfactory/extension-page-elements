@@ -5,6 +5,9 @@
 #pfy.pfy-default-styling .pfy-say-widget,
 .pfy-default-styling .pfy-say-widget {
   position: relative;
+  width: 9em;
+//  background: yellow;
+
   .pfy-button {
     font-size: 1em;
     position: relative;
@@ -12,16 +15,50 @@
       transform: scale(1.5);
     }
   }
+  .pfy-say-speed-wrapper {
+    display: none;
+  }
   .pfy-say-buttons {
     display: none;
     position: absolute;
     top: 0;
     left: 0;
   }
-
+  span.pfy-say-speed-wrapper {
+    margin-top: 0.3em;
+    label {
+      flex: 1 0 2.5em;
+      text-align: center;
+    }
+    width: 100%;
+    font-size: 0.8em;
+    gap: 0.1em;
+    label {
+      flex: 0 1 auto;
+      span {
+        display: block;
+      }
+    }
+  }
+  div.pfy-say-speed-wrapper {
+    box-shadow: inset 0 0 4px gray;
+    background: #eee;
+    padding: 0.2em;
+  }
   &.pfy-say-open {
     .pfy-say-buttons {
-      display: block;
+      display: flex;
+      gap: 0.3em;
+      button {
+        flex: 1 0 2.8em;
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+    .pfy-say-speed-wrapper {
+      display: flex;
+      justify-content: space-between;
+
     }
     .pfy-say-open {
       opacity: 0;
@@ -34,9 +71,32 @@
 
 .pfy-no-webspeech {
   .pfy-form-wrapper,
+  .pfy-say-speed-wrapper,
   .hinweis,
   .buttons {
     display: none;
   }
 }
 
+__END__
+.pfy-say-widget {
+  width: 9em;
+  .pfy-say-speed-wrapper {
+    width: 100%;
+    font-size: 0.8em;
+    display: flex;
+    gap: 0.1em;
+    label {
+      flex: 0 1 auto;
+      span {
+        display: block;
+      }
+    }
+  }
+  .pfy-say-speed-wrapper {
+    // display: none;
+  }
+  &.pfy-say-open .pfy-say-speed-wrapper {
+    display: block;
+  }
+}
