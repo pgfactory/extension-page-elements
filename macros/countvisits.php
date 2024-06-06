@@ -4,9 +4,9 @@ namespace PgFactory\PageFactory;
 use PgFactory\MarkdownPlus\Permission;
 
 
-const VISITS_FILE       = 'site/logs/visits.yaml';
-const VISITS_SINCE_FILE = 'site/logs/visits-since.txt';
-const VISITS_BOTS_FILE  = 'site/logs/visits_bots.txt';
+const VISITS_FILE       = 'site/logs/visits/visits.yaml';
+const VISITS_SINCE_FILE = 'site/logs/visits/visits-since.txt';
+const VISITS_BOTS_FILE  = 'site/logs/visits/visits_bots.txt';
 
 function countvisits($argStr = '')
 {
@@ -87,6 +87,7 @@ class CountVisits
         $pgId = page()->id();
         $clientIp = $this->getClientIP(true);
         if (!file_exists($file)) {
+            preparePath($file);
             file_put_contents($file, "$pgId: 0");
             file_put_contents(VISITS_SINCE_FILE, date('Y-m-d H:i:s'));
             $count = 0;
