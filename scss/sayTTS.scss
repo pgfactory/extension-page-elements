@@ -1,12 +1,11 @@
 /*
- * sayTTS.js
+ * sayTTS.scss
  */
 
 #pfy.pfy-default-styling .pfy-say-widget,
 .pfy-default-styling .pfy-say-widget {
   position: relative;
   width: 9em;
-//  background: yellow;
 
   .pfy-button {
     font-size: 1em;
@@ -68,35 +67,11 @@
 } // .pfy-say-widget
 
 
-
-.pfy-no-webspeech {
-  .pfy-form-wrapper,
-  .pfy-say-speed-wrapper,
-  .hinweis,
-  .buttons {
-    display: none;
-  }
-}
-
-__END__
-.pfy-say-widget {
-  width: 9em;
-  .pfy-say-speed-wrapper {
-    width: 100%;
-    font-size: 0.8em;
-    display: flex;
-    gap: 0.1em;
-    label {
-      flex: 0 1 auto;
-      span {
-        display: block;
-      }
+.pfy-default-styling {
+  .pfy-no-webspeech {
+    .pfy-say-widget {
+      display: none;
     }
   }
-  .pfy-say-speed-wrapper {
-    // display: none;
-  }
-  &.pfy-say-open .pfy-say-speed-wrapper {
-    display: block;
-  }
 }
+

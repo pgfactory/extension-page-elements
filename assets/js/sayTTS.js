@@ -27,7 +27,6 @@ const TextToSpeech = {
         this.speed = 1;
         localStorage.setItem("speed", 1);
       }
-      mylog(`speed: ${this.speed}`);
       this.initWebSpeech();
     }, // initSpeech
 
@@ -46,7 +45,6 @@ const TextToSpeech = {
         const btn = ev.target;
         domForOne(btn, '^.pfy-say-widget', (widgetEl) => {
           this.widget = widgetEl;
-          mylog('open say-widget');
 
           // setup play button:
           domForOne(widgetEl, '.pfy-say-play', (el) => {
@@ -176,14 +174,12 @@ const TextToSpeech = {
         this.speed = parseFloat(this.speed);
         localStorage.setItem("speed", 1);
       }
-      mylog(`initial speed: ${this.speed}`);
       this.updateSpeedSelector();
 
       domForEach(widgetEl, '.pfy-say-speed-wrapper input', (el) => {
         el.addEventListener('change', (ev) => {
           const inputEl = ev.target;
           const value = parseFloat(inputEl.value);
-          mylog(value);
           localStorage.setItem("speed", value);
           TextToSpeech.speed = value;
           TextToSpeech.play(ev);
@@ -193,13 +189,10 @@ const TextToSpeech = {
 
 
     updateSpeedSelector : function() {
-      mylog('updateSpeedSelector');
       setTimeout(function() {
         const currSpeed = String(TextToSpeech.speed) + 'x';
-        mylog(`currSpeed: ${currSpeed}`);
         domForOne(TextToSpeech.widget, `.pfy-say-speed-wrapper input[value="${currSpeed}"]`, (el) => {
           el.checked = true;
-          mylog(el);
         });
       }, 100);
     }, // updateSpeedSelector
@@ -208,7 +201,6 @@ const TextToSpeech = {
     setButtonPressed: function (arg) {
         let btnEl = null;
         if (typeof arg.target !== 'undefined') {
-          mylog(arg.target);
           arg.target.classList.add('pfy-button-pressed');
           arg.target.setAttribute('aria-pressed', true);
 
@@ -228,7 +220,6 @@ const TextToSpeech = {
     unsetButtonPressed: function (arg) {
       let btnEl = null;
       if (typeof arg.target !== 'undefined') {
-        mylog(arg.target);
         arg.target.classList.remove('pfy-button-pressed');
         arg.target.setAttribute('aria-pressed', false);
 
@@ -250,7 +241,7 @@ const TextToSpeech = {
         console.log("Web Speech API supported!");
       } else {
         console.log("Web Speech API not supported :-(");
-        document.body.classList.add('no-webspeech');
+        document.body.classList.add('pfy-no-webspeech');
       }
     }, // initWebSpeech
 
