@@ -31,8 +31,8 @@ const TextToSpeech = {
     }, // initSpeech
 
     initWidget: function(widgetEl) {
-    // init open button
-    domForOne(widgetEl, '.pfy-say-open', (el) => {
+      // init open button
+      domForOne(widgetEl, '.pfy-say-open', (el) => {
         el.addEventListener('click', (ev) => {
           this.open(ev);
         });
@@ -87,19 +87,7 @@ const TextToSpeech = {
             }
           }
           if(!text) {
-            // case no callback or that didn't return any text:
-            const textSel = widgetEl.dataset.sayTarget;
-            domForOne(widgetEl, textSel, (el) => {
-              // remove the say widget in case it was embedded in the text element:
-              let clone = el.cloneNode(true);
-              const widgetEl = clone.querySelector('.pfy-say-widget');
-              if (widgetEl) {
-                widgetEl.remove();
-                this.text = clone.innerText;
-              } else {
-                this.text = el.innerText;
-              }
-            });
+            this.getTextToSay(widgetEl.dataset.sayTarget, widgetEl);
           }
           mylog(`Text to read: ${this.text}`);
 
@@ -113,38 +101,71 @@ const TextToSpeech = {
     }, // open
 
 
+    getTextToSay: function (textSel, widgetEl) {
+      // case no callback or that didn't return any text:
+      let el;
+      if (textSel.match('^')) {
+        domForOne(widgetEl, textSel, (e) => {
+          el = e;
+        });
+      } else {
+        if (typeof widgetEl !== 'undefined') {
+          el = widgetEl.querySelector(textSel);
+        } else {
+          if (!el) {
+            el = document.querySelector(textSel);
+          }
+        }
+      }
+      // remove the say widget in case it was embedded in the text element:
+      let clone = el.cloneNode(true);
+      const widgetElem = clone.querySelector('.pfy-say-widget');
+      if (widgetElem) {
+        widgetElem.remove();
+        this.text = clone.innerText;
+      } else {
+        this.text = el.innerText;
+      }
+      if (!this.text) {
+        this.text = '';
+        mylog('No text found to read aloud.');
+      }
+    }, // getTextToSay
+
+
     play: function() {
       mylog('Play');
-      if (TextToSpeech.widget.classList.contains('pfy-say-playing')) {
-        this.synth.cancel();
-      }
       if (typeof this.widget === 'undefined') {
         mylog('Play: this.widget is null');
         return;
       }
+      this.synth.cancel();
       const utterThis = new SpeechSynthesisUtterance(this.text);
       utterThis.rate = this.speed * this.speedFactor;
       this.synth.speak(utterThis);
       this.widget.classList.add('pfy-say-playing');
       this.setButtonPressed(this.playBtn);
+      this.unsetButtonPressed(this.pauseBtn);
     }, // play
 
 
     pause: function() {
-      if (this.widget.classList.contains('pfy-say-paused')) {
-        mylog('Resume');
-        this.synth.resume();
-        this.widget.classList.remove('pfy-say-paused');
-        this.widget.classList.add('pfy-say-playing');
-        this.unsetButtonPressed(this.pauseBtn);
-        this.setButtonPressed(this.playBtn);
-      } else {
-        mylog('Pause');
-        this.synth.pause();
-        this.widget.classList.add('pfy-say-paused');
-        this.widget.classList.remove('pfy-say-playing');
-        this.setButtonPressed(this.pauseBtn);
-        this.unsetButtonPressed(this.playBtn);
+      if (window.speechSynthesis.speaking) {
+        if (window.speechSynthesis.paused) {
+          mylog('Resume');
+          this.synth.resume();
+          this.widget.classList.remove('pfy-say-paused');
+          this.widget.classList.add('pfy-say-playing');
+          this.unsetButtonPressed(this.pauseBtn);
+          this.setButtonPressed(this.playBtn);
+        } else {
+          mylog('Pause');
+          this.synth.pause();
+          this.widget.classList.add('pfy-say-paused');
+          this.widget.classList.remove('pfy-say-playing');
+          this.setButtonPressed(this.pauseBtn);
+          this.unsetButtonPressed(this.playBtn);
+        }
       }
     }, // pause
 
@@ -239,6 +260,7 @@ const TextToSpeech = {
     initWebSpeech: function() {
       if ('speechSynthesis' in window) {
         console.log("Web Speech API supported!");
+        this.synth = window.speechSynthesis;
       } else {
         console.log("Web Speech API not supported :-(");
         document.body.classList.add('pfy-no-webspeech');
