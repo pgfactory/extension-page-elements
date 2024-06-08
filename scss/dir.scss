@@ -1,0 +1,47 @@
+/*
+* CSS-Variables:
+// --mdp-accordion-summary-padding: 0.2em;
+// --mdp-accordion-left-indent: 3em;
+// --mdp-accordion-summary-indent: -0.3em;
+*/
+
+#pfy.pfy-default-styling .pfy-encapsulated .pfy-dir,
+.pfy-default-styling .pfy-dir {
+  ul {
+    list-style-type: none;
+  }
+  .pfy-dir-lvl-1 {
+    padding-left: 0;
+    ul {
+      padding-left: var(--mdp-accordion-left-indent, 0rem);
+    }
+  }
+  .mdp-accordion {
+    .mdp-accordion-body {
+      padding-left: calc(1.6rem + var(--mdp-accordion-summary-indent, 0rem));
+    }
+    summary {
+      padding-top: var(--mdp-accordion-summary-padding, 0rem);
+      padding-bottom: var(--mdp-accordion-summary-padding, 0rem);
+      padding-left: calc(1.2rem + var(--mdp-accordion-summary-indent, 0rem));
+    }
+    summary:before {
+      content: '+'; //'▹';
+      transform-origin: 0.3rem 50%;
+      transition: 0.2s transform ease;
+    }
+    details[open] > summary:before {
+      content: '–';
+      transform: rotate(180deg);
+      transition: 0.2s transform ease;
+    }
+  }
+  .pfy-dir-sub-header {
+    font-weight: bold;
+    font-size: 1.2em;
+    padding-bottom: 0.5em;
+  }
+  .pfy-dir-go-back {
+    margin-bottom: -0.8em;
+  }
+}

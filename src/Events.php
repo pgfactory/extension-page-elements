@@ -14,25 +14,19 @@
 
 namespace PgFactory\PageFactoryElements;
 
-
 use PgFactory\PageFactory\DataSet as DataSet;
-use PgFactory\PageFactory\PageFactory;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\getFile;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
-use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\translateToClassName;
 use RRule\RRule;
-use IntlDateFormatter;
 
 
 class Events extends DataSet
 {
     public $filetime;
     private static array $timePlaceholders = [];
-    private mixed $templates = null;
 
     /**
     //     * @param string $file
@@ -51,7 +45,7 @@ class Events extends DataSet
             if (($ftime = fileTime(resolvePath($file)))) {
                 $this->filetime = date("d.F Y", $ftime);
             } else {
-                $this->filetime = '{! pfy-event-source-filetime-unknown !}';
+                $this->filetime = '{|! pfy-event-source-filetime-unknown !|}';
             }
         }
         $this->options = $options;
@@ -72,6 +66,7 @@ class Events extends DataSet
 
         if ($options['rrule']??false || $options['timePattern']??false) {
             $events = $this->renderTimePattern();
+            // special case:
             if (is_string($events)) {
                 return $events;
             }
@@ -90,8 +85,10 @@ class Events extends DataSet
 
         $events = $this->handleExpections($events);
 
-        // find the appropriate template taking into account category and language:
-        $mdStr = $this->compile($events);
+        // render by compiling data with template:
+        TemplateCompiler::sanitizeTemplateOption($options);
+        $template = TemplateCompiler::getTemplate($options, $options['category']??null);
+        $mdStr = TemplateCompiler::compile($template, $events);
 
         // finalize:
         $mdStr = $this->cleanup($mdStr);
@@ -106,6 +103,10 @@ class Events extends DataSet
 
 
     // 0 (Sun) bis 6 (Sat)
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
     private function renderTimePattern(): mixed
     {
         // simple pattern, such as current year (='Y'):
@@ -166,6 +167,10 @@ class Events extends DataSet
     } // renderTimePattern
 
 
+    /**
+     * @param string $str
+     * @return string
+     */
     private function convertDatetime(string $str): string
     {
         $date = str_replace('-', '', substr($str, 0, 10));
@@ -174,6 +179,11 @@ class Events extends DataSet
     } // convertDatetime
 
 
+    /**
+     * @param array $events
+     * @return array
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private function handleExpections(array $events): array
     {
         $exceptions = [];
@@ -353,137 +363,6 @@ class Events extends DataSet
 
 
     /**
-     * @param $category
-     * @return mixed
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private function getTemplate(string|false $category): mixed
-    {
-        if ($this->templates === null) {
-            $this->loadTemplates();
-        }
-        $templates = $this->templates;
-        if (is_string($templates)) {
-            return $templates;
-        }
-
-        $templateName = $this->options['templateBasename'] ?? '';
-        if ($templateName) {
-            $templateName .= '-';
-        }
-        $language = PageFactory::$langCode;
-
-        if ($templates) { // Templates from file found:
-            if ($category) {
-                $templateCand = "$templateName$category";
-                $template = $templates[$templateCand]??false;
-
-            } else { //  try language:
-                $templateCand = "$templateName$language";
-                $template = $templates[$templateCand]??false;
-            }
-            if (!$template) { // try category-language
-                $templateCand = "$templateName$category-$language";
-                $template = $templates[$templateCand]??false;
-            }
-            if (!$template) { // try -language-category
-                $templateCand = "$templateName$language-$category";
-                $template = $templates[$templateCand]??false;
-            }
-            if (!$template) { // try default template:
-                $template = $templates[$templateName]??false;
-            }
-            if (!$template) { // try default template:
-                $template = $templates['_']??false;
-            }
-
-        } else { // Templates from variables:
-            if ($category) {
-                $templateCand = "$templateName$category";
-                $template = TransVars::getVariable($templateCand);
-
-            } else { //  try language:
-                $templateCand = "$templateName$language";
-                $template = TransVars::getVariable($templateCand);
-            }
-            if (!$template) { // try category-language
-                $templateCand = "$templateName$category-$language";
-                $template = TransVars::getVariable($templateCand);
-            }
-            if (!$template) { // try -language-category
-                $templateCand = "$templateName$language-$category";
-                $template = TransVars::getVariable($templateCand);
-            }
-            if (!$template) { // try default template:
-                $template = TransVars::getVariable($templateName);
-            }
-            if (!$template) { // try default template:
-                $template = $templates['_']??false;
-            }
-        }
-        return $template;
-    } // getTemplate
-
-
-    /**
-     * @param $events
-     * @return string
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private function compile($events)
-    {
-        $wrap1 = $wrap2 = "\n";
-        $mdStr = '';
-        foreach ($events as $i => $eventRec) {
-            $category = $eventRec['category']??false;
-            $eventRec['index'] = $i + 1;
-            $catClass = translateToClassName($category);
-            if ($this->options['wrap']) {
-                $wrap1 = "\n%%%%%% .pfy-event-wrapper.event-$catClass\n\n";
-                $wrap2 = "\n\n%%%%%%\n\n";
-            }
-            $template = $this->getTemplate($category);
-            $template = str_replace('%%', $i, $template);
-            $mdStr .= $wrap1;
-            $mdStr .= $this->compileTemplate($template, $eventRec);
-            $mdStr .= $wrap2;
-        }
-        return $mdStr;
-    } // compile
-
-
-    /**
-     * @param string $template
-     * @param array $eventRec
-     * @return string
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
-     */
-    private function compileTemplate(string $template, array $eventRec): string
-    {
-        // immediately replace patterns %key% with value from data-rec:
-        $template = $this->resolveVariables($template, $eventRec);
-
-        // execute PageFactory Macros:
-        $template = TransVars::executeMacros($template, onlyMacros:true);
-
-        //
-        $eventRec['filetime'] = $this->filetime;
-        $vars = array_merge(\PgFactory\PageFactory\TransVars::$variables, $eventRec);
-
-        // compile templage with Twig:
-        $loader = new \Twig\Loader\ArrayLoader([
-            'index' => $template,
-        ]);
-        $twig = new \Twig\Environment($loader);
-        $twig->addFilter(new \Twig\TwigFilter('intlDate', 'PgFactory\PageFactoryElements\twigIntlDateFilter'));
-        $twig->addFilter(new \Twig\TwigFilter('intlDateFormat', 'PgFactory\PageFactoryElements\twigIntlDateFormatFilter'));
-        return $twig->render('index', $vars);
-    } // compileTemplate
-
-
-    /**
      * Resolves a format string to current values.
      *   Supports date() type arguments (e.g. 'Y-m-d' or 'Y2-m-d').
      *   Special case: 'Yn' (where n=number) -> flips year to next year when month is greater than 12-n.
@@ -521,65 +400,28 @@ class Events extends DataSet
      */
     private function cleanup(string $str): string
     {
-        $str = str_replace(['{!', '!}'], ['{{', '}}'], $str);
+        $str = str_replace(['{|!', '!|}'], ['{{', '}}'], $str);
         return $str;
     } // cleanup
 
 
     /**
-     * @param string $template
-     * @param array $variables
-     * @return string
-     */
-    private function resolveVariables(string $template, array $variables): string
-    {
-        foreach ($variables as $key => $value) {
-            $template = str_replace("%$key%", "$value", $template);
-        }
-        return $template;
-    } // resolveVariables
-
-
-    /**
-     * @param $category
-     * @return false|mixed
-     * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
+     * @param string|false $category
+     * @param int $offset
+     * @return array|false
+     * @throws \Exception
      */
     public function getNextEvent(string|false $category = false, int $offset = 0): array|false
     {
-        $category = $category?: $this->options['category']??false;
-        $templatesFile = $this->options['templatesFile']??false;
-        $sortedData = $this->getData($category);
-        if (isset($this->options['offset']) && $offset === 0) {
-            $offset = $this->options['offset'];
-        }
-        $nextEventInx = $this->findEvent($sortedData, $offset);
-        if ($nextEventInx === false) {
-            return false;
-        }
-        $nextEventRec = $sortedData[$nextEventInx];
-        $eventBanner = '';
-
-        // prepare event banner:
-        if ($templatesFile) {
-            $this->loadTemplates($templatesFile);
-            $template = $this->getTemplate($category);
-            $eventBanner = $this->compileTemplate($template, $nextEventRec);
-            $eventBanner = markdown($eventBanner);
-            $eventBanner = $this->cleanup($eventBanner);
-        }
-        $nextEventRec['eventBanner'] = $eventBanner;
-
-        return $nextEventRec;
+        $events = self::getNextEvents($category, $offset, 1);
+        return $events[0] ?? [];
     } // getNextEvent
 
 
     /**
      * @param string|false $category
      * @param int $offset
+     * @param int|false $count
      * @return array|false
      * @throws \Kirby\Exception\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
@@ -588,11 +430,8 @@ class Events extends DataSet
      */
     public function getNextEvents(string|false $category = false, int $offset = 0, int|false $count = false): array|false
     {
+        $options = ($this->options??false) ?: [];
         $category = $category?: $this->options['category']??false;
-        $templatesFile = $this->options['templatesFile']??false;
-        if ($templatesFile) {
-            $this->loadTemplates($templatesFile);
-        }
 
         // handle case where rrule is specified, rather than events from DB:
         if (($this->options['rrule']??false) || ($this->options['timePattern']??false)) {
@@ -619,47 +458,25 @@ class Events extends DataSet
             return false;
         }
 
-        $nextEvents = [];
-        $count = $count ?: sizeof($sortedData);
-        for ($i = $nextEventInx; $i < $count; $i++) {
-            $nextEventRec = $sortedData[$i];
-            $eventBanner = '';
+        if ($count === false) {
+            $count = 1;
+        }
 
-            // prepare event banner:
-            if ($templatesFile) {
-                $template = $this->getTemplate($category);
-                $eventBanner = $this->compileTemplate($template, $nextEventRec);
-                $eventBanner = markdown($eventBanner);
-                $eventBanner = $this->cleanup($eventBanner);
-            }
-            $nextEventRec['eventBanner'] = $eventBanner;
-            $nextEvents[] = $nextEventRec;
+        $nextEvents = array_splice($sortedData, $nextEventInx, $count);
+
+        TemplateCompiler::sanitizeTemplateOption($options);
+        $templateOptions = TemplateCompiler::getTemplate($options, $category);
+
+        $templateOptions['selector'] = $category;
+
+        foreach ($nextEvents as $i => $rec) {
+            $eventBanner = TemplateCompiler::compile($templateOptions, $rec);
+            $nextEvents[$i]['eventBanner'] = $eventBanner;
         }
 
         return $nextEvents;
     } // getNextEvents
 
-
-    /**
-     * @param $file
-     * @return void
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private function loadTemplates(string|false $file = false): void
-    {
-        if ($template = ($this->options['template']??false)) {
-            if (file_exists($f = resolvePath($template))) {
-                $template = getFile($f);
-            }
-            $this->templates = $template;
-            return;
-        }
-        $file = $file ?: ($this->options['templatesFile']??false);
-        if (!$file) {
-            throw new \Exception("Error: events file '$file' not found.");
-        }
-        $this->templates = loadFile($file);
-    } // loadTemplates
 
 } // Events
 

@@ -23,15 +23,8 @@ function events($args = '')
                 '(If not set, "unlimited" will be assumed)', false],
             'count' => ['[int] Defines the number of events to be rendered at most.', 1],
             'offset' => ['[int] Selects events relative to "from". "0" means next event etc. ', 0],
-            'template' => ['[string] Text (in MarkdownPlus format) defining how data records will '.
+            'template' => ['[string|array] Text (in MarkdownPlus format) defining how data records will '.
                 'be presented.<br>Inject values as \{{ key }}, where key is the name of a data element in the data record.', null],
-            'templatesFile' => ['[.yaml file-name] For category specific templates. '.
-                'Syntax:<br>``category: |``<br>&nbsp;&nbsp;``markdown ...`` (like above, but with leading blanks)<br>'.
-                'If no template is found that directly matches the *category* name, alternatives are tried:<br> '.
-                '\<language> (e.g. ``en:``), \<category-language> (e.g. ``sports-de:``),<br>'.
-                'If that still doesn\'t lead to a hit, the default template identified as  ``_:`` is selected.', false],
-            'templateBasename' => ['[string] If defined, ``templateBasename-`` will be prepended to the *category* name '.
-                'before selecting the template.', ''],
             'rrule' => ['[string] Defition string for recurring events. Uses the RRULE syntax (see [icalendar.org](https://icalendar.org)). '.
                 ' -> Use tool to assemble RRULE string: [icalendar.org/rrule-tool.html](https://icalendar.org/rrule-tool.html).', null],
             'exceptions' => ['[string] Defines dates and ranges to exclude. Examples: `2024-12-24,2024-12-31` or `Y-02-15, Y-04 - Y-06` etc. '.
@@ -63,14 +56,14 @@ For the macro to work, each record needs to contain at least these fields:
 
 - ``start``
 - ``end``
-- ``category``
+- ``category`` (optional)
 
 Apart from these, records may contain any number of additional fields. They all can be used in templates 
 as variables, e.g. ``\{{ start }}``. 
 
-Variable replacement is performed by the Twig library, which
-offers a variety of filters and more, see 
-<a href='https://twig.symfony.com/doc' target="_blank">Twig Documentation</a> for reference.
+Variable replacement is performed by Twig, TransVars or simply by string replacement. 
+(decided by the "mode" option in the template file.)  
+See <a href='https://twig.symfony.com/doc' target="_blank">Twig Documentation</a> for reference.
 
 ## Rolling Dates
 In arguments ``from`` and ``till`` you can use letters for rolling values, e.g. "Y" for the current year.  

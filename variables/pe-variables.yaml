@@ -872,3 +872,21 @@ pfy-login-pw-reset-mail-body:
 pfy-no-event-found:
   de: -- Derzeit sind keine Veranstaltungen geplant --
   _:  -- No events are currently scheduled --
+
+
+
+# === Dir =============================================
+pfy-dir-go-back:
+#  de: '<div title="Zurück zur höheren Ebene" style="transform: scaleX(-1); width: 1em;">⤴</div>'
+  de: '<span title="Zurück zur höheren Ebene">Zurück</span>'
+  _:  '<span title="Back to the previous level">Back</span>'
+
+pfy-dir-sub-folder:
+  de: 'Ordner «'
+  _:  'Folder "'
+
+pfy-dir-sub-folder-tail:
+  de: '»'
+  _:  '"'
+
+

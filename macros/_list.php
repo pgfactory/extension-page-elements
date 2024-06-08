@@ -5,7 +5,8 @@ namespace PgFactory\PageFactory;
  * Twig function
  */
 
-use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactoryElements\ListRenderer;
+use PgFactory\PageFactoryElements\TemplateCompiler;
 
 /**
  * @param $argStr
@@ -17,16 +18,20 @@ function _list($argStr = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'type' => ['[users,variables,functions,subpages] Selects the objects to be listed.', false],
-            'page' => ['Defines the page of which to list subpages.', '\~page/'],
+            'type' => ['[users,variables,macros,subpages,dir] Selects the objects to be listed.', false],
+            'page' => ['Defines the page of which to list subpages.', null],
             'path' => ['Defines the path (aka directory) of which to list elements.', null],
-            'template' => ['File containing a markdown template for rendering elements found in "path"'.
-                'If file is not found, the string is used as template.', null],
-            'asLinks' => ['If true and type=subpages, listed elements are wrapped in &lt;a> tags.', false],
-            'wrapperTag' => ['Defines the wrapper tag. If false, no wrapper is applied.', 'div'],
-            'options' => ['{template,prefix,suffix,separator,listWrapperTag} Specifies how to render the list.', false],
-//            'order' => ['', ''],
+            'selector' => ['[string] Used to select categories of data. Currently just "role"  of users. '.
+                'Also used to select template if multiple are available.', null],
+            'template' => ['File containing a markdown for rendering elements. Can be text or filename (.txt or .yaml).'
+                , null],
+            'prefix' => ['Optional text that is rendered before the output.', null],
+            'suffix' => ['Optional text that is rendered after the output', null],
+            'markdown' => ['If true, output is markdown compiled.', null],
             'reversed' => ['If true, output is rendered in reversed order.', false],
+            'asLinks' => ['If true and type=subpages or dir, listed elements are wrapped in &lt;a> tags.', false],
+            'wrapperClass' => ['Class applied to the wrapper tag.', null],
+            'wrapperTag' => ['Defines the wrapper tag. If false, no wrapper is applied.', 'div'],
         ],
         'summary' => <<<EOT
 # list()
@@ -41,14 +46,6 @@ Available ``types``:
 - ``subpages``      10em>> lists all sub-pages
 - ``dir``           10em>> lists elements in a given folder using a template for rendering
 
-Available ``options`` for  type **users**:
-
-- ``template``      10em>> should contain placeholders like '%name%' and '%email%' or any fields defined in Kirby's user admin
-- ``prefix``        10em>> string to prepend to each element
-- ``suffix``        10em>>  string to append to each element
-- ``separator``     10em>>  string placed between elements
-- ``listWrapperTag``    10em>> 'ul' or 'ol' or tag or false (for no wrapper) 
-
 EOT,
     ];
 
@@ -59,15 +56,22 @@ EOT,
         list($options, $sourceCode, $inx) = $str;
     }
 
+    $str = '';
     // assemble output:
     $type = $options['type'].' ';
     $type1 = $type[0];
-    if (isset($options['order']) && (($options['order']?:' ')[0] === 'r')) {
-        $options['reversed'] = true;
-    }
-    $class = '';
 
-   if ($type1 === 'v') {     // variables
+    $class = $options['class']??'';
+    $markdown = $options['markdown']??null;
+
+    $prefix = $options['prefix'] ?? '';
+    $prefix = str_replace('\\n', "\n", $prefix);
+    $suffix = $options['suffix'] ?? '';
+    $suffix = str_replace('\\n', "\n", $suffix);
+
+    TemplateCompiler::sanitizeTemplateOption($options);
+
+    if ($type1 === 'v') {     // variables
         $str = TransVars::renderVariables();
         $str = shieldStr($str);
         $class = 'pfy-variables';
@@ -77,19 +81,27 @@ EOT,
         $class = 'pfy-macros';
 
     } elseif ($type1 === 'u') {   // users
-        $str = ListElements::renderUserList($options);
+        $str = ListRenderer::renderUserList($options);
         $class = 'pfy-users';
+        $markdown = !($markdown === null) && ($options['markdown']??false);
 
-    } else if ($type1 === 'd') {     // datasources
-        $str = ListElements::renderListOfDatasources($options);
-        $class = 'pfy-list-dir';
+   } elseif ($type1 === 'd' || ($options['path']??false)) {     // dir
+       $str = ListRenderer::renderFolderContent($options);
+       $class = 'pfy-list-dir';
 
-    } elseif ($type1 === 's') {   // sub-pages
-        $str = ListElements::renderSubpages($options);
-        $class = 'pfy-subpages';
+   } elseif (($type1 === 's') || ($options['page']??false)) {   // sub-pages
+       $str = ListRenderer::renderSubpages($options);
+       $class = 'pfy-subpages';
+   }
+
+   $str = "$prefix\n$str\n$suffix\n";
+
+    if ($markdown) {
+        $str = markdown($str);
     }
 
-    if ($tag = $options['wrapperTag']) {
+    if ($options['wrapperTag']??false) {
+        $tag = $options['wrapperTag'];
         $str = <<<EOT
 <$tag class='pfy-list pfy-list-$inx $class'>
 $str
@@ -100,153 +112,3 @@ EOT;
     return $sourceCode.$str;
 }
 
-
-class ListElements
-{
-    public static function renderListOfDatasources($options): string
-    {
-        $reversed = ($options['reversed']??false);
-        $path = $options['path'] ?? '';
-        $template = self::getTemplate($options);
-
-        $path = resolvePath($path);
-        $dir = getDir($path);
-
-        if ($reversed) {
-            rsort($dir);
-        }
-
-        $out = '';
-        foreach ($dir as $file) {
-            $filename = base_name($file, false);
-            $date = '';
-            if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
-                $date = $m[1];
-            }
-            $html = Utils::compileTemplate($template, [
-                'file' => "~/$file",
-                'filename' => $filename,
-                'date' => $date,
-                ]);
-            $out .= $html . "\n\n";
-        }
-
-        return $out;
-    } // renderListOfDatasources
-
-
-    public static function renderSubpages(array $options): string
-    {
-        $asLinks = $options['asLinks']??false;
-        $reversed = ($options['order']??' ')[0] === 'r';
-        $page = $options['page']??'';
-        if ($page === '~page/' || $page === '\\~page/') {
-            $pages = page()->children()->listed();
-        } elseif ($page === '/' || $page === '~/') {
-            $pages = site()->children()->listed();
-        } else {
-            if (!$page = page($page)) {
-                throw new \Exception("Error: page '$page' not found (by macro list())");
-            }
-            $pages = $page->children()->listed();
-        }
-        $str = '';
-
-        if ($reversed) {
-            $pages = $pages->flip();
-        }
-
-        foreach ($pages as $page) {
-            if (!self::checkVisibility($page)) {
-                continue;
-            }
-
-            $elem = $page->title()->value();
-            if ($asLinks) {
-                $url = $page->url();
-                $elem = "<a href='$url'>$elem</a>";
-            }
-            $str .= "<li>$elem</li>\n";
-        }
-        if ($str) {
-            $str = "<ul>\n$str</ul>\n";
-        } else {
-            $text = TransVars::getVariable('pfy-list-empty', true);
-            $str = "<div class='pfy-list-empty'>$text</div>";
-        }
-        return $str;
-    } // renderSubpages
-
-
-    /**
-     * @return string
-     */
-    public static function renderUserList($options): string
-    {
-        $options1 = (array)$options['options'] ?? [];
-        $template = self::getTemplate($options);
-        $prefix = $options['prefix'] ?? '';
-        $suffix = $options['suffix'] ?? '';
-        if (is_array($template)) {
-            $prefix = ($template['prefix'] ?? '') ?: $prefix;
-            $template = $template['element'] ?? '';
-            $suffix = ($template['suffix'] ?? '') ?: $suffix;
-        }
-
-        $str = $prefix."\n";
-        $users = Utils::getUsers($options1);
-        foreach ($users as $user) {
-            $s = Utils::compileTemplate($template, $user);
-            $str .= "$s\n";
-        }
-        $str .= "$suffix\n";
-
-        if (!$str) {
-            $text = TransVars::getVariable('pfy-list-empty', true);
-            $str = "<div class='pfy-list-empty'>$text</div>";
-        }
-        $html = markdown($str);
-        return $html;
-    } // renderUserList
-
-
-    private static function getTemplate(array $options): string|array
-    {
-        $template = $options['template'] ?? '';
-        $templateFile = resolvePath($template);
-        if (file_exists($templateFile)) {
-            $template = loadFile($templateFile);
-        }
-        if (is_array($template)) {
-            foreach ($template as $key => $elem) {
-                $template[$key] = preg_replace('/ % ([\w-]{1,20}) % /msx', "{{ $1 }}", $elem);
-            }
-        } else {
-            $template = preg_replace('/ % ([\w-]{1,20}) % /msx', "{{ $1 }}", $template);
-        }
-        return $template;
-    } // getTemplate
-
-
-    private static function checkVisibility($page): bool
-    {
-        if ($visibility = $page->visible()->value()) {
-            $visible = Permission::evaluate($visibility);
-            if (!$visible) {
-                return false;
-            }
-        }
-        if ($showFrom = $page->showfrom()->value()) {
-            if (strtotime($showFrom) > time()) {
-                return false;
-            }
-        }
-        if ($showTill = $page->showtill()->value()) {
-            if (strtotime($showTill) < time()) {
-                return false;
-            }
-        }
-        return true;
-    } // checkVisibility
-
-} // ListElements

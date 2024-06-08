@@ -23,11 +23,11 @@ use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use DateTime;
 
-const ENLIST_INFO_ICON = 'ⓘ';
-const ENLIST_MAIL_ICON = '✉';
-const ENLIST_ADD_ICON = '+';
-const ENLIST_DELETE_ICON = '−';
-const ENLIST_CALENDAR_ICON = '📅';
+const ENLIST_INFO_ICON      = 'ⓘ';
+const ENLIST_MAIL_ICON      = '✉';
+const ENLIST_ADD_ICON       = '+';
+const ENLIST_DELETE_ICON    = '−';
+const ENLIST_CALENDAR_ICON  = '📅';
 
 
 class Enlist
@@ -195,6 +195,10 @@ class Enlist
             $html = '';
             foreach ($this->events as $i => $event) {
                 $this->event = $event;
+                if (str_starts_with($event['eventBanner'], '<h2>Template-Variables')) {
+                    return $event['eventBanner'];
+                }
+
                 $this->title = $event['eventBanner'];
                 $this->datasetName = $event['start'];
                 // normalize dataset name, e.g. 2024-04-01 12:34 to "2024-04-01T12:34"
@@ -1298,7 +1302,7 @@ EOT;
             array_keys($replace),
             array_values($replace),
             $body);
-//ToDo: email with ics attachment
+ //ToDo: email with ics attachment
         Utils::sendMail($data['Email'], $subject, $body );
         return true;
     } // handleSendConfirmation
@@ -1338,6 +1342,7 @@ EOT;
             $src = $eventOptions['file']??false;
         }
         $eventOptions['file'] = $src;
+        $eventOptions['macroName'] = $this->options['macroName'];
 
         $sched = new Events($eventOptions);
         $count = $eventOptions['count']??false;
@@ -1421,6 +1426,11 @@ EOT;
     } // renderICal
 
 
+    /**
+     * @param array $rec
+     * @return string
+     * @throws \Exception
+     */
     private function createICalRecord(array $rec): string
     {
         $title = $this->compileICalElement(($this->options['ical'] ?? ''), $rec);
@@ -1455,6 +1465,14 @@ EOT;
     } // createICalRecord
 
 
+    /**
+     * @param object $event
+     * @param array $rec
+     * @param string $iCalName
+     * @param string $fieldValue
+     * @return void
+     * @throws \Exception
+     */
     private function iCalElem(object &$event, array $rec, string $iCalName, string $fieldValue): void
     {
         if (!str_contains('uniqueIdentifier,createdAt,addressName,coordinates,attendee,transparent,fullDay', $iCalName)) {
@@ -1470,6 +1488,11 @@ EOT;
     } // iCalElem
 
 
+    /**
+     * @param string $fieldValue
+     * @param array $rec
+     * @return string
+     */
     private function compileICalElement(string $fieldValue, array $rec): string
     {
         // replace %placeholders% with values from current rec:
