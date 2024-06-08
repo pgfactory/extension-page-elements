@@ -40,7 +40,7 @@ EOT,
         $str = $sourceCode;
     }
 
-    $title = $options['title'] ? " title='{$options['title']}'" : '';
+    $title = $options['title'] ? " title='{$options['title']}'" : ' title="{{ pfy-say-open-title }}"';
     $textSelector = $options['textSelector'];
     $wrapperId = $options['wrapperId'].$options['id'];
     $wrapperId = $wrapperId? " id='{$wrapperId}'" : '';
@@ -78,9 +78,9 @@ EOT;
 <div$wrapperId class="pfy-say-widget$wrapperClass" data-say-target="$textSelector"$callback>
     <button id="pfy-button-open-$inx" class="pfy-button pfy-say-open" aria-pressed="false"$title>{{ pfy-say-open }}</button>
     <div class="pfy-say-buttons">
-        <button id="pfy-button-play-$inx" class="pfy-button pfy-say-play" aria-pressed="false">{{ pfy-say-play }}</button>
-        <button id="pfy-button-pause-$inx" class="pfy-button pfy-say-pause" aria-pressed="false">{{ pfy-say-pause }}</button>
-        <button id="pfy-button-stop-$inx" class="pfy-button pfy-say-stop" aria-pressed="false">{{ pfy-say-stop }}</button>
+        <button id="pfy-button-play-$inx" class="pfy-button pfy-say-play" aria-pressed="false" title="{{ pfy-say-play-title }}">{{ pfy-say-play }}</button>
+        <button id="pfy-button-pause-$inx" class="pfy-button pfy-say-pause" aria-pressed="false" title="{{ pfy-say-pause-title }}">{{ pfy-say-pause }}</button>
+        <button id="pfy-button-stop-$inx" class="pfy-button pfy-say-stop" aria-pressed="false" title="{{ pfy-say-stop-title }}">{{ pfy-say-stop }}</button>
     </div><!--/.pfy-say-buttons-->
 $speedset
 </div><!--/.pfy-say-widget-->
@@ -89,7 +89,27 @@ EOT;
 
     if ($inx === 1) {
         PageFactory::$pg->addAssets('SAYTTS');
+        $html = <<<EOT
+<svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g>
+<symbol id='pfy-iconset-play'>
+<path d="M82 50L14.5 93.3013V6.69873L82 50Z" fill="currentColor"/>
+</symbol>
+<symbol id='pfy-iconset-stop'>
+<rect x="20" y="20" width="60" height="60" fill="currentColor"/>
+</symbol>
+<symbol id='pfy-iconset-pause'>
+<rect x="22.5" y="20" width="20" height="60" fill="currentColor"/>
+<rect x="57.5" y="20" width="20" height="60" fill="currentColor"/>
+</symbol>
+</g>
+</svg>
+
+EOT;
+        PageFactory::$pg->addBodyEndInjections($html);
     }
+
+
 
     $str = TransVars::translate($str);
     $str = shieldStr($str);

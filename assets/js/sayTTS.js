@@ -104,18 +104,21 @@ const TextToSpeech = {
     getTextToSay: function (textSel, widgetEl) {
       // case no callback or that didn't return any text:
       let el;
-      if (textSel.match('^')) {
+      if (textSel.includes('^')) {
         domForOne(widgetEl, textSel, (e) => {
           el = e;
         });
       } else {
         if (typeof widgetEl !== 'undefined') {
           el = widgetEl.querySelector(textSel);
-        } else {
-          if (!el) {
-            el = document.querySelector(textSel);
-          }
         }
+      }
+      if (!el) {
+        el = document.querySelector(textSel);
+      }
+      if (!el) {
+        mylog(`Unable to find '${textSel}'`);
+        return;
       }
       // remove the say widget in case it was embedded in the text element:
       let clone = el.cloneNode(true);

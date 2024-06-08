@@ -4,33 +4,37 @@ pfy-say-open:
     de: Vorlesen
     _: Read
 
+pfy-say-open-title:
+    de: Diesen Text vorlesen
+    _: Read
+
+pfy-say-play-title:
+    de: Von vorne abspielen
+    _: Play
+
+pfy-say-pause-title:
+    de: Anhalten
+    _:  Pause
+
+pfy-say-stop-title:
+    de: Beenden
+    _:  Stop
+
 pfy-say-play:
-#    de: Start
-#    _: Play
-    _: <span class='pfy-play-icon' title='Play'>▶</span>
+    _: |
+        <div class='pfy-player-icon' title='{{ pfy-say-play-title }}'>
+        <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-play"></use></svg>
+        </div>
 
 pfy-say-pause:
-    #    de: Pause
-    #    _:Pause
-    _: <span class='pfy-pause-icon' title='Pause'>⏸</span>
+    _: |
+        <div class='pfy-player-icon' title='{{ pfy-say-pause-title }}'>
+        <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-pause"></use></svg>
+        </div>
 
 pfy-say-stop:
-#    de: Stop
-#    _: Stop
-    _: <span class='pfy-stop-icon' title='Stop'>⏹</span>
+    _: |
+        <div class='pfy-player-icon' title='{{ pfy-say-stop-title }}'>
+        <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-stop"></use></svg>
+        </div>
 
-#pfy-say-continue:
-#    de: Weiter
-#    _: Continue
-
-
-__END__
-▶
-▷
-⏯
-▉
-⏹
-⏸
-⬤
-⬛
-〓
