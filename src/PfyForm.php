@@ -515,18 +515,10 @@ EOT;
                 $elem = $this->addCheckboxElem($name, $label);
                 break;
             case 'upload':
-                $elem = $this->addUpload($name, $label);
-                $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
-                if ($mb = ($elemOptions['maxMegaByte']??false)) {
-                    $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
-                }
+                $elem = $this->addUploadElem($name, $label);
                 break;
             case 'multiupload':
-                $elem = $this->addMultiUpload($name, $label);
-                $elem->addRule($this::Image, 'File must be JPEG, PNG, GIF or WebP');
-                if ($mb = ($elemOptions['maxMegaByte']??false)) {
-                  $elem->addRule($this::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
-                }
+                $elem = $this->addUploadElem($name, $label, multiUpload: true);
                 break;
             case 'button':
                 $elem = $this->addButton($name, $label);
@@ -848,6 +840,39 @@ EOT;
 
     /**
      * @param string $name
+     * @param string $label
+     * @param bool $multiUpload
+     * @return object|\Nette\Forms\Controls\UploadControl
+     */
+    private function addUploadElem(string $name, string $label, bool $multiUpload = false): object
+    {
+        if ($multiUpload) {
+            $elem = $this->addMultiUpload($name, $label);
+        } else {
+            $elem = $this->addUpload($name, $label);
+        }
+        $filter = $this->formElements[$name]['filter']??false;
+        if ('images' === $filter) {
+            $elem->addRule(self::Image, 'File must be JPEG, PNG, GIF or WebP');
+        } elseif ($filter) {
+            if (str_contains($filter, ',')) {
+                $pattern = str_replace([',', ' '], ['|', ''], $filter);
+                $pattern = "($pattern)$";
+            } else {
+                $pattern = "$filter$";
+            }
+            $pattern = '.*\\.'.$pattern;
+            $elem->addRule(self::PatternInsensitive, "File must have extension '$filter'", $pattern);
+        }
+        if ($mb = ($elemOptions['maxMegaByte']??false)) {
+            $elem->addRule(self::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
+        }
+        return $elem;
+    } // addUploadElem
+
+
+    /**
+     * @param string $name
      * @param array $array
      * @return void
      */
@@ -997,22 +1022,22 @@ EOT;
 
 
     /**
-     * @param mixed $recs
+     * @param mixed $dataRec
      * @return void
      */
-    private function handleUploads(mixed $recs): void
+    private function handleUploads(mixed $dataRec): void
     {
-        foreach ($recs as $key => $rec) {
+        foreach ($dataRec as $key => $rec) {
             if (is_array($rec)) {
                 foreach ($rec as $k => $r) {
                     if (is_a($r, 'Nette\Http\FileUpload')) {
-                        $this->handleUploadedFile($key, $r);
-                        unset($recs[$key][$k]);
+                        $this->handleUploadedFile($key, $r, $dataRec);
+                        unset($dataRec[$key][$k]);
                     }
                 }
             } else {
                 if (is_a($rec, 'Nette\Http\FileUpload')) {
-                    $this->handleUploadedFile($key, $rec);
+                    $this->handleUploadedFile($key, $rec, $dataRec);
                 }
             }
         }
@@ -1024,14 +1049,26 @@ EOT;
      * @param object $rec
      * @throws \Exception
      */
-    private function handleUploadedFile(string $key, object $rec): void
+    private function handleUploadedFile(string $key, object $rec, array $dataRec): void
     {
-        $path = $this->formElements[$key]['args']['path']??false;
+        $path = $this->formElements[$key]['path']??false;
+        if ($p = (strpos($path, '$'))) {
+            // case given path contains patter '$xy', where xy is name of other data element:
+            $k = substr($path, $p+1);
+            if (isset($dataRec[$k])) {
+                $path1 = $dataRec[$k];
+            }
+            $path = fixPath(substr($path, 0, $p).$path1);
+        }
+        if (!$path) {
+            // case nothing specified -> use ~/uploads/:
+            $path = '~/uploads/';
+        }
         $path = resolvePath($path);
         preparePath($path);
         $filename = $rec->name;
         $filename = basename($filename);
-        $filename = str_replace('..','.', $filename);
+        $filename = str_replace(['..', ' '],['.', '_'], $filename);
         $filename = preg_replace('/[^.\w-]/','', $filename);
         $rec->move($path.$filename);
     } // handleUploadedFile
