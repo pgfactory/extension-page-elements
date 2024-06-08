@@ -596,7 +596,15 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   input.pfy-upload,
-  input.pfy-multiupload{
+  input.pfy-multiupload {
+    &::file-selector-button {
+      @include _pfy-button;
+      height: calc(var(--pfy-form-row-gap-height, 1em) * 2);
+      margin-right: 0.5em;
+      width: var(--pfy-file-selector-button, 12.4em);
+    }
+    height: calc(var(--pfy-form-row-gap-height, 1em) * 2 + 1em);
+    padding: 0;
     border: none;
     background: transparent;
   }
