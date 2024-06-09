@@ -947,6 +947,7 @@ EOT;
             // string means spam detected:
             $this->showForm = false;
             $this->formResponse =  "<div class='pfy-form-error'>$dataRec</div>\n";
+            return;
         }
 
         // handle optional 'deadline' and 'maxCount':
