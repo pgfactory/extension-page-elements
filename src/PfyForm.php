@@ -1261,8 +1261,8 @@ EOT;
         }
         TransVars::setVariable("_data_", $out);
 
-        if (!($label = ($this->formOptions['ownerNotificationLabel']??''))) {
-            $label = TransVars::getVariable('pfy-form-owner-notification-label');
+        if ($label = ($this->formOptions['ownerNotificationLabel']??'')) {
+            TransVars::setVariable('pfy-form-owner-notification-label', $label);
         }
 
         $this->propagateDataToVariables($dataRec);
