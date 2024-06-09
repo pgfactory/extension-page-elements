@@ -93,6 +93,7 @@ class Enlist
     private array|false $events = false;
 
     private static bool $userPreset = false;
+    private static array $datasetNames = [];
 
     /**
      * @var string
@@ -205,8 +206,12 @@ class Enlist
                 if (preg_match('/(\d{4}-\d\d-\d\d).(\d\d:\d\d)/', $this->datasetName, $m)) {
                     $this->datasetName = str_replace($m[0], $m[1].'T'.$m[2], $this->datasetName);
                 }
-                // prepend index to make unique:
-                $this->datasetName = "$this->inx.".($i+1).":$this->datasetName";
+                // prepend index to make unique, if necessary:
+                if (in_array($this->datasetName, self::$datasetNames)) {
+                    $this->datasetName = "$this->inx.".($i+1).":$this->datasetName";
+                }
+                self::$datasetNames[] = $this->datasetName;
+
                 if ($event['info']??false) {
                     $this->info = $event['info'];
                 } else {
@@ -317,11 +322,17 @@ EOT;
 
         if (!($this->datasetName = ($this->options['listName'] ?? false))) {
             if ($title0 && (self::$_title === null)) {
-                $this->datasetName = $this->inx . '_' . translateToFilename(strip_tags($title0), false);
+                $this->datasetName =  translateToFilename(strip_tags($title0), false);
             } else {
-                $this->datasetName = $this->inx . "_List";
+                $this->datasetName = "List";
             }
         }
+
+        // prepend index to make unique, if necessary:
+        if (in_array($this->datasetName, self::$datasetNames)) {
+            $this->datasetName = $this->inx . '_' . $this->datasetName;
+        }
+        self::$datasetNames[] = $this->datasetName;
 
         if ($permissionQuery = $this->admin) {
             if ($permissionQuery === true) {
