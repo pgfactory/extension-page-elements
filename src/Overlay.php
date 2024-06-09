@@ -44,7 +44,7 @@ EOT;
         PageFactory::$pg->addJq("pfyPopup($jsOptions);");
 
         $this->addAssets('POPUPS');
-        PageFactory::$pg->setBodyTagClass('pfy-overlay-open');
+        PageFactory::$pg->addBodyTagClass('pfy-overlay-open');
         return '';
     } // render
 
