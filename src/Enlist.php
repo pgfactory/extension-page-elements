@@ -173,13 +173,8 @@ class Enlist
             self::$initialized = true;
             PageFactory::$pg->addAssets('FORMS');
 
-            $adminEmail = $this->options['adminEmail'];
-            if ($adminEmail === true) {
-                $adminEmail = PageFactory::$webmasterEmail;
-            }
-            if ($adminEmail) {
-                PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
-            }
+            $adminEmail = $this->options['adminEmail'] ?: PageFactory::$webmasterEmail;
+            PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
         }
 
         $this->handleUserPreset();

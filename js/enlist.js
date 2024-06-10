@@ -67,8 +67,7 @@ const Enlist = {
 
           mailAddresses = mailAddresses.replace(/^[,;]/, '');
           mylog('MailTo: ' + mailAddresses);
-          const to = (typeof adminEmail !== 'undefined') ? adminEmail : 'me@domain.net';
-          const url = `mailto:${to}?cc=${mailAddresses}`;
+          const url = `mailto:${mailAddresses}`;
           window.open(url,"_blank");
         });
       });
