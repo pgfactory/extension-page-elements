@@ -310,9 +310,9 @@ class DataTable
 
             } elseif (str_starts_with($elem, 'send')) {
                 $icon = MdPlusHelper::renderIcon('mail_send');
-                $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>$icon</button>";
                 $hdrCell = TransVars::getVariable('pfy-row-send-header');
-                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
+                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-send-rec-title }}');
                 $this->injectColumn($cell, $hdrCell, isServiceCol: true);
                 $serviceColumns[$i] = 'pfy-row-send';
 
