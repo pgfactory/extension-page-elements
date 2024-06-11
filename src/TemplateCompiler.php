@@ -7,6 +7,8 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
+use function PgFactory\PageFactory\shieldStr;
+use function PgFactory\PageFactory\var_r;
 
 
 const DEFAULT_OPTIONS = [
@@ -24,9 +26,12 @@ const DEFAULT_OPTIONS = [
     'wrapperSuffix' => '',
 ];
 
+const CUSTOM_PHP_PATH = 'site/templates/custom/';
+
 class TemplateCompiler
 {
     private static array $systemVariables = [];
+    private static array $template;
 
     /**
      * @param string|array $template
@@ -50,6 +55,8 @@ class TemplateCompiler
             foreach ($data as $k => $v) {
                 $out .= "- &#37;$k&#37;\n";
             }
+            $out .= "\n## Template-Options:\n\n";
+            $out .= shieldStr("<pre>".var_r(DEFAULT_OPTIONS)."</pre>\n");
             $out = \PgFactory\PageFactory\markdown($out);
             return $out;
         }
@@ -81,6 +88,8 @@ class TemplateCompiler
             $prefix .= "\n";
             $template[$useAsElement] .= "\n";
         }
+
+        self::$template = $template;
 
         $out = '';
         if ($data) {
@@ -220,6 +229,20 @@ class TemplateCompiler
 
 
     /**
+     * @param string $phpFile
+     * @param array $vars
+     * @return string
+     */
+    public static function phpCompileTemplate(string $phpFile, array $vars): string
+    {
+        $phpFile = CUSTOM_PHP_PATH . $phpFile;
+        $fun = include $phpFile;
+        $out = $fun($vars);
+        return $out;
+    } // phpCompileTemplate
+
+
+    /**
      * @param string $mode
      * @param string $template
      * @param array $vars
@@ -237,6 +260,9 @@ class TemplateCompiler
 
         } elseif (stripos('TransVars', $mode) !== false) {
             $str = self::transvarCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
+
+        } elseif (stripos('php', $mode) !== false) {
+            $str = self::phpCompileTemplate(self::$template['file'], $vars);
 
         } else {
             $str = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
