@@ -281,7 +281,10 @@ const tableHelper = {
                 const input = document.getElementById('pfy-table-send-rec-input');
                 input.focus();
               }, 50);
-            }
+            },
+            onClose: function () {
+              parent.enableEditButtons(table);
+            },
           };
           options.header = `{{ pfy-table-send-rec-header }}`;
 
