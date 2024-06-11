@@ -19,15 +19,22 @@ use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 use function PgFactory\PageFactory\writeFile;
-use Spatie\IcalendarGenerator\Components\Calendar;
-use Spatie\IcalendarGenerator\Components\Event;
-use DateTime;
 
 const ENLIST_INFO_ICON      = 'ⓘ';
 const ENLIST_MAIL_ICON      = '✉';
 const ENLIST_ADD_ICON       = '+';
 const ENLIST_DELETE_ICON    = '−';
 const ENLIST_CALENDAR_ICON  = '📅';
+
+const ICAL_DEFAULT_OPTIONS = [
+    'title' => '',
+    'location' => '',
+    'description' => '',
+    'organizer' => '',
+    'status' => '',
+    'fullDay' => false,
+    'uniqueIdentifier' => '',
+];
 
 
 class Enlist
@@ -1439,59 +1446,28 @@ EOT;
      */
     private function createICalRecord(array $rec): string
     {
-        $title = $this->compileICalElement(($this->options['ical'] ?? ''), $rec);
-
-        $cal = Calendar::create();
-        $start  = $rec['start'];
-        $end    = $rec['end'];
-
-        $event = Event::create($title);
-        $event->startsAt(new DateTime($start));
-        $event->endsAt(new DateTime($end));
-
-        // add optional elements:
-        if (is_array($this->options['icalElements'])) {
-            foreach ($this->options['icalElements'] as $iCalName => $fieldName) {
-                $this->iCalElem($event, $rec, $iCalName, $fieldName);
-            }
+        $iCalArgs = ICAL_DEFAULT_OPTIONS;
+        if (is_array($this->options['ical'])) {
+            $iCalArgs = ($this->options['ical'] ?? []);
+            $iCalArgs += ICAL_DEFAULT_OPTIONS;
+        } elseif (is_string($this->options['ical'])) {
+            $iCalArgs['title'] = $this->options['ical'];
         }
 
-        // optionally add organizer field:
-        if ($organiser = ($this->options['icalOrganiser']??false)) {
-            if ($organiser === true) {
-                $organiser = $this->options['adminEmail'] ?? false;
-            }
-            if ($organiser) {
-                $event->organizer($organiser);
-            }
-        }
-
-        $cal->event($event);
-        return $cal->get();
+        $icalOptions = [
+            'start'         => $rec['start'],
+            'end'           => $rec['end'],
+            'title'         => $this->compileICalElement($iCalArgs['title'], $rec),
+            'location'      => $this->compileICalElement($iCalArgs['location'], $rec),
+            'description'   => $this->compileICalElement($iCalArgs['description'], $rec),
+            'organizer'     => $this->compileICalElement($iCalArgs['organizer'], $rec),
+            'status'        => $this->compileICalElement($iCalArgs['status'], $rec),
+            'fullDay'       => $this->compileICalElement($iCalArgs['fullDay'], $rec),
+            'uniqueIdentifier' => $this->compileICalElement($iCalArgs['uniqueIdentifier'], $rec),
+        ];
+        $cal = Ical::render($icalOptions);
+        return $cal;
     } // createICalRecord
-
-
-    /**
-     * @param object $event
-     * @param array $rec
-     * @param string $iCalName
-     * @param string $fieldValue
-     * @return void
-     * @throws \Exception
-     */
-    private function iCalElem(object &$event, array $rec, string $iCalName, string $fieldValue): void
-    {
-        if (!str_contains('uniqueIdentifier,createdAt,addressName,coordinates,attendee,transparent,fullDay', $iCalName)) {
-            mylog("iCal: unsupported element found: '$iCalName'");
-            return;
-        }
-        $fieldValue = $this->compileICalElement($fieldValue, $rec);
-
-        // add value to event:
-        if ($fieldValue) {
-            $event->$iCalName($fieldValue);
-        }
-    } // iCalElem
 
 
     /**
