@@ -5,7 +5,7 @@ namespace PgFactory\PageFactory;
  * Twig function
  */
 
-function popup($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -110,5 +110,5 @@ EOT;
     PageFactory::$pg->addAssets('POPUPS');
 
     return $sourceCode;
-}
+};
 

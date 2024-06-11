@@ -6,7 +6,7 @@ use PgFactory\PageFactoryElements\DataTable as DataTable;
  * Twig function
  */
 
-function table($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -90,5 +90,5 @@ EOT,
     $str .= $ds->render();
 
     return $str;
-}
+};
 

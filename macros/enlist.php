@@ -13,7 +13,7 @@ require_once __DIR__ . '/../src/PfyForm.php';
  */
 
 
-function enlist($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -166,7 +166,7 @@ EOT,
     }
 
     return $html;
-} // form
+}; // form
 
 
 

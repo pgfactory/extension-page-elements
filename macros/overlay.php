@@ -5,7 +5,7 @@ namespace PgFactory\PageFactory;
  * Twig function
  */
 
-function overlay($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -93,5 +93,5 @@ EOT;
     PageFactory::$pg->addJq($jq);
 
     return $sourceCode;
-}
+};
 

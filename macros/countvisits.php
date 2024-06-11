@@ -3,12 +3,17 @@ namespace PgFactory\PageFactory;
 
 use PgFactory\MarkdownPlus\Permission;
 
+if (!defined('VISITS_FILE')) {
+    define('VISITS_FILE', 'site/logs/visits/visits.yaml');
+}
+if (!defined('VISITS_SINCE_FILE')) {
+    define('VISITS_SINCE_FILE', 'site/logs/visits/visits-since.yaml');
+}
+if (!defined('VISITS_BOTS_FILE')) {
+    define('VISITS_BOTS_FILE', 'site/logs/visits/visits_bots.yaml');
+}
 
-const VISITS_FILE       = 'site/logs/visits/visits.yaml';
-const VISITS_SINCE_FILE = 'site/logs/visits/visits-since.txt';
-const VISITS_BOTS_FILE  = 'site/logs/visits/visits_bots.txt';
-
-function countvisits($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -44,7 +49,7 @@ EOT,
     $str .= $obj->render($options);
 
     return $str;
-}
+};
 
 
 class CountVisits

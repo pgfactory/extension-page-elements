@@ -7,7 +7,7 @@ use PgFactory\PageFactoryElements\Login;
  * PageFactory Macro (and Twig Function)
  */
 
-function login($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -40,5 +40,5 @@ EOT,
     $str .= Login::render();
 
     return $str; // return [$str]; if result needs to be shielded
-}
+};
 

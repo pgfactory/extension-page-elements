@@ -7,7 +7,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/PfyForm.php';
 
 
-$GLOBALS['pfy.form'] = false;
+if (!isset($GLOBALS['pfy.form'])) {
+    $GLOBALS['pfy.form'] = false;
+}
 /*
  * PageFactory Macro (and Twig Function)
  */
@@ -16,7 +18,7 @@ $GLOBALS['pfy.form'] = false;
 /**
  * @throws InvalidArgumentException
  */
-function form($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -316,7 +318,7 @@ EOT,
     }
 
     return $html;
-} // form
+}; // form
 
 
 

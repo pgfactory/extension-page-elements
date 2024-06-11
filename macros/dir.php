@@ -4,7 +4,7 @@ namespace PgFactory\PageFactory;
 use PgFactory\PageFactoryElements\Dir;
 
 
-function dir($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -42,7 +42,7 @@ EOT,
     $str .= $obj->render($options);
 
     return $str;
-}
+};
 
 
 

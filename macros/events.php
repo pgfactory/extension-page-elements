@@ -7,7 +7,7 @@ use PgFactory\PageFactoryElements\Events as Events;
  * PageFactory Macro (and Twig Function)
  */
 
-function events($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -111,5 +111,5 @@ EOT;
     }
 
     return $str;
-} // events
+}; // events
 

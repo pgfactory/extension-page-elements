@@ -13,7 +13,7 @@ use PgFactory\PageFactoryElements\TemplateCompiler;
  * @return array|string
  * @throws \Kirby\Exception\InvalidArgumentException
  */
-function _list($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -110,5 +110,5 @@ EOT;
     }
 
     return $sourceCode.$str;
-}
+};
 

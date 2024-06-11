@@ -7,7 +7,7 @@ namespace PgFactory\PageFactory;
 
 use PgFactory\PageFactoryElements\Calendar;
 
-function calendar($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -73,5 +73,5 @@ EOT,
     $str .= "<!-- /calendar -->\n\n";
 
     return $str; // return [$str]; if result needs to be shielded
-}
+};
 

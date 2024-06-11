@@ -7,7 +7,7 @@ namespace PgFactory\PageFactory;
 
 use PgFactory\MarkdownPlus\MarkdownPlus;
 
-function message($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -48,5 +48,5 @@ EOT,
         PageFactory::$pg->addBodyEndInjections($html);
     }
     return $sourceCode;
-}
+};
 

@@ -7,7 +7,7 @@ namespace PgFactory\PageFactory;
 
 use PgFactory\MarkdownPlus\MarkdownPlus;
 
-function say($args = '')
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -114,5 +114,5 @@ EOT;
     $str = TransVars::translate($str);
     $str = shieldStr($str);
     return $str;
-}
+};
 

@@ -5,7 +5,8 @@ namespace PgFactory\PageFactory;
  * PageFactory Macro (and Twig Function)
  */
 
-function auto_headings_numbering($args = '')
+// auto_headings_numbering()
+return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -55,5 +56,5 @@ EOT,
     PageFactory::$pg->addCss("body {--heading-number-before: \"$branchNr\";}");
 
     return $str;
-}
+}; // auto_headings_numbering
 

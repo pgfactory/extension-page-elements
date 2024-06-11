@@ -5,7 +5,7 @@ namespace PgFactory\PageFactory;
  * PageFactory Macro (and Twig Function)
  */
 
-function swissmap($options = '')
+return function ($options = '')
 {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
@@ -55,7 +55,7 @@ EOT,
     $html .= $mapSearch->render($options);
 
     return $html;
-}
+};
 
 
 

@@ -5,7 +5,7 @@ namespace PgFactory\PageFactory;
  * Twig function
  */
 
-function reveal($argStr = '')
+return function ($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
@@ -110,5 +110,5 @@ EOT;
     $out = "\t<div class='pfy-reveal-controller-wrapper-$inx pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
 
     return $out;
-}
+};
 
