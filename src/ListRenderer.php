@@ -56,7 +56,7 @@ class ListRenderer
         // set default template if none is defined:
         if (!$template['element']) {
             if ($options['asLinks']??false) {
-                $template['element'] = '- (link: %url% text:%filename% target:_blank)';
+                $template['element'] = '- (link: ~/%pageUrl% text:%filename% target:_blank)';
             } else {
                 $template['element'] = '- %filename%';
             }
@@ -91,6 +91,7 @@ class ListRenderer
             $filename = (string)$page->title();
             $slug = $page->slug();
             $pageUrl = $page->id();
+            $shortUrl = dirname($_SERVER["SCRIPT_NAME"]).'/'.$pageUrl;
             $date = '';
             if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
                 $date = $m[1];
@@ -98,6 +99,7 @@ class ListRenderer
 
             $rec = [
                 'url'       => $url,
+                'shortUrl'  => $shortUrl,
                 'filename'  => $filename,
                 'pagename'  => $filename,
                 'name'      => $filename,
