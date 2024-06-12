@@ -4,7 +4,7 @@ namespace PgFactory\PageFactory;
 use PgFactory\PageFactoryElements\Dir;
 
 
-return function ($argStr = '')
+return function($argStr = '')
 {
     // Definition of arguments and help-text:
     $config =  [
