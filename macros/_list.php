@@ -77,7 +77,7 @@ EOT,
         $class = 'pfy-variables';
 
     } elseif ($type1 === 'm') {   // macros
-        $str = TransVars::renderMacros();
+        $str = Macros::renderMacros();
         $class = 'pfy-macros';
 
     } elseif ($type1 === 'u') {   // users
