@@ -12,7 +12,7 @@ use function PgFactory\PageFactory\var_r;
 
 
 const DEFAULT_OPTIONS = [
-    'mode' => 'simple', // twig,transVars, replace/simple
+    'mode' => false, // twig,transVars, replace/simple
     'prefix' => '',
     'element' => '',
     'suffix' => '',
@@ -73,8 +73,7 @@ class TemplateCompiler
         } else {
             $compileMarkdown = ($template['compileMarkdown']??false) ?: ($template['markdown']??false);
         }
-        $mode = ($template['mode']??false);
-
+        $mode = ($template['mode'] ?: kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', false));
         $prefix = $template['prefix']??'';
         $suffix = $template['suffix']??'';
 
