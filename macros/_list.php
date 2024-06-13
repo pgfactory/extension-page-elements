@@ -23,6 +23,7 @@ return function ($argStr = '')
             'path' => ['Defines the path (aka directory) of which to list elements.', null],
             'selector' => ['[string] Used to select categories of data. Currently just "role"  of users. '.
                 'Also used to select template if multiple are available.', null],
+            'role' => ['Synonyme for "selecdtor".', null],
             'template' => ['File containing a markdown for rendering elements. Can be text or filename (.txt or .yaml).'
                 , null],
             'prefix' => ['Optional text that is rendered before the output.', null],
@@ -68,6 +69,10 @@ EOT,
     $prefix = str_replace('\\n', "\n", $prefix);
     $suffix = $options['suffix'] ?? '';
     $suffix = str_replace('\\n', "\n", $suffix);
+
+    if ($options['role']??false) {
+        $options['selector'] = $options['role'];
+    }
 
     TemplateCompiler::sanitizeTemplateOption($options);
 
