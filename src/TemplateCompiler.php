@@ -32,6 +32,7 @@ class TemplateCompiler
 {
     private static array $systemVariables = [];
     private static array $template;
+    private static string $filename;
 
     /**
      * @param string|array $template
@@ -102,7 +103,7 @@ class TemplateCompiler
                 foreach ($data as $rec) {
                     $elemTempl = self::handleMissingTemplate($template[$useAsElement], $rec);
                     $s = self::compileTemplate($mode, $elemTempl, $rec, $includeSystemVariables);
-                    if ($compileMarkdown) {
+                    if ($s && $compileMarkdown) {
                         $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
                     }
                     $out .= $s . $sepPlaceholder;
@@ -148,6 +149,7 @@ class TemplateCompiler
      */
     public static function getTemplate(array $options, string $selector = null): string|array
     {
+        self::$filename = '';
         $template = TemplateCompiler::sanitizeTemplateOption($options);
 
         $selector = ($selector??false) ?: (($template['selector']??false) ?: ($options['selector'] ?? ''));
@@ -156,6 +158,7 @@ class TemplateCompiler
         if ($file && ($file[0] === '~')) {
             $templateFile = resolvePath($file);
             if (file_exists($templateFile)) {
+                self::$filename = basename($templateFile);
                 $template1 = loadFile($templateFile);
                 if (isset($template['element'])) { unset($template['element']); }
                 if (isset($template['file'])) { unset($template['file']); }
@@ -293,26 +296,34 @@ class TemplateCompiler
         }
 
         $template = TemplateCompiler::basicCompileTemplate($template, $vars);
+        $templateName = self::$filename ?: 'twig-template';
 
-        $loader = new \Twig\Loader\ArrayLoader([
-            'index' => $template,
-        ]);
+        $templateOptions = [];
+        $templateOptions[$templateName] = $template;
+        $loader = new \Twig\Loader\ArrayLoader($templateOptions);
         if (PageFactory::$debug) {
             $params = ['debug' => true];
         } else {
             $params = ['debug' => false, 'cache' => 'site/cache/twig/'];
         }
-        $twig = new \Twig\Environment($loader, $params);
-        $twig->addFilter(new \Twig\TwigFilter('intlDate', 'PgFactory\PageFactoryElements\twigIntlDateFilter'));
-        $twig->addFilter(new \Twig\TwigFilter('intlDateFormat', 'PgFactory\PageFactoryElements\twigIntlDateFormatFilter'));
+        try {
+            $twig = new \Twig\Environment($loader, $params);
+            $twig->addFilter(new \Twig\TwigFilter('intlDate', 'PgFactory\PageFactoryElements\twigIntlDateFilter'));
+            $twig->addFilter(new \Twig\TwigFilter('intlDateFormat', 'PgFactory\PageFactoryElements\twigIntlDateFormatFilter'));
 
-        foreach ($functions as $name => $function) {
-            $twig->addFunction(new \Twig\TwigFunction($name, $function, ['is_safe' => ['html']]));
-        }
-        $out = $twig->render('index', $vars);
+            foreach ($functions as $name => $function) {
+                $twig->addFunction(new \Twig\TwigFunction($name, $function, ['is_safe' => ['html']]));
+            }
+            $out = $twig->render($templateName, $vars);
 
-        if ($removeUndefinedPlaceholders) {
-            self::removeUndefinedPlaceholders($out);
+            if ($removeUndefinedPlaceholders) {
+                self::removeUndefinedPlaceholders($out);
+            }
+        } catch (\Twig\Error\SyntaxError $e) {
+            $errMsg = $e->getMessage();
+            $errMsg = "<div class='pfy-twig-error'>Error in Twig-template:<br>$errMsg</div>";
+            PageFactory::$pg->setOverlay($errMsg, false);
+            $out = $errMsg;
         }
         return $out;
     } // twigCompileTemplate
