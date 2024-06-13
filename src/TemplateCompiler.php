@@ -321,7 +321,7 @@ class TemplateCompiler
             }
         } catch (\Twig\Error\SyntaxError $e) {
             $errMsg = $e->getMessage();
-            $errMsg = "<div class='pfy-twig-error'>Error in Twig-template:<br>$errMsg</div>";
+            $errMsg = "<div class='pfy-error'>Error in Twig-template:<br>$errMsg</div>";
             PageFactory::$pg->setOverlay($errMsg, false);
             $out = $errMsg;
         }
