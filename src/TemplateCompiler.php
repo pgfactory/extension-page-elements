@@ -45,21 +45,8 @@ class TemplateCompiler
     {
         $useAsElement = ($auxOptions['useAsElement']??false) ?: 'element';
 
-        if ($template === 'help' || $template[$useAsElement] === 'help') {
-            $rec0 = reset($data);
-            if (is_array($rec0)) {
-                $data = $rec0;
-            }
-            $macroName = $template['_macroName'];
-            $macroName = $macroName ? " for '$macroName()'" : '';
-            $out = "## Template-Variables$macroName:\n";
-            foreach ($data as $k => $v) {
-                $out .= "- &#37;$k&#37;\n";
-            }
-            $out .= "\n## Template-Options:\n\n";
-            $out .= shieldStr("<pre>".var_r(DEFAULT_OPTIONS)."</pre>\n");
-            $out = \PgFactory\PageFactory\markdown($out);
-            return $out;
+        if ($help = self::handleHelpRequest($template, $useAsElement, $data)) {
+            return $help;
         }
 
         if (is_string($template)) {
@@ -213,6 +200,34 @@ class TemplateCompiler
 
 
     /**
+     * @param string $mode
+     * @param string $template
+     * @param array $vars
+     * @param bool $includeSystemVariables
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
+     */
+    private static function compileTemplate(string $mode, string $template, array $vars, bool $includeSystemVariables = false): string
+    {
+        $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
+        $template = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
+
+        if ($mode === 'twig') {
+            $str = self::twigCompileTemplate($template, $vars, $includeSystemVariables);
+
+        } elseif (stripos('TransVars', $mode) !== false) {
+            $str = self::transvarCompileTemplate($template);
+
+        } elseif (stripos('php', $mode) !== false) {
+            $str = self::phpCompileTemplate(self::$template['file'], $vars);
+        }
+        return $str;
+    } // compileTemplate
+
+
+    /**
      * @param string $template
      * @param array $vars
      * @param bool $removeUndefinedPlaceholders
@@ -221,6 +236,7 @@ class TemplateCompiler
     public static function basicCompileTemplate(string $template, array $vars, bool $removeUndefinedPlaceholders = false): string
     {
         foreach ($vars as $key => $value) {
+            $template = str_replace('%!'.$key.'!%', shieldStr($value, 'immutable'), $template);
             $template = str_replace(['{{ '.$key.' }}', '%'.$key.'%'], $value, $template);
         }
         if ($removeUndefinedPlaceholders) {
@@ -245,35 +261,6 @@ class TemplateCompiler
 
 
     /**
-     * @param string $mode
-     * @param string $template
-     * @param array $vars
-     * @param bool $includeSystemVariables
-     * @return string
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
-     */
-    private static function compileTemplate(string $mode, string $template, array $vars, bool $includeSystemVariables = false): string
-    {
-        $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
-        if ($mode === 'twig') {
-            $str = self::twigCompileTemplate($template, $vars, $includeSystemVariables);
-
-        } elseif (stripos('TransVars', $mode) !== false) {
-            $str = self::transvarCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
-
-        } elseif (stripos('php', $mode) !== false) {
-            $str = self::phpCompileTemplate(self::$template['file'], $vars);
-
-        } else {
-            $str = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
-        }
-        return $str;
-    } // compileTemplate
-
-
-    /**
      * @param string $template
      * @param array $vars
      * @param bool $includeSystemVariables
@@ -295,7 +282,6 @@ class TemplateCompiler
             $functions = [];
         }
 
-        $template = TemplateCompiler::basicCompileTemplate($template, $vars);
         $templateName = self::$filename ?: 'twig-template';
 
         $templateOptions = [];
@@ -335,10 +321,8 @@ class TemplateCompiler
      * @param bool $removeUndefinedPlaceholders
      * @return string
      */
-    private static function transvarCompileTemplate(string $template, array $vars, bool $removeUndefinedPlaceholders = false): string
+    private static function transvarCompileTemplate(string $template): string
     {
-        $template = preg_replace('/ % ([\w-]{1,20}) % /msx', "{{ $1 }}", $template);
-        $template = self::basicCompileTemplate($template, $vars);
         $str = TransVars::translate($template);
         return $str;
     } // transvarCompileTemplate
@@ -399,5 +383,27 @@ class TemplateCompiler
         $template .= "\n\n";
         return $template;
     } // handleMissingTemplate
+
+
+    private static function handleHelpRequest(array|string $template, mixed $useAsElement, mixed $data): string
+    {
+        $out = '';
+        if ($template === 'help' || $template[$useAsElement] === 'help') {
+            $rec0 = reset($data);
+            if (is_array($rec0)) {
+                $data = $rec0;
+            }
+            $macroName = $template['_macroName'];
+            $macroName = $macroName ? " for '$macroName()'" : '';
+            $out = "## Template-Variables$macroName:\n";
+            foreach ($data as $k => $v) {
+                $out .= "- &#37;$k&#37;\n";
+            }
+            $out .= "\n## Template-Options:\n\n";
+            $out .= shieldStr("<pre>" . var_r(DEFAULT_OPTIONS) . "</pre>\n");
+            $out = \PgFactory\PageFactory\markdown($out);
+        }
+        return $out;
+    } // handleHelpRequest
 
 } // TemplateCompiler

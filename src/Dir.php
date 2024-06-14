@@ -14,6 +14,9 @@ use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 
+const DEFAULT_ELEMENT_TEMPLATE = '- (link: %url% text:%filename% type:%ext% target:_blank) %description%';
+const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
+
 class Dir
 {
     public static $inx = 1;
@@ -199,7 +202,7 @@ EOT;
         }
         if ($maxAge = $this->maxAge) {
             $dir = array_filter($dir, function ($file) use ($maxAge) {
-                return (filemtime($file) < $maxAge);
+                return (filemtime($file) > $maxAge);
             });
         }
 
@@ -268,19 +271,24 @@ EOT;
         if ($type !== 'file') {
             $subPath = str_replace('/', '%2F', substr($file, $this->origPathLen));
         }
+        $decription = '';
+        if (file_exists("$file.txt")) {
+            $decription = file_get_contents("$file.txt");
+        }
         $out = [
-            'file'      => $file,
-            'filename'  => $filename,
-            'basename'  => $basename,
-            'name'      => $basename,
-            'ext'       => fileExt($filename),
-            'url'       => $url,
-            'path'      => $path,
-            'subpath'   => $subPath,
-            'type'      => $type,
-            'filedate'  => filemtime($file),
-            'size'      => is_file($file) ? sizetostr($file) : '',
-            'dateInName'=> $date,
+            'file'          => $file,
+            'filename'      => $filename,
+            'basename'      => $basename,
+            'name'          => $basename,
+            'ext'           => fileExt($filename),
+            'url'           => $url,
+            'path'          => $path,
+            'subpath'       => $subPath,
+            'type'          => $type,
+            'filedate'      => filemtime($file),
+            'size'          => is_file($file) ? sizetostr($file) : '',
+            'dateInName'    => $date,
+            'description'   => $decription,
         ];
         return $out;
     } // extractFileDescriptorVars
@@ -295,8 +303,8 @@ EOT;
     {
         $options = $args;
         $options['template'] ??= [];
-        $options['template']['element'] ??= "- (link: %url% text: %filename%)";
-        $options['template']['folderElement'] ??= "**%basename%**";
+        $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
+        $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
 
         TemplateCompiler::sanitizeTemplateOption($options);
         $templateOptions = TemplateCompiler::getTemplate($options);

@@ -5,12 +5,14 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
+use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\getDir;
 
-
+const DEFAULT_ELEMENT_TEMPLATE = '- (link: %url% text:%filename% type:%ext% target:_blank) %description%';
+const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
 
 class ListRenderer
 {
@@ -131,10 +133,13 @@ class ListRenderer
         // set default template if none is defined:
         if (!$template['element']) {
             if ($options['asLinks']??false) {
-                $template['element'] = '- (link: %url% text:%filename% target:_blank)';
+                $template['element'] = DEFAULT_ELEMENT_TEMPLATE;
             } else {
                 $template['element'] = '- %filename%';
             }
+        }
+        if (!$template['folderElement']) {
+            $template['folderElement'] = DEFAULT_FOLDER_ELEMENT_TEMPLATE;
         }
 
         $reversed = ($options['reversed']??false);
@@ -154,6 +159,7 @@ class ListRenderer
         $data = [];
         foreach ($dir as $file) {
             $filename = basename($file);
+            $fileExt = fileExt($file);
             $name = base_name(rtrim($file,'/'), false);
             $date = '';
             if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
@@ -164,6 +170,7 @@ class ListRenderer
                 'url'       => $filePath,
                 'path'      => $filePath,
                 'filename'  => $filename,
+                'ext'       => $fileExt,
                 'pagename'  => $filename,
                 'name'      => $name,
                 'slug'      => $filename,
