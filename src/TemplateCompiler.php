@@ -12,7 +12,7 @@ use function PgFactory\PageFactory\var_r;
 
 
 const DEFAULT_OPTIONS = [
-    'mode' => false, // twig,transVars, replace/simple
+    'mode' => null, // twig,transVars, replace/simple
     'prefix' => '',
     'element' => '',
     'file' => '',
@@ -153,7 +153,7 @@ class TemplateCompiler
 
         } else {
             foreach (DEFAULT_OPTIONS as $key => $value) {
-                if (isset($options[$key]) && !str_contains('element,markdown', $key)) {
+                if (isset($options[$key]) && !str_contains('element', $key)) {
                     $templateOptions[$key] = $options[$key];
                 }
             }
@@ -169,7 +169,9 @@ class TemplateCompiler
             $templateOptions['templates'] = loadFile($templateOptions['file']);
         }
 
-        $templateOptions['mode'] = ($templateOptions['mode'] ?: kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', false));
+        if ($templateOptions['mode'] === null) {
+            $templateOptions['mode'] = kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', 'simple');
+        }
         return $templateOptions;
     } // sanitizeTemplateOption
 
