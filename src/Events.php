@@ -17,7 +17,6 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\PageFactory\DataSet as DataSet;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
-use function PgFactory\PageFactory\getFile;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use RRule\RRule;
@@ -86,9 +85,9 @@ class Events extends DataSet
         $events = $this->handleExpections($events);
 
         // render by compiling data with template:
-        TemplateCompiler::sanitizeTemplateOption($options);
-        $template = TemplateCompiler::getTemplate($options, $options['category']??null);
-        $mdStr = TemplateCompiler::compile($template, $events);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $template = TemplateCompiler::getTemplate($templateOptions, $options['category']??null);
+        $mdStr = TemplateCompiler::compile($template, $events, $templateOptions);
 
         // finalize:
         $mdStr = $this->cleanup($mdStr);
@@ -139,10 +138,10 @@ class Events extends DataSet
         $till = ($options['till']??false)? $this->resolveTimePlaceholders($options['till'], false) : false;
 
         if ($from) {
-            $rRules['DTSTART'] = $this->convertDatetime($from);
+            $rRules['DTSTART'] = self::convertDatetime($from);
         }
         if ($till) {
-            $rRules['UNTIL'] = $this->convertDatetime($till);
+            $rRules['UNTIL'] = self::convertDatetime($till);
         } elseif ($count = ($options['count']??false)) {
             $rRules['COUNT'] = $count;
         }
@@ -171,7 +170,7 @@ class Events extends DataSet
      * @param string $str
      * @return string
      */
-    private function convertDatetime(string $str): string
+    public static function convertDatetime(string $str): string
     {
         $date = str_replace('-', '', substr($str, 0, 10));
         $time = str_pad(str_replace(':','', substr($str, 11, 5)), 6, '0');
@@ -299,7 +298,6 @@ class Events extends DataSet
         } else {
             $targetDateT = strtotime(date('Y-m-d ')); // round down to last midnight
         }
-        //$targetDateStr = date('Y-m-d H:i', $targetDateT);
 
         // find the record
         $found = false;
