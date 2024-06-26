@@ -10,6 +10,13 @@ var pfyReveal = {
     const revealControllers = document.querySelectorAll('input.pfy-reveal-controller');
     if (revealControllers) {
       revealControllers.forEach(function (revealController) {
+        pfyReveal.init(revealController);
+        pfyReveal.setupEventHandler(revealController);
+      });
+    }
+  }, // initialize
+
+  init: function(revealController) {
         var inx = 0;
         const revealContainerId = revealController.dataset.revealTarget;
         if (revealContainerId) {
@@ -43,10 +50,11 @@ var pfyReveal = {
         }
         revealContainer.style.display = 'block';
         pfyReveal.disableFocus(revealContainer);
-      });
-    }
+  }, // initialize
 
-    document.body.addEventListener('click', function (event) {
+
+  setupEventHandler: function (revealController) {
+    revealController.addEventListener('click', function (event) {
       var revealController = event.target.closest('.pfy-reveal-controller');
       if (revealController) {
         var target = document.querySelector(revealController.getAttribute('data-reveal-target'));
@@ -55,7 +63,7 @@ var pfyReveal = {
         }
       }
     });
-  }, // initialize
+  }, // setupEventHandler
 
 
   toggle: function(revealContainer, revealController) {
