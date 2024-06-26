@@ -15,6 +15,8 @@ const DEFAULT_OPTIONS = [
     'mode' => false, // twig,transVars, replace/simple
     'prefix' => '',
     'element' => '',
+    'file' => '',
+    'templates' => null,
     'suffix' => '',
     'separator' => '',
     'selector' => '',
@@ -31,52 +33,41 @@ const CUSTOM_PHP_PATH = 'site/templates/custom/';
 class TemplateCompiler
 {
     private static array $systemVariables = [];
-    private static array $template;
+    private static array $templateOptions;
     private static string $filename;
 
     /**
-     * @param string|array $template
+     * @param array $template // -> sanitized templateOptions
      * @param mixed $data
-     * @param array $auxOptions
+     * @param array $templateOptions
      * @return string
      * @throws \Exception
      */
-    public static function compile(string|array $template, mixed $data = false, array $auxOptions = []): string
+    public static function compile(string $template, mixed $data = false, array $templateOptions = []): string
     {
-        $useAsElement = ($auxOptions['useAsElement']??false) ?: 'element';
 
-        if ($help = self::handleHelpRequest($template, $useAsElement, $data)) {
+        if ($help = self::handleHelpRequest($template, $data)) {
             return $help;
         }
 
-        if (is_string($template)) {
-            $element = $template;
-            $template = [];
-            $template[$useAsElement] = $element;
-        }
-        $template = $template + DEFAULT_OPTIONS;
-        $includeSystemVariables = ($template['includeSystemVariables']??false) ?: $template['includeSystemVariables'];
-        if (isset($auxOptions['compileMarkdown'])) {
-            $compileMarkdown = $auxOptions['compileMarkdown'];
-        } else {
-            $compileMarkdown = ($template['compileMarkdown']??false) ?: ($template['markdown']??false);
-        }
-        $mode = ($template['mode'] ?: kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', false));
-        $prefix = $template['prefix']??'';
-        $suffix = $template['suffix']??'';
+        $includeSystemVariables = ($templateOptions['includeSystemVariables']??false);
+        $compileMarkdown        = $templateOptions['markdown']??false;
+        $mode                   = $templateOptions['mode'];
+        $prefix                 = $templateOptions['prefix']??'';
+        $suffix                 = $templateOptions['suffix']??'';
 
         $sepPlaceholder = $separator = '';
-        if ($template['separator']??false) {
+        if ($templateOptions['separator']??false) {
             $sepPlaceholder = '{!!!}';
-            $separator = $template['separator'];
+            $separator = $templateOptions['separator'];
         }
         if ($compileMarkdown) {
             $suffix .= "\n";
             $prefix .= "\n";
-            $template[$useAsElement] .= "\n";
+            $template .= "\n";
         }
 
-        self::$template = $template;
+        self::$templateOptions = $templateOptions;
 
         $out = '';
         if ($data) {
@@ -88,7 +79,7 @@ class TemplateCompiler
                 }
                 $out .= $prefix;
                 foreach ($data as $rec) {
-                    $elemTempl = self::handleMissingTemplate($template[$useAsElement], $rec);
+                    $elemTempl = self::handleMissingTemplate($template, $rec);
                     $s = self::compileTemplate($mode, $elemTempl, $rec, $includeSystemVariables);
                     if ($s && $compileMarkdown) {
                         $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
@@ -103,18 +94,18 @@ class TemplateCompiler
             }
         } elseif ($data !== false) {
             // special case: no data available
-            return TransVars::getVariable($template['noDataAvailableText'], true);
+            return TransVars::getVariable($templateOptions['noDataAvailableText'], true);
         } else {
-            $out = self::compileTemplate($mode, $template[$useAsElement], [], $includeSystemVariables);
+            $out = self::compileTemplate($mode, $template, [], $includeSystemVariables);
         }
 
         $out = str_replace(['\\n', '\\t'], ["\n", "\t"], $out);
 
-        if ($template['wrapperPrefix']??false) {
-            $out = $template['wrapperPrefix'] . $out;
+        if ($templateOptions['wrapperPrefix']??false) {
+            $out = $templateOptions['wrapperPrefix'] . $out;
         }
-        if ($template['wrapperSuffix']??false) {
-            $out .= $template['wrapperSuffix'];
+        if ($templateOptions['wrapperSuffix']??false) {
+            $out .= $templateOptions['wrapperSuffix'];
         }
         if ($compileMarkdown) {
             $md = new MarkdownPlus();
@@ -129,73 +120,57 @@ class TemplateCompiler
 
 
     /**
-     * @param array $options
+     * @param array $templateOptions
      * @param string|null $selector
      * @return string|array
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    public static function getTemplate(array $options, string $selector = null): string|array
+    public static function getTemplate(mixed $templateOptions, string $selector = null, string $useAsElement = 'element'): string|array
     {
         self::$filename = '';
-        $template = TemplateCompiler::sanitizeTemplateOption($options);
 
-        $selector = ($selector??false) ?: (($template['selector']??false) ?: ($options['selector'] ?? ''));
-
-        $file = ($template['file']??false) ?: $template['element'] ?? '';
-        if ($file && ($file[0] === '~')) {
-            $templateFile = resolvePath($file);
-            if (file_exists($templateFile)) {
-                self::$filename = basename($templateFile);
-                $template1 = loadFile($templateFile);
-                if (isset($template['element'])) { unset($template['element']); }
-                if (isset($template['file'])) { unset($template['file']); }
-                if (is_string($template1)) {
-                    $template['element'] = $template1;
-                } else {
-                    // template definition may contain multiple templates:
-                    $template1 = self::selectTemplate($template1, $selector);
-                    $template = $template + $template1;
-                }
-            }
-        } elseif (is_array($template)) {
-            // template definition may contain multiple templates:
-            $template = self::selectTemplate($template, $selector);
+        $selector = ($selector??false) ?: ($templateOptions['selector'] ?? '');
+        $templates = $templateOptions['templates']??false;
+        if ($templates) {
+            $template = self::selectTemplate($templates, $selector, $useAsElement);
+        } else {
+            $template = $templateOptions['element']??'';
         }
-
-        $template = $template + DEFAULT_OPTIONS;
 
         return $template;
     } // getTemplate
 
 
     /**
-     * @param array|string $options
+     * @param array|string $templateOptions
      * @return array
      */
-    public static function sanitizeTemplateOption(array|string &$options): array
+    public static function sanitizeTemplateOption(array|string $options): array
     {
+        $templateOptions = DEFAULT_OPTIONS;
         if (is_string($options)) {
-            $tmp = $options;
-            $options = [];
-            $options['template'] = [];
-            $options['template']['element'] = $tmp;
+            $templateOptions['element'] = $options;
+
+        } else {
+            foreach (DEFAULT_OPTIONS as $key => $value) {
+                if (isset($options[$key]) && !str_contains('element,markdown', $key)) {
+                    $templateOptions[$key] = $options[$key];
+                }
+            }
         }
 
-        if (!isset($options['template'])) {
-            $options['template'] = [];
-        } elseif (is_string($options['template'])) {
-            $tmpl = $options['template'];
-            $options['template'] = [];
-            $options['template']['element'] = $tmpl;
+        // special case: for convenience, element may contain file:
+        if (($options['element']??false) && ($options['element'][0] === '~')) {
+            $templateOptions['file'] = $options['element'];
+            $templateOptions['element'] = '';
         }
-        if ($options['asLinks']??false) {
-            $options['template']['asLinks'] = $options['asLinks'];
+
+        if ($templateOptions['file']) {
+            $templateOptions['templates'] = loadFile($templateOptions['file']);
         }
-        $options['markdown'] = ($options['markdown']??false) ?: ($options['compileMarkdown']??false);
 
-        $options['template']['_macroName'] = $options['macroName']??'';
-
-        return $options['template'];
+        $templateOptions['mode'] = ($templateOptions['mode'] ?: kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', false));
+        return $templateOptions;
     } // sanitizeTemplateOption
 
 
@@ -221,7 +196,7 @@ class TemplateCompiler
             $str = self::transvarCompileTemplate($template);
 
         } elseif (stripos('php', $mode) !== false) {
-            $str = self::phpCompileTemplate(self::$template['file'], $vars);
+            $str = self::phpCompileTemplate(self::$templateOptions['file'], $vars);
         }
         return $str;
     } // compileTemplate
@@ -344,7 +319,7 @@ class TemplateCompiler
      * @param string|null $selector
      * @return string|array
      */
-    private static function selectTemplate(array|string $template, string $selector = null): string|array
+    private static function selectTemplate(array|string $template, string $selector = null, string $useAsElement = 'element'): string|array
     {
         if (is_string($template)) {
             return $template;
@@ -356,10 +331,12 @@ class TemplateCompiler
             $template = $template['_'];
         }
 
-        if (is_string($template)) {
-            $tmpl = $template;
-            $template = [];
-            $template['element'] = $tmpl;
+        if (is_array($template)) {
+            if (isset($template[$useAsElement])) {
+                $template = $template[$useAsElement];
+            } else {
+                $template = reset($template);
+            }
         }
         return $template;
     } // selectTemplate
@@ -385,15 +362,21 @@ class TemplateCompiler
     } // handleMissingTemplate
 
 
-    private static function handleHelpRequest(array|string $template, mixed $useAsElement, mixed $data): string
+    /**
+     * @param string $template
+     * @param mixed $data
+     * @return string
+     * @throws \Exception
+     */
+    private static function handleHelpRequest(string $template, mixed $data): string
     {
         $out = '';
-        if ($template === 'help' || $template[$useAsElement] === 'help') {
+        if ($template === 'help') {
             $rec0 = reset($data);
             if (is_array($rec0)) {
                 $data = $rec0;
             }
-            $macroName = $template['_macroName'];
+            $macroName = self::$templateOptions['_macroName'];
             $macroName = $macroName ? " for '$macroName()'" : '';
             $out = "## Template-Variables$macroName:\n";
             foreach ($data as $k => $v) {
