@@ -7,9 +7,11 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\PageFactory\PageFactory;
+use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\getFile;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\mylog;
@@ -26,6 +28,7 @@ class AjaxHandler
     private static string $sessCalRecKey;
     private static array $sessRec;
     private static $templates = null;
+    private static array $categories;
 
 
     /**
@@ -41,7 +44,6 @@ class AjaxHandler
         }
         self::$sessDbKey = "db:$pageId:$dataSrcInx:file";
         self::$sessCalRecKey = "pfy.cal.$pageId:$dataSrcInx";
-        self::$sessRec = kirby()->session()->get(self::$sessCalRecKey, []);
 
         // handle lockRec:
         if (isset($_GET['lockRec'])) {
@@ -205,8 +207,11 @@ class AjaxHandler
      */
     private static function handleCalendarRequests(): void
     {
+        self::$sessRec = kirby()->session()->get(self::$sessCalRecKey, []);
+        self::$categories = explode(',', self::$sessRec['categories']??[]);
+
         if (isset($_GET['get'])) {
-            exit(json_encode(self::getRecs()));
+            exit(json_encode(self::getCalRecs()));
         }
         if (isset($_GET['getCalRec'])) {
             exit(json_encode(self::getCalRec()));
@@ -217,24 +222,63 @@ class AjaxHandler
         if (isset($_GET['modifyRec'])) {
             exit(self::modifyCalRec());
         }
+        if (isset($_GET['delete'])) {
+            exit(self::deleteRec());
+        }
+        if (isset($_GET['duplicate'])) {
+            exit(self::duplicateRec());
+        }
     } // handleCalendarRequests
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private static function deleteRec(): string
+    {
+        $recKey = get('delete');
+        $db = self::openDb();
+        $dataRec = $db->find($recKey);
+        $dataRec->delete(true);
+        mylog("Rec $recKey deleted");
+        return '"ok"';
+    } // deleteRec
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private static function duplicateRec(): string
+    {
+        $recKey = get('duplicate');
+        $db = self::openDb();
+        $dataSet = $db->find($recKey);
+        $rec = $dataSet->data();
+        $recKey = createHash();
+        $db->addRec($rec, true, $recKey);
+        mylog("Rec $recKey duplicated");
+        return '"ok"';
+    } // duplicateRec
 
 
     /**
      * @return array
      */
-    private static function getRecs(): array
+    private static function getCalRecs(): array
     {
-        $data = self::_getRecs();
+        $data = self::_getCalRecs();
         if (!$data) {
             exit(json_encode($data));
         }
+        require_once 'site/plugins/pagefactory-pageelements/src/TemplateCompiler.php';
         $data1 = [];
         foreach ($data as $i => $rec) {
             $data1[$i] = self::_assembleRec($rec);
         }
         return $data1;
-    } // getRecs
+    } // getCalRecs
 
 
     /**
@@ -247,29 +291,23 @@ class AjaxHandler
         $data = [];
         $data['start'] = $rec['start'];
         $data['end']   = $rec['end'];
-        $data['title'] = $rec['title']??'';
         $data['_creator'] = $rec['creator']??'';
 
-        $template = false;
-        $templates = self::getTemplates();
-        if (is_string($templates)) {
-            $template = $templates;
-        } else {
-            if ($category = $rec['category'] ?? false) {
-                if (isset($templates[$category])) {
-                    $template = $templates[$category];
-                }
-            }
-            if (!$template && isset($templates['_'])) {
-                $template = $templates['_'];
-            } else {
-                $file = self::$sessRec['template'];
-                mylog("Error: no matching template found in '$file'.");
-            }
+        $templateOptions = (self::$sessRec['template']??[]);
+        $selector = $rec['category'] ?? null;
+
+        // compile event summary:
+        $template = TemplateCompiler::getTemplate($templateOptions, $selector);
+        if (!$template) {
+            mylog('Error: calendar template missing.');
+            exit(json_encode('Error: calendar template missing.'));
         }
-        if ($template) {
-            $data['title'] = self::compileRec($template, $rec);
-        }
+        $data['summary']       = self::compileRec($template, $rec, $templateOptions);
+
+        // compile event description:
+        $template = TemplateCompiler::getTemplate($templateOptions, $selector, 'description');
+        $data['description'] = self::compileRec($template, $rec, $templateOptions, 'description');
+
         return $data;
     } // _assembleRec
 
@@ -278,7 +316,7 @@ class AjaxHandler
      * @return array
      * @throws \Exception
      */
-    private static function _getRecs(): array
+    private static function _getCalRecs(): array
     {
         $from = str_replace(' ','T', get('start'));
         $till = str_replace(' ','T', get('end'));
@@ -312,7 +350,7 @@ class AjaxHandler
             }
         }
         return array_values($data);
-    } // getRecs
+    } // _getCalRecs
 
 
     /**
@@ -391,27 +429,6 @@ class AjaxHandler
 
 
     /**
-     * @return mixed|string|null
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private static function getTemplates()
-    {
-        if (self::$templates) {
-            return self::$templates;
-        }
-        if ($templateFile = (self::$sessRec['template']??false)) {
-            return self::$templates = loadFile($templateFile);
-        } else {
-            return <<<EOT
-<span class='time-range'>%time-range%</span>
-<span class='category'>%category%</span>
-<span class='description'>%Title%</span>
-EOT;
-        }
-    } // getTemplates
-
-
-    /**
      * @param string $template
      * @param array $eventRec
      * @return string
@@ -419,15 +436,21 @@ EOT;
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
      */
-    private static function compileRec(string $template, array $eventRec): string
+    private static function compileRec(string $template, array $eventRec, array $templateOptions, string $elemToUse = 'element'): string
     {
+        $category = $eventRec['category']??'';
+        $catInx = array_search($category, self::$categories);
         $wrapperClass = 'pfy-event-'.translateToClassName($eventRec['category']??'pfy-event-wrapper');
+        if ($catInx) {
+            $wrapperClass .= " pfy-category-$catInx";
+        }
+
         $recKey = $eventRec['_reckey']??false;
         $creator = $eventRec['creator']??'';
         $fromTime = substr($eventRec['start'], -5);
         $tillTime = substr($eventRec['end'], -5);
-        $timeRange = "$fromTime - $tillTime";
-        $eventRec['time-range'] = $timeRange;
+        $timeRange = "<span class='pfy-cal-start-time'>$fromTime</span><span class='pfy-cal-end-time'> – $tillTime</span>";
+        $eventRec['time'] = $timeRange;
 
         // case 'allday' event:
         if (strlen($eventRec['start']) < 16) {
@@ -435,29 +458,18 @@ EOT;
                 $template = self::$templates['allday'];
             }
         }
+        $str = TemplateCompiler::compile($template, $eventRec, $templateOptions);
 
-        // replace patterns %key% with value from data-rec:
-        $str = self::resolveVariables($template, $eventRec);
-
-        if (str_contains($str, '{{')) {
-            // execute PageFactory Macros:
-            $str = TransVars::executeMacros($str, onlyMacros: true);
-
-            // compile templage with Twig:
-            $loader = new \Twig\Loader\ArrayLoader([
-                'index' => $str,
-            ]);
-            $twig = new \Twig\Environment($loader);
-            $str = $twig->render('index', $eventRec);
-            $str = markdown($str);
-        }
-        $str = <<<EOT
-<span class="$wrapperClass" data-reckey="$recKey" data-creator="$creator">
+        if ($elemToUse === 'element') {
+            $str = <<<EOT
+<div class="pfy-cal-summary $wrapperClass" data-reckey="$recKey" data-creator="$creator">
 $str
-</span>
+</div>
 
 EOT;
-
+        } elseif ($elemToUse === 'description') {
+            $str = "<div class='pfy-cal-description'>\n$str\n</div>";
+        }
         return $str;
     } // compileRec
 
@@ -502,7 +514,6 @@ EOT;
         }
         return $data;
     } // deObfuscateRecKeys
-
 
 } // AjaxHandler
 

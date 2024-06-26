@@ -14,10 +14,11 @@ return function ($args = '')
     $config =  [
         'options' => [
             'file' => ['File path where data shall be fetched from (and stored if in editing mode).', 'calendar.yaml'],
-            'eventTemplate' => ['[file] Points to file containing one (.txt) or multiple (.yaml) templates.<br>'.
+            'template' => ['[file] Points to file containing one (.txt) or multiple (.yaml) templates.<br>'.
                 'The template is Twig-compiled and the output used as content of each event. '.
                 'Inject event values via pattern `%value-name%`.<br>'.
                 'In case of multiple, category decides which template to use. ', null],
+            'eventTemplate' => ['Synonyme for "template"', null],
             'admin' => ['Defines, who will have administration permission, e.g. "admin".<br>'.
                 'Admins can change events of any users as well as such in the past, normal users don\'t.', false],
             'edit' => ['Synonyme for "editPermission"', null],
@@ -37,6 +38,9 @@ return function ($args = '')
             'fullCalendarOptions' => ['[string] Will be passed through to the FullCalendar object (see https://fullcalendar.io/docs#toc)', ''],
             'keepDataDuration' => ['[month] Defines the time after which older events are discarded and '.
                 'moved to an archive file.', 1],
+            'form' => ['.', null],
+            'customfields' => ['.', null],
+            'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', false],
 //            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],
 //            'publishCallback' => ['[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false],
 //            'output' => ['[true|false] If false, no output will be rendered (useful in conjunction with publish).', true],
@@ -64,6 +68,7 @@ EOT,
         $options['edit'] = $options['editPermission'];
     }
     $options['userCategories'] = (bool)preg_match('/category:.*?options:.*?\$\[users/', $args);
+    $options['template'] = $options['template'] ?: ($options['eventTemplate']??'');
 
     // assemble output:
     $str .= "\n<!-- calendar -->\n";

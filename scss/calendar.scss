@@ -6,19 +6,120 @@
 **
  */
 
+// :root {
+//   --fc-border-color: black;
+//   --fc-daygrid-event-dot-width: 5px;
+// }
+$nColors: 6;
+$deg: 60deg; //calc(360deg / #{$nColors});
+$light: 90%;
+$sat: 60%;
+$eventColorCat1: hsl(calc(1 * #{$deg})  #{$sat}  #{$light});
+$eventColorCat2: hsl(calc(2 * #{$deg})  #{$sat}  #{$light});
+$eventColorCat3: hsl(calc(3 * #{$deg})  #{$sat}  #{$light});
+$eventColorCat4: hsl(calc(4 * #{$deg})  #{$sat}  #{$light});
+$eventColorCat5: hsl(calc(5 * #{$deg})  #{$sat}  #{$light});
+$eventColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
+
+$light: 40%;
+$sat: 60%;
+$eventBorderColorCat1: hsl(calc(1 * #{$deg})  #{$sat}  #{$light});
+$eventBorderColorCat2: hsl(calc(2 * #{$deg})  #{$sat}  #{$light});
+$eventBorderColorCat3: hsl(calc(3 * #{$deg})  #{$sat}  #{$light});
+$eventBorderColorCat4: hsl(calc(4 * #{$deg})  #{$sat}  #{$light});
+$eventBorderColorCat5: hsl(calc(5 * #{$deg})  #{$sat}  #{$light});
+$eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
 
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
   .pfy-calendar {
+     //--fc-border-color: red;
+     //--fc-daygrid-event-dot-width: 5px;
+
     a, a:hover {
       border-bottom: none;
     }
   }
   .fc-event {
     min-height: 1em;
+    overflow-wrap: anywhere;
+    text-wrap: wrap;
+    overflow-y: auto;
   }
+
+  .pfy-cal-description {
+    display: none;
+  }
+  .fc-timeGridWeek-view {
+    .pfy-cal-time,
+    .pfy-cal-location {
+      display: none;
+    }
+  }
+  .fc-timeGridWeek-view,
+  .fc-dayGridMonth-view {
+    .fc-event {
+      border: 1px solid #aaa;
+    }
+
+    //.fc-event-main {
+    //  color: #444;
+    //}
+
+    .fc-event:has(.pfy-category-1) {
+      background: $eventColorCat1;
+      border-color: $eventBorderColorCat1;
+    }
+
+    .fc-event:has(.pfy-category-2) {
+      background: $eventColorCat2;
+      border-color: $eventBorderColorCat2;
+    }
+
+    .fc-event:has(.pfy-category-3) {
+      background: $eventColorCat3;
+      border-color: $eventBorderColorCat3;
+    }
+
+    .fc-event:has(.pfy-category-4) {
+      background: $eventColorCat4;
+      border-color: $eventBorderColorCat4;
+    }
+
+    .fc-event:has(.pfy-category-5) {
+      background: $eventColorCat5;
+      border-color: $eventBorderColorCat5;
+    }
+
+    .fc-event:has(.pfy-category-6) {
+      background: $eventColorCat6;
+      border-color: $eventBorderColorCat6;
+    }
+  }
+  .fc-listYear-view {
+    .pfy-category-1 .fc-list-event-dot {
+      border-color: $eventBorderColorCat1;
+    }
+    .pfy-category-2 .fc-list-event-dot {
+      border-color: $eventBorderColorCat2;
+    }
+    .pfy-category-3 .fc-list-event-dot {
+      border-color: $eventBorderColorCat3;
+    }
+    .pfy-category-4 .fc-list-event-dot {
+      border-color: $eventBorderColorCat4;
+    }
+    .pfy-category-5 .fc-list-event-dot {
+      border-color: $eventBorderColorCat5;
+    }
+    .pfy-category-6 .fc-list-event-dot {
+      border-color: $eventBorderColorCat6;
+    }
+  }
+
+
 
   .pfy-calendar-narrow {
     .fc-header-toolbar {
@@ -47,6 +148,31 @@
 
   .pfy-popup-wrapper .pfy-popup-container {
     padding-top: 0.5em;
+  }
+
+  .fc-daygrid-event-harness {
+    a {
+      > span {
+        text-wrap: balance;
+        hyphens: auto;
+        //overflow-x: auto;
+      }
+    }
+  }
+
+//  #pfy-cal-context-menu {
+  .tippy-content {
+    button {
+      border: none;
+      background: transparent;
+      color: white;
+    }
+  }
+  .tippy-box,
+  .tippy-arrow.tippy-arrow:before  {
+    background-color: #fcffc6;
+    border-color: #fcffc6;
+    color: #333;
   }
 
 } // pfy-default-styling

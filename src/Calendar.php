@@ -25,6 +25,14 @@ use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\translateToIdentifier;
 
+const DEFAULT_TEMPLATE = [
+    'element' =>
+"<span class='pfy-cal-time'>%time%</span>
+<span class='pfy-cal-category'>%category%</span>
+<span class='pfy-cal-title'>%title%</span>
+",
+    'description' => '%description%',
+];
 
 class Calendar
 {
@@ -73,10 +81,10 @@ class Calendar
      * @param array $fields
      * @throws \Exception
      */
-    public function __construct(array $args, array $fields)
+    public function __construct(array $args)
     {
         $this->inx =     $args['inx'];
-        $this->fields =  $this->fixCategories($fields);
+        $this->fields =  $args['form']??[];
         $this->options = $args;
         $pageId =        PageFactory::$pageId;
 
@@ -92,6 +100,11 @@ class Calendar
         PageFactory::$pg->addJs("const timezone = '$timezone';");
 
         $this->checkAndFixDB();
+
+        if ($recKey = get('delete')) {
+            mylog($recKey);
+            exit('{}');
+        }
     } // __construct
 
 
@@ -104,6 +117,7 @@ class Calendar
 
         $lang = PageFactory::$lang;
         $timezone = PageFactory::$timezone;
+        $useDblClick = ($this->options['useDblClick']??false) ? 'true':'false';
 
         $calOptions = <<<EOT
     inx: $this->inx,
@@ -116,6 +130,7 @@ class Calendar
     headerRightButtons:     '$this->headerRightButtons',
     businessHours:          '$this->businessHours',
     visibleHours:           '$this->visibleHours',
+    useDblClick:            $useDblClick,
     fullCalendarOptions: {
         locale:             '$lang',
         timeZone:           '$timezone',
@@ -194,7 +209,7 @@ EOT;
                 'class' => 'pfy-cal-delete-entry',
             ];
         }
-           if (!isset($formFields['cancel'])) {
+        if (!isset($formFields['cancel'])) {
             $formFields['cancel'] = [];
         }
         if (!isset($formFields['submit'])) {
@@ -347,9 +362,11 @@ EOT;
             [',timeGridWeek,',',dayGridMonth,',',listYear,',',listYear,'], ','.$this->headerRightButtons.',');
         $this->headerRightButtons = trim($this->headerRightButtons, ',');
 
-        if ($eventTemplateFile = ($args['eventTemplate']??false)) {
-            $eventTemplateFile = resolvePath($eventTemplateFile);
-            $this->sessCalRec['template'] = $eventTemplateFile;
+        if ($eventTemplate = ($args['template']??false)) {
+            $eventTemplate = TemplateCompiler::sanitizeTemplateOption($eventTemplate);
+            $this->sessCalRec['template'] = $eventTemplate;
+        } else {
+            $this->sessCalRec['template'] = DEFAULT_TEMPLATE;
         }
 
         // Default View:
@@ -396,6 +413,7 @@ EOT;
         // initial date:
         $this->initialDate = $this->sessCalRec['date'] ?? date('Y-m-d');
         $this->sessCalRec['date'] = $this->initialDate;
+        $this->sessCalRec['thisPage'] = PageFactory::$pageRoot;
     } // parseOptions
 
 

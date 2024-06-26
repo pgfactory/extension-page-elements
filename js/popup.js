@@ -84,7 +84,11 @@ function pfyPopup( options ) {
     } else {
       this.closeOnBgClick = options.closeOnBgClick;
     }
-    this.closeButton = (typeof options.closeButton !== 'undefined' && options.closeButton) ? options.closeButton : true;
+    if (typeof options.closeButton !== 'undefined') {
+      this.closeButton = options.closeButton;
+    } else {
+      this.closeButton = true;
+    }
     this.buttons = (typeof options.buttons === 'string' && options.buttons) ? options.buttons.split(/\s*,\s*/) : [];
 
     // omit closeButton if buttons are defined (unless header is active):

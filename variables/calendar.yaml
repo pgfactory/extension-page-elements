@@ -48,6 +48,10 @@ pfy-cal-end-before-start:
     de: 'Fehler: Ereignisbeginn nach dessen Ende ist unmöglich.'
     _:  'Error: event cannot end before it started.'
 
+pfy-cal-event-in-the-past:
+#    de: '.'
+    _:  'Not possible to create/modify events in the past.'
+
 pfy-cal-insufficient-permission:
     de: Sie haben keine Berechtigung, diesen Kalender zu verändern.
     de2: Du hast keine Berechtigung, diesen Kalender zu verändern.
@@ -165,3 +169,18 @@ pfy-cal-timeout-alert:
         <h2>Timeout</h2>
         <p>This page has been open for too long.</p>
         <p>Please, reload before you continue.</p>
+
+pfy-cal-context-edit-label:
+    de: Bearbeiten
+    _:  Edit
+
+pfy-cal-context-duplicate-label:
+    de: Duplizieren
+    _:  Duplicate
+
+pfy-cal-context-delete-label:
+    de: Löschen
+    _:  Delete
+
+
+
