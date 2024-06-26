@@ -757,6 +757,26 @@ const pfyFormsHelper = {
     }
   }, // setTriggerOnContinueLink
 
+
+  initRepetitionWidget: function (wrapperEl = null) {
+    domForEach(wrapperEl, '.pfy-form-rrule-wrapper', function (rruleWrapper) {
+      domForOne(rruleWrapper, '.pfy-rrule-elem-freq', function (select) {
+        select.addEventListener('change', function (ev) {
+          const selectEl = ev.target;
+          const details = selectEl.closest('details');
+          const rruleBody = details.querySelector('.pfy-form-rrule-body-wrapper');
+          const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
+          if (selectedFreq === 'NONE') {
+            details.open = false;
+            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper' ;
+          } else {
+            details.open = true;
+            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
+          }
+        });
+      });
+    });
+  },
+
+
 }; // pfyFormsHelper
-
-

@@ -13,6 +13,7 @@ use Nette\Utils\Html;
 use Kirby\Email\PHPMailer;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
+use RRule\RRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 use function PgFactory\PageFactory\var_r as var_r;
 use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
@@ -24,7 +25,7 @@ const FORMS_SUPPORTED_TYPES =
     'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
     'event,'.
-    'button,reset,submit,cancel,@import,';
+    'button,reset,submit,cancel,@import,literal,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
 const INFO_ICON = 'ⓘ';
@@ -300,6 +301,12 @@ class PfyForm extends Form
     {
         $html = '';
         $rec = $this->formElements[$name];
+
+        // special case: type literal -> just output literal
+        if (($rec['type']??false) === 'literal') {
+            return $rec['html'];
+        }
+
         $_name = strtolower($name);
         try {
             $elem = $this[$name];
@@ -390,6 +397,9 @@ $input
 </div>
 
 EOT;
+
+        } elseif ($type === 'literal') {
+            $html .= $this->formElements[$_name]['html'] ?? '';
 
         } elseif (str_contains(',cancel,submit,reset,', ",$type,")) {
             $cls = $this->formElements[$_name]['class'] ?? '';
@@ -523,6 +533,8 @@ EOT;
             case 'button':
                 $elem = $this->addButton($name, $label);
                 break;
+            case 'literal':
+                return; // nothing to do
             case 'cancel':
             case 'reset':
                 $elem = $this->addButton('_cancel', $label);
@@ -655,7 +667,10 @@ EOT;
     private function addTextareaElem(string $name, string $label): object
     {
         $elemOptions = &$this->formElements[$name];
+
+        // textarea option 'reveal':
         if ($revealLabel = ($elemOptions['reveal']??false)) {
+            // add checkbox to open reveal-container:
             $this->revealInx++;
             $inx = "{$this->formIndex}_$this->revealInx";
             $elemOptions['revealInx'] = $inx;
@@ -670,6 +685,7 @@ EOT;
             $elem1->setHtmlAttribute('data-icon-open', '∣');
             $label = $elemOptions['label']??'';
         }
+
         $elem = $this->addTextarea($name, $label);
         if ($revealLabel) {
             $elem->setHtmlAttribute('data-reveal-target-id', $targetId);
@@ -1096,6 +1112,12 @@ EOT;
     private function normalizeData(array $dataRec): array|string
     {
         foreach ($dataRec as $name => $value) {
+            // handle special case "rrule":
+            if ($name === 'rrule') {
+                $this->saveRepeatedEvents($name, $dataRec);
+                continue;
+            }
+
             // handle anti-spam field:
             if ($this->formElements[$name]['antiSpam'] ?? false) {
                 if ($value !== '') {
@@ -1170,6 +1192,93 @@ EOT;
 
 
     /**
+     * @param string $name
+     * @param array $dataRec
+     * @return void
+     * @throws \Exception
+     */
+    private function saveRepeatedEvents(string $name, array &$dataRec): void
+    {
+        $recKey = $dataRec['_reckey']??false;
+        $allowedEventFieldNames = ',DTSTART,DTEND,FREQ,UNTIL,COUNT,INTERVAL,WKST,BYWEEKDAY,BYDAY,BYMONTH,';
+        if ($dataRec['_freq'] !== 'NONE') {
+            $rrule = 'DTSTART:'. Events::convertDatetime($dataRec['start']??'')."\n";
+            $rrule .= ($this->formElements[$name]['saveAs'] ?? '');
+            $rruleElems = [];
+            while (preg_match('/\$([\w-]+)/', $rrule, $m)) {
+                $varName = $m[1];
+                $v = $dataRec[$varName] ?? '';
+                if (is_array($v)) {
+                    $v = implode(',', $v);
+                }
+                $rrule = str_replace($m[0], (string)$v, $rrule);
+                $vName = strtoupper(ltrim($varName, '_'));
+                if ($v && str_contains($allowedEventFieldNames, ",$vName,") && ($vName !== 'INTERVAL' || $v !== '1')) {
+                    $vName = ($vName === 'BYWEEKDAY') ? 'BYDAY' : $vName;
+                    $rruleElems[$vName] = $v;
+                }
+            }
+            // "RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=1;WKST=2024-06-17T20:42;BYDAY=WE,FR;BYMONTH=;"
+            $rrule = preg_replace('/(INTERVAL=1;|\w+=;)/', '', $rrule);
+            $dataRec[$name] = $rrule;
+            $this->executeRRule($rruleElems, $dataRec, $recKey);
+        }
+    } // saveRepeatedEvents
+
+
+    /**
+     * @param array $rRules
+     * @param array $dataRec
+     * @param string $recKey
+     * @return void
+     * @throws \Exception
+     */
+    private function executeRRule(array $rRules, array $dataRec, string $recKey): void
+    {
+        $from = $dataRec['start'];
+        $startTime = 'T'.substr($from, 11, 5);
+        $till = $dataRec['end'];
+        $endTime = 'T'.substr($till, 11, 5);
+
+        if ($from) {
+            $rRules['DTSTART'] = Events::convertDatetime($from);
+        }
+        if ($until = $dataRec['_until']??false) {
+            $rRules['UNTIL'] = Events::convertDatetime($until);
+        } elseif ($count = ($dataRec['_count']??false)) {
+            $rRules['COUNT'] = $count;
+        }
+
+        $dataRec = array_filter($dataRec, function ($k) {
+            return $k[0] !== '_';
+        }, ARRAY_FILTER_USE_KEY);
+        $dataRec['parentEvent'] = $dataRec['start'];
+        $newEvents = [];
+
+        // compile rrule:
+        try {
+            $rrule = new RRule(array_change_key_case($rRules));
+
+            $event = [];
+            foreach ($rrule as $occurrence) {
+                $event['start'] = $occurrence->format('Y-m-d') . $startTime;
+                $event['end'] = $occurrence->format('Y-m-d') . $endTime;
+                $newEvents[] = $event + $dataRec;
+            }
+        } catch (\Exception $e) {
+            throw new \Exception("Error: improple date/time format in Events (".$e->getMessage().")");
+        }
+
+        // save newly created events (exclude first as that will be saved later the normal way):
+        array_shift($newEvents);
+        foreach ($newEvents as $newRec) {
+            $res = $this->saveRec($newRec, $recKey);
+//ToDo: eval $res, report errors
+        }
+    } // executeRRule
+
+
+    /**
      * @param string $file
      * @return object|false
      * @throws \Exception
@@ -1217,6 +1326,18 @@ EOT;
         if (!$newRec) {
             return false;
         }
+        return $this->saveRec($newRec, $recId);
+    } // storeSubmittedData
+
+
+    /**
+     * @param array $newRec
+     * @param string $recId
+     * @return false|string
+     * @throws \Exception
+     */
+    private function saveRec(array $newRec, string $recId)
+    {
         $this->openDB();
 
         if (!$recId && $this->db->recExists($newRec)) {
@@ -1228,7 +1349,7 @@ EOT;
             return $res;
         }
         return false;
-    } // storeSubmittedData
+    } // saveRec
 
 
     /**
@@ -2335,8 +2456,9 @@ EOT;
     private function handleComposedFields(): void
     {
         foreach ($this->formElements as $name => $rec) {
-            if (($rec['type']??false) === 'event') {
-                $this->composeEventElement($name);
+            $type = ($rec['type']??false);
+            if ($type === 'event') {
+                $this->composeEventElement($name, $rec);
             }
         }
     } // handleComposedFields
@@ -2393,7 +2515,7 @@ EOT;
      * @param int|string $name
      * @return void
      */
-    private function composeEventElement(int|string $name): void
+    private function composeEventElement(int|string $name, array $rec): void
     {
         if (!$this->eventFieldFound) {
             $this->eventFieldFound = true;
@@ -2430,7 +2552,113 @@ EOT;
         ];
 
         $this->formElements = array_splice_associative($this->formElements, $name, 1, $eventElements);
+
+        if ($rec['repeatable']??false) {
+            $this->composeRruleElement($name, $rec);
+        }
     } // composeEventElement
+
+
+    /**
+     * @param int|string $name
+     * @param array $rec
+     * @return void
+     */
+    private function composeRruleElement(int|string $name, array $rec): void
+    {
+        $wkst = $rec['wkst']?? 'MO';
+        $eventElements = [];
+
+        $eventElements['rrule'] = [
+            'type'  => 'hidden',
+            'saveAs'  => '"RRULE:FREQ=$_freq;COUNT=$_count;INTERVAL=$_interval;WKST='.$wkst.';BYDAY=$_byweekday;BYMONTH=$_bymonth;"',
+        ];
+
+        $eventElements['_repeatEvent'] = [
+            'type' => 'literal',
+            'html' => "<!-- pfy-rrule-wrapper -->\n<details class='pfy-form-rrule-wrapper'>\n<summary>\n",
+        ];
+
+        $eventElements['_freq'] = [
+            'type' => 'dropdown',
+            'label' => '{{ pfy-form-rrule-freq-label }}',
+            'class' => 'pfy-rrule-elem pfy-rrule-elem-freq',
+            'info' => '{{ pfy-form-rrule-freq-info }}',
+            'options' =>
+                'NONE:{{ pfy-form-rrule-none-option }},'.
+                'DAILY:{{ pfy-form-rrule-daily-option }},'.
+                'WEEKLY:{{ pfy-form-rrule-weekly-option }},'.
+                'MONTHLY:{{ pfy-form-rrule-monthly-option }},'.
+                'YEARLY:{{ pfy-form-rrule-yearly-option }}',
+        ];
+
+        $eventElements['_repeatEventBody'] = [
+            'type'      => 'literal',
+            'html'      => "</summary>\n<div class='pfy-form-rrule-body-wrapper'",
+        ];
+
+        $eventElements['_until'] = [
+            'type'      => 'datetime-local',
+            'label'     => '{{ pfy-form-rrule-until-label }}',
+            'class'     => 'pfy-rrule-elem pfy-rrule-elem-until medium',
+            'info'      => '{{ pfy-form-rrule-until-info }}',
+        ];
+
+        $eventElements['_count'] = [
+            'type'      => 'integer',
+            'label'     => '{{ pfy-form-rrule-count-label }}',
+            'class'     => 'pfy-rrule-elem pfy-rrule-elem-count short',
+            'preset'    => 1,
+            'min'       => 1,
+            'max'       => 100,
+            'info'      => '{{ pfy-form-rrule-count-info }}',
+        ];
+
+        $eventElements['_interval'] = [
+            'type'      => 'integer',
+            'label'     => '{{ pfy-form-rrule-interval-label }}',
+            'class'     => 'pfy-rrule-elem pfy-rrule-elem-interval short',
+            'info'      => '{{ pfy-form-rrule-interval-info }}',
+            'preset'    => 1,
+            'min'       => 1,
+            'max'       => 366,
+        ];
+
+        $options = '';
+        foreach (['MO','TU','WE','TH','FR','SA','SU'] as $i => $wday) {
+            $d = ($i+5) > 9 ? $i+5 : '0'.$i+5;
+            $options .= $wday .':'. intlDateFormat('E', strtotime("1970-01-$d")) .',';
+        }
+        $eventElements['_byweekday'] = [
+            'type'      => 'checkbox',
+            'options'   => rtrim($options, ','),
+            'label'     => '{{ pfy-form-rrule-byweekday-label }}',
+            'class'     => 'pfy-rrule-elem pfy-rrule-elem-byweekday pfy-short-options',
+            'info'      => '{{ pfy-form-rrule-byweekday-info }}',
+        ];
+
+        $options = '';
+        for ($month = 1; $month <= 12; $month++) {
+            $options .= $month .':'. intlDateFormat('MMM', strtotime("1970-$month-01")) .',';
+        }
+        $eventElements['_bymonth'] = [
+            'type'      => 'checkbox',
+            'options'   => rtrim($options, ','),
+            'label'     => '{{ pfy-form-rrule-bymonth-label }}',
+            'class'     => 'pfy-rrule-elem pfy-rrule-elem-bymonth pfy-short-options',
+            'info'      => '{{ pfy-form-rrule-bymonth-info }}',
+        ];
+
+        $eventElements['_repeatEventEnd'] = [
+            'type'      => 'literal',
+            'html'      => "</div><!-- /pfy-form-rrule-body-wrapper -->\n</details>\n<!-- /pfy-rrule-wrapper -->\n",
+        ];
+
+        $names = array_keys($this->formElements);
+        $n = array_search('end', $names);
+        $name = $names[$n+1]??'';
+        $this->formElements = array_splice_associative($this->formElements, $name, 0, $eventElements);
+    } // composeRruleElement
 
 
     /**

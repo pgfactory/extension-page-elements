@@ -420,6 +420,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     padding-right: 1em;
   }
 
+  .pfy-short-options  {
+    --pfy-form-choice-option-width: 3em;
+  }
 
   // === large screen ========================================
   &.pfy-large-screen {
@@ -699,6 +702,59 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
 
+  // === RRule ===========================
+  .pfy-form-rrule-wrapper {
+    ::marker {
+      content: "";
+    }
+  }
+  .pfy-form-rrule-body-wrapper {
+    border: $formRevealControllerBorder;
+    background: $formRevealControllerBg;
+    padding: 1em;
+  }
+  .pfy-form-rrule-yearly {
+    .pfy-choice-wrapper {
+      display: inline-flex;
+      flex-direction: column-reverse;
+      label {
+        padding-bottom: 2px;
+      }
+    }
+  }
+  .pfy-form-rrule-monthly,
+  .pfy-form-rrule-weekly,
+  .pfy-form-rrule-daily{
+    .pfy-rrule-elem-bymonth {
+      display: none;
+    }
+  }
+  .pfy-form-tooltip span {
+      display: none;
+  }
+  .pfy-form-rrule-daily .daily,
+  .pfy-form-rrule-weekly .weekly,
+  .pfy-form-rrule-monthly .monthly,
+  .pfy-form-rrule-yearly .yearly {
+    display:inline;
+  }
+  .pfy-form-rrule-wrapper {
+    --pfy-form-label-width: 10em;
+
+    .pfy-rrule-elem-freq {
+      --pfy-form-label-width: 11em;
+      select {
+        width: 100%;
+      }
+    }
+
+    .pfy-form-rrule-body-wrapper .pfy-rrule-elem {
+        .pfy-label-wrapper,
+        .pfy-input-wrapper {
+          width: 100%;
+        }
+      }
+  }
 } // .pfy-default-styling
 
 

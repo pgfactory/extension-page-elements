@@ -1,0 +1,319 @@
+
+
+# Forms
+
+pfy-form-select-empty-option:
+  de: '&lt; auswählen &gt;'
+  _:  '&lt; select &gt;'
+
+pfy-noscript-warning:
+  de: Ihr Browser lässt die Auführung von JavaScripts nicht zu. Deshalb wird dieses Formular nicht funktionieren.
+  _:  Your browser does not permit javascripts. Thus, this form will not work.
+
+pfy-form-submit-success:
+  de: '<p>Wir haben Ihre Daten empfangen und gespeichert.<br>Besten Dank</p>'
+  de2: '<p>Wir haben deine Daten empfangen und gespeichert.<br>Besten Dank</p>'
+  _:  '<p>We recived your data and stored it successfully.<br>Thanks a lot</p>'
+
+pfy-form-success-continue:
+  de: 'Weiter...'
+  _:  'Continue...'
+
+pfy-form-owner-notification-label: #Neue Anemldung auf host.net
+  de: Anmeldung
+  _:  sign-up
+
+pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
+  de: Neue {{ pfy-form-owner-notification-label }} auf %host%
+  _:  New {{ pfy-form-owner-notification-label }} on %host%
+
+pfy-form-owner-notification-body:
+  de: |
+    Guten Tag\n
+    Es gibt eine neue {{ pfy-form-owner-notification-label }}:\n
+    %data%\n
+    Beste Grüsse, der Webmaster
+  _:  |
+    Hello\n
+    We received a new {{ pfy-form-owner-notification-label }}:\n
+    %data%\n
+    Best regards, the webmaster
+
+pfy-form-required-info:
+  de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben.'
+  _:  '<span class="pfy-form-required-marker">*</span> Required input.'
+
+pfy-form-required-group-empty:
+  de: 'Bitte mindestens eines dieser Felder ausfüllen.'
+  _:  'Please fill in at least one of these fields.'
+
+pfy-form-required-group-info:
+  de: 'Bitte mindestens eines dieser Felder ausfüllen.'
+  _:  'Please fill in at least one of these fields.'
+
+pfy-row-number-header: '#'
+
+pfy-form-warning-record-already-exists:
+  de: Diese Daten haben wir bereits empfangen.
+  _:  We already received your data.
+
+pfy-no-data-available:
+  de: '-- Noch keine Daten vorhanden --'
+  _:  '-- No data yet --'
+
+pfy-form-timed-out:
+  de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
+  _:  The page timed out.<br>Click Ok to reload and try again.
+
+pfy-form-session-expired:
+  de: Die Seite wurde vor zu langer Zeit geladen, Ihre Eingaben konnten nicht mehr verarbeitet werden.<br>Bitte versuchen Sie es erneut.
+  _:  The page timed out, your data entries couldn't be processed.<br>Please try again.
+
+pfy-anti-spam-warning:
+  de: |
+    Ihre Eingaben konnten nicht verarbeitet werden weil serverseitig ein Fehler aufgetreten ist.<br>
+    Bitte senden Sie Ihr Angaben per E-Mail an den {{ pfy-webmaster-link }}.<br>
+    Wir entschuldigen uns für die Unannehmlichkeiten.
+  _:  |
+    Your input could not be processed due to an error condition on the server.<br>
+    Please send your request by e-mail to the {{ pfy-webmaster-link }}<br>
+    We apologize for the inconvenience.
+
+pfy-form-override-honeypot:
+  de: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte geben Sie den <strong> ersten Buchstaben</strong> aus Feld <strong>«%refName%»</strong> ein:</p>'
+  de2: '<h3>Vorsichtsmassnahme gegen Spam:</h3><p>Bitte gib den <strong>ersten Buchstaben</strong> aus Feld <strong>«%refName%»</strong> ein:</p>'
+  _:  '<h3>As a measure of precaution against spam:</h3><p>Please enter the <strong>first letter</strong> of field <strong>"%refName%"</strong>:</p>'
+
+pfy-form-honeypot-failed:
+  de: 'Das klappte nicht, Ihre Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuchen Sie es erneut.'
+  de2: 'Das klappte nicht, deine Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuche es erneut.'
+  _:  'That didn\'t work, your data has <strong>not</strong> been submitted.</p><p>Please try again.'
+
+pfy-form-confirmation-email-sent:
+  de: 'Wir haben Ihnen eine Bestätigung per E-Mail geschickt.'
+  de2: 'Wir haben dir eine Bestätigung per E-Mail geschickt.'
+  _:  'We have sent a confirmation to your e-mail address.'
+
+pfy-form-confirmation-email-missing:
+  de: 'Es wurde keine Bestätigung verschickt, da die E-Mail-Adresse fehlte.'
+  _:  "We didn't send a confirmation because the e-mail address was missing."
+
+pfy-confirmation-response-element-empty:
+  de: '&lt; leer &gt;'
+  _:  '&lt; empty &gt;'
+
+pfy-confirmation-response-subject:
+  de: 'Anmeldebestätigung von {{ hostUrl }}'
+  _:  'Sign-up confirmation from {{ hostUrl }}'
+
+pfy-confirmation-response-message:
+  de: |
+    Guten Tag {{ _First_Name_ }} {{ _Last_Name_ }}
+    
+    Vielen Dank für Ihre Anmeldung.
+    
+    Details:
+    Datum:	      {{ _date_ }}
+    Zeit:	      {{ _time_ }}
+    Ort:	      {{ _location_ }}
+    
+    Wir freuen uns, sie bald zu sehen.
+    
+    Im Verhinderungsfalle bitten wir um frühzeitige Benachrichtigung.
+    
+    Beste Grüsse
+    Das Organisationsteam
+
+  _:  |
+    Hello {{ _First_Name_ }} {{ _Last_Name_ }}
+  
+    Thanks a lot for your registration.
+  
+    Details:
+    Date:	      {{ _date_ }}
+    Time:	      {{ _time_ }}
+    Location:	  {{ _location_ }}
+  
+    We are looking forward to seeing you soon.
+    
+    Please send us a note in case you cannot participate.
+    
+    Best Regards
+    The organisation team
+
+pfy-form-rec-deleted-confirmation:
+  de: 'Der Eintrag wurde gelöscht.'
+  _:  'The entry has been deleted.'
+
+
+# Deadline:
+pfy-form-deadline-expired:
+  de: 'Die Anmeldefrist ist vorbei.'
+  _:  'Sorry, registration is closed.'
+
+pfy-form-deadline-expired-warning:
+  de: |
+    <div>
+      <strong>Achtung</strong>: Die Anmeldefrist ist vorbei. Normale Besucher erhalten folgende Mitteilung:
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+    </div>
+
+  _:  |
+    <div>
+      <strong>Notice</strong>: Deadline expired. Response to regular visitors:
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+    </div>
+
+# MaxCount:
+pfy-form-maxcount-reached:
+  de: 'Die Veranstaltung ist ausgebucht.'
+  _:  'The event is fully booked.'
+
+pfy-form-maxcount-reached-warning:
+  de: |
+    <div>
+      <strong>Achtung</strong>: Die maximale Zahl von Anmeldungen ist erreicht. Normale Besucher erhalten folgende Mitteilung:
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+    </div>
+
+  _:  |
+    <div>
+      <strong>Notice</strong>: The max number of sign-ups has been reached. Response to regular visitors:
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+    </div>
+
+pfy-form-no-event-found:
+  de: Derzeit sind keine Veranstaltungsdaten bekannt.
+  _:  Currently no event dates available.
+
+
+pfy-form-timeout-alert:
+  de: |
+    <h2>Zeitüberschreitung</h2>
+    <p>Dieses Formular war zu lange offen.<br>Sie riskieren Datenverlust, wenn Sie es jetzt absenden.</p>
+    <p>Bitte laden Sie die Seite neu, bevor Sie das Formular verwenden.</p>
+  de2: |
+    <h2>Zeitüberschreitung</h2>
+    <p>Dieses Formular war zu lange offen.<br>Du riskierst Datenverlust, wenn du es jetzt absendest.</p>
+    <p>Bitte lade die Seite neu, bevor du das Formular verwendest.</p>
+  _:  |
+    <h2>Timeout</h2>
+    <p>This form has been open for too long.<br>You risk loosing data if you submit it now.</p>
+    <p>Please, reload the page now</p>
+
+pfy-form-reload-btn:
+  de: Seite neu laden
+  _:  Reload page
+
+pfy-show-source-code: Show Source Code
+
+pfy-form-enablesubmit-elem-not-checked:
+  de: Bitte zustimmen, bevor Sie das Formular absenden
+  _:  Please confirm before sumbitting this form
+
+// ex. pfy-form-problem-banner:
+pfy-problem-with-form-banner:
+  de: |
+    %%% .pfy-problem-with-form-hint.pfy-screen-only
+    Problem mit diesem Webformular?
+
+    → bitte den {{ pfy-webmaster-link }} benachrichtigen. Danke.
+    %%%
+  _: |
+    %%% .pfy-problem-with-form-hint.pfy-screen-only
+    Problems with this web form?
+
+    → Please contact the {{ pfy-webmaster-link }}. Thank you.
+    %%%
+
+
+pfy-form-event-start-label:
+  de: 'Von:'
+  _:  'From:'
+
+pfy-form-event-end-label:
+  de: 'Bis:'
+  _:  'Until:'
+
+
+
+
+# === RRule ===========================================
+pfy-form-rrule-repeat-label:
+  de: 'Wiederholen:'
+  _: 'Repeat Event:'
+
+pfy-form-rrule-freq-label:
+  de: 'Wiederholung:'
+  _: 'Repetition:'
+
+pfy-form-rrule-freq-info:
+  de: Soll das Ereignis wiederholt werden? Wenn ja, wie häufig?
+  _:  Shall the event be repeated? If so, how often?
+
+pfy-form-rrule-none-option:
+  de: Ohne
+  _:  None
+
+pfy-form-rrule-yearly-option:
+  de: Jährlich
+  _:  Yearly
+
+pfy-form-rrule-monthly-option:
+  de: Monatlich
+  _:  Monthly
+
+pfy-form-rrule-weekly-option:
+  de: Wöchentlich
+  _:  Weekly
+
+pfy-form-rrule-daily-option:
+  de: Täglich
+  _:  Daily
+
+pfy-form-rrule-until-label:
+  de: 'Wiederholen bis:'
+  _:  'Repeat until:'
+
+pfy-form-rrule-until-info:
+  de: Bis wann soll das Ereignis wiederholt werden?  Alternative zu "Anzahl".
+  _: Until when shall the event be repeated? Alternative to 'Count' option.
+
+
+pfy-form-rrule-count-label:
+  de: 'Anzahl:'
+  _:  'Count:'
+
+pfy-form-rrule-count-info:
+  de: Wie oft soll das Ereignis wiederholt werden? Alternative zu "Wiederholen bis".
+  _:  How often shall the event be repeated? Alternative to 'Repeat until' option.
+
+pfy-form-rrule-interval-label:
+  de: 'Intervall:'
+  _: 'Interval:'
+
+pfy-form-rrule-interval-info:
+  de: |
+    Z.B.  nur alle <strong>2</strong>
+    <span class='daily'>Tage</span><span class='weekly'>Wochen</span><span class='monthly'>Monate</span><span class='yearly'>Jahre</span>.
+
+  _: |
+    E.g. only every <strong>2</strong>
+    <span class='daily'>days</span><span class='weekly'>weeks</span><span class='monthly'>months</span><span class='yearly'>years</span>.
+
+pfy-form-rrule-byweekday-label:
+  de: 'An Wochentagen:'
+  _: 'By weekday:'
+
+
+pfy-form-rrule-byweekday-info:
+  de: An welchen Wochentagen?
+  _:  On which days of the week?
+
+pfy-form-rrule-bymonth-label:
+  de: 'In den Monaten:'
+  _:  'By month:'
+
+pfy-form-rrule-bymonth-info:
+  de: Für welche Monate?
+  _: For which months?
