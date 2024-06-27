@@ -74,8 +74,6 @@ EOT,
         $options['selector'] = $options['role'];
     }
 
-    TemplateCompiler::sanitizeTemplateOption($options);
-
     if ($type1 === 'v') {     // variables
         $str = TransVars::renderVariables();
         $str = shieldStr($str);

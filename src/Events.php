@@ -462,13 +462,11 @@ class Events extends DataSet
 
         $nextEvents = array_splice($sortedData, $nextEventInx, $count);
 
-        TemplateCompiler::sanitizeTemplateOption($options);
-        $templateOptions = TemplateCompiler::getTemplate($options, $category);
-
-        $templateOptions['selector'] = $category;
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $template = TemplateCompiler::getTemplate($templateOptions, $category);
 
         foreach ($nextEvents as $i => $rec) {
-            $eventBanner = TemplateCompiler::compile($templateOptions, $rec);
+            $eventBanner = TemplateCompiler::compile($template, $rec, $templateOptions);
             $nextEvents[$i]['eventBanner'] = $eventBanner;
         }
 

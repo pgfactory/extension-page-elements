@@ -14,7 +14,7 @@ use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 
-const DEFAULT_ELEMENT_TEMPLATE = '- (link: %url% text:%filename% type:%ext% target:_blank) %description%';
+const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
 
 class Dir
@@ -27,6 +27,7 @@ class Dir
     private $includeFiles;
     private $includeFolders;
     private $exclude;
+    private $markdown;
     private $modifiers;
     private $maxAge;
     private $replaceOnElem;
@@ -75,6 +76,11 @@ class Dir
             return $str;
         }
 
+        if ($this->markdown) {
+            $md = new MarkdownPlus();
+            $str = $md->compile($str);
+        }
+
         if ($str !== '{{ pfy-dir-empty }}') {
             $str = <<<EOT
 
@@ -111,7 +117,10 @@ EOT;
         $str = '';
         $subdir = '';
 
+        $template = TemplateCompiler::getTemplate($templateOptions, useAsElement: 'folderElement');
+
         if ($this->hierarchical) {
+            $templateOptions['markdown'] = false;
             $dir0 = $this->sortDir($dir0, $this->reverseFolders);
             foreach ($dir0 as $path2) {
                 if (is_file($path2)) {
@@ -119,7 +128,7 @@ EOT;
                 }
                 $sub = $this->renderDir($path2, $pattern, $level+1);
                 $fileVars = $this->extractFileDescriptorVars(rtrim($path2, '/'));
-                $label = TemplateCompiler::compile($templateOptions, $fileVars, ['compileMarkdown' => 'inline', 'useAsElement' => 'folderElement']);
+                $label = TemplateCompiler::compile($template, $fileVars, $templateOptions);
 
                 // handle '<>', i.e. Accordion pattern:
                 if (preg_match('/\s*&lt;(.*?)&gt;(.*)/', $label, $m)) {
@@ -142,7 +151,7 @@ EOT;
             $data = reset($data);
         }
 
-        $str1 = TemplateCompiler::compile($templateOptions, $data);
+        $str1 = TemplateCompiler::compile($template, $data, $templateOptions);
 
         $class = "pfy-dir pfy-dir-lvl-$level";
 
@@ -306,9 +315,13 @@ EOT;
         $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
         $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
 
-        TemplateCompiler::sanitizeTemplateOption($options);
-        $templateOptions = TemplateCompiler::getTemplate($options);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
         $templateOptions['noDataAvailableText'] = '';
+
+        if (!isset($options['markdown'])) {
+            $options['markdown'] = true;
+        }
+
         $this->templateOptions = $templateOptions;
 
         $this->path = $args['path'];
@@ -317,6 +330,7 @@ EOT;
         $this->includeFiles = str_contains(strtolower($args['include']), 'files');
         $this->includeFolders = str_contains(strtolower($args['include']), 'folders');
         $this->exclude = $args['exclude'];
+        $this->markdown = $args['markdown']??true;
         $this->maxAge = $args['maxAge'];
         $this->replaceOnElem = $args['replaceOnElem'];
         $this->modifiers = strtoupper($args['modifiers']);

@@ -52,7 +52,7 @@ class TemplateCompiler
 
         $includeSystemVariables = ($templateOptions['includeSystemVariables']??false);
         $compileMarkdown        = $templateOptions['markdown']??false;
-        $mode                   = $templateOptions['mode'];
+        $mode                   = $templateOptions['mode']??'simple';
         $prefix                 = $templateOptions['prefix']??'';
         $suffix                 = $templateOptions['suffix']??'';
 
@@ -150,7 +150,10 @@ class TemplateCompiler
         $templateOptions = DEFAULT_OPTIONS;
         if (is_string($options)) {
             $templateOptions['element'] = $options;
-
+            if (($templateOptions['element'][0]??'') === '~') {
+                $templateOptions['file'] = $templateOptions['element'];
+                $templateOptions['element'] = '';
+            }
         } else {
             foreach (DEFAULT_OPTIONS as $key => $value) {
                 if (isset($options[$key]) && !str_contains('element', $key)) {
@@ -160,9 +163,13 @@ class TemplateCompiler
         }
 
         // special case: for convenience, element may contain file:
-        if (($options['element']??false) && ($options['element'][0] === '~')) {
-            $templateOptions['file'] = $options['element'];
-            $templateOptions['element'] = '';
+        if ($options['element']??false) {
+            if ($options['element'][0] === '~') {
+                $templateOptions['file'] = $options['element'];
+                $templateOptions['element'] = '';
+            } else {
+                $templateOptions['element'] = $options['element'];
+            }
         }
 
         if ($templateOptions['file']) {
@@ -189,7 +196,7 @@ class TemplateCompiler
     private static function compileTemplate(string $mode, string $template, array $vars, bool $includeSystemVariables = false): string
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
-        $template = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
+        $str = $template = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
 
         if ($mode === 'twig') {
             $str = self::twigCompileTemplate($template, $vars, $includeSystemVariables);

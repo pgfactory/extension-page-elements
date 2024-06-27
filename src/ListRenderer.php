@@ -31,9 +31,11 @@ class ListRenderer
         } elseif ($options['role']??false) {
             $options['selector'] = $options['role'];
         }
-        $template = TemplateCompiler::getTemplate($options);
         $users = Utils::getUsers($options); // -> $options['role'] and $options['reversed']
-        $str = TemplateCompiler::compile($template, $users);
+
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $template = TemplateCompiler::getTemplate($templateOptions, $options['selector']);
+        $str = TemplateCompiler::compile($template, $users, $templateOptions);
 
         if (!$str) {
             $text = TransVars::getVariable('pfy-list-empty', true);
@@ -53,14 +55,15 @@ class ListRenderer
      */
     public static function renderSubpages(array $options): string
     {
-        $template = TemplateCompiler::getTemplate($options);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $template = TemplateCompiler::getTemplate($templateOptions);
 
         // set default template if none is defined:
-        if (!$template['element']) {
-            if ($options['asLinks']??false) {
-                $template['element'] = '- (link: ~/%pageUrl% text:%filename% target:_blank)';
+        if (!$template) {
+            if (($options['asLinks']??false) || ($templateOptions['asLinks']??false)) {
+                $template = '- (link: ~/%pageUrl% text:%filename% target:_blank)';
             } else {
-                $template['element'] = '- %filename%';
+                $template = '- %filename%';
             }
         }
 
@@ -113,7 +116,7 @@ class ListRenderer
             $data[] = $rec;
         }
 
-        $out =  TemplateCompiler::compile($template, $data);
+        $out =  TemplateCompiler::compile($template, $data, $templateOptions);
         return $out;
     } // renderSubpages
 
@@ -128,18 +131,19 @@ class ListRenderer
      */
     public static function renderFolderContent(array $options): string
     {
-        $template = TemplateCompiler::getTemplate($options);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $template = TemplateCompiler::getTemplate($templateOptions);
 
         // set default template if none is defined:
-        if (!$template['element']) {
+        if (!($template??false)) {
             if ($options['asLinks']??false) {
-                $template['element'] = DEFAULT_ELEMENT_TEMPLATE;
+                $template = DEFAULT_ELEMENT_TEMPLATE;
             } else {
-                $template['element'] = '- %filename%';
+                $template = '- %filename%';
             }
         }
-        if (!$template['folderElement']) {
-            $template['folderElement'] = DEFAULT_FOLDER_ELEMENT_TEMPLATE;
+        if (!($templateOptions['folderElement']??false)) {
+            $templateOptions['folderElement'] = DEFAULT_FOLDER_ELEMENT_TEMPLATE;
         }
 
         $reversed = ($options['reversed']??false);
@@ -179,7 +183,7 @@ class ListRenderer
             $data[] = $rec;
         }
 
-        $out =  TemplateCompiler::compile($template, $data);
+        $out = TemplateCompiler::compile($template, $data, $templateOptions);
         return $out;
     } // renderFolderContent
 
