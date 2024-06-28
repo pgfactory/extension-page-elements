@@ -134,7 +134,7 @@ class TemplateCompiler
         if ($templates) {
             $template = self::selectTemplate($templates, $selector, $useAsElement);
         } else {
-            $template = $templateOptions['element']??'';
+            $template = $templateOptions[$useAsElement]??'';
         }
 
         return $template;
@@ -155,11 +155,7 @@ class TemplateCompiler
                 $templateOptions['element'] = '';
             }
         } else {
-            foreach (DEFAULT_OPTIONS as $key => $value) {
-                if (isset($options[$key]) && !str_contains('element', $key)) {
-                    $templateOptions[$key] = $options[$key];
-                }
-            }
+            $templateOptions = $options + DEFAULT_OPTIONS;
         }
 
         // special case: for convenience, element may contain file:
