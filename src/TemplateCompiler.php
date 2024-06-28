@@ -23,6 +23,7 @@ const DEFAULT_OPTIONS = [
     'asLinks' => false,
     'noDataAvailableText' => 'pfy-no-data-available',
     'includeSystemVariables' => false,
+    'removeUndefinedPlaceholders' => false,
     'markdown' => true,
     'wrapperPrefix' => '',
     'wrapperSuffix' => '',
@@ -50,7 +51,6 @@ class TemplateCompiler
             return $help;
         }
 
-        $includeSystemVariables = ($templateOptions['includeSystemVariables']??false);
         $compileMarkdown        = $templateOptions['markdown']??false;
         $mode                   = $templateOptions['mode']??'simple';
         $prefix                 = $templateOptions['prefix']??'';
@@ -80,7 +80,7 @@ class TemplateCompiler
                 $out .= $prefix;
                 foreach ($data as $rec) {
                     $elemTempl = self::handleMissingTemplate($template, $rec);
-                    $s = self::compileTemplate($mode, $elemTempl, $rec, $includeSystemVariables);
+                    $s = self::compileTemplate($mode, $elemTempl, $rec);
                     if ($s && $compileMarkdown) {
                         $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
                     }
@@ -96,7 +96,7 @@ class TemplateCompiler
             // special case: no data available
             return TransVars::getVariable($templateOptions['noDataAvailableText'], true);
         } else {
-            $out = self::compileTemplate($mode, $template, [], $includeSystemVariables);
+            $out = self::compileTemplate($mode, $template, []);
         }
 
         $out = str_replace(['\\n', '\\t'], ["\n", "\t"], $out);
@@ -187,19 +187,18 @@ class TemplateCompiler
      * @param string $mode
      * @param string $template
      * @param array $vars
-     * @param bool $includeSystemVariables
      * @return string
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
      */
-    private static function compileTemplate(string $mode, string $template, array $vars, bool $includeSystemVariables = false): string
+    private static function compileTemplate(string $mode, string $template, array $vars): string
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
-        $str = $template = self::basicCompileTemplate($template, $vars, removeUndefinedPlaceholders: true);
+        $str = $template = self::basicCompileTemplate($template, $vars);
 
         if ($mode === 'twig') {
-            $str = self::twigCompileTemplate($template, $vars, $includeSystemVariables);
+            $str = self::twigCompileTemplate($template, $vars);
 
         } elseif (stripos('TransVars', $mode) !== false) {
             $str = self::transvarCompileTemplate($template);
@@ -217,13 +216,13 @@ class TemplateCompiler
      * @param bool $removeUndefinedPlaceholders
      * @return string
      */
-    public static function basicCompileTemplate(string $template, array $vars, bool $removeUndefinedPlaceholders = false): string
+    public static function basicCompileTemplate(string $template, array $vars): string
     {
         foreach ($vars as $key => $value) {
             $template = str_replace('%!'.$key.'!%', shieldStr($value, 'immutable'), $template);
             $template = str_replace(['{{ '.$key.' }}', '%'.$key.'%'], $value, $template);
         }
-        if ($removeUndefinedPlaceholders) {
+        if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
             self::removeUndefinedPlaceholders($template);
         }
         return $template;
@@ -247,16 +246,14 @@ class TemplateCompiler
     /**
      * @param string $template
      * @param array $vars
-     * @param bool $includeSystemVariables
-     * @param $removeUndefinedPlaceholders
      * @return string
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
      */
-    private static function twigCompileTemplate(string $template, array $vars, bool $includeSystemVariables = false, $removeUndefinedPlaceholders = false): string
+    private static function twigCompileTemplate(string $template, array $vars): string
     {
-        if ($includeSystemVariables) {
+        if (self::$templateOptions['includeSystemVariables']??false) {
             if (!self::$systemVariables) {
                 self::$systemVariables = TransVars::$variables;
             }
@@ -286,7 +283,7 @@ class TemplateCompiler
             }
             $out = $twig->render($templateName, $vars);
 
-            if ($removeUndefinedPlaceholders) {
+            if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
                 self::removeUndefinedPlaceholders($out);
             }
         } catch (\Twig\Error\SyntaxError $e) {
