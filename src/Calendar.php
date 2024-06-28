@@ -184,11 +184,11 @@ EOT;
         if (!($formFields = $this->fields)) {
             // if none supplied, use default fields:
             $formFields = [
-                'allday'        => ['type' => 'checkbox', 'label' => '{{ pfy-cal-allday-event }}:', 'class' => 'reversed pfy-cal-allday'],
-                'category'      => $this->categories? ['type' => 'dropdown', 'options' => $this->categories] : false,
-                'Title'         => ['type' => 'text'],
-                'Event'         => ['type' => 'event', 'defaultEventDuration' => $this->defaultEventDuration],
-                'Description'   => ['type' => 'textarea'],
+                'allday'        => ['type' => 'checkbox', 'label' => '{{ pfy-cal-allday-event-label }}:', 'class' => 'reversed pfy-cal-allday'],
+                'category'      => $this->categories? ['type' => 'dropdown', 'label' => '{{ pfy-cal-category-label }}:', 'options' => $this->categories] : false,
+                'Title'         => ['type' => 'text', 'class' => 'pfy-cal-title'],
+                'Event'         => ['type' => 'event', 'defaultEventDuration' => $this->defaultEventDuration, 'repeatable' => true],
+                'Description'   => ['type' => 'textarea', 'class' => 'pfy-cal-description'],
             ];
         }
 
@@ -427,6 +427,7 @@ EOT;
             'masterFileRecKeyType' => 'index',
             'obfuscateRecKeys' => true,
             'keepDataDuration' => $this->options['keepDataDuration']??false,
+            'keepDataOnField'  => 'end',
         ]);
         $data = $db->data(true);
         $modified = false;

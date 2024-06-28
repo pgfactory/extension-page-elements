@@ -568,7 +568,7 @@ PfyCalendar.prototype.modifyEvent = function(event0, start, end) {
   const parent = this;
   const fullCal = this.fullCal;
   const eventEl = event0.el;
-  const span = eventEl.querySelector('.fc-event-main > span');
+  const span = eventEl.querySelector('.fc-event-main [data-reckey]');
   const recKey = span.dataset.reckey;
   if (typeof recKey === 'undefined') {
     return;
@@ -657,6 +657,16 @@ PfyCalendar.prototype.setupContextMenu = function() {
                 el.addEventListener('click', (ev) => {
                   mylog(ev.target);
                   mylog('duplicate');
+                  ev.stopPropagation();
+                  ev.stopImmediatePropagation();
+                  ev.preventDefault();
+                  domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+                    const recKey = el.dataset.reckey;
+                    execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
+                      .then(function (data) {
+                        parent.fullCal.refetchEvents();
+                      });
+                  });
                 });
               });
 

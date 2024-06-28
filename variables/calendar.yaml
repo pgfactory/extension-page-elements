@@ -112,7 +112,7 @@ pfy-cal-event-title:
     de: Bezeichnung
     _:  Event name
 
-pfy-cal-allday-event:
+pfy-cal-allday-event-label:
     de: Ganztägig
     _:  Allday
 

@@ -30,6 +30,8 @@ $eventBorderColorCat4: hsl(calc(4 * #{$deg})  #{$sat}  #{$light});
 $eventBorderColorCat5: hsl(calc(5 * #{$deg})  #{$sat}  #{$light});
 $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
 
+$eventTextColor: var(--pfy-event-txt-color, #333);
+$eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
 
 #pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
@@ -47,6 +49,11 @@ $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
     overflow-wrap: anywhere;
     text-wrap: wrap;
     overflow-y: auto;
+  }
+  .fc-v-event .fc-event-main {
+    &, a {
+      color: $eventTextColor;
+    }
   }
 
   .pfy-cal-description {
@@ -165,7 +172,7 @@ $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
     button {
       border: none;
       background: transparent;
-      color: white;
+      color: $eventPopupTextColor;
     }
   }
   .tippy-box,
