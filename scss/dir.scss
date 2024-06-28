@@ -17,6 +17,10 @@
       padding-left: var(--mdp-accordion-left-indent, 0rem);
     }
   }
+  ul.pfy-dir-lvl-2.pfy-dir-lvl-2 {
+    padding-left: 2rem;
+    margin-bottom: 1em;
+  }
   .mdp-accordion {
     .mdp-accordion-body {
       padding-left: calc(1.6rem + var(--mdp-accordion-summary-indent, 0rem));

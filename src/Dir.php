@@ -38,7 +38,7 @@ class Dir
     private $download;
     private $pattern = '';
     private $replace = '';
-    private $templateOptions = false;
+    private $templateOptions = [];
 
 
     public function __construct()
@@ -117,10 +117,10 @@ EOT;
         $str = '';
         $subdir = '';
 
-        $template = TemplateCompiler::getTemplate($templateOptions, useAsElement: 'folderElement');
+        $template = TemplateCompiler::getTemplate($templateOptions);
+        $folderTemplate = TemplateCompiler::getTemplate($templateOptions, useAsElement: 'folderElement');
 
         if ($this->hierarchical) {
-            $templateOptions['markdown'] = false;
             $dir0 = $this->sortDir($dir0, $this->reverseFolders);
             foreach ($dir0 as $path2) {
                 if (is_file($path2)) {
@@ -128,7 +128,7 @@ EOT;
                 }
                 $sub = $this->renderDir($path2, $pattern, $level+1);
                 $fileVars = $this->extractFileDescriptorVars(rtrim($path2, '/'));
-                $label = TemplateCompiler::compile($template, $fileVars, $templateOptions);
+                $label = TemplateCompiler::compile($folderTemplate, $fileVars, $templateOptions);
 
                 // handle '<>', i.e. Accordion pattern:
                 if (preg_match('/\s*&lt;(.*?)&gt;(.*)/', $label, $m)) {
@@ -151,18 +151,18 @@ EOT;
             $data = reset($data);
         }
 
-        $str1 = TemplateCompiler::compile($template, $data, $templateOptions);
+        $currLevelFiles = TemplateCompiler::compile($template, $data, $templateOptions);
 
         $class = "pfy-dir pfy-dir-lvl-$level";
 
-        if ($str1 && preg_match('/^<(ul|ol)/', $str1)) {
-            $str1 = substr($str1, 0, 3) . " class='$class'>" . $subdir . substr($str1, 4);
-            $str .= $str1;
+        if ($currLevelFiles && preg_match('/^<(ul|ol)/', $currLevelFiles)) {
+            $currLevelFiles = substr($currLevelFiles, 0, 3) . " class='$class'>" . $subdir . substr($currLevelFiles, 4);
+            $str .= $currLevelFiles;
 
         } elseif ($subdir) {
             $str .= "<ul class='$class'>\n$subdir\n</ul>";
         } else {
-            $str .= $str1;
+            $str .= $currLevelFiles;
         }
         return $str;
     } // renderDir
@@ -274,6 +274,7 @@ EOT;
         }
         $basename   = base_name($filename, false);
         $basename   = str_replace(['(', ')'], ['&#40;', '&#41;'], $basename);
+        $label      = str_replace('_', ' ', $basename);
         $type       = is_file($file)? 'file' : 'folder';
         $path       = dirname($file) . '/';
         $subPath    = '';
@@ -288,6 +289,7 @@ EOT;
             'file'          => $file,
             'filename'      => $filename,
             'basename'      => $basename,
+            'label'         => $label,
             'name'          => $basename,
             'ext'           => fileExt($filename),
             'url'           => $url,
