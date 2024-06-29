@@ -40,7 +40,6 @@ class Calendar
     private array $options;
     private string $fullCalendarOptions;
     private string $initialDate;
-    private string $calOptions;
     private string $source;
     private string $class;
     private string $id;
