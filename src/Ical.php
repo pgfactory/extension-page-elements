@@ -13,6 +13,9 @@ class Ical
         $event->startsAt(new DateTime($iCalOptions['start']));
         $event->endsAt(new DateTime($iCalOptions['end']));
 
+        if ($description = ($iCalOptions['description']??false)) {
+            $event->description($description);
+        }
         if ($organiser = ($iCalOptions['organiser']??false)) {
             $event->organizer($organiser);
         }
