@@ -1446,11 +1446,11 @@ EOT;
      */
     private function createICalRecord(array $rec): string
     {
-        $iCalArgs = ICAL_DEFAULT_OPTIONS;
-        if (is_array($this->options['ical'])) {
-            $iCalArgs = ($this->options['ical'] ?? []);
+        if (is_array($iCalArgs = $this->options['ical'])) {
             $iCalArgs += ICAL_DEFAULT_OPTIONS;
-        } elseif (is_string($this->options['ical'])) {
+
+        } elseif (is_string($iCalArgs)) {
+            $iCalArgs = ICAL_DEFAULT_OPTIONS;
             $iCalArgs['title'] = $this->options['ical'];
         }
 
