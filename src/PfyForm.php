@@ -1033,6 +1033,10 @@ EOT;
         $this->showForm = false;
         if ($html) {
             $html = "<div class='pfy-form-response'>\n$html\n</div><!-- /pfy-form-response -->\n";
+
+            // in case there are multiple forms in the page, hide all others:
+            // (nette forms would preset received data in other forms)
+            PageFactory::$pg->addCss('.pfy-form-and-table-wrapper {display: none;}');
         }
         $this->formResponse =  $html;
     } // handleReceivedData
