@@ -2,8 +2,6 @@
 
 namespace PgFactory\PageFactoryElements;
 
-require_once __DIR__ . '/Data2DSet.php';
-
 use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\DataSet;
@@ -56,7 +54,8 @@ class DataTable
     private string $sort;
     private $minRows;
     private string $export;
-    private bool $includeSystemElements;
+    private bool|string $includeSystemElements;
+    private bool $includeTimestamp;
     private $elementLabels;
     protected $markLocked;
     protected $isTableAdmin;
@@ -76,13 +75,7 @@ class DataTable
     private mixed $shieldCellContent;
     private static int $tableInx = 0;
     private static bool $interactiveInitializee = false;
-    /**
-     * @var false|mixed
-     */
     private mixed $mailFrom;
-    /**
-     * @var false|mixed
-     */
     private mixed $mailFieldName;
 
     /**
@@ -144,6 +137,7 @@ class DataTable
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
+        $this->includeTimestamp     = $options['includeTimestamp'] ?? false;
         $this->markLocked = $options['markLocked'] ?? false;
         $this->placeholderForUndefined = ($options['placeholderForUndefined']??'?');
 
@@ -179,8 +173,11 @@ class DataTable
                 $this->parseArrayArg('tableHeaders');
             }
             if ($this->includeSystemElements) {
-                $this->tableHeaders['_timestamp'] = '_timestamp';
-                $this->tableHeaders['_reckey'] = '_reckey';
+                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
+                $this->tableHeaders['_reckey'] = TransVars::getVariable('pfy-table-reckey-header');
+            }
+            if ($this->includeTimestamp && !isset($this->tableHeaders['_timestamp'])) {
+                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
             }
         }
         // table footers:
@@ -252,11 +249,7 @@ class DataTable
      */
     private function prepareTableData(): void
     {
-        if ($this->data2Dset) {
-            $this->tableData = $this->data2Dset->getNormalized2D_Data($this->tableHeaders);
-        } else {
-            $this->tableData = Data2DSet::normalizeData($this->tableData, $this->tableHeaders, $this->placeholderForUndefined);
-        }
+        $this->tableData = $this->data2Dset->getNormalized2Ddata($this->tableHeaders);
         if ($this->sort) {
             $this->sortTableData();
         }
@@ -820,7 +813,7 @@ EOT;
      */
     private function exportDownloadDocs(): string
     {
-        $file = $this->data2Dset->export(fileType: true);
+        $file = $this->data2Dset->export(fileType: 'office');
         return $file;
     } // exportDownloadDocs
 
