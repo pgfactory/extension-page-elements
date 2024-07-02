@@ -1423,18 +1423,33 @@ EOT;
 
         $file = resolvePath($this->formOptions['file'], relativeToPage: true);
 
+        $showAllFields = $tableOptions['showAllFields']??false;
         $fieldNames = $this->fieldNames;
-        if (isset($fieldNames['_formInx'])) {
-            unset($fieldNames['_formInx']);
+        foreach (['_reckey', '_formInx', '_csrf'] as $k) {
+            if (isset($fieldNames[$k])) {
+                unset($fieldNames[$k]);
+            }
         }
+        foreach ($fieldNames as $fieldName) {
+            if (!$showAllFields && ($fieldName[0] === '_')) {
+                unset($fieldNames[$fieldName]);
+                continue;
+            }
+            $elem = $this->formElements[$fieldName];
+            if ($elem['label']??false) {
+                $fieldNames[$fieldName] = trim($elem['label'], ': ');
+            }
+        }
+
         $tableOptions['tableHeaders']         = $fieldNames;
         $tableOptions['masterFileRecKeyType'] = 'index';
         $tableOptions['tdClass']              = 'pfy-scroll-hints';
-        $tableOptions['markLocked']           = true;
+        $tableOptions['markLocked']           = false; //true;
         $tableOptions['obfuscateRecKeys']     = true;
         $tableOptions['shieldCellContent']    = $this->formOptions['tableOptions']['shieldCellContent']??false;
         $tableOptions['mailFrom']             = ($this->formOptions['mailFrom']??false) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']        = ($this->formOptions['confirmationEmail']??false) ?: $this->formOptions['emailFieldName']??false;
+        $tableOptions['includeTimestamp']     = ($tableOptions['includeTimestamp']??false) ?: $this->formOptions['tableOptions']['includeTimestamp']??true;
 
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
