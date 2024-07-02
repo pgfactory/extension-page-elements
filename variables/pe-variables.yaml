@@ -109,7 +109,9 @@ pfy-table-new-rec-popup-header:
   de: 'Neuer Datensatz'
   _:  'New Data Record'
 
-
+pfy-table-timestamp-header:
+  de: Zeit
+  _:  Time
 
 # Popups
 pfy-confirm-header:
