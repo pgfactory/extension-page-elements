@@ -215,8 +215,10 @@ class TemplateCompiler
     public static function basicCompileTemplate(string $template, array $vars): string
     {
         foreach ($vars as $key => $value) {
-            $template = str_replace('%!'.$key.'!%', shieldStr($value, 'immutable'), $template);
-            $template = str_replace(['{{ '.$key.' }}', '%'.$key.'%'], $value, $template);
+            if (is_string($value)) {
+                $template = str_replace('%!' . $key . '!%', shieldStr($value, 'immutable'), $template);
+                $template = str_replace(['{{ ' . $key . ' }}', '%' . $key . '%'], $value, $template);
+            }
         }
         if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
             self::removeUndefinedPlaceholders($template);
