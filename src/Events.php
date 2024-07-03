@@ -134,9 +134,24 @@ class Events extends DataSet
         }
 
         // start and end dates, resp. count (optional):
-        $from = ($options['from']??false)? $this->resolveTimePlaceholders($options['from'], false) : strtotime('Y-m-d');
+        $from = ($options['from']??false)? $this->resolveTimePlaceholders($options['from'], false) : time();
+        if ($from && !is_numeric($from)) {
+            $from = strtotime($from);
+        }
         $till = ($options['till']??false)? $this->resolveTimePlaceholders($options['till'], false) : false;
+        if ($till && !is_numeric($till)) {
+            $till = strtotime($till);
+        }
 
+        // special case 'offset': create superset of events from which to select later:
+        if ($options['offset']??false) {
+            $from = strtotime('-1 year', $from);
+            if (!$till) {
+                $till = strtotime('+2 year');
+            }
+            $options['count'] = false;
+            unset($rRules['COUNT']);
+        }
         if ($from) {
             $rRules['DTSTART'] = self::convertDatetime($from);
         }
@@ -170,8 +185,11 @@ class Events extends DataSet
      * @param string $str
      * @return string
      */
-    public static function convertDatetime(string $str): string
+    public static function convertDatetime(string|int $str): string
     {
+        if (is_int($str)) {
+            $str = date('Y-m-d H:i:s', $str);
+        }
         $date = str_replace('-', '', substr($str, 0, 10));
         $time = str_pad(str_replace(':','', substr($str, 11, 5)), 6, '0');
         return "{$date}T{$time}Z";
