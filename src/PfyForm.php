@@ -2278,13 +2278,14 @@ EOT;
         $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
         if ($confirmationEmailTemplate === true) {
             $template = TransVars::getVariable("pfy-confirmation-response-$selector");
+            $out = TemplateCompiler::basicCompileTemplate($template, $dataRec);
 
         } else {
             $templateOptions = TemplateCompiler::sanitizeTemplateOption($confirmationEmailTemplate);
             $template = TemplateCompiler::getTemplate($templateOptions, $selector);
-            $template = TemplateCompiler::compile($template, $dataRec, $templateOptions);
+            $out = TemplateCompiler::compile($template, $dataRec, $templateOptions);
         }
-        return $template;
+        return $out;
     } // getEmailComponent
 
 
