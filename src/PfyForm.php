@@ -1402,7 +1402,10 @@ EOT;
         $message = TransVars::translate($message);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
-        $this->sendMail($to, $subject, $message, 'Notification Mail to Onwer');
+        if (str_contains($to, ',')) {
+            $to = explodeTrim(',', $to);
+        }
+        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Onwer');
     } // notifyOwner
 
 
@@ -2262,7 +2265,7 @@ EOT;
         $message = $this->getEmailComponent('message', $dataRec);
         $to = $dataRec[$this->formOptions['confirmationEmail']]??false;
         if ($to) {
-            $this->sendMail($to, $subject, $message, 'Confirmation Mail to Visitor');
+            $this->sendMail($to, $subject, $message, logComment: 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
         }
         return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-missing }}</div>\n";
@@ -2331,7 +2334,7 @@ EOT;
      * @param string $debugInfo
      * @return void
      */
-    private function sendMail(string $to, string $subject, string $body, string $debugInfo = ''): void
+    private function sendMail(string|array $to, string $subject, string $body, string $cc = '', $html = '', $logComment = ''): void
     {
         $props = [
             'to' => $to,
@@ -2340,9 +2343,27 @@ EOT;
             'subject' => $subject,
             'body' => $body,
         ];
+        if ($cc) {
+            $props['cc'] = $cc;
+        }
+        if ($html) {
+            $props['body'] = [
+                'html' => $html,
+                'text' => $body,
+            ];
+        }
+
+        if (is_array($to)) {
+            $to = implode(',', $to);
+        }
 
         new PHPMailer($props);
-        mylog("$subject\n\n$body", 'mail-log.txt');
+        if ($logComment) {
+            mylog("$logComment $to:\n$subject\n\n$body", 'mail-log.txt');
+
+        } else {
+            mylog("$to:\n$subject\n\n$body", 'mail-log.txt');
+        }
     } // sendMail
 
 
