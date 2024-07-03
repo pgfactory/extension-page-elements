@@ -13,6 +13,7 @@ use Nette\Utils\Html;
 use Kirby\Email\PHPMailer;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
+use PgFactory\PageFactoryElements\TemplateCompiler;
 use RRule\RRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 use function PgFactory\PageFactory\var_r as var_r;
@@ -2248,16 +2249,18 @@ EOT;
         if (!$this->formOptions['confirmationEmail']) {
             return '';
         }
+        $eventData = $this->auxBannerValues;
+        foreach ($eventData as $key => $value) {
+            $value = TransVars::getVariable($value, true);
+            if ($value) {
+                $eventData[$key] = $value;
+            }
+        }
+        $dataRec += $eventData;
 
-        list($subject, $message) = $this->getEmailComponents();
-        $to = $this->propagateDataToVariables($dataRec);
-
-        // handle pattern %varname% -> transform into {{ _varname_ }}:
-        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
-        $message = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $message);
-
-        $subject = TransVars::translate($subject);
-        $message = TransVars::translate($message);
+        $subject = $this->getEmailComponent('subject', $dataRec);
+        $message = $this->getEmailComponent('message', $dataRec);
+        $to = $dataRec[$this->formOptions['confirmationEmail']]??false;
         if ($to) {
             $this->sendMail($to, $subject, $message, 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
@@ -2270,28 +2273,19 @@ EOT;
      * @return array
      * @throws \Exception
      */
-    private function getEmailComponents(): array
+    private function getEmailComponent(string $selector, array $dataRec): string
     {
         $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
         if ($confirmationEmailTemplate === true) {
-            $subject = TransVars::getVariable('pfy-confirmation-response-subject');
-            $template = TransVars::getVariable('pfy-confirmation-response-message');
+            $template = TransVars::getVariable("pfy-confirmation-response-$selector");
 
         } else {
-            $confirmationEmailTemplate1 = resolvePath($confirmationEmailTemplate, relativeToPage: true);
-            if (!is_file($confirmationEmailTemplate1)) {
-                throw new \Exception("Forms confirmationEmail: template  '$confirmationEmailTemplate' not found");
-            }
-            $template = fileGetContents($confirmationEmailTemplate1);
-            if (preg_match("/^subject:(.*?)\n/i", $template, $m)) {
-                $subject = trim($m[1]);
-                $template = trim(str_replace($m[0], '', $template));
-            } else {
-                $subject = '{{ pfy-form-confirmation-email-subject }}';
-            }
+            $templateOptions = TemplateCompiler::sanitizeTemplateOption($confirmationEmailTemplate);
+            $template = TemplateCompiler::getTemplate($templateOptions, $selector);
+            $template = TemplateCompiler::compile($template, $dataRec, $templateOptions);
         }
-        return [$subject, $template];
-    } // getEmailComponents
+        return $template;
+    } // getEmailComponent
 
 
     /**
@@ -2320,6 +2314,9 @@ EOT;
             }
             $value = $value?: TransVars::getVariable('pfy-confirmation-response-element-empty');
             TransVars::setVariable("_{$key}_", $value);
+        }
+        if ($value = ($this->auxBannerValues['eventBanner']??false)) {
+            TransVars::setVariable("_banner_", $value);
         }
 
         return $to;

@@ -29,14 +29,14 @@ pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
 
 pfy-form-owner-notification-body:
   de: |
-    Guten Tag\n
-    Es gibt eine neue {{ pfy-form-owner-notification-label }}:\n
-    %data%\n
+    Guten Tag
+    Es gibt eine neue {{ pfy-form-owner-notification-label }}:
+    %data%
     Beste Grüsse, der Webmaster
   _:  |
-    Hello\n
-    We received a new {{ pfy-form-owner-notification-label }}:\n
-    %data%\n
+    Hello
+    We received a new {{ pfy-form-owner-notification-label }}:
+    %data%
     Best regards, the webmaster
 
 pfy-form-required-info:
