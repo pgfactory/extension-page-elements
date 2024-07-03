@@ -52,6 +52,7 @@ class DataTable
     private array $serviceColArray = [];
     private mixed $editMode;
     private string $sort;
+    private bool $reversed;
     private $minRows;
     private string $export;
     private bool|string $includeSystemElements;
@@ -96,6 +97,7 @@ class DataTable
             $this->data2Dset = new Data2DSet($dataSrc, $options);
         } else {
             $this->tableData = $dataSrc;
+            $this->data2Dset = new Data2DSet(false, $options);
         }
 
         if (isset($_GET['delete']) || isset($_GET['archive'])) {
@@ -134,6 +136,7 @@ class DataTable
         $permission = $options['permission'] ?? false;
 
         $this->sort = $options['sort'] ?? false;
+        $this->reversed = $options['reversed'] ?? false;
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
         $this->includeSystemElements = $options['includeSystemElements'] ?? false;
@@ -249,7 +252,23 @@ class DataTable
      */
     private function prepareTableData(): void
     {
-        $this->tableData = $this->data2Dset->getNormalized2Ddata($this->tableHeaders);
+        if (!$this->tableData) {
+            // fetch data from datasource:
+            $this->tableData = $this->data2Dset->normalizeData(false, '?', $this->tableHeaders);
+
+        } else {
+            // data already exists in $this->tableData -> amend it for table output:
+            $data = [];
+            $data['_hdr'] = $this->tableHeaders;
+            foreach ($this->tableData as $dataRec) {
+                $rec = [];
+                foreach ($this->tableHeaders as $key => $value) {
+                    $rec[$key] = $this->data2Dset->normalizeDataElement($key, $dataRec[$value]??'');
+                }
+                $data[] = $rec;
+            }
+            $this->tableData = $data;
+        }
         if ($this->sort) {
             $this->sortTableData();
         }
@@ -267,6 +286,10 @@ class DataTable
         uasort($table, function ($a,$b) {
             return strcmp($a[$this->sort], $b[$this->sort]);
         });
+
+        if ($this->reversed) {
+            $table = array_reverse($table, true);
+        }
         $this->tableData = $this->tableData + $table;
     } // sortTableData
 
