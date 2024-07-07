@@ -491,7 +491,6 @@ function pfyPopup( options ) {
 
 
   this.open = function () {
-
     this.checkPopupAlreadyOpen();
 
     this.renderButtons();

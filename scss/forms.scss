@@ -324,7 +324,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     top: 0;
     left: 0;
     transform: translate(2em, 2em);
-    width: max-content;
+//    width: max-content;
     max-width: min(33em, 80vw);
     background: $tooltipBg;
     color: $tooltipColor;
@@ -629,6 +629,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     background: rgba(50,50,50,0.8);
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     z-index: 10000;
     .pfy-timeout-img {
       max-width: 40vw;
@@ -704,14 +705,14 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 
   // === RRule ===========================
   .pfy-form-rrule-wrapper {
-    ::marker {
-      content: "";
+    summary {
+      display: block;
     }
   }
   .pfy-form-rrule-body-wrapper {
     border: $formRevealControllerBorder;
     background: $formRevealControllerBg;
-    padding: 1em;
+    padding: 0 1em 1em 1em;
   }
   .pfy-form-rrule-yearly {
     .pfy-choice-wrapper {
