@@ -334,7 +334,7 @@ PfyCalendar.prototype._openExistingEventPopup = function (parent, calObj, calEl)
   pfyFormsHelper.initRepetitionWidget(form);
   let recKey = '';
   if (calEl) {
-    const el = calEl.querySelector('.fc-event-main [data-reckey]');
+    const el = calEl.querySelector('[data-reckey]');
     recKey = el.dataset.reckey;
   }
   parent.presetForm(form, recKey);
@@ -741,7 +741,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
     if (this.clicks === 1) {
       setTimeout(function () {
         if (parent.clicks === 1) {
-          mylog('ignoring single click');
+          //mylog('ignoring single click');
         } else {
           fun(parent, argObj1, argObj2);
         }
