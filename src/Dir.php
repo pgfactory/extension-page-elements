@@ -15,7 +15,7 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 
 const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
-const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
+const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 
 class Dir
 {
@@ -23,7 +23,8 @@ class Dir
     private $path;
     private $origPathLen = '';
     private $id;
-    private $class;
+    private $class = '';
+    private $wrapperClass;
     private $includeFiles;
     private $includeFolders;
     private $exclude;
@@ -39,6 +40,8 @@ class Dir
     private $pattern = '';
     private $replace = '';
     private $templateOptions = [];
+    private string|array $folderTemplate;
+    private string|array $template;
 
 
     public function __construct()
@@ -69,7 +72,15 @@ class Dir
             $goBack = "\n<div class='pfy-dir-go-back'><a href='$href'>{{ pfy-dir-go-back }}</a></div>";
             $header = "<div class='pfy-dir-sub-header'>{{ pfy-dir-sub-folder }}$dirOffset{{ pfy-dir-sub-folder-tail }}</div>";
         }
-        $str = $this->renderDir($path, $pattern);
+
+        if ($this->hierarchical) {
+            $this->template = TemplateCompiler::getTemplate($this->templateOptions);
+            $this->folderTemplate = TemplateCompiler::getTemplate($this->templateOptions, useAsElement: 'folderElement');
+            $str = $this->renderDirHierarchical($path, $pattern, 1);
+
+        } else {
+            $str = $this->renderDir($path, $pattern);
+        }
 
         // case help: list available variables
         if (str_starts_with($str, '<h2>Template-Variables')) {
@@ -78,17 +89,18 @@ class Dir
 
         if ($this->markdown) {
             $md = new MarkdownPlus();
-            $str = $md->compile($str);
+            $str = $md->compile(ltrim($str, "\n"));
         }
 
         if ($str !== '{{ pfy-dir-empty }}') {
             $str = <<<EOT
 
-<div{$this->id}{$this->class}>$header$goBack
+<div{$this->id}{$this->wrapperClass}>$header$goBack
 $str   
 </div>
 EOT;
         }
+
         return $str;
     } // render
 
@@ -103,10 +115,8 @@ EOT;
      * @throws \Twig\Error\RuntimeError
      * @throws \Twig\Error\SyntaxError
      */
-    private function renderDir(string $path, string $pattern, int $level = 1): string
+    private function renderDir(string $path, string $pattern, string $class = ''): string
     {
-        $templateOptions = $this->templateOptions;
-
         if ($this->deep) {
             $dir0 = getDirDeep($path . $pattern);
         } else {
@@ -117,33 +127,6 @@ EOT;
         $str = '';
         $subdir = '';
 
-        $template = TemplateCompiler::getTemplate($templateOptions);
-        $folderTemplate = TemplateCompiler::getTemplate($templateOptions, useAsElement: 'folderElement');
-
-        if ($this->hierarchical) {
-            $dir0 = $this->sortDir($dir0, $this->reverseFolders);
-            foreach ($dir0 as $path2) {
-                if (is_file($path2)) {
-                    continue;
-                }
-                $sub = $this->renderDir($path2, $pattern, $level+1);
-                $fileVars = $this->extractFileDescriptorVars(rtrim($path2, '/'));
-                $label = TemplateCompiler::compile($folderTemplate, $fileVars, $templateOptions);
-
-                // handle '<>', i.e. Accordion pattern:
-                if (preg_match('/\s*&lt;(.*?)&gt;(.*)/', $label, $m)) {
-                    $id = $m[1] ?: $level;
-                    $label = "<$id>{$m[2]}";
-                    $s = "$label\n$sub\n<$id>\n";
-                    $md = new MarkdownPlus();
-                    $s = $md->compile($s);
-                    $subdir .= "<li>$s\n</li>\n";
-                } else {
-                    $subdir .= "<li>$label\n$sub\n</li>\n";
-                }
-            }
-        }
-
         $dir = $this->sortDir($dir);
 
         $data = $this->extractFilesDescriptorVars($dir);
@@ -151,9 +134,10 @@ EOT;
             $data = reset($data);
         }
 
-        $currLevelFiles = TemplateCompiler::compile($template, $data, $templateOptions);
+        $template = TemplateCompiler::getTemplate($this->templateOptions);
+        $currLevelFiles = TemplateCompiler::compile($template, $data, $this->templateOptions);
 
-        $class = "pfy-dir pfy-dir-lvl-$level";
+        $class = ($this->class ?: 'pfy-dir') . " $class";
 
         if ($currLevelFiles && preg_match('/^<(ul|ol)/', $currLevelFiles)) {
             $currLevelFiles = substr($currLevelFiles, 0, 3) . " class='$class'>" . $subdir . substr($currLevelFiles, 4);
@@ -166,6 +150,38 @@ EOT;
         }
         return $str;
     } // renderDir
+
+
+    private function renderDirHierarchical(string $path, string $pattern, int $level = 1): string
+    {
+        $out = '';
+        $folders = getDir($path, type: 'folders');
+        foreach ($folders as $folder) {
+            $subdir = $this->renderDirHierarchical($folder, $pattern, $level+1);
+
+            $fileVars = $this->extractFileDescriptorVars(rtrim($folder, '/'));
+            $templateOptions = $this->templateOptions;
+            $templateOptions['markdown'] = false;
+            $label = TemplateCompiler::compile($this->folderTemplate, $fileVars, $templateOptions);
+            $p = '';
+            if (preg_match('/^(<\d*>\s*)(.*)/', $label, $m)) {
+                $p = $m[1];
+                $label = $m[2];
+            }
+
+            $subdir = <<<EOT
+
+$p$label
+
+$subdir
+$p
+
+EOT;
+            $out .= $this->markdown($subdir);
+        }
+        $out .= $this->renderDir($path, $pattern, "pfy-dir-lvl-$level");
+        return $out;
+    } // renderDirHierarchical
 
 
     /**
@@ -285,6 +301,7 @@ EOT;
         if (file_exists("$file.txt")) {
             $decription = file_get_contents("$file.txt");
         }
+        require_once 'site/plugins/pagefactory-pageelements/src/pe_helper.php';
         $out = [
             'file'          => $file,
             'filename'      => $filename,
@@ -313,22 +330,24 @@ EOT;
     private function parseOptions($args, int $inx): array
     {
         $options = $args;
-        $options['template'] ??= [];
+        if (!isset($options['template'])) {
+            $options['template'] = [];
+        } elseif (is_string($options['template'])) {
+            $options['template'] = [];
+            $options['template']['element'] = $options['template'];
+        }
         $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
         $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
+        $options['template']['markdown'] ??= true;
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
         $templateOptions['noDataAvailableText'] = '';
-
-        if (!isset($options['markdown'])) {
-            $options['markdown'] = true;
-        }
 
         $this->templateOptions = $templateOptions;
 
         $this->path = $args['path'];
         $this->id = $args['id'];
-        $this->class = $args['class'];
+        $this->wrapperClass = $args['class'];
         $this->includeFiles = str_contains(strtolower($args['include']), 'files');
         $this->includeFolders = str_contains(strtolower($args['include']), 'folders');
         $this->exclude = $args['exclude'];
@@ -370,6 +389,7 @@ EOT;
         } else {
             $pattern = '*';
         }
+        $this->pattern = $pattern;
         $this->path = dir_name($this->path);
         if ($this->path) {
             $this->path = fixPath($this->path);
@@ -386,13 +406,20 @@ EOT;
         } elseif ($this->id === false) {
             $this->id = " id='pfy-dir-$inx'";
         }
-        if ($this->class) {
-            $this->class = " class='{$this->class}'";
+        if ($this->wrapperClass) {
+            $this->wrapperClass = " class='{$this->wrapperClass}'";
         }
         $path = resolvePath($this->path);
         preparePath($path);
         return array($path, $pattern);
     } // parseOptions
+
+
+    private function markdown(string $str): string
+    {
+        $md = new MarkdownPlus();
+        return $md->compile($str);
+    } // markdown
 
 } // Dir
 
