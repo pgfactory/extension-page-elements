@@ -166,7 +166,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-input-wrapper {
-    width: calc(100% - #{$labelWidth} - 0.35em);
+    width: calc(100% - #{$labelWidth} - 0.4em);
     max-width: $inputWidth;
 
     input, textarea {
@@ -300,6 +300,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 
   .pfy-label-wrapper {
     position: relative;
+  }
+
+  .pfy-form-hint {
+    margin-top: 1em;
   }
 
   .pfy-form-tooltip-anker {
