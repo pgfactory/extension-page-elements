@@ -263,7 +263,7 @@ class DataTable
             foreach ($this->tableData as $dataRec) {
                 $rec = [];
                 foreach ($this->tableHeaders as $key => $value) {
-                    $rec[$key] = $this->data2Dset->normalizeDataElement($key, $dataRec[$value]??'');
+                    $rec[$key] = $this->data2Dset->normalizeDataElement($key, $dataRec[$key]??($dataRec[$value]??''));
                 }
                 $data[] = $rec;
             }
