@@ -23,6 +23,7 @@ use function PgFactory\PageFactory\writeFile;
 const ENLIST_INFO_ICON      = 'ⓘ';
 const ENLIST_MAIL_ICON      = '✉';
 const ENLIST_ADD_ICON       = '+';
+const ENLIST_MODIFY_ICON    = '✎';
 const ENLIST_DELETE_ICON    = '−';
 const ENLIST_CALENDAR_ICON  = '📅';
 
@@ -328,6 +329,8 @@ EOT;
             } else {
                 $this->datasetName = "List";
             }
+        } else {
+            $this->datasetName =  htmlspecialchars_decode($this->datasetName);
         }
 
         // prepend index to make unique, if necessary:
@@ -369,7 +372,7 @@ EOT;
         $tableClass = $this->customFields ? ' pfy-enlist-custom-fields' : '';
         $tableOptions = [
             'tableClass' => "pfy-enlist-table$tableClass",
-            'tableHeaders' => $tableHeaders,
+            'headers' => $tableHeaders,
             'minRows' => $this->nTotalSlots,
             'announceEmptyTable' => false,
             'dataReference' => true,
@@ -417,6 +420,8 @@ EOT;
                     $tableHeaders[$key] = $key;
                 }
 
+            } elseif ($value['label']??false) {
+                $tableHeaders[$key] = $value['label'];
             } else {
                 $tableHeaders[$key] = $key;
             }
@@ -499,7 +504,11 @@ EOT;
                 }
             }
             if ($rec['Name'] ?? false) {
-                $rowClasses[$i] .= ($this->obfuscate !== true) ? 'pfy-enlist-delete' : 'pfy-enlist-obfuscated';
+                if ($this->editable) {
+                    $rowClasses[$i] .= 'pfy-enlist-modify';
+                } else {
+                    $rowClasses[$i] .= ($this->obfuscate !== true) ? 'pfy-enlist-delete' : 'pfy-enlist-obfuscated';
+                }
 
             } else {
                 if (!$addFieldDone) {
@@ -525,7 +534,12 @@ EOT;
         }
 
         if ($this->obfuscate !== true) {
-            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+            if ($this->editable) {
+                $deleteIcon = '<button type="button" title="{{ pfy-enlist-modify-title }}">' . ENLIST_MODIFY_ICON . '</button>';
+            } else {
+                $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+            }
+//            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
         } else {
             $deleteIcon = '';
         }
@@ -535,6 +549,9 @@ EOT;
             $row = &$data[$i];
             $row['#'] = $i + 1;
             if (str_contains($rowClass, 'delete')) {
+                $row['&nbsp;'] = $deleteIcon;
+                $row['&nbsp; '] = $deleteIcon;
+            } elseif (str_contains($rowClass, 'modify')) {
                 $row['&nbsp;'] = $deleteIcon;
                 $row['&nbsp; '] = $deleteIcon;
             } elseif (str_contains($rowClass, 'add')) {

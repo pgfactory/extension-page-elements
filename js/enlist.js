@@ -46,6 +46,25 @@ const Enlist = {
     } // delButtons
 
 
+    const modifyButtons = this.isEnlistAdmin?
+        document.querySelectorAll('.pfy-enlist-modify button'):
+        document.querySelectorAll('.pfy-enlist-modify');
+
+    if (modifyButtons) {
+      modifyButtons.forEach(function(modifyButton) {
+        modifyButton.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const hasExpiredClass = this.closest('.pfy-enlist-expired');
+          if (hasExpiredClass && !Enlist.isEnlistAdmin) {
+            pfyAlert(`{{ pfy-enlist-deadline-expired-alert }}`);
+          } else {
+            Enlist.openPopup(this, 'modify');
+          }
+        });
+      });
+    } // modifyButtons
+
+
     const sendToAllBtns = document.querySelectorAll('.pfy-enlist-sendmail-button');
     if (sendToAllBtns) {
       const sep = this.isWindows ? ';' : ',';
