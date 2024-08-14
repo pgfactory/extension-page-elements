@@ -21,9 +21,11 @@ return function ($argStr = '')
             'type' => ['[users,variables,macros,subpages,dir] Selects the objects to be listed.', false],
             'page' => ['Defines the page of which to list subpages.', null],
             'path' => ['Defines the path (aka directory) of which to list elements.', null],
-            'selector' => ['[string] Used to select categories of data. Currently just "role"  of users. '.
+            'selector' => ['[string] Used to select categories of data. For "users", specifies a user\'s data field. '.
                 'Also used to select template if multiple are available.', null],
-            'role' => ['Synonyme for "selecdtor".', null],
+            'selectorOp' => ['Defines an operand used in user filtering (e.g. "==", "!=" etc.), .', '!='],
+            'selectorValue' => ['Defines a value used in user filtering.', null],
+            'role' => ['In case of type=user, selects the type of user (admin,staff, etc).".', null],
             'template' => ['File containing a markdown for rendering elements. Can be text or filename (.txt or .yaml).'
                 , null],
             'prefix' => ['Optional text that is rendered before the output.', null],
@@ -69,10 +71,6 @@ EOT,
     $prefix = str_replace('\\n', "\n", $prefix);
     $suffix = $options['suffix'] ?? '';
     $suffix = str_replace('\\n', "\n", $suffix);
-
-    if ($options['role']??false) {
-        $options['selector'] = $options['role'];
-    }
 
     if ($type1 === 'v') {     // variables
         $str = TransVars::renderVariables();

@@ -26,11 +26,6 @@ class ListRenderer
      */
     public static function renderUserList($options): string
     {
-        if ($options['selector']??false) {
-            $options['role'] = $options['selector'];
-        } elseif ($options['role']??false) {
-            $options['selector'] = $options['role'];
-        }
         $users = Utils::getUsers($options); // -> $options['role'] and $options['reversed']
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
