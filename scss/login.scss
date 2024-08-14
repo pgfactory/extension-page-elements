@@ -3,13 +3,22 @@
 #pfy.pfy-default-styling .pfy-encapsulated,
 .pfy-default-styling {
 
-  .pfy-login-wrapper {
-      &.pfy-login-unpw {
-        .pfy-login-otc,
-        .pfy-login-code {
-        display: none;
+    .pfy-login-wrapper {
+      .pfy-form-tooltip {
+        width: 12em;
       }
-    }
+      .pfy-login-unpw,
+      .pfy-login-otc,
+      .pfy-login-code {
+        display: initial;
+      }
+
+      &.pfy-login-unpw {
+          .pfy-login-otc,
+          .pfy-login-code {
+          display: none;
+        }
+      }
 
       &.pfy-login-otc {
         .pfy-login-unpw,
