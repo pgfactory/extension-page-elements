@@ -125,19 +125,28 @@ class TemplateCompiler
      * @return string|array
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    public static function getTemplate(mixed $templateOptions, string $selector = null, string $useAsElement = 'element'): string|array
+    public static function getTemplate(mixed &$templateOptions, string $selector = null, string $useAsElement = 'element'): string|array
     {
         self::$filename = '';
 
         $selector = ($selector??false) ?: ($templateOptions['selector'] ?? '');
         $templates = $templateOptions['templates']??false;
         if ($templates) {
-            $template = self::selectTemplate($templates, $selector, $useAsElement);
+            list($tmplateToUse, $tmplateRec) = self::selectTemplate($templates, $selector, $useAsElement);
+
+            // $tmplateRec may contain additional values, such as prefix or suffix -> propagate to $templateOptions:
+            if (is_array($tmplateRec)) {
+                foreach ($tmplateRec as $key => $value) {
+                    if (isset($templateOptions[$key])) {
+                        $templateOptions[$key] = $value;
+                    }
+                }
+            }
         } else {
-            $template = $templateOptions[$useAsElement]??'';
+            $tmplateToUse = $templateOptions[$useAsElement]??'';
         }
 
-        return $template;
+        return $tmplateToUse;
     } // getTemplate
 
 
@@ -169,7 +178,19 @@ class TemplateCompiler
         }
 
         if ($templateOptions['file']) {
-            $templateOptions['templates'] = loadFile($templateOptions['file']);
+            $templ = loadFile($templateOptions['file']);
+            if (is_array($templ)) {
+                foreach ($templ as $key => $value) {
+                    if (is_string($value)) {
+                        $templ[$key] = str_replace(['\\n', '\\t'], ["\n", "\t"], $templ[$key]);
+                    } else {
+                        foreach ($value as $k => $v) {
+                            $templ[$key][$k] = str_replace(['\\n', '\\t'], ["\n", "\t"], $templ[$key][$k]);
+                        }
+                    }
+                }
+            }
+            $templateOptions['templates'] = $templ;
         }
 
         if ($templateOptions['mode'] === null) {
@@ -321,12 +342,14 @@ class TemplateCompiler
     /**
      * @param array|string $template
      * @param string|null $selector
+     * @param string $useAsElement
      * @return string|array
      */
     private static function selectTemplate(array|string $template, string $selector = null, string $useAsElement = 'element'): string|array
     {
+        $selectedTemplate = $template;
         if (is_string($template)) {
-            return $template;
+            return [$selectedTemplate, $template];
         }
 
         if (isset($template[$selector])) {
@@ -337,12 +360,14 @@ class TemplateCompiler
 
         if (is_array($template)) {
             if (isset($template[$useAsElement])) {
-                $template = $template[$useAsElement];
+                $selectedTemplate = $template[$useAsElement];
             } else {
-                $template = reset($template);
+                $selectedTemplate = reset($template);
             }
+        } else {
+            $selectedTemplate = $template;
         }
-        return $template;
+        return [$selectedTemplate, $template];
     } // selectTemplate
 
 
