@@ -462,7 +462,12 @@ const pfyFormsHelper = {
     const parent = this;
     const duration = parseInt(field.dataset.eventDuration ?? '');
     const relatedField = field.dataset.relatedField ?? '';
-    const $startDate = form.querySelector('[name='+relatedField+']');
+    let $startDate;
+    if (relatedField) {
+      $startDate = form.querySelector('[name=' + relatedField + ']');
+    } else {
+      $startDate = form.querySelector('[name=start]');
+    }
     const preset = $startDate.dataset.preset ?? false;
     const now = new Date();
     const nextFullHour = parent.roundUpMinutes(now);
