@@ -254,7 +254,7 @@ class DataTable
     {
         if (!$this->tableData) {
             // fetch data from datasource:
-            $this->tableData = $this->data2Dset->normalizeData(false, '?', $this->tableHeaders);
+            $this->tableData = $this->data2Dset->normalizeData(false, $this->placeholderForUndefined, $this->tableHeaders);
 
         } else {
             // data already exists in $this->tableData -> amend it for table output:
