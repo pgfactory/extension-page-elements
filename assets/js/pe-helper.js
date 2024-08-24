@@ -35,7 +35,7 @@ function camelize(str) {
 
 function reloadAgent( arg, url, confirmMsg ) {
     let newUrl = window.location.pathname.replace(/\?.*/, '');
-    if (typeof url !== 'undefined') {
+    if (typeof url !== 'undefined' && url) {
         newUrl = url.trim();
         if (!newUrl || newUrl === '/') {
           newUrl = hostUrl;
@@ -43,7 +43,7 @@ function reloadAgent( arg, url, confirmMsg ) {
           newUrl = pageUrl + newUrl.substring(2);
         }
     }
-    if (typeof arg !== 'undefined') {
+    if (typeof arg !== 'undefined' && arg) {
         newUrl = appendToUrl(newUrl, arg);
     }
 
