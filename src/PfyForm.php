@@ -305,7 +305,7 @@ class PfyForm extends Form
 
         // special case: type literal -> just output literal
         if (($rec['type']??false) === 'literal') {
-            return $rec['html'];
+            return $rec['html']??'';
         }
 
         $_name = strtolower($name);
@@ -372,6 +372,14 @@ class PfyForm extends Form
             } else {
                 $class .= ' pfy-required-group';
                 $attr .= " data-required-group='{$rec['required']}'";
+            }
+        }
+
+        // handle option "category" -> to hide form elements not belonging to given category
+        if (preg_match('/data-category="(.*?)"/', $input, $m)) {
+            $categories = explodeTrim(',',$m[1]);
+            foreach ($categories as $category) {
+                $class .= " pfy-for-category-$category";
             }
         }
 
@@ -644,6 +652,11 @@ EOT;
         // handle 'wrapperId' option:
         if ($wrapperId = ($elemOptions['wrapperId']??false)) {
             $elem->setHtmlAttribute('data-wrapper-id', $wrapperId);
+        }
+
+        // handle 'category' option:
+        if ($showForCategory = ($elemOptions['category']??false)) {
+            $elem->setHtmlAttribute('data-category', $showForCategory);
         }
 
         // handle 'antiSpam' option:
