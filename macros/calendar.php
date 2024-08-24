@@ -38,8 +38,7 @@ return function ($args = '')
             'fullCalendarOptions' => ['[string] Will be passed through to the FullCalendar object (see https://fullcalendar.io/docs#toc)', ''],
             'keepDataDuration' => ['[month] Defines the time after which older events are discarded and '.
                 'moved to an archive file.', 1],
-            'form' => ['.', null],
-            'customfields' => ['.', null],
+            'form' => ['Definition of form fields.', null],
             'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', false],
 //            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],
 //            'publishCallback' => ['[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false],
@@ -73,9 +72,35 @@ EOT,
     // assemble output:
     $str .= "\n<!-- calendar -->\n";
 
-    $cal = new Calendar($options, $auxOptions);
+    $cal = new Calendar($options);
     $str .= $cal->render();
     $str .= "<!-- /calendar -->\n\n";
+
+    // if categories are defined, inject styles to show/hide associated form fields
+    // (in form field def: e.g. category='public')
+    if ($options['categories']??false) {
+        $categories = explodeTrim(',', $options['categories'], excludeEmptyElems: true);
+        $style = '';
+        $style2 = '';
+        foreach ($categories as $category) {
+            $style .= ".pfy-for-category-$category,\n";
+            $style2 .= <<<EOT
+.pfy-category-$category .pfy-for-category-$category {
+    display: initial;
+}
+
+EOT;
+
+        }
+        $style = rtrim($style, ",\n");
+        $style = <<<EOT
+$style {
+    display: none;
+}
+$style2
+EOT;
+        PageFactory::$pg->addCss($style);
+    }
 
     return $str; // return [$str]; if result needs to be shielded
 };
