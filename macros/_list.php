@@ -21,11 +21,10 @@ return function ($argStr = '')
             'type' => ['[users,variables,macros,subpages,dir] Selects the objects to be listed.', false],
             'page' => ['Defines the page of which to list subpages.', null],
             'path' => ['Defines the path (aka directory) of which to list elements.', null],
-            'selector' => ['[string] Used to select categories of data. For "users", specifies a user\'s data field. '.
-                'Also used to select template if multiple are available.', null],
-            'selectorOp' => ['Defines an operand used in user filtering (e.g. "==", "!=" etc.), .', '!='],
-            'selectorValue' => ['Defines a value used in user filtering.', null],
-            'role' => ['In case of type=user, selects the type of user (admin,staff, etc).".', null],
+
+            'usersOptions' => ['(array) Special options when listing users. '.
+                ' Supported sub-options:  "role", "selector", "selectorOp", "selectorValue","sort", "reversed". '.
+                '<br>Example: "usersOptions: {role:staff, sort:lastname}" ', null],
             'template' => ['File containing a markdown for rendering elements. Can be text or filename (.txt or .yaml).'
                 , null],
             'prefix' => ['Optional text that is rendered before the output.', null],
@@ -82,6 +81,9 @@ EOT,
         $class = 'pfy-macros';
 
     } elseif ($type1 === 'u') {   // users
+        if ($usersOptions = ($options['usersOptions']??[])) {
+            $options = array_merge($options, $usersOptions);
+        }
         $str = ListRenderer::renderUserList($options);
         $class = 'pfy-users';
         $markdown = !($markdown === null) && ($options['markdown']??false);
