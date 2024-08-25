@@ -14,7 +14,8 @@ use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 
-const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
+const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
+
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 
 class Dir
@@ -289,7 +290,7 @@ EOT;
             $filename = preg_replace($this->pattern, $this->replace, $filename);
         }
         $basename   = base_name($filename, false);
-        $basename   = str_replace(['(', ')'], ['&#40;', '&#41;'], $basename);
+        $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
         $label      = str_replace('_', ' ', $basename);
         $type       = is_file($file)? 'file' : 'folder';
         $path       = dirname($file) . '/';
