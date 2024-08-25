@@ -29,7 +29,7 @@ class ListRenderer
         $users = Utils::getUsers($options); // -> $options['role'] and $options['reversed']
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
-        $template = TemplateCompiler::getTemplate($templateOptions, $options['selector']);
+        $template = TemplateCompiler::getTemplate($templateOptions, $options['selector']??'');
         $str = TemplateCompiler::compile($template, $users, $templateOptions);
 
         if (!$str) {
