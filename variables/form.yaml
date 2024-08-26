@@ -24,21 +24,22 @@ pfy-form-owner-notification-label: #Neue Anemldung auf host.net
   _:  sign-up
 
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
-  de: Neue {{ pfy-form-owner-notification-label }} auf %host%
-  _:  New {{ pfy-form-owner-notification-label }} on %host%
+  de: {{ pfy-form-owner-notification-label }} auf %host%
+  _:  {{ pfy-form-owner-notification-label }} on %host%
 
 pfy-form-owner-notification-body:
   de: |
     Guten Tag
-    Es gibt eine neue {{ pfy-form-owner-notification-label }}:
+    Es gibt eine {{ pfy-form-owner-notification-label }}:
     %data%
     Beste Grüsse, der Webmaster
   _:  |
     Hello
-    We received a new {{ pfy-form-owner-notification-label }}:
+    We received a {{ pfy-form-owner-notification-label }}:
     %data%
     Best regards, the webmaster
 
+#
 pfy-form-required-info:
   de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben.'
   _:  '<span class="pfy-form-required-marker">*</span> Required input.'

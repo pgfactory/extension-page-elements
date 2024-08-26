@@ -2301,6 +2301,7 @@ EOT;
             $template = TemplateCompiler::getTemplate($templateOptions, $selector);
             $out = TemplateCompiler::compile($template, $dataRec, $templateOptions);
         }
+        $out = str_replace([' BR ', '\\n'], "\n", $out);
         return $out;
     } // getEmailComponent
 
