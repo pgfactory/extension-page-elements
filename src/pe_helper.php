@@ -56,8 +56,10 @@ function intlDate(string $format, mixed $time = false): string
 {
     $format = resolveYearPlaceholder($format);
     $time = $time ?: time();
-    if (is_string($time)) {
+    if (!is_numeric($time)) {
         $time = strtotime($time);
+    } elseif (is_string($time)) {
+        $time = intval($time);
     }
 
     // simple ISO format:
@@ -278,3 +280,58 @@ function sizetostr(int|string $arg, int $precision = 1): string
         return round($size/1073741824, $precision).' GB';
     }
 } // sizetostr
+
+
+
+/**
+ * Resolves a format string to current values.
+ *   Supports date() type arguments (e.g. 'Y-m-d' or 'Y2-m-d').
+ *   Special case: 'Yn' (where n=number) -> flips year to next year when month is greater than 12-n.
+ *   Example: Y2 returns next year when called in November or December, otherwise the current year.
+ *   Values M (=Jan), F (=January), D (=Mon), l (=Monday) are translated to local language
+ */
+function resolveTimePlaceholders(string $str, $returnUnixTime = true): string|int
+{
+    if (preg_match('/\( (.*?) \)/xu', $str, $m)) {
+        $str = str_replace($m[0], '', $str); // remove modifier
+
+        // determine reference time:
+        $offsetExpr = $m[1];
+        if (preg_match('/^\s*([-+]?)(\d+)(\w+)/', $offsetExpr, $mm)) {
+            if (!($sign = $mm[1])) {
+                $sign = '+';
+            }
+            switch ($unit = strtolower($mm[3])) {
+                case 'y':
+                    $unit = 'years';
+                    break;
+                case 'm':
+                    $unit = 'months';
+                    break;
+                case 'd':
+                    $unit = 'days';
+                    break;
+            }
+            $offsetExpr = "$sign{$mm[2]}$unit";
+            $tRef = strtotime($offsetExpr);
+        } else {
+            $tRef = time();
+        }
+
+    // legacy format "Yn-m-d":
+    } elseif (preg_match('/Y(\d+)/', $str, $m)) {
+        $str = str_replace($m[0], 'Y', $str);
+        $offsetExpr = "+{$m[1]}days";
+        $tRef = strtotime($offsetExpr);
+    } else {
+        $tRef = time();
+    }
+    $str = str_replace(['Y', 'm', 'd'], [date('Y', $tRef), date('m', $tRef), date('d', $tRef)], $str);
+
+    if ($returnUnixTime) {
+        $t = strtotime($str);
+        return $t;
+    } else {
+        return $str;
+    }
+} // resolveTimePlaceholders
