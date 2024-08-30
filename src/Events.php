@@ -110,7 +110,7 @@ class Events extends DataSet
     {
         // simple pattern, such as current year (='Y'):
         if ($this->options['timePattern']??false) {
-            return $this->resolveTimePlaceholders($this->options['timePattern'], false);
+            return resolveTimePlaceholders($this->options['timePattern'], false);
         }
 
         $options = $this->options;
@@ -134,11 +134,11 @@ class Events extends DataSet
         }
 
         // start and end dates, resp. count (optional):
-        $from = ($options['from']??false)? $this->resolveTimePlaceholders($options['from'], false) : time();
+        $from = ($options['from']??false)? resolveTimePlaceholders($options['from'], false) : time();
         if ($from && !is_numeric($from)) {
             $from = strtotime($from);
         }
-        $till = ($options['till']??false)? $this->resolveTimePlaceholders($options['till'], false) : false;
+        $till = ($options['till']??false)? resolveTimePlaceholders($options['till'], false) : false;
         if ($till && !is_numeric($till)) {
             $till = strtotime($till);
         }
@@ -219,7 +219,7 @@ class Events extends DataSet
         if ($exceptionsStr) {
             $rawExceptions = explodeTrim(',;', $exceptionsStr);
             foreach ($rawExceptions as $rawException) {
-                $exception = $this->resolveTimePlaceholders($rawException, false);
+                $exception = resolveTimePlaceholders($rawException, false);
                 if (str_contains($exception, ' - ')) {
                     list($from, $till) = explode(' - ', $exception);
                     $from = strtotime($from);
@@ -312,7 +312,7 @@ class Events extends DataSet
         $from = $options['from']??0;
 
         if ($from) {
-            $targetDateT = $this->resolveTimePlaceholders($from);
+            $targetDateT = resolveTimePlaceholders($from);
         } else {
             $targetDateT = strtotime(date('Y-m-d ')); // round down to last midnight
         }
@@ -347,11 +347,14 @@ class Events extends DataSet
     private function selectEvents($sortedData): array
     {
         $first = $this->findEvent($sortedData);
+        if ($first === false) {
+            return [];
+        }
 
         $till = $this->options['till'];
         if ($till) {
             if (is_string($till)) {
-                $till = $this->resolveTimePlaceholders($till);
+                $till = resolveTimePlaceholders($till);
             }
             $count = 999;
         } else {
@@ -376,38 +379,6 @@ class Events extends DataSet
         }
         return $events;
     } // selectEvents
-
-
-    /**
-     * Resolves a format string to current values.
-     *   Supports date() type arguments (e.g. 'Y-m-d' or 'Y2-m-d').
-     *   Special case: 'Yn' (where n=number) -> flips year to next year when month is greater than 12-n.
-     *   Example: Y2 returns next year when called in November or December, otherwise the current year.
-     *   Values M (=Jan), F (=January), D (=Mon), l (=Monday) are translated to local language
-     * @param $str
-     * @return false|int
-     */
-    private function resolveTimePlaceholders(string $str, $strtotime = true): string
-    {
-        if (preg_match('/Y(\d+)/', $str, $m)) {
-            $y = date('Y');
-            $d = intval($m[1]);
-            if ($d) {
-                $dayOfYear = intval(date('z'));
-                if ($dayOfYear > (365 - $d)) {
-                    $y += 1;
-                }
-            }
-            $str = str_replace($m[0], (string)$y, $str);
-        }
-        $str = intlDate($str);
-
-        if ($strtotime) {
-            return strtotime($str);
-        } else {
-            return $str;
-        }
-    } // resolveTimePlaceholders
 
 
     /**
