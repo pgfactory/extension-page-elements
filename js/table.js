@@ -151,7 +151,7 @@ const tableHelper = {
         mylog('MailTo: ' + mailAddresses);
         const to = (typeof formOwnerEmail !== 'undefined') ? formOwnerEmail : 'me@domain.net';
         const url = `mailto:${to}?bcc=${mailAddresses}`;
-        window.open(url,"_blank");
+        window.location.href = url;
       });
     }
   }, // setupOpenCreateMailDialog
