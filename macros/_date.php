@@ -7,15 +7,16 @@ namespace PgFactory\PageFactory;
 
 use function PgFactory\PageFactoryElements\intlDate;
 use function PgFactory\PageFactoryElements\intlDateFormat;
+use function PgFactory\PageFactoryElements\resolveTimePlaceholders;
 
-return function ($args = '')
-{
+return function ($args = '') {
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
     $config = [
         'options' => [
             'format' => ['Defines how to render the date.', false],
             'date' => ['[ISO-datetime] Defines the date/time to render.', false],
+            'default' => ['[ISO-datetime] Returned if format or date is missing.', false],
             'intlDateFormat' => ['If true, "IntlDateFormatter" format is used.', false],
         ],
         'summary' => <<<EOT
@@ -40,20 +41,16 @@ EOT,
     }
 
     // assemble output:
-    $format = $options['format']??false;
+    $format = $options['format'] ?? false;
     if (!$format) {
-        return $str;
+        return $options['default'] ?? '';
     }
     if (!$date = ($options['date']??false)) {
         $t = time();
     } else {
-        if ($date[0] === '-') {
-            $date = date('Y-m') . '-01 ' . $date;
-        } elseif ($date[0] !== '+') {
-            $date = '+' . $date;
-        }
-        $t = strtotime($date);
+        $t = resolveTimePlaceholders($date);
     }
+
     if ($options['intlDateFormat']??false) {
         $str .= intlDateFormat($format, $t);
     } else {
