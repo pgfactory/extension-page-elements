@@ -36,11 +36,20 @@ EOT,
     }
 
     // assemble output:
+    $default = $options['default']??'';
+
     if ($urlArgName = ($options['name']??false)) {
         if (isset($_GET[$urlArgName])) {
             $value = $_GET[$urlArgName];
+            if ($default && !$value) {
+                $value = $default;
+            }
             TransVars::setVariable($urlArgName, $value);
             $str .= $value;
+
+        } else {
+            TransVars::setVariable($urlArgName, $default);
+            $str .= $default;
         }
     }
 
