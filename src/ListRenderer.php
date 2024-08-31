@@ -28,10 +28,20 @@ class ListRenderer
     {
         $users = Utils::getUsers($options); // -> $options['role'] and $options['reversed']
 
-        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
-        $template = TemplateCompiler::getTemplate($templateOptions, $options['selector']??'');
-        $str = TemplateCompiler::compile($template, $users, $templateOptions);
+        if ($options['table']??false) {
+            $tableOptions = $options['table']??[];
+            if (!($tableOptions['tableHeaders']??false)) {
+                if ($rec0 = reset($users)) {
+                    $tableOptions['tableHeaders'] = array_keys($rec0);
+                }
+            }
+            $str = self::renderUserTable($users, $tableOptions);
 
+        } else {
+            $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template'] ?? []);
+            $template = TemplateCompiler::getTemplate($templateOptions, $options['selector'] ?? '');
+            $str = TemplateCompiler::compile($template, $users, $templateOptions);
+        }
         if (!$str) {
             $text = TransVars::getVariable('pfy-list-empty', true);
             $str = "<div class='pfy-list-empty'>$text</div>";
@@ -181,6 +191,14 @@ class ListRenderer
         $out = TemplateCompiler::compile($template, $data, $templateOptions);
         return $out;
     } // renderFolderContent
+
+
+    private static function renderUserTable(array $users, array $options): string
+    {
+        $dt = new DataTable($users, $options);
+        $out = $dt->render();
+        return $out;
+    } // renderUserTable
 
 
     /**
