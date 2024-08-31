@@ -23,8 +23,9 @@ return function ($argStr = '')
             'path' => ['Defines the path (aka directory) of which to list elements.', null],
 
             'usersOptions' => ['(array) Special options when listing users. '.
-                ' Supported sub-options:  "role", "selector", "selectorOp", "selectorValue","sort", "reversed". '.
-                '<br>Example: "usersOptions: {role:staff, sort:lastname}" ', null],
+                ' Supported sub-options:  "role", "selector", "selectorOp", "selectorValue","sort", "reversed" and "table".<br> '.
+                '"table" causes rendering as a Table (instead of using templates). '.
+                '<br>Example: "usersOptions: {role:staff, sort:lastname}, table:(interactive:true)" ', null],
             'template' => ['File containing a markdown for rendering elements. Can be text or filename (.txt or .yaml).'
                 , null],
             'prefix' => ['Optional text that is rendered before the output.', null],
