@@ -34,6 +34,7 @@ class DataTable
 {
     private $tableData;
     private $tableHeaders;
+    private bool $translateHeaders;
     private $tableClass;
     private $tdClass;
     private $tableWrapperClass;
@@ -44,7 +45,7 @@ class DataTable
     private $footers;
     private string $caption;
     private string $captionAbove;
-    private string $interactive;
+    private string|bool $interactive;
     private string|bool $scrollable;
     private string $showRowNumbers;
     private mixed $showRowSelectors;
@@ -127,6 +128,7 @@ class DataTable
         $this->showRowSelectors = $options['showRowSelectors'] ?? false;
 
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
+        $this->translateHeaders = $options['translateHeaders'] ?? false;
         $this->editMode = ($options['editMode']??false) ?: 'inpage';
         $this->announceEmptyTable = $options['announceEmptyTable'] ?? true;
         if ($this->editMode === 'popup') {
@@ -480,7 +482,8 @@ class DataTable
                 }
             }
             $this->elementLabels[] = $c;
-            if (!preg_match('/[^-\w\s]/', $elem)) {
+            if ($this->translateHeaders) {
+                // original:  if (!preg_match('/[^-\w\s]/', $elem)) {
                 if ($e = TransVars::getVariable($elem)) {
                     $elem = $e;
                 }
