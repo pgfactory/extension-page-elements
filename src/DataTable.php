@@ -96,9 +96,10 @@ class DataTable
         if (is_string($dataSrc)) {
             $this->file = $dataSrc;
             $this->data2Dset = new Data2DSet($dataSrc, $options);
-        } else {
+        } elseif (is_array($dataSrc)) {
             $this->tableData = $dataSrc;
-            $this->data2Dset = new Data2DSet(false, $options);
+            $options['tableName'] = ($options['tableName']??false) ?: "table-$this->inx";
+            $this->data2Dset = new Data2DSet($dataSrc, $options);
         }
 
         if (isset($_GET['delete']) || isset($_GET['archive'])) {
@@ -822,7 +823,7 @@ EOT;
     {
         $button = '';
         $appUrl = PageFactory::$appUrl;
-        if (DataSet::$officeFormatAvailable) {
+        if (DataSet::checkOfficeFormatIsAvailable()) {
             $file = $this->exportDownloadDocs();
             $filename = basename($file);
             $icon = renderIcon('cloud_download_alt');
