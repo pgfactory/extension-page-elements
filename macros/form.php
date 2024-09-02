@@ -200,7 +200,7 @@ All:
 : - label   >> [string] 
 : - placeholder   >> [string] 
 : - preset   >> [any] initial value (also: 'default' or 'value')
-: - required    >> [bool]
+: - required    >> [bool,identifier]
 : - disabled    >> [bool]
 : - readonly    >> [bool]
 : - info        >> [string] info icon showing info text as tooltip
