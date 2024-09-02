@@ -2076,7 +2076,7 @@ EOT;
         $errorsFound = false;
         $requiredGroups = [];
         foreach ($dataRec as $key => $value) {
-            if (($required = ($this->formElements[$key]['required']??false)) && (is_string($required))) {
+            if (($required = ($this->formElements[$key]['required']??false)) && (!is_bool($required))) {
                 $requiredGroups[$required]['names'][] = $key;
                 if (!isset($requiredGroups[$required]['all-empty'])) {
                     $requiredGroups[$required]['all-empty'] = true;
