@@ -105,6 +105,12 @@ $focus-color: orange;
     margin: 0.5em 0;
     padding-left: 0.5em;
   }
-
+  
+  .dataTables_wrapper {
+    .dataTables_length, 
+    .dataTables_filter {
+      text-align: right;
+    }
+  }
 } // pfy-encapsulated
 
