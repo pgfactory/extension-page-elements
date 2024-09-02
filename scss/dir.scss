@@ -15,18 +15,18 @@
 
     .mdp-accordion {
       .mdp-accordion-body {
-        padding-left: calc(1.6rem + var(--mdp-accordion-summary-indent, 0rem));
+        padding-left: calc(1.6em + var(--mdp-accordion-summary-indent, 0rem));
       }
 
       summary {
         padding-top: var(--mdp-accordion-summary-padding, 0rem);
         padding-bottom: var(--mdp-accordion-summary-padding, 0rem);
-        padding-left: calc(1.2rem + var(--mdp-accordion-summary-indent, 0rem));
+        padding-left: calc(1.2em + var(--mdp-accordion-summary-indent, 0rem));
       }
 
       summary:before {
         content: '+'; //'▹';
-        transform-origin: 0.3rem 50%;
+        transform-origin: 0.3em 50%;
         transition: 0.2s transform ease;
       }
 
