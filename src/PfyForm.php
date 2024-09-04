@@ -738,6 +738,12 @@ EOT;
         if ($elemOptions['splitOutput']??false) {
             $this->addFieldNames($name, $radioElems);
         }
+
+        if ($elemOptions['revealTarget']??false) {
+            PageFactory::$pg->addAssets('REVEAL');
+            $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
+        }
+
         return $elem;
     } // addRadioElem
 

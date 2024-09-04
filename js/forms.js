@@ -138,8 +138,14 @@ const pfyFormsHelper = {
           revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
         }
 
-        revealController.addEventListener('change', function(el) {
-          const open = el.target.checked;
+        revealController.addEventListener('change', function(ev) {
+          const inpEl = ev.target;
+          let open = inpEl.checked;
+
+          // case radio: option with value == 'true' opens reveal target:
+          if (inpEl.type === 'radio' && inpEl.value !== 'true') {
+            open = false;
+          }
           if (open) {
             pfyReveal.reveal(revealContainer, revealController);
           } else {
