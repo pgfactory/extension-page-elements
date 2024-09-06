@@ -1,9 +1,11 @@
 <?php
 
 namespace PgFactory\PageFactoryElements;
+use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
+use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\createHash;
 use function \PgFactory\PageFactory\getDir;
 use function \PgFactory\PageFactory\rrmdir;
@@ -36,6 +38,7 @@ class PageElements
         $this->handleCssRefactor();
         $this->initTooltips();
         $this->cleanDownloadFolder();
+        self::initOnboardingAid();
     } // __construct
 
 
@@ -171,6 +174,7 @@ EOT;
 
 
     /**
+     * Called from Extensions::loadExtensions()
      * @return void
      * @throws \Exception
      */
@@ -185,6 +189,62 @@ EOT;
                 PageFactory::$pg->overrideContent($html);
             }
         }
+
+        // handle ?onboardingaid:
+        //   => request later handled by Login::loginCallback()
+        if (isset($_GET['onboardingaid'])) {
+            self::renderOnboardingAid();
+        }
     } // handleUrlRequests
+
+
+    static function initOnboardingAid(): void
+    {
+        $str = '';
+        if (Permission::isLoggedIn()) {
+            $str = <<<EOT
+<a href="./?onboardingaid" class="pfy-login-button pfy-onboardingaid" title="{{ pfy-onboardingaid-title }}">
+<svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 1)">
+<path d="m6.5 17.5h4"></path><path d="m8.5 4c2.4852814 0 4.5 2.01471863 4.5 4.5 0 1.7663751-1.017722 3.2950485-2.4987786 4.031633l-.0012214.968367c0 1.1045695-.8954305 2-2 2s-2-.8954305-2-2l-.00021218-.9678653c-1.48160351-.7363918-2.49978782-2.2653584-2.49978782-4.0321347 0-2.48528137 2.01471863-4.5 4.5-4.5z">
+</path><path d="m8.5 1.5v-1"></path><path d="m13.5 3.5 1-1"></path><path d="m2.5 3.5 1-1" transform="matrix(-1 0 0 1 6 0)"></path><path d="m13.5 13.5 1-1" transform="matrix(1 0 0 -1 0 26)"></path><path d="m2.5 13.5 1-1" transform="matrix(-1 0 0 -1 6 26)">
+</path><path d="m1.5 7.5h-1"></path><path d="m16.5 7.5h-1"></path></g></svg>
+</a>
+
+EOT;
+        }
+        TransVars::setVariable('pfy-onboardingaid-icon', $str);
+    } // onboardingaid
+
+
+    static function renderOnboardingAid(): void
+    {
+        if ($user = kirby()->user()) {
+            self::getAccessLink($user);
+            $str = <<<EOT
+
+<section class="pfy-section-wrapper">
+<div class="pfy-onboardingaid">
+{{ pfy-onboardingaid-text }}
+</div>
+</section>
+
+EOT;
+            $html = TransVars::compile($str);
+            PageFactory::$pg->overrideContent($html);
+        }
+    } // renderOnboardingAid
+
+
+    static function getAccessLink($user)
+    {
+        $link = '';
+        if ($content = $user->content()) {
+            if ($data = $content->data()) {
+                $accessCode = $data['accesscode'];
+                $link = PageFactory::$absPageUrl."?a=$accessCode";
+            }
+        }
+        TransVars::setVariable('pfy-user-accesslink', $link);
+    } // getAccessLink
 
 } // PageElements

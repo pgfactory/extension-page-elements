@@ -1,0 +1,73 @@
+
+# onboardingaid
+
+
+pfy-onboardingaid-title:
+  de: 'Onboarding-Hilfe öffnen'
+  _: 'Open onboarding help'
+
+pfy-onboardingaid-text:
+  de: |
+    ## Persönlicher Zugangs-Link
+
+    Mit diesem Link öffnen Sie die (vorherige) Seite und sind gleich angemeldet:
+    
+    {{ link('{{ pfy-user-accesslink }}', class:pfy-onboarding-link) }}
+
+    {{ vgap }}
+
+    Achtung: Wer immer diesen Link kennt, kann sich damit anmelden.  
+    Bitte <strong>vertraulich</strong> behandeln!
+
+    {{ vgap }}
+    **Tipp: Speichern für spätere Wiederverwendung**
+
+    1. Link anklicken <br>
+       -> Seite wird neu geladen<br>
+       -> Zugangs-Link erscheint in der Adresszeile des Browsers
+    1. Seite als Lesezeichen/Favorit speichern <br> 
+      -> Stern-Symbol in der Adresszeile des Browsers verwenden
+
+  de2: |
+    ## Persönlicher Zugangs-Link
+
+    Mit diesem Link öffnest du die (vorherige) Seite und bist gleich angemeldet:
+    
+    {{ link('{{ pfy-user-accesslink }}', class:pfy-onboarding-link) }}
+
+    {{ vgap }}
+
+    Achtung: Wer immer diesen Link kennt, kann sich damit anmelden.  
+    Bitte <strong>vertraulich</strong> behandeln!
+
+    {{ vgap }}
+    **Tipp: Speichern für spätere Wiederverwendung**
+
+    1. Link anklicken <br>
+       -> Seite wird neu geladen<br>
+       -> Zugangs-Link erscheint in der Adresszeile des Browsers
+    1. Seite als Lesezeichen/Favorit speichern <br> 
+      -> Stern-Symbol in der Adresszeile des Browsers verwenden
+
+  _: |
+    ## Private Access-Link
+
+    This link opens the (previous) page, automatically loggin in:
+    
+    {{ link('{{ pfy-user-accesslink }}', class:pfy-onboarding-link) }}
+
+    {{ vgap }}
+
+    Attention: Whoever knows this link can log into this website.
+    Please keep it <strong>strictly confidential</strong>!
+
+    {{ vgap }}
+    **Tip: save it for later re-use**
+
+    1. Click on link<br>
+       -> page is loaded<br>
+       -> Access-Link appears in address field of your browser
+    1. Save as bookmark/favorite<br> 
+      -> star-symbol in your browser's address field
+
+
