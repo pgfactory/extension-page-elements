@@ -33,6 +33,17 @@ class Login
         if (str_starts_with(self::$selfLink, './')) {
             self::$selfLink = PageFactory::$pageUrl . substr(self::$selfLink, 2);
         }
+
+        // check url for arg 'next':
+        $session = kirby()->session();
+        if ($_GET['next']??false) {
+            $options['nextPage'] = $_GET['next'];
+            $session->set('pfy.loginNextPage', $options['nextPage']);
+        } elseif ($next = $session->get('pfy.loginNextPage')) {
+            $options['nextPage'] = $next;
+            $session->remove('pfy.loginNextPage');
+        }
+
         $nextPage = ($options['nextPage']??false) ?: ($options['next']??false);
         if ($nextPage) {
             if (str_starts_with($nextPage, './')) {
