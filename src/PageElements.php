@@ -141,6 +141,10 @@ class PageElements
     } // addAssets
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     protected function initTooltips(): void
     {
         PageFactory::$pg->addAssets('TOOLTIPS');
@@ -198,12 +202,16 @@ EOT;
     } // handleUrlRequests
 
 
+    /**
+     * @return void
+     */
     static function initOnboardingAid(): void
     {
         $str = '';
+        $url = PageFactory::$absPageUrl;
         if (Permission::isLoggedIn()) {
             $str = <<<EOT
-<a href="./?onboardingaid" class="pfy-login-button pfy-onboardingaid" title="{{ pfy-onboardingaid-title }}">
+<a href="$url?onboardingaid" class="pfy-login-button pfy-onboardingaid" title="{{ pfy-onboardingaid-title }}">
 <svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 1)">
 <path d="m6.5 17.5h4"></path><path d="m8.5 4c2.4852814 0 4.5 2.01471863 4.5 4.5 0 1.7663751-1.017722 3.2950485-2.4987786 4.031633l-.0012214.968367c0 1.1045695-.8954305 2-2 2s-2-.8954305-2-2l-.00021218-.9678653c-1.48160351-.7363918-2.49978782-2.2653584-2.49978782-4.0321347 0-2.48528137 2.01471863-4.5 4.5-4.5z">
 </path><path d="m8.5 1.5v-1"></path><path d="m13.5 3.5 1-1"></path><path d="m2.5 3.5 1-1" transform="matrix(-1 0 0 1 6 0)"></path><path d="m13.5 13.5 1-1" transform="matrix(1 0 0 -1 0 26)"></path><path d="m2.5 13.5 1-1" transform="matrix(-1 0 0 -1 6 26)">
@@ -216,6 +224,10 @@ EOT;
     } // onboardingaid
 
 
+    /**
+     * @return void
+     * @throws \Exception
+     */
     static function renderOnboardingAid(): void
     {
         if ($user = kirby()->user()) {
@@ -235,6 +247,10 @@ EOT;
     } // renderOnboardingAid
 
 
+    /**
+     * @param $user
+     * @return void
+     */
     static function getAccessLink($user)
     {
         $link = '';
