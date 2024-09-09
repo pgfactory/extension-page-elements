@@ -92,6 +92,9 @@ class Events extends DataSet
         // finalize:
         $mdStr = $this->cleanup($mdStr);
 
+        // Work-around for HP printer - crashes on these characters:
+        $mdStr = str_replace(['↗', '↘'], ['⇗', '⇘'], $mdStr);
+
         // md-compile:
         if ($options['markdown']??true) {
             return markdown($mdStr);
