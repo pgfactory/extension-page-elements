@@ -27,6 +27,8 @@ pfy-onboardingaid-text:
        -> Zugangs-Link erscheint in der Adresszeile des Browsers
     1. Seite als Lesezeichen/Favorit speichern <br> 
       -> Stern-Symbol in der Adresszeile des Browsers verwenden
+    
+    ->  {{ link('~page/', 'Zurück') }} {: style="text-align:right"}
 
   de2: |
     ## Persönlicher Zugangs-Link
@@ -48,6 +50,8 @@ pfy-onboardingaid-text:
        -> Zugangs-Link erscheint in der Adresszeile des Browsers
     1. Seite als Lesezeichen/Favorit speichern <br> 
       -> Stern-Symbol in der Adresszeile des Browsers verwenden
+    
+    ->  {{ link('~page/', 'Zurück') }} {: style="text-align:right"}
 
   _: |
     ## Private Access-Link
@@ -69,6 +73,8 @@ pfy-onboardingaid-text:
        -> Access-Link appears in address field of your browser
     1. Save as bookmark/favorite<br> 
       -> star-symbol in your browser's address field
+    
+    ->  {{ link('~page/', 'Back to page') }} {: style="text-align:right"}
 
 pfy-onboardingaid-icon: |
   <svg fill="currentColor" height="1em" width="1em" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
