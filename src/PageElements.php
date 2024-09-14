@@ -228,8 +228,8 @@ EOT;
     static function renderOnboardingAid(): void
     {
         if ($user = kirby()->user()) {
-            self::getAccessLink($user);
-            $str = <<<EOT
+            if (self::getAccessLink($user)) {
+                $str = <<<EOT
 
 <section class="pfy-section-wrapper">
 <div class="pfy-onboardingaid">
@@ -238,6 +238,18 @@ EOT;
 </section>
 
 EOT;
+            } else {
+                $str = <<<EOT
+
+<section class="pfy-section-wrapper">
+<div class="pfy-onboardingaid">
+{{ pfy-onboardingaid-accesscode-missing }}
+</div>
+</section>
+
+EOT;
+
+            }
             $html = TransVars::compile($str);
             PageFactory::$pg->overrideContent($html);
         }
@@ -246,18 +258,22 @@ EOT;
 
     /**
      * @param $user
-     * @return void
+     * @return bool
      */
-    static function getAccessLink($user)
+    static function getAccessLink($user): bool
     {
         $link = '';
         if ($content = $user->content()) {
             if ($data = $content->data()) {
                 $accessCode = $data['accesscode'];
+                if (!$accessCode) {
+                    return false;
+                }
                 $link = PageFactory::$absPageUrl."?a=$accessCode";
             }
         }
         TransVars::setVariable('pfy-user-accesslink', $link);
+        return true;
     } // getAccessLink
 
 } // PageElements

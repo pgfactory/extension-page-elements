@@ -2,6 +2,16 @@
 # onboardingaid
 
 
+pfy-onboardingaid-accesscode-missing:
+  de: |
+    Es ist noch kein AccessCode definiert für diesen Benutzer.
+    
+    ->  {{ link('~page/', 'Abbrechen') }} {: text-align:right}
+  _: |
+    No AccessCode has been defined for this user.
+
+    ->  {{ link('~page/', 'Back to page') }} {: text-align:right}
+
 pfy-onboardingaid-title:
   de: 'Onboarding-Hilfe öffnen'
   _: 'Open onboarding help'
