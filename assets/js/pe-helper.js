@@ -7,7 +7,7 @@ window.onload = function() {
     //      localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
     // Scroll to position if request was left in localStorage:
     const yPos = localStorage.getItem('scrollpos');
-    if (yPos) {
+    if (yPos && (yPos !== '0')) {
         document.documentElement.scrollTop = yPos;
         localStorage.setItem('scrollpos', 0);
     }
