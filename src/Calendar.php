@@ -117,13 +117,14 @@ class Calendar
         $lang = PageFactory::$lang;
         $timezone = PageFactory::$timezone;
         $useDblClick = ($this->options['useDblClick']??false) ? 'true':'false';
+        $freezePast = $this->freezePast? 'true': 'false';
 
         $calOptions = <<<EOT
     inx: $this->inx,
     initialView:            '$this->defaultView',
     admin:                  $this->adminPermStr,
     edit:                   $this->edPermStr,
-    freezePast:             $this->freezePast,
+    freezePast:             $freezePast,
     modifyPermission:       $this->modifyPermission,
     headerLeftButtons:      '$this->headerLeftButtons',
     headerRightButtons:     '$this->headerRightButtons',
@@ -242,31 +243,32 @@ EOT;
         } elseif ($this->edPermStr !== 'false') {
             $start = strtotime($dataRec['start']??0);
             $end = strtotime($dataRec['end']??0);
-            if ($end < time()) {
-                $res = [
-                    'html' => '{{ pfy-cal-event-in-the-past }}',
-                    'continueEval' => false,
-                    'showDirectFeedback' => false
-                ];
-
-            } elseif ($start < time()) {
-                if ($dataRec['_delete']??false) {
-                    unset($dataRec['_delete']);
-                    $dataRec['end'] = date('Y-m-d H:i');
+            if ($this->options['freezePast']) {
+                if ($end < time()) {
                     $res = [
-                        'html' => '{{ pfy-cal-event-start-in-the-past }}',
-                        'continueEval' => true,
-                        'showDirectFeedback' => false,
-                        'dataRec' => $dataRec,
-                    ];
-                } else {
-                    $res = [
-                        'html' => '{{ pfy-cal-event-start-in-the-past }}',
+                        'html' => '{{ pfy-cal-event-in-the-past }}',
                         'continueEval' => false,
-                        'showDirectFeedback' => false,
+                        'showDirectFeedback' => false
                     ];
-                }
 
+                } elseif ($start < time()) {
+                    if ($dataRec['_delete'] ?? false) {
+                        unset($dataRec['_delete']);
+                        $dataRec['end'] = date('Y-m-d H:i');
+                        $res = [
+                            'html' => '{{ pfy-cal-event-start-in-the-past }}',
+                            'continueEval' => true,
+                            'showDirectFeedback' => false,
+                            'dataRec' => $dataRec,
+                        ];
+                    } else {
+                        $res = [
+                            'html' => '{{ pfy-cal-event-start-in-the-past }}',
+                            'continueEval' => false,
+                            'showDirectFeedback' => false,
+                        ];
+                    }
+                }
             } else {
                 // fix allday event -> add 1 day to end to conform with user logic:
                 if ($dataRec['allday']??false) {
@@ -348,7 +350,7 @@ EOT;
         $this->categories =             $args['categories']??false;
         $this->headerLeftButtons =      $args['headerLeftButtons']??'prev,today,next';
         $this->headerRightButtons =     $args['headerRightButtons']??'timeGridWeek,dayGridMonth,listYear';
-        $this->freezePast =             ($args['freezePast']??true)?'true':'false';
+        $this->freezePast =             $args['freezePast']??true;
         $this->businessHours =          $args['businessHours']??'08:00-17:00';
         $this->visibleHours =           $args['visibleHours']??'07:00-21:00';
         $this->userCategories =         $args['userCategories']??false;

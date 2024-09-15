@@ -48,6 +48,10 @@ pfy-cal-end-before-start:
     de: 'Fehler: Ereignisbeginn nach dessen Ende ist unmöglich.'
     _:  'Error: event cannot end before it started.'
 
+pfy-cal-event-start-in-the-past:
+    de: 'Kalendereinträge in der Vergangenheit können nicht gelöscht oder verändert werden.'
+    _:  'Not possible to create/modify events in the past.'
+
 pfy-cal-event-in-the-past:
     de: 'Kalendereinträge in der Vergangenheit können nicht gelöscht oder verändert werden.'
     _:  'Not possible to create/modify events in the past.'
