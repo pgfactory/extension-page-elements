@@ -1,7 +1,7 @@
 /*
 * pfyPopup
 * to see help, invoke
-*   pfyPopup({text: 'help'});
+*   pfyPopup('help');
 *
 * Usage:
   pfyConfirm('Continue...?').then(
@@ -46,6 +46,9 @@ function pfyPopup( options ) {
 
 
   this.parseArgs = function () {
+    if (typeof options === 'undefined') {
+      options = 'help';
+    }
     if (typeof options === 'string') {
         const str = options;
         options = null;
@@ -131,13 +134,7 @@ function pfyPopup( options ) {
     this.wrapperClass  = (typeof options.wrapperClass !== 'undefined' && options.wrapperClass)? options.wrapperClass : '';
 
     if (this.content === 'help') {
-      this.content = this.renderHelp();
-      this.closeButton = true;
-      this.closeOnBgClick = true;
-      this.draggable = true;
-      this.trigger = true;
-      this.containerClass = 'pfy-macro-help pfy-encapsulated';
-      this.header = 'Options for popup()';
+      this.renderHelp();
     }
   }; // parseArgs
 
@@ -186,7 +183,9 @@ function pfyPopup( options ) {
     pElement.innerHTML = html;
     ankerElement.appendChild(pElement);
 
-    return document.querySelector( '#' + this.id + ' .pfy-popup-wrapper');
+    const dialog = document.querySelector( '#' + this.id + ' .pfy-popup-wrapper');
+    dialog.show();
+    return dialog;
   }; // renderContent
 
 
@@ -586,7 +585,7 @@ function pfyPopup( options ) {
 
 
   this.renderHelp = function() {
-    return '\t<dl>\n' +
+    this.content =  '\t<dl>\n' +
       '\t<dt>text:</dt>\n' +
       '\t\t<dd>[html or string]Text to be displayed in the popup (for small messages, otherwise use contentFrom).<br>'+
       '"content" functions as synonym for "text". </dd>\n' +
@@ -650,7 +649,16 @@ function pfyPopup( options ) {
           'Default: "body". </dd>\n' +
 
       '\t</dl>\n';
+
+    this.closeButton = true;
+    this.closeOnBgClick = true;
+    this.draggable = true;
+    this.trigger = true;
+    this.containerClass = 'pfy-macro-help pfy-encapsulated';
+    this.header = 'Options for popup()';
+
   }; // renderHelp
+
 
 
 
