@@ -116,6 +116,7 @@ class Calendar
 
         $lang = PageFactory::$lang;
         $timezone = PageFactory::$timezone;
+        $draggable = ($this->options['draggable']??false) ? 'true':'false';
         $useDblClick = ($this->options['useDblClick']??false) ? 'true':'false';
         $freezePast = $this->freezePast? 'true': 'false';
 
@@ -124,6 +125,7 @@ class Calendar
     initialView:            '$this->defaultView',
     admin:                  $this->adminPermStr,
     edit:                   $this->edPermStr,
+    draggable:              $draggable,
     freezePast:             $freezePast,
     modifyPermission:       $this->modifyPermission,
     headerLeftButtons:      '$this->headerLeftButtons',

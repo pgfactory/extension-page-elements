@@ -23,6 +23,7 @@ return function ($args = '')
                 'Admins can change events of any users as well as such in the past, normal users don\'t.', false],
             'edit' => ['Synonyme for "editPermission"', null],
             'editPermission' => ['[anybody|group|users] Defines, who will be able to modify calendar entries.', false],
+            'draggable' => ['If true, events can be dragged and resized (if editPermission is true).', true],
             'modifyPermission' => ['[name(s)] If defined, logged-in users can only modify events that match given '.
                 'condition., E.g. "modifyPermission:\'tom,alice\'".', null],
             'defaultEventDuration' => ['[allday|minutes] In month and year view: defines the default duration of new events.', 60],
@@ -39,7 +40,7 @@ return function ($args = '')
             'keepDataDuration' => ['[month] Defines the time after which older events are discarded and '.
                 'moved to an archive file.', 1],
             'form' => ['Definition of form fields.', null],
-            'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', false],
+            'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', true],
 //            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],
 //            'publishCallback' => ['[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false],
 //            'output' => ['[true|false] If false, no output will be rendered (useful in conjunction with publish).', true],
@@ -48,7 +49,50 @@ return function ($args = '')
 
 # $funcName()
 
-ToDo: describe purpose of function
+Renders a calendar which gets events from a DB designated by 'file'.
+
+## Example
+
+    \{{ calendar(
+        file: '~config/events.yaml'
+        edit: 'localhost|loggedin'
+        categories: ',Keynote,Presentation,Panel,internal'
+    
+        form: {
+            allday:	        {type: 'checkbox'},
+            category:       {type: 'dropdown', options: ',Keynote,Presentation,Panel,internal'},
+            Topic:	        {type: 'text',     class: 'pfy-cal-title'},
+            Event:	        {type: 'event', defaultEventDuration: 120, repeatable: true},
+            Location:       {type: text}
+            Description:    {type: 'textarea'},
+            cancel:         {}
+            submit:         {type: submit, label: Save}
+        }
+    
+        template: {
+            file:		~page/cal-template.yaml
+            selector: 	Keynote
+            mode: 		twig
+            includeSystemVariables: true
+            compileMarkdown:	false
+        }
+    ) }}
+    
+### Sample Template \~page/cal-template.yaml
+
+    _:   \// => default for all categories which have no dedicated entry
+      element: |
+        <div class='time'>{{ start|date("H.i") }}
+        {% if category %}<span class='category'> %category%</span>{% endif %}
+        </div>
+        {% if Topic %}<div class='topic'>«%Topic%»</div>{% endif %}
+    
+      description: |
+        %time%<br>
+        «%Topic%»
+    
+        {% if Comment %}<div class='comment'>%Comment%</div>{% endif %}
+
 EOT,
     ];
 

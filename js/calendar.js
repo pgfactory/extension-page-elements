@@ -63,26 +63,28 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   const visibleHoursFrom = this.options.visibleHours.substring(0,5);
   const visibleHoursTill = this.options.visibleHours.substring(6);
 
+  const editPermission = this.editPermission && this.options.draggable;
+
   // Default values for FullCalendar options
   let fullCalendarOptionDefaults = {
         headerToolbar: {
-            left: this.options.headerLeftButtons,
-            center: 'title',
-            right: this.options.headerRightButtons,
+            left:     this.options.headerLeftButtons,
+            center:   'title',
+            right:    this.options.headerRightButtons,
         },
-        nowIndicator:       true,
-        editable: this.editPermission,
-        eventStartEditable: this.editPermission,
-        eventDurationEditable: this.editPermission,
-        navLinks: true, // can click day/week names to navigate views
-        height: 'auto',
-        dayMaxEvents: true, // allow "more" link when too many events
+        nowIndicator:           true,
+        editable:               editPermission,
+        eventStartEditable:     editPermission,
+        eventDurationEditable:  editPermission,
+        navLinks:               true, // can click day/week names to navigate views
+        height:                 'auto',
+        dayMaxEvents:           true, // allow "more" link when too many events
         //selectable: true,
-        weekNumbers: true,
-        weekNumberCalculation: 'ISO',
-        slotMinTime: visibleHoursFrom,
-        slotMaxTime: visibleHoursTill,
-        businessHours: { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: businessHoursFrom, endTime: businessHoursTill},
+        weekNumbers:            true,
+        weekNumberCalculation:  'ISO',
+        slotMinTime:            visibleHoursFrom,
+        slotMaxTime:            visibleHoursTill,
+        businessHours:          { daysOfWeek: [ 1, 2, 3, 4, 5 ], startTime: businessHoursFrom, endTime: businessHoursTill},
         buttonText: {
             prev:     `{{ pfy-cal-label-prev }}`,
             next:     `{{ pfy-cal-label-next }}`,
@@ -568,7 +570,7 @@ PfyCalendar.prototype.modifyEvent = function(event0, start, end) {
   const parent = this;
   const fullCal = this.fullCal;
   const eventEl = event0.el;
-  const span = eventEl.querySelector('.fc-event-main [data-reckey]');
+  const span = eventEl.querySelector('.fc-event [data-reckey]');
   const recKey = span.dataset.reckey;
   if (typeof recKey === 'undefined') {
     return;
