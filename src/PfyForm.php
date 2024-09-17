@@ -2579,15 +2579,45 @@ EOT;
             $this->eventFieldFound = true;
             $startName = 'start';
             $endName   = 'end';
+            $startLabel = TransVars::getVariable('pfy-form-event-start-label');
+            $endLabel = TransVars::getVariable('pfy-form-event-end-label');
+
+        } elseif ($this->formElements[$name]['suffix']??false) {
+            $suffix = $this->formElements[$name]['suffix'];
+            $startName = 'start' . $suffix;
+            $endName = 'end' . $suffix;
+
+            // startLabel:
+            if (!($startLabel = TransVars::getVariable("pfy-form-event-$startName-label"))) {
+                $startLabel = TransVars::getVariable('pfy-form-event-start-label');
+                if (preg_match('/\W$/', $startLabel)) {
+                    $startLabel =$startLabel . $suffix . substr($startLabel, -1);
+
+                } else {
+                    $startLabel = $startLabel . $suffix;
+                }
+            }
+
+            // endLabel:
+            if (!($endLabel = TransVars::getVariable("pfy-form-event-$endName-label"))) {
+                $endLabel = TransVars::getVariable('pfy-form-event-end-label');
+                if (preg_match('/\W$/', $endLabel)) {
+                    $endLabel = $endLabel . $suffix . substr($endLabel, -1);
+
+                } else {
+                    $endLabel = $endLabel . $suffix;
+                }
+            }
+
         } else {
-            $startName = $name . '_start';
-            $endName   = $name . '_end';
+            $startName   = 'start_'.$name;
+            $endName   = 'end_'.$name;
+            $startLabel = TransVars::getVariable('pfy-form-event-start-label');
+            $endLabel = TransVars::getVariable('pfy-form-event-end-label');
         }
 
         $eventElements = [];
-        $startLabel = TransVars::getVariable('pfy-form-event-start-label');
-        $endLabel = TransVars::getVariable('pfy-form-event-end-label');
-        
+
         // preset: true = today, hour = today plus given time
         $preset = $this->formElements[$name]['preset']??'';
         if ($preset === true) {
