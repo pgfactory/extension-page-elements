@@ -1722,6 +1722,10 @@ EOT;
      */
     protected function renderFormFields(array|null $formElements = null): string
     {
+        if (!$this->showForm) {
+            return '';
+        }
+
         if ($formElements !== null) {
             $this->formElements = $formElements;
         }
@@ -1747,6 +1751,10 @@ EOT;
      */
     protected function renderFormTail(): string
     {
+        if (!$this->showForm) {
+            return '';
+        }
+
         $html = '';
         $html .= $this->renderFormButtons();
 
@@ -2188,7 +2196,7 @@ EOT;
         $sched = new Events($eventOptions);
         $nextEvent = $sched->getNextEvent();
 
-        if ($nextEvent === false) {
+        if (!$nextEvent) { // changed from $nextEvent===false
             return;
         }
 
