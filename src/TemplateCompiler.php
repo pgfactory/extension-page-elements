@@ -27,6 +27,7 @@ const DEFAULT_OPTIONS = [
     'markdown' => true,
     'wrapperPrefix' => '',
     'wrapperSuffix' => '',
+    'newlineReplace' => '<br>',
 ];
 
 const CUSTOM_PHP_PATH = 'site/templates/custom/';
@@ -49,6 +50,10 @@ class TemplateCompiler
 
         if ($help = self::handleHelpRequest($template, $data)) {
             return $help;
+        }
+
+        if ($newlineReplace = $templateOptions['newlineReplace']??false) {
+            self::newlineReplace($data, $newlineReplace);
         }
 
         $compileMarkdown        = $templateOptions['markdown']??false;
@@ -417,5 +422,21 @@ class TemplateCompiler
         }
         return $out;
     } // handleHelpRequest
+
+
+    private static function newlineReplace(mixed &$data, string $replaceNewlineWith): void
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($value) && str_contains($value, $replaceNewlineWith)) {
+                $data[$key] = str_replace("\n", $replaceNewlineWith, $value);
+            } elseif (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    if (is_string($v) && str_contains($v, "\n")) {
+                        $data[$key][$k] = str_replace("\n", $replaceNewlineWith, $v);
+                    }
+                }
+            }
+        }
+    } // newlineReplace
 
 } // TemplateCompiler
