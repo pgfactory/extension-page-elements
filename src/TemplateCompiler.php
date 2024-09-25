@@ -424,6 +424,11 @@ class TemplateCompiler
     } // handleHelpRequest
 
 
+    /**
+     * @param mixed $data
+     * @param string $replaceNewlineWith
+     * @return void
+     */
     private static function newlineReplace(mixed &$data, string $replaceNewlineWith): void
     {
         foreach ($data as $key => $value) {
