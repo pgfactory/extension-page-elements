@@ -53,6 +53,7 @@ class DataTable
     private array $serviceColArray = [];
     private mixed $editMode;
     private string $sort;
+    private array|bool $filter;
     private bool $reversed;
     private $minRows;
     private string $export;
@@ -139,6 +140,7 @@ class DataTable
         $permission = $options['permission'] ?? false;
 
         $this->sort = $options['sort'] ?? false;
+        $this->filter = $options['filter'] ?? false;
         $this->reversed = $options['reversed'] ?? false;
         $this->minRows = $options['minRows'] ?? false;
         $this->export = $options['export'] ?? false;
@@ -275,6 +277,9 @@ class DataTable
         if ($this->sort) {
             $this->sortTableData();
         }
+        if ($this->filter) {
+            $this->filterTableData();
+        }
     } // prepareTableData
 
 
@@ -287,7 +292,7 @@ class DataTable
         $this->tableData = [];
         $this->tableData['_hdr'] = array_shift($table);
         uasort($table, function ($a,$b) {
-            return strcmp($a[$this->sort], $b[$this->sort]);
+            return strcmp($a[$this->sort]??'', $b[$this->sort]??'');
         });
 
         if ($this->reversed) {
@@ -295,6 +300,40 @@ class DataTable
         }
         $this->tableData = $this->tableData + $table;
     } // sortTableData
+
+
+    private function filterTableData(): void
+    {
+        $table = $this->tableData;
+        $this->tableData = [];
+        $this->tableData['_hdr'] = array_shift($table);
+
+        $filterElem = $this->filter['name']??false;
+        $filterValue = $this->filter['value']??false;
+        if (!$filterElem || !$filterValue) {
+            return;
+        }
+        $filterOp = $this->filter['op']??'===';
+
+        if ($filterOp === '===') {
+            $table = array_filter($table, function ($rec) use ($filterElem, $filterValue) {
+                return $rec[$filterElem] === $filterValue;
+            });
+        } else {
+            $table = array_filter($table, function ($rec) use ($filterElem, $filterValue, $filterOp) {
+                $v = $rec[$filterElem];
+                $expr = "return \"$v\" $filterOp \"$filterValue\";";
+                try {
+                    $res = eval($expr);
+                } catch (\Exception $e) {
+                    $res = false;
+                }
+                return $res;
+            });
+        }
+
+        $this->tableData = $this->tableData + $table;
+    } // filterTableData
 
 
     /**

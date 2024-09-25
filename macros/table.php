@@ -42,6 +42,7 @@ return function ($argStr = '')
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
+            'filter' => ['{name:xy, value:xy} Filters out data records not complying with given criteria.', false],
             'reversed' => ['If true, the table is presented in reversed order.', false],
             'placeholderForUndefined' => ['Defines the string which will be placed in cells for which a value is missing.', '?'],
             'export' => ['(true|filename) If set, the table data is exported to files in Xslx and Ods format.', false],        ],
