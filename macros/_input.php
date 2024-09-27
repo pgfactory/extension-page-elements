@@ -5,6 +5,8 @@ namespace PgFactory\PageFactory;
  * PageFactory Macro (and Twig Function)
  */
 
+use PgFactory\MarkdownPlus\Permission;
+
 return function ($args = '')
 {
     $funcName = basename(__FILE__, '.php');
@@ -15,6 +17,8 @@ return function ($args = '')
             'type' => ['', 'text'],
             'file' => ['', null],
             'name' => ['', 'input-group-'],
+            'permission' => ['[anybody|group|users] Defines, who will be able to modify input widget.', 'anyone'],
+            'editPermission' => ['Synonyme for "permission".', 'anyone'],
         ],
         'summary' => <<<EOT
 
@@ -32,6 +36,7 @@ EOT,
         $str = $sourceCode;
     }
 
+    $permission = Permission::evaluate($options['permission']);
     $inputGroupName = $options['name'].$inx;
     $pageId = PageFactory::$pageId;
     $file = $options['file'] ?: "~data/input/$pageId.yaml";
@@ -49,13 +54,23 @@ EOT,
     // assemble output:
     for ($i=1; $i<=$options['nSlots']; $i++) {
         $val = $rec["input_$i"]??'';
-        $val = $val ? " value='$val'" : '';
-        $str .= <<<EOT
+        $valAttr = $val ? " value='$val'" : '';
+        if ($permission) {
+            $str .= <<<EOT
 <div class='pfy-input-widget pfy-input-widget-$i'>
-<input type='$type' name='input-$i'$val>
+<input type='$type' name='input-$i'$valAttr>
 <div class="pfy-mini-button">✓</div>
 </div>
 EOT;
+
+        } else {
+            $str .= <<<EOT
+<div class='pfy-input-widget pfy-input-widget-$i'>
+<div class="pfy-input-widget-inner">$val</div>
+</div>
+EOT;
+        }
+
     }
 
     $str = <<<EOT

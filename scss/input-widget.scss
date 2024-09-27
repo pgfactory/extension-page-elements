@@ -10,14 +10,17 @@
     height: var(--pfy-input-widget-height, 2em);
     line-height: var(--pfy-input-widget-height, 2em);
 
+    .pfy-input-widget-inner,
     input {
       height: 100%;
-      line-height: 100%;
       width: 100%;
       border-radius: 0.25em;
       border: 1px solid var(--pfy-form-field-border, var(--pfy-form-field-border-default, #b4b3b3));
       padding: 0 0.3em;
       background-color: var(--pfy-form-field-background-color, var(--pfy-form-field-background-color-default, #fffff6));
+    }
+    input {
+      line-height: 100%;
     }
 
     input:focus {
