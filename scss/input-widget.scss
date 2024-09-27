@@ -1,0 +1,48 @@
+// === input widget
+
+#pfy.pfy-default-styling .pfy-encapsulated,
+.pfy-default-styling {
+
+  .pfy-input-widget {
+    position: relative;
+    overflow: hidden;
+    max-width: 20em;
+    height: var(--pfy-input-widget-height, 2em);
+    line-height: var(--pfy-input-widget-height, 2em);
+
+    input {
+      height: 100%;
+      line-height: 100%;
+      width: 100%;
+      border-radius: 0.25em;
+      border: 1px solid var(--pfy-form-field-border, var(--pfy-form-field-border-default, #b4b3b3));
+      padding: 0 0.3em;
+      background-color: var(--pfy-form-field-background-color, var(--pfy-form-field-background-color-default, #fffff6));
+    }
+
+    input:focus {
+      padding-right: calc(var(--pfy-input-widget-button-width, var(--pfy-input-widget-height, 2em)) + 0.25em);
+    }
+
+    input:focus + .pfy-mini-button {
+      right: 2px;
+      transition: right 0.3s;
+    }
+
+    .pfy-mini-button {
+      position: absolute;
+      top: 2px;
+      right: calc(0em - var(--pfy-input-widget-button-width, var(--pfy-input-widget-height, 2em)));
+      transition: right 0.3s;
+      width: var(--pfy-input-widget-button-width, var(--pfy-input-widget-height, 2em));
+      height: calc(100% - 4px);
+      text-align: center;
+      border: 1px solid gray;
+      border-radius: 0.25em;
+      background: -webkit-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+      background: -ms-linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+      background: linear-gradient(#FFF 0%, #EFEFEF 60%, #E1DFE2 100%);
+      cursor: pointer;
+    }
+  } // pfy-input-widget
+} // pfy-default-styling

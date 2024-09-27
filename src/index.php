@@ -69,6 +69,10 @@ const PE_URL_DEFINITIONS = [
         PAGE_ELEMENTS_URL.'js/-calendar.js',
         PAGE_ELEMENTS_URL.'css/-calendar.css',
     ],
+    'INPUT_WIDGET' => [
+        PAGE_ELEMENTS_URL.'js/input-widget.js',
+        PAGE_ELEMENTS_URL.'css/-input-widget.css',
+    ],
     'SAYTTS' => [
         PAGE_ELEMENTS_URL.'js/sayTTS.js',
         PAGE_ELEMENTS_URL.'css/-sayTTS.css',
