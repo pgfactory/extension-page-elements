@@ -13,9 +13,7 @@ const Enlist = {
   }, // init
 
   addEventListeners: function() {
-    const addButtons = this.isEnlistAdmin?
-        document.querySelectorAll('.pfy-enlist-add button'):
-        document.querySelectorAll('.pfy-enlist-add');
+    const addButtons = document.querySelectorAll('.pfy-enlist-add');
 
     if (addButtons) {
       addButtons.forEach(function(addButton) {

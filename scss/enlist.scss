@@ -205,7 +205,7 @@
   .pfy-popup-wrapper.pfy-enlist-del-mode {
     .del { display: block; }
   }
-  
+
   .pfy-enlist-expired {
     .pfy-enlist-table td {
       cursor: not-allowed;
@@ -222,8 +222,12 @@
     filter: brightness(95%);
   }
 
+  .pfy-enlist-wrapper {
+    .pfy-enlist-add {
+      cursor: pointer;
+    }
+  }
   .pfy-enlist-wrapper:not(.pfy-enlist-admin) {
-    .pfy-enlist-add,
     .pfy-enlist-modify,
     .pfy-enlist-delete {
       cursor: pointer;
@@ -272,6 +276,10 @@
     user-select: none;
     cursor: pointer;
     height: 1.5em;
+  }
+
+  .pfy-enlist-hide-num .pfy-enlist-row-num {
+    display: none;
   }
 
 } // .pfy-default-styling

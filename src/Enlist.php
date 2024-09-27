@@ -267,6 +267,9 @@ class Enlist
 
         $html = $this->renderTable();
         $attrib = $this->directlyReservePossible ? ' data-directreserve="true"' : '';
+        if ($this->nTotalSlots === 1) {
+            $class .= ' pfy-enlist-hide-num';
+        }
 
         $html = <<<EOT
 <div id='$id' class='$class' data-setname="$this->datasetName"$attrib>
