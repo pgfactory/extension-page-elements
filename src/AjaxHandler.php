@@ -69,6 +69,11 @@ class AjaxHandler
             unset($_GET['calendar']);
         }
 
+        if (isset($_GET['input'])) {
+            self::handleInputWidgetRequests();
+            unset($_GET['input']);
+        }
+
         exit('"not ok: command unknown"');
     } // exec
 
@@ -188,14 +193,14 @@ class AjaxHandler
      * @return object|DataSet
      * @throws \Exception
      */
-    private static function openDb(): object
+    private static function openDb(string $masterFileRecKeyType = 'index'): object
     {
         $file = kirby()->session()->get(self::$sessDbKey, false);
         if (!$file) {
             exit('"Error: file unknown"');
         }
         $db = new DataSet($file, [
-            'masterFileRecKeyType' => 'index',
+            'masterFileRecKeyType' => $masterFileRecKeyType,
             'obfuscateRecKeys' => true,
         ]);
         return $db;
@@ -426,6 +431,30 @@ class AjaxHandler
         }
         return self::_assembleRec($rec);
     } // getCalRec
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private static function handleInputWidgetRequests()
+    {
+        $name = $_GET['name'] ?? null;
+        $name = str_replace('-', '_', $name);
+        $value = $_GET['value'] ?? null;
+        $datasrcinx = $_GET['datasrcinx'] ?? null;
+        $db = self::openDb('_origRecKey');
+        $data = $db->data();
+        if (isset($data[$datasrcinx])) {
+            $rec = &$data[$datasrcinx];
+            $rec[$name] = $value;
+        } else {
+            $data[$datasrcinx] = [$name => $value];
+        }
+
+        $db->write($data);
+        exit('"Ok"');
+    } // handleInputWidgetRequests
 
 
     /**
