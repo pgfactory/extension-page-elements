@@ -34,7 +34,8 @@ function initWritable() {
           mylog('writable-widget: not saving to host');
           return;
         }
-        const value = inputEl.value;
+        let value = inputEl.value;
+        value = encodeURIComponent(value);
         const name = inputEl.name;
         const inpWrapper = inputEl.closest('.pfy-writable-widget-wrapper');
         const dataSrcInx = inpWrapper.dataset.writableGroup;
@@ -43,8 +44,10 @@ function initWritable() {
         cmd += '&name=' + name + '&value=' + value;
         execAjaxPromise(cmd)
           .then(function (data) {
-            mylog('storing writable done: ' + data[name]);
-            inputEl.value = data[name];
+            if (typeof data === 'object' && typeof data[name] !== 'undefined') {
+              mylog('storing writable done: "' + data[name] + '"');
+              inputEl.value = data[name];
+            }
           });
       });
     });
@@ -80,7 +83,7 @@ function initWritable() {
         }
         const textareaEl = ev.target;
         let value = textareaEl.value;
-        value = encodeURI(value);
+        value = encodeURIComponent(value);
         const name = textareaEl.name;
         const inpWrapper = textareaEl.closest('.pfy-writable-widget-wrapper');
         const dataSrcInx = inpWrapper.dataset.writableGroup;
@@ -89,8 +92,10 @@ function initWritable() {
         cmd += '&name=' + name + '&value=' + value;
         execAjaxPromise(cmd)
           .then(function (data) {
-            mylog('storing writable done: ' + data[name]);
-            textareaEl.value = data[name];
+            if (typeof data === 'object') {
+              mylog('storing writable done: "' + data[name]) + '"';
+              textareaEl.value = data[name];
+            }
           });
       });
     });

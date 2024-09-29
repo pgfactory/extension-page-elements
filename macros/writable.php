@@ -64,6 +64,7 @@ EOT,
     // assemble output:
     for ($i=1; $i<=$options['nSlots']; $i++) {
         $val = $rec["writable_$i"]??'';
+        $val = str_replace("'", '&#39;', $val);
         $valAttr = $val ? " value='$val'" : '';
         if ($permission) {
             $placeholder = $placeholders[$i]??'';
