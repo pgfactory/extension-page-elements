@@ -679,6 +679,7 @@ const pfyFormsHelper = {
     if (growers) {
       growers.forEach((grower) => {
         const textarea = grower.querySelector("textarea");
+        grower.dataset.replicatedValue = textarea.value; // init grower
         textarea.addEventListener("input", () => {
           grower.dataset.replicatedValue = textarea.value;
         });
