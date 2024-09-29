@@ -75,6 +75,8 @@ class Enlist
     private $info0;
     private $info;
     private static $_info = null;
+    private $placeholder;
+    private static $_placeholder = null;
     private $freezeTime = false;
     private static $_freezeTime = null;
 
@@ -267,6 +269,10 @@ class Enlist
 
         $html = $this->renderTable();
         $attrib = $this->directlyReservePossible ? ' data-directreserve="true"' : '';
+        if ($this->placeholder) {
+            $attrib .= " data-placeholder='$this->placeholder'";
+        }
+
         if ($this->nTotalSlots === 1) {
             $class .= ' pfy-enlist-hide-num';
         }
@@ -305,6 +311,7 @@ EOT;
         $this->prepStaticOption('nSlots', 1);
         $this->prepStaticOption('nReserveSlots', 0);
         $this->prepStaticOption('info');
+        $this->prepStaticOption('placeholder');
         $this->info0 = $this->info;
         $this->prepStaticOption('file');
         $this->prepStaticOption('freezeTime');
@@ -542,7 +549,6 @@ EOT;
             } else {
                 $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
             }
-//            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
         } else {
             $deleteIcon = '';
         }

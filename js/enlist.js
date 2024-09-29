@@ -10,7 +10,20 @@ const Enlist = {
   init: function() {
     this.addEventListeners();
     this.initTooltips();
+    this.initPlaceholders();
   }, // init
+
+  initPlaceholders: function () {
+    domForEach('.pfy-enlist-wrapper', function (el) {
+      const placeholder = el.dataset.placeholder;
+      if (placeholder) {
+        domForEach(el, '.pfy-enlist-add .pfy-enlist-name div', function (e) {
+          e.innerHTML = placeholder;
+          e.classList.add('pfy-placeholder');
+        })
+      }
+    })
+  },
 
   addEventListeners: function() {
     const addButtons = document.querySelectorAll('.pfy-enlist-add');

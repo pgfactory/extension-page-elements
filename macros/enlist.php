@@ -35,6 +35,8 @@ return function ($args = '')
 
             'info' =>	['[string] Content of info-tooltip next to title. (default: false)', null],
 
+            'placeholder' => ['Placeholder shown as long as the field is empty.', null],
+
             'ical' =>	['[string|bool] If set, a calendar icon is added to the list. Clicking on it will '.
                 'download a calendar entry (.ics). The arg\'s value is used as the event SUMMARY (aka event-title). '.
                 'Use placeholders to compose meaningful titles, e.g. `ical:"[XY] %title%"`, where `%title%` is the '.
