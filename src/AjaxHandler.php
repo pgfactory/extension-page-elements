@@ -69,9 +69,9 @@ class AjaxHandler
             unset($_GET['calendar']);
         }
 
-        if (isset($_GET['input'])) {
-            self::handleInputWidgetRequests();
-            unset($_GET['input']);
+        if (isset($_GET['writable'])) {
+            self::handleWritableWidgetRequests();
+            unset($_GET['writable']);
         }
 
         exit('"not ok: command unknown"');
@@ -437,10 +437,9 @@ class AjaxHandler
      * @return void
      * @throws \Exception
      */
-    private static function handleInputWidgetRequests()
+    private static function handleWritableWidgetRequests()
     {
         $name = $_GET['name'] ?? null;
-        $name = str_replace('-', '_', $name);
         $value = $_GET['value'] ?? null;
         $datasrcinx = $_GET['datasrcinx'] ?? null;
         $db = self::openDb('_origRecKey');
@@ -451,10 +450,14 @@ class AjaxHandler
         } else {
             $data[$datasrcinx] = [$name => $value];
         }
-
         $db->write($data);
-        exit('"Ok"');
-    } // handleInputWidgetRequests
+
+        // read back stored value:
+        $data = $db->data();
+        $value = $data[$datasrcinx][$name]??'';
+        $res = json_encode([$name => $value]);
+        exit($res);
+    } // handleWritableWidgetRequests
 
 
     /**
