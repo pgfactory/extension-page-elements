@@ -28,6 +28,7 @@ return function ($args = '')
             'rrule' => ['[string] Defition string for recurring events. Uses the RRULE syntax (see [icalendar.org](https://icalendar.org)). '.
                 ' -> Use tool to assemble RRULE string: [icalendar.org/rrule-tool.html](https://icalendar.org/rrule-tool.html).', null],
             'markdown' => ['[bool] Whether result shall be markdown compiled.', false],
+            'translate' => ['[bool] Whether result shall be translated compiled (i.e. compiled by TransVar).', false],
             'exceptions' => ['[string] Defines dates and ranges to exclude. Examples: `2024-12-24,2024-12-31` or `Y-02-15, Y-04 - Y-06` etc. '.
                 'If day is omitted in ISO-Date string, the entire month is excluded.', null],
             'exceptionsFile' => ['[filename] Retrieves dates and ranges to exclude from a .txt file. '.

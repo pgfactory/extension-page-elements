@@ -14,7 +14,9 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use PgFactory\MarkdownPlus\MarkdownPlus;
 use PgFactory\PageFactory\DataSet as DataSet;
+use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\resolvePath;
@@ -94,6 +96,11 @@ class Events extends DataSet
 
         // Work-around for HP printer - crashes on these characters:
         $mdStr = str_replace(['↗', '↘'], ['⇗', '⇘'], $mdStr);
+
+        // Translate:
+        if ($options['translate']??true) {
+            $mdStr = TransVars::translate($mdStr);
+        }
 
         // md-compile:
         if ($options['markdown']??true) {
