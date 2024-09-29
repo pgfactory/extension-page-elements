@@ -8,6 +8,7 @@ use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\shieldStr;
+use function PgFactory\PageFactory\strPosMatching;
 use function PgFactory\PageFactory\var_r;
 
 
@@ -287,6 +288,15 @@ class TemplateCompiler
             $functions = [];
         }
 
+        if (str_contains($template, '\\{{')) {
+            list($p1, $p2) = strPosMatching($template, 0, '\\{{', '}}');
+            while ($p1 !== false) {
+                $template = substr($template, 0, $p1).'{\\{'.substr($template, $p1+3);
+                $template = substr($template, 0, $p2).'}\\}'.substr($template, $p2+3);
+                list($p1, $p2) = strPosMatching($template, $p2, '\\{{', '}}');
+            }
+        }
+
         $templateName = self::$filename ?: 'twig-template';
 
         $templateOptions = [];
@@ -306,6 +316,10 @@ class TemplateCompiler
                 $twig->addFunction(new \Twig\TwigFunction($name, $function, ['is_safe' => ['html']]));
             }
             $out = $twig->render($templateName, $vars);
+
+            if (str_contains($out, '{\\{')) {
+                $out = str_replace(['{\\{', '}\\}'], ['{{', '}}'], $out);
+            }
 
             if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
                 self::removeUndefinedPlaceholders($out);
