@@ -24,9 +24,9 @@ function initWritable() {
         // set up outside click to terminate writable input:
         writableInputEl = inputEl;
         setTimeout(function () {
-          mylog('triggering click');
+          //mylog('setting up click trigger');
           document.querySelector('body').addEventListener('click', handleOutsideWriteableClick);
-        }, 100);
+        }, 100, {once: true, passive: true, capture: true});
       });
 
       inputEl.addEventListener('change', function (ev) {
@@ -71,9 +71,9 @@ function initWritable() {
         // set up outside click to terminate writable input:
         writableInputEl = textareaEl;
         setTimeout(function () {
-          mylog('triggering click');
+          //mylog('setting up click trigger');
           document.querySelector('body').addEventListener('click', handleOutsideWriteableClick);
-        }, 100);
+        }, 100, {once: true, passive: true, capture: true});
       });
 
       textareaEl.addEventListener('change', function (ev) {
@@ -93,7 +93,7 @@ function initWritable() {
         execAjaxPromise(cmd)
           .then(function (data) {
             if (typeof data === 'object') {
-              mylog('storing writable done: "' + data[name]) + '"';
+              mylog('storing writable done: "' + data[name] + '"');
               textareaEl.value = data[name];
             }
           });
@@ -104,6 +104,7 @@ function initWritable() {
 
 
 function handleOutsideWriteableClick(ev) {
+  //mylog('handleOutsideWriteableClick');
   if (!writableInputEl) {
     return;
   }
