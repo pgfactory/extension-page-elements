@@ -41,7 +41,8 @@ EOT,
     }
 
     $permission = Permission::evaluate($options['permission']);
-    $writableGroupName = $options['name'].$inx;
+    $writableGroupName = $options['name'].'_'.$inx;
+    $writableGroupName = preg_replace('/\W/', '_', $writableGroupName);
     $pageId = PageFactory::$pageId;
     $file = $options['file'] ?: "~data/writable/$pageId.yaml";
     $sessDbKey = "db:$pageId:$writableGroupName:file";

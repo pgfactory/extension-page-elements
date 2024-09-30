@@ -442,6 +442,12 @@ class AjaxHandler
         $name = $_GET['name'] ?? null;
         $value = $_GET['value'] ?? null;
         $datasrcinx = $_GET['datasrcinx'] ?? null;
+        $datasrcinx = preg_replace('/\W/', '_', $datasrcinx);
+
+        if (!defined('PFY_LOGS_PATH')) {
+            define('PFY_LOGS_PATH', 'site/logs/');
+        }
+        mylog("Writable update: '$datasrcinx:$name' <= '$value'", 'writable-log.txt');
         $db = self::openDb('_origRecKey');
         $data = $db->data();
         if (isset($data[$datasrcinx])) {
