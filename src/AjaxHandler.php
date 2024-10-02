@@ -45,6 +45,14 @@ class AjaxHandler
         self::$sessDbKey = "db:$pageId:$dataSrcInx:file";
         self::$sessCalRecKey = "pfy.cal.$pageId:$dataSrcInx";
 
+        session_start();
+        if (isset($_SESSION['pfy.dataPath'])) {
+            PageFactory::$dataPath = $_SESSION['pfy.dataPath'];
+            PageFactory::$customConfigPath = $_SESSION['pfy.configPath'];
+        }
+        session_abort();
+
+
         // handle lockRec:
         if (isset($_GET['lockRec'])) {
             self::lockRec($_GET['lockRec']);
