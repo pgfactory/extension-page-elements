@@ -39,6 +39,7 @@ return function ($argStr = '')
                 '``select``, ``num``, ``edit``, ``send``, or `custom`.', false],
             'permission' => ['[none,anyone,localhost,loggedin etc.].', null],
             'editableBy' => ['Synonyme for "permission".', null],
+            'masterFileRecKeyType' => ['Controls under what kind of key data is stored.', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
