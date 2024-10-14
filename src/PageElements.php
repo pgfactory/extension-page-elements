@@ -227,7 +227,7 @@ EOT;
      */
     static function renderOnboardingAid(): void
     {
-        if ($user = kirby()->user()) {
+        if ($user = Permission::getLoggedInUser()) {
             if (self::getAccessLink($user)) {
                 $str = <<<EOT
 
