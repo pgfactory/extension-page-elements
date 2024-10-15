@@ -82,6 +82,12 @@ const PE_URL_DEFINITIONS = [
 
 require_once __DIR__.'/pe_helper.php';
 
+// save config and data path for AjaxHandler:
+session_start();
+$_SESSION['pfy.dataPath'] = PageFactory::$dataPath;
+$_SESSION['pfy.configPath'] = PageFactory::$customConfigPath;
+session_write_close();
+
  // run init-code if requested in config.php:
 if ($code = kirby()->option('pgfactory.pagefactory-elements.options.initCode')) {
     $code = 'site/custom/code/'.$code;
