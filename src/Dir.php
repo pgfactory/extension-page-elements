@@ -157,6 +157,12 @@ EOT;
     {
         $out = '';
         $folders = getDir($path, type: 'folders');
+
+        // reverse order of folders if option REVERSE_FOLDERS is active:
+        if ($this->reverseFolders) {
+            $folders = array_reverse($folders);
+        }
+
         foreach ($folders as $folder) {
             $subdir = $this->renderDirHierarchical($folder, $pattern, $level+1);
 
