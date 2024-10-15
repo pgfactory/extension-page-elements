@@ -33,7 +33,7 @@ $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
 $eventTextColor: var(--pfy-event-txt-color, #333);
 $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
 
-#pfy .pfy-encapsulated.pfy-default-styling,
+//#pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
   .pfy-calendar {

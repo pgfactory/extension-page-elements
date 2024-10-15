@@ -70,7 +70,7 @@ $formRevealContainerBg:     var(--pfy-form-reveal-container-bg, var(--pfy-form-r
 $formRevealContainerBorder: var(--pfy-form-reveal-container-border, var(--pfy-form-reveal-border));
 $formRevealPadding:         var(--pfy-form-reveal-padding);
 
-#pfy .pfy-encapsulated.pfy-default-styling,
+//#pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
   .pfy-form-colored {
     --pfy-form-input-color-default:             inherit;
