@@ -281,13 +281,21 @@ const pfyFormsHelper = {
     if (fields.length) {
       const typesToSkip = 'submit,cancel,checkbox,radio,button';
       fields.forEach(function (field) {
-        const type = field.getAttribute('type');
+        let type = field.getAttribute('type');
+        if (!type) {
+          type = field.tagName.toLowerCase();
+        }
         const readonly = field.getAttribute('readonly') !== null;
         if (!readonly && typesToSkip.includes(type)) {
           return;
         }
         const val = pfyFormsHelper.getFieldValue(field, data);
         field.value = val;
+
+        // preset auto-grow textareas:
+        if (type === 'textarea') {
+          field.parentNode.dataset.replicatedValue = val;
+        }
 
         // handle case of revealed textarea:
         if (field.classList.contains('pfy-reveal-target')) {
