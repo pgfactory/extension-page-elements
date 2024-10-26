@@ -11,7 +11,7 @@ use function PgFactory\PageFactory\shieldStr;
 use function PgFactory\PageFactory\strPosMatching;
 use function PgFactory\PageFactory\var_r;
 
-
+const EVENT_INDEX_PLACEHOLDER = '%%';
 const DEFAULT_OPTIONS = [
     'mode' => null, // twig,transVars, replace/simple
     'prefix' => '',
@@ -84,11 +84,14 @@ class TemplateCompiler
                     $data = [$data];
                 }
                 $out .= $prefix;
-                foreach ($data as $rec) {
+                foreach ($data as $i => $rec) {
                     $elemTempl = self::handleMissingTemplate($template, $rec);
                     $s = self::compileTemplate($mode, $elemTempl, $rec);
                     if ($s && $compileMarkdown) {
                         $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
+                    }
+                    if (str_contains($s, EVENT_INDEX_PLACEHOLDER)) {
+                        $s = str_replace(EVENT_INDEX_PLACEHOLDER, $i+1, $s);
                     }
                     $out .= $s . $sepPlaceholder;
                 }
