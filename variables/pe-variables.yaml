@@ -45,7 +45,7 @@ pfy-popup-download-header:
   _:  Download
 
 pfy-table-edit-rec-title:
-  de: 'Diesen Datensatz beareiten'
+  de: 'Diesen Datensatz bearbeiten'
   _:  'Edit this data record'
 
 pfy-table-send-rec-title:
