@@ -92,7 +92,7 @@ session_write_close();
 if ($code = kirby()->option('pgfactory.pagefactory-elements.options.initCode')) {
     $code = 'site/custom/code/'.$code;
     if (file_exists($code)) {
-        require $code;
+        require_once $code;
     }
 }
 
