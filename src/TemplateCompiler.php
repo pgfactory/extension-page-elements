@@ -286,7 +286,7 @@ class TemplateCompiler
                 self::$systemVariables = TransVars::$variables;
             }
             $vars = $vars + self::$systemVariables;
-            $functions = TransVars::findAllMacros('forTwig');
+            $functions = TransVars::findAllMacros();
         } else {
             $functions = [];
         }
