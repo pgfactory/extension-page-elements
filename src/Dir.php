@@ -39,6 +39,7 @@ class Dir
     private $hierarchical;
     private $download;
     private $pattern = '';
+    private $replacePattern = '';
     private $replace = '';
     private $templateOptions = [];
     private string|array $folderTemplate;
@@ -293,7 +294,7 @@ EOT;
         }
         $filename = basename($file);
         if ($this->replaceOnElem) {
-            $filename = preg_replace($this->pattern, $this->replace, $filename);
+            $filename = preg_replace($this->replacePattern, $this->replace, $filename);
         }
         $basename   = base_name($filename, false);
         $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
@@ -377,7 +378,10 @@ EOT;
         $this->reverseFolders = str_contains($this->modifiers, ',REVERSE_FOLDERS,');
 
         if ($this->replaceOnElem) {
-            list($this->pattern, $this->replace) = explodeTrim(',', $this->replaceOnElem);
+            list($this->replacePattern, $this->replace) = explodeTrim(',', $this->replaceOnElem);
+            if (!str_contains('/|#', $this->replacePattern[0])) {
+                $this->replacePattern = "#$this->replacePattern#";
+            }
         }
 
         if ($this->maxAge) {
