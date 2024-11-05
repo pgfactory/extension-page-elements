@@ -92,36 +92,7 @@ class ListRenderer
             $pages = $pages->flip();
         }
 
-        foreach ($pages as $page) {
-            if (!self::checkVisibility($page)) {
-                continue;
-            }
-            $url = $page->url();
-            $path = (string)$page->root();
-            $filename = (string)$page->title();
-            $slug = $page->slug();
-            $pageUrl = $page->id();
-            $shortUrl = dirname($_SERVER["SCRIPT_NAME"]).'/'.$pageUrl;
-            $date = '';
-            if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
-                $date = $m[1];
-            }
-
-            $rec = [
-                'url'       => $url,
-                'shortUrl'  => $shortUrl,
-                'filename'  => $filename,
-                'pagename'  => $filename,
-                'name'      => $filename,
-                'path'      => $path,
-                'slug'      => $slug,
-                'pageUrl'   => $pageUrl,
-                'date'      => $date,
-            ];
-            $data[] = $rec;
-        }
-
-        $out =  TemplateCompiler::compile($template, $data, $templateOptions);
+        $out = self::renderSubpagesByTemplate($pages, $data, $template, $templateOptions);
         return $out;
     } // renderSubpages
 
@@ -281,5 +252,40 @@ class ListRenderer
         $wrapperEnd = str_replace(['\\n', '\\t'], ["\n", "\t"], $wrapperEnd);
         return array($template, $templateOptions, $wrapperBegin, $wrapperEnd);
     } // parseFolderArgs
+
+
+    private static function renderSubpagesByTemplate(\Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages, array $data, array|string $template, array $templateOptions): string
+    {
+        foreach ($pages as $page) {
+            if (!self::checkVisibility($page)) {
+                continue;
+            }
+            $url = $page->url();
+            $path = (string)$page->root();
+            $filename = (string)$page->title();
+            $slug = $page->slug();
+            $pageUrl = $page->id();
+            $shortUrl = dirname($_SERVER["SCRIPT_NAME"]) . '/' . $pageUrl;
+            $date = '';
+            if (preg_match('/(\d{4}-\d{2}-\d{2})/', $filename, $m)) {
+                $date = $m[1];
+            }
+
+            $rec = [
+                'url' => $url,
+                'shortUrl' => $shortUrl,
+                'filename' => $filename,
+                'pagename' => $filename,
+                'name' => $filename,
+                'path' => $path,
+                'slug' => $slug,
+                'pageUrl' => $pageUrl,
+                'date' => $date,
+            ];
+            $data[] = $rec;
+        }
+
+        return TemplateCompiler::compile($template, $data, $templateOptions);
+    } // renderSubpagesByTemplate
 
 } // class ListRenderer
