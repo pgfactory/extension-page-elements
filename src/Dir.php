@@ -136,8 +136,9 @@ EOT;
             $data = reset($data);
         }
 
-        $template = TemplateCompiler::getTemplate($this->templateOptions);
-        $currLevelFiles = TemplateCompiler::compile($template, $data, $this->templateOptions);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($this->templateOptions);
+        $template = TemplateCompiler::getTemplate($templateOptions);
+        $currLevelFiles = TemplateCompiler::compile($template, $data, $templateOptions);
 
         $class = ($this->class ?: 'pfy-dir') . " $class";
 
@@ -253,9 +254,16 @@ EOT;
      */
     private function sortDir(array $dir, $reverse = null): array
     {
-        usort($dir, function ($a, $b) {
-            return strnatcasecmp(basename($a), basename($b));
-        });
+        $filenames = array_map('basename', $dir);
+        if ($this->replaceOnElem) {
+            $filenames = array_map(function($e) {
+                return preg_replace($this->replacePattern, $this->replace, $e);
+            }, $filenames);
+        }
+        $dir = array_combine($filenames, $dir);
+
+        ksort($dir);
+
         $reverse = ($reverse??false) ?: $this->reverse;
         if ($reverse) {
             $dir = array_reverse($dir);
