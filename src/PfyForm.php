@@ -1458,7 +1458,7 @@ EOT;
                 unset($fieldNames[$fieldName]);
                 continue;
             }
-            $elem = $this->formElements[$fieldName];
+            $elem = $this->formElements[$fieldName]??[];
             if ($elem['label']??false) {
                 $fieldNames[$fieldName] = trim($elem['label'], ': ');
             }
