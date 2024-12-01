@@ -7,7 +7,7 @@ window.onload = function() {
     //      localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
     // Scroll to position if request was left in localStorage:
     const yPos = localStorage.getItem('scrollpos');
-    if (yPos && (yPos !== '0')) {
+    if (yPos) {
         document.documentElement.scrollTop = yPos;
         localStorage.setItem('scrollpos', 0);
     }
@@ -35,7 +35,7 @@ function camelize(str) {
 
 function reloadAgent( arg, url, confirmMsg ) {
     let newUrl = window.location.pathname.replace(/\?.*/, '');
-    if (typeof url !== 'undefined' && url) {
+    if (typeof url !== 'undefined') {
         newUrl = url.trim();
         if (!newUrl || newUrl === '/') {
           newUrl = hostUrl;
@@ -43,7 +43,7 @@ function reloadAgent( arg, url, confirmMsg ) {
           newUrl = pageUrl + newUrl.substring(2);
         }
     }
-    if (typeof arg !== 'undefined' && arg) {
+    if (typeof arg !== 'undefined') {
         newUrl = appendToUrl(newUrl, arg);
     }
 
