@@ -46,7 +46,7 @@ class Calendar
     private array  $fields;
     private string $defaultView;
     private mixed $defaultEventDuration;
-    private string $sessDbKey;
+    private string $sessDbFileKey;
     private string $sessCalRecKey;
     private array  $sessCalRec;
     private mixed $categories;
@@ -157,7 +157,7 @@ EOT;
 
         // save sessCalRec in session for use in AjaxHandler:
         kirby()->session()->set($this->sessCalRecKey, $this->sessCalRec);
-        kirby()->session()->set($this->sessDbKey, $this->source);
+        kirby()->session()->set($this->sessDbFileKey, resolvePath($this->source));
 
         return $str;
     } // render
@@ -358,7 +358,7 @@ EOT;
         $this->userCategories =         $args['userCategories']??false;
         $this->fullCalendarOptions =    $args['fullCalendarOptions'];
         $pageId =                       PageFactory::$pageId;
-        $this->sessDbKey =              "db:$pageId:$this->inx:file";
+        $this->sessDbFileKey =              "db:$pageId:$this->inx:file";
 
         $this->headerRightButtons = str_replace(
             [',week,',',month,',',year,',',list,'],

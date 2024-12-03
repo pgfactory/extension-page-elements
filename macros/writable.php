@@ -45,8 +45,8 @@ EOT,
     $writableGroupName = preg_replace('/\W/', '_', $writableGroupName);
     $pageId = PageFactory::$pageId;
     $file = $options['file'] ?: "~data/writable/$pageId.yaml";
-    $sessDbKey = "db:$pageId:$writableGroupName:file";
-    kirby()->session()->set($sessDbKey, $file);
+    $sessDbFileKey = "db:$pageId:$writableGroupName:file";
+    kirby()->session()->set($sessDbFileKey, resolvePath($file));
     $db = new DataSet($file, [
         'masterFileRecKeyType' => '_reckey',
         'obfuscateRecKeys' => false,

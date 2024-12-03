@@ -24,7 +24,7 @@ class AjaxHandler
 {
     private static string $pageId;
     private static string $dataSrcInx;
-    private static string $sessDbKey;
+    private static string $sessDbFileKey;
     private static string $sessCalRecKey;
     private static array $sessRec;
     private static $templates = null;
@@ -42,7 +42,7 @@ class AjaxHandler
         if (!$dataSrcInx || ($dataSrcInx === 'undefined')) {
             exit('"not ok: ajaxHandler didn\'t receive datasrcinx"');
         }
-        self::$sessDbKey = "db:$pageId:$dataSrcInx:file";
+        self::$sessDbFileKey = "db:$pageId:$dataSrcInx:file";
         self::$sessCalRecKey = "pfy.cal.$pageId:$dataSrcInx";
 
         session_start();
@@ -203,7 +203,7 @@ class AjaxHandler
      */
     private static function openDb(string $masterFileRecKeyType = 'index'): object
     {
-        $file = kirby()->session()->get(self::$sessDbKey, false);
+        $file = kirby()->session()->get(self::$sessDbFileKey, false);
         if (!$file) {
             exit('"Error: file unknown"');
         }
