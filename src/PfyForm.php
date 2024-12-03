@@ -986,7 +986,7 @@ EOT;
             return;
         }
 
-        // handle optional 'deadline' and 'maxCount':
+        // handle required groups:
         if ($this->applyRequiredGroupCheck($dataRec)) {
             return;
         }
@@ -1096,6 +1096,7 @@ EOT;
         if ($p = (strpos($path, '$'))) {
             // case given path contains patter '$xy', where xy is name of other data element:
             $k = substr($path, $p+1);
+            $k = preg_replace('|\W.*|', '', $k); // remove trailing characters
             if (isset($dataRec[$k])) {
                 $path1 = $dataRec[$k];
             }
@@ -1424,7 +1425,7 @@ EOT;
         if (str_contains($to, ',')) {
             $to = explodeTrim(',', $to);
         }
-        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Onwer');
+        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
     } // notifyOwner
 
 
@@ -2003,7 +2004,13 @@ EOT;
 
         // %deadline%:
         if (str_contains($str, '%deadline%') && ($deadline = $this->formOptions['deadline'])) {
-            $deadlineStr = Utils::timeToString($deadline);
+            if (isset(self::$scheduleRecs[self::$formInx]['start'])) {
+                $t = strtotime(self::$scheduleRecs[self::$formInx]['start']);
+            } else {
+                $t = time();
+            }
+
+            $deadlineStr = Utils::timeToString($deadline, timeRef: $t);
             $str = str_replace('%deadline%', $deadlineStr, $str);
         }
 
@@ -2053,6 +2060,10 @@ EOT;
         foreach ($this->auxBannerValues as $key => $value) {
             $str = str_replace("%$key%", $value, $str);
         }
+
+        // remove remaining variable patterns from string:
+        $str = preg_replace("/\%\w{1,12}\%/", '', $str);
+
         return $str;
     } // handleFormBannerValues
 
@@ -2120,7 +2131,13 @@ EOT;
     private function checkDeadline(): void
     {
         if ($deadlineStr = $this->formOptions['deadline']) {
-            $deadline = strtotime($deadlineStr);
+
+            if (isset(self::$scheduleRecs[self::$formInx]['start'])) {
+                $t = strtotime(self::$scheduleRecs[self::$formInx]['start']);
+            } else {
+                $t = time();
+            }
+            $deadline = strtotime($deadlineStr, $t);
             // if no time is defined, extend the deadline till midnight:
             if (!str_contains($deadlineStr, 'T')) {
                 $deadline += 86400;
@@ -2221,6 +2238,10 @@ EOT;
         if ($maxCount = ($nextEvent['maxCount']??false)) {
             $this->formOptions['maxCount'] = $maxCount;
             $this->tableOptions['minRows'] = $maxCount;
+        }
+
+        if ($deadline = ($nextEvent['deadline']??false)) {
+            $this->formOptions['deadline'] = $deadline;
         }
 
         self::$scheduleRecs[self::$formInx] = $nextEvent;
