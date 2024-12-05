@@ -1674,15 +1674,17 @@ EOT;
 
         // case confirmationEmail: check whether corresponding field is defined:
         if ($confirmationEmail = $this->formOptions['confirmationEmail']) {
-            $found = false;
-            foreach ($this->formElements as $rec) {
-                if ($rec['name'] === $confirmationEmail) {
-                    $found = true;
-                    break;
+            if (!str_contains($confirmationEmail, '@')) { // $confirmationEmail may be an explicit address, then skip:
+                $found = false;
+                foreach ($this->formElements as $rec) {
+                    if ($rec['name'] === $confirmationEmail) {
+                        $found = true;
+                        break;
+                    }
                 }
-            }
-            if (!$found) {
-                throw new \Exception("Error: form option confirmationEmail refers to a field that is not defined: '$confirmationEmail'");
+                if (!$found) {
+                    throw new \Exception("Error: form option confirmationEmail refers to a field that is not defined: '$confirmationEmail'");
+                }
             }
         }
 
@@ -2297,7 +2299,7 @@ EOT;
      */
     private function handleConfirmationMail(array $dataRec): mixed
     {
-        if (!$this->formOptions['confirmationEmail']) {
+        if (!($confirmationMail = $this->formOptions['confirmationEmail']??false)) {
             return '';
         }
         $eventData = $this->auxBannerValues;
@@ -2311,7 +2313,12 @@ EOT;
 
         $subject = $this->getEmailComponent('subject', $dataRec);
         $message = $this->getEmailComponent('message', $dataRec);
-        $to = $dataRec[$this->formOptions['confirmationEmail']]??false;
+
+        if (str_contains($confirmationMail, '@')) {
+            $to = $confirmationMail;
+        } else {
+            $to = $dataRec[$confirmationMail]??false;
+        }
         if ($to) {
             $this->sendMail($to, $subject, $message, logComment: 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
