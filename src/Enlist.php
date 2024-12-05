@@ -11,7 +11,6 @@ use PgFactory\PageFactory\Utils;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\createHash;
-use function PgFactory\PageFactory\parseArgumentStr;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
@@ -26,6 +25,8 @@ const ENLIST_ADD_ICON       = '+';
 const ENLIST_MODIFY_ICON    = '✎';
 const ENLIST_DELETE_ICON    = '−';
 const ENLIST_CALENDAR_ICON  = '📅';
+
+const DEFAULT_DATA_PATH     = 'enlist/';
 
 const ICAL_DEFAULT_OPTIONS = [
     'title' => '',
@@ -581,11 +582,13 @@ EOT;
     private function openDb(): void
     {
         if ($this->file) {
-            $filename = basename($this->file);
+            $filename = $this->file;
+            $path = str_contains($filename, '/') ? '' : DEFAULT_DATA_PATH;
         } else {
             $filename = $this->pageId;
+            $path = DEFAULT_DATA_PATH;
         }
-        $file = "~data/enlist/$filename.yaml";
+        $file = "~data/$path$filename.yaml";
         $file = resolvePath($file);
         $this->db = new DataSet($file, [
             'masterFileRecKeyType' => 'origKey',
