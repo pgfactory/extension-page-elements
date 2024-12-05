@@ -8,8 +8,10 @@ window.onload = function() {
     // Scroll to position if request was left in localStorage:
     const yPos = localStorage.getItem('scrollpos');
     if (yPos) {
+      if (!window.location.hash) { // exec only if no anchor present in url
         document.documentElement.scrollTop = yPos;
         localStorage.setItem('scrollpos', 0);
+      }
     }
 }
 
