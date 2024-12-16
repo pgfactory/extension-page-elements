@@ -15,7 +15,8 @@ return function ($args = '') {
     $config = [
         'options' => [
             'format' => ['Defines how to render the date.', false],
-            'date' => ['[ISO-datetime] Defines the date/time to render.', false],
+            'date' => ['[ISO-datetime] Defines the date/time to render. (default: now)', false],
+            'offset' => ['(string) Defines an offset that is applied to the date/time, e.g. "+2 months".', false],
             'default' => ['[ISO-datetime] Returned if format or date is missing.', false],
             'intlDateFormat' => ['If true, "IntlDateFormatter" format is used.', false],
         ],
@@ -49,6 +50,10 @@ EOT,
         $t = time();
     } else {
         $t = resolveTimePlaceholders($date);
+    }
+
+    if ($offset = ($options['offset']??false)) {
+        $t = strtotime($offset, $t);
     }
 
     if ($options['intlDateFormat']??false) {
