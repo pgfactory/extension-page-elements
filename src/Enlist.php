@@ -4,6 +4,7 @@ namespace PgFactory\PageFactoryElements;
 
 use IntlDateFormatter;
 use Kirby\Exception\InvalidArgumentException;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PfyForm;
@@ -157,8 +158,7 @@ class Enlist
                 if ((($customField['type'] ?? 'text') === 'checkbox') ||
                     ($customField['options'] ?? false)) {
                     $customField['type'] = 'checkbox';
-                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '', splitOnLastMatch:true);
-                    $customOptions = array_flip($customOptions);
+                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
                     $customFields[$key]['options'] = $customOptions;
                     if ($customField['splitOutput']??false) {
                         $this->fieldNames = array_merge($this->fieldNames, array_values($customOptions));
@@ -182,7 +182,7 @@ class Enlist
 
         if (!self::$initialized) {
             self::$initialized = true;
-            PageFactory::$pg->addAssets('FORMS');
+            Assets::addAssets('FORMS');
 
             $adminEmail = $this->options['adminEmail'] ?: PageFactory::$webmasterEmail;
             PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
@@ -960,7 +960,7 @@ EOT;
     private function callback(array $data): string
     {
         $setName = $data['setname'];
-        $context = "[$setName: ".PageFactory::$hostUrl.$this->pagePath.']';
+        $context = "[$setName: ".PFY_HOST_URL.$this->pagePath.']';
         if ($this->isEnlistAdmin) {
             $context = rtrim($context, ']').' (as admin)]';
         }
@@ -1447,19 +1447,18 @@ EOT;
         $start  = $rec['start'];
         $ics = $this->createICalRecord($rec);
 
+        $date = date('Y-m-d\TH:i', strtotime($start));
+        $file = "~download/enlist/$date.ics";
         if ($saveToFile) {
-            $date = date('Y-m-d\TH:i', strtotime($start));
-            $file = "~download/enlist/$date.ics";
             writeFile($file, $ics);
         }
 
 
-        $url = Utils::resolveUrls($file);
         $calIcon = ENLIST_CALENDAR_ICON;
         $iCal = <<<EOT
 
 <div class='pfy-enlist-ical-wrapper'>
-<a href="$url" download="$start" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
+<a href="$file" download="$start" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
 </div>
 
 EOT;

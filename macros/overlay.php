@@ -36,6 +36,8 @@ return function ($argStr = '')
             'callbackArg'		=> ['[any variable] Value or object that will be available inside callback functions.',
                 false],
 
+            'triggerButton'		=> ['[string] ', false],
+
             'id'		=> ['[string] ID to be applied to the popup element. (Default: pfy-popup-N)', false],
 
             'wrapperClass'		=> ['[string] Class(es) applied to wrapper around Popup element.', false],
@@ -44,7 +46,8 @@ return function ($argStr = '')
 
             'containerClass'		=> ['[string] Class(es) applied to container element.', false],
 
-            'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],        ],
+            'buttonsClass'		=> ['[string] Will be applied to buttons defined by "buttons" argument.', false],
+        ],
         'summary' => <<<EOT
 # overlay()
 
@@ -84,13 +87,14 @@ EOT,
             }
         }
     }
-    $jq = <<<EOT
+    $js = <<<EOT
 
 var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
-    PageFactory::$pg->addJq($jq);
+    PageFactory::$pg->addJsReady($js);
+    Assets::addAssets('POPUPS');
 
     return $sourceCode;
 };

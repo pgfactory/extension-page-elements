@@ -2,13 +2,13 @@
 
 $focus-color: orange;
 
-//#pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
     .pfy-table-wrapper {
         .pfy-button {
             margin-bottom: 3px;
             display: inline-block;
+            height: 2em;
         }
     }
     /* === pfy-tables  */
@@ -39,6 +39,9 @@ $focus-color: orange;
   }
   .pfy-table-new-rec {
     width: 2em;
+    .mdp-icon {
+      margin-left: -0.15em;
+    }
   }
   .pfy-rec-locked {
     background: repeating-linear-gradient(

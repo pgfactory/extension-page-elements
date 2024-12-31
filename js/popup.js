@@ -668,7 +668,7 @@ function pfyPopup( options ) {
 
 
 
-// === convenience wrapper functions ============================================
+ // === convenience wrapper functions ============================================
 function pfyPopupPromise( options ) {
     return new Promise(function(resolve, reject) {
       // affirmative reactions:

@@ -43,7 +43,7 @@ EOT,
             $msg = $mdp->compile($msg);
         }
 
-        PageFactory::$pg->addAssets('MESSAGES');
+        Assets::addAssets('MESSAGES');
         $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";
         PageFactory::$pg->addBodyEndInjections($html);
     }

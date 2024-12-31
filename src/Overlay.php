@@ -41,7 +41,7 @@ EOT;
             $jsOptions .= "\tpopupClass: 'pfy-overlay',\n";
         }
         $jsOptions = "{\n$jsOptions }";
-        PageFactory::$pg->addJq("pfyPopup($jsOptions);");
+        PageFactory::$pg->addJsReady("pfyPopup($jsOptions);");
 
         $this->addAssets('POPUPS');
         PageFactory::$pg->addBodyTagClass('pfy-overlay-open');

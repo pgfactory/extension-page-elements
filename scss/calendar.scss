@@ -1,15 +1,15 @@
-// Calendar Styling
-//==================
+ // Calendar Styling
+ //==================
 
 /*
 **	Variables:
 **
  */
 
-// :root {
-//   --fc-border-color: black;
-//   --fc-daygrid-event-dot-width: 5px;
-// }
+ // :root {
+ //   --fc-border-color: black;
+ //   --fc-daygrid-event-dot-width: 5px;
+ // }
 $nColors: 6;
 $deg: 60deg; //calc(360deg / #{$nColors});
 $light: 90%;
@@ -33,7 +33,6 @@ $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
 $eventTextColor: var(--pfy-event-txt-color, #333);
 $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
 
-//#pfy .pfy-encapsulated.pfy-default-styling,
 .pfy-default-styling {
 
   .pfy-calendar {
@@ -168,7 +167,6 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     }
   }
 
-//  #pfy-cal-context-menu {
   .tippy-content {
     button {
       border: none;

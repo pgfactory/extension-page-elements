@@ -46,7 +46,7 @@ EOT,
     }
 
     // assemble output:
-    PageFactory::$pg->addAssets('REVEAL');
+    Assets::addAssets('REVEAL');
 
     $id = "pfy-reveal-controller-$inx";
     $class = $args['class'];

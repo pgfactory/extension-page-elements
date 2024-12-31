@@ -6,6 +6,8 @@
  */
 namespace PgFactory\PageFactoryElements;
 
+
+use Kirby\Http\Url;
 use PgFactory\PageFactory\PageFactory;
 use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\getFile;
@@ -103,13 +105,13 @@ class AjaxHandler
             $text = json_encode($text);
         }
         if (!defined('PFY_LOGS_PATH')) {
-            define('PFY_LOGS_PATH', 'site/logs/');
+            define('PFY_LOGS_PATH', PFY_APP_BASE_PATH . '/site/logs/');
         }
         $ip = $_SERVER['REMOTE_ADDR'];
         if (option('pgfactory.pagefactory-elements.options.debug_logIP', false)) {
             $text = "[$ip]  $text";
         }
-        require_once 'site/plugins/pagefactory/src/helper.php';
+        require_once PFY_APP_BASE_PATH . 'site/plugins/pagefactory/src/helper.php';
         mylog($text, $logFile);
         exit('"ok"');
     } // serverLog
@@ -285,7 +287,7 @@ class AjaxHandler
         if (!$data) {
             exit(json_encode($data));
         }
-        require_once 'site/plugins/pagefactory-pageelements/src/TemplateCompiler.php';
+        require_once __DIR__ . '/TemplateCompiler.php';
         $data1 = [];
         foreach ($data as $i => $rec) {
             $data1[$i] = self::_assembleRec($rec);
@@ -453,7 +455,7 @@ class AjaxHandler
         $datasrcinx = preg_replace('/\W/', '_', $datasrcinx);
 
         if (!defined('PFY_LOGS_PATH')) {
-            define('PFY_LOGS_PATH', 'site/logs/');
+            define('PFY_LOGS_PATH', URL::index() . '/site/logs/');
         }
         mylog("Writable update: '$datasrcinx:$name' <= '$value'", 'writable-log.txt');
         $db = self::openDb('_origRecKey');

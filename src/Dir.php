@@ -3,6 +3,7 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\MarkdownPlus;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\PageFactory;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\base_name;
@@ -48,7 +49,7 @@ class Dir
 
     public function __construct()
     {
-        PageFactory::$pg->addAssets('media/plugins/pgfactory/pagefactory-pageelements/css/-dir.css');
+        Assets::addAssets('media/plugins/pgfactory/pagefactory-pageelements/css/-dir.css');
     } // __construct
 
 
@@ -70,7 +71,7 @@ class Dir
         $goBack = $header = '';
         if ($dirOffset) {
             $path = "$path$dirOffset/";
-            $href = PageFactory::$pageUrl .'?dir=' . dirname($dirOffset);
+            $href = PFY_PAGE_URL .'?dir=' . dirname($dirOffset);
             $goBack = "\n<div class='pfy-dir-go-back'><a href='$href'>{{ pfy-dir-go-back }}</a></div>";
             $header = "<div class='pfy-dir-sub-header'>{{ pfy-dir-sub-folder }}$dirOffset{{ pfy-dir-sub-folder-tail }}</div>";
         }
@@ -294,10 +295,10 @@ EOT;
             $date = $m[0];
         }
         if (!($url = $this->parseUrlFile($file))) {
-            if (str_starts_with($file, 'content/')) {
-                $url = PageFactory::$appRootUrl . substr(preg_replace('|/\d+_|', '/', $file), 8);
+            if (str_starts_with($file, PFY_APP_BASE_PATH . 'content/')) {
+                $url = PFY_APP_BASE_URL . substr(preg_replace('|/\d+_|', '/', $file), 8);
             } else {
-                $url = PageFactory::$appRootUrl . $file;
+                $url = PFY_APP_BASE_URL . $file;
             }
         }
         $filename = basename($file);
@@ -317,7 +318,7 @@ EOT;
         if (file_exists("$file.txt")) {
             $decription = file_get_contents("$file.txt");
         }
-        require_once 'site/plugins/pagefactory-pageelements/src/pe_helper.php';
+        require_once __DIR__ . '/pe_helper.php';
         $out = [
             'file'          => $file,
             'filename'      => $filename,

@@ -107,7 +107,7 @@ $jsArgs});
 EOT;
     PageFactory::$pg->addJsReady($jq);
 
-    PageFactory::$pg->addAssets('POPUPS');
+    Assets::addAssets('POPUPS');
 
     return $sourceCode;
 };

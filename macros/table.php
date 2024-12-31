@@ -89,7 +89,7 @@ EOT,
         $args['permission'] .= 'num';
     }
 
-    $file = resolvePath($file, relativeToPage: true);
+    $file = resolvePath($file);
     $ds = new DataTable($file, $args);
     $str .= $ds->render();
 

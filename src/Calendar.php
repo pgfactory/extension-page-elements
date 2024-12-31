@@ -92,7 +92,7 @@ class Calendar
         $this->sessCalRec    = kirby()->session()->get($this->sessCalRecKey, []);
 
         $this->parseOptions($args);
-        PageFactory::$pg->addAssets('CALENDAR');
+        Assets::addAssets('CALENDAR');
         $locale = str_replace('_', '-', PageFactory::$locale);
         PageFactory::$pg->addJs("const locale = '$locale';");
         $timezone = PageFactory::$timezone;

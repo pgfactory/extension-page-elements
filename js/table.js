@@ -330,6 +330,9 @@ const tableHelper = {
               mylog('prepareEditForm - onOpen new');
               const form = document.querySelector('#pfy-popup-form .pfy-form');
               if (form) {
+                form.removeAttribute('aria-hidden');
+                form.removeAttribute('id');
+
                 const cancelInputs = form.querySelectorAll('input.pfy-cancel');
                 if (cancelInputs.length) {
                   cancelInputs.forEach(function(input) {
@@ -396,6 +399,8 @@ const tableHelper = {
             pfyFormsHelper.setupCancelButtonHandler(form);
             pfyFormsHelper.presetForm(form, data, recKey);
             tableHelper.setupCancelButton(table, tableInx);
+            form.removeAttribute('aria-hidden');
+            form.removeAttribute('id');
           }
         }
       };
@@ -404,7 +409,6 @@ const tableHelper = {
           tableHelper.enableEditButtons(table);
           editBtn.setAttribute('aria-expanded', 'false');
         })
-        .then(function () {});
    } else {
       pfyFormsHelper.presetForm(parentForm, data, recKey);
       tableHelper.enableEditButtons(table);

@@ -212,8 +212,22 @@ pfy-form-enablesubmit-elem-not-checked:
   de: Bitte zustimmen, bevor Sie das Formular absenden
   _:  Please confirm before sumbitting this form
 
-// ex. pfy-form-problem-banner:
+ // ex. pfy-form-problem-banner:
 pfy-problem-with-form-banner:
+  de: |
+    %%% .pfy-problem-with-form-hint.pfy-screen-only
+    Problem mit diesem Webformular?
+
+    → bitte den {{ pfy-webmaster-link }} benachrichtigen. Danke.
+    %%%
+  _: |
+    %%% .pfy-problem-with-form-hint.pfy-screen-only
+    Problems with this web form?
+
+    → Please contact the {{ pfy-webmaster-link }}. Thank you.
+    %%%
+
+problemWithFormBanner:
   de: |
     %%% .pfy-problem-with-form-hint.pfy-screen-only
     Problem mit diesem Webformular?

@@ -31,13 +31,12 @@ const DEFAULT_OPTIONS = [
     'newlineReplace' => '<br>',
 ];
 
-const CUSTOM_PHP_PATH = 'site/templates/custom/';
+define('CUSTOM_PHP_PATH', PFY_APP_BASE_PATH . 'site/templates/custom/');
 
 class TemplateCompiler
 {
     private static array $systemVariables = [];
     private static array $templateOptions;
-    private static string $filename;
 
     /**
      * @param array $template // -> sanitized templateOptions
@@ -136,8 +135,6 @@ class TemplateCompiler
      */
     public static function getTemplate(mixed &$templateOptions, string $selector = null, string $useAsElement = 'element'): string|array
     {
-        self::$filename = '';
-
         $selector = ($selector??false) ?: ($templateOptions['selector'] ?? '');
         $templates = $templateOptions['templates']??false;
         if ($templates) {
@@ -214,24 +211,13 @@ class TemplateCompiler
      * @param string $template
      * @param array $vars
      * @return string
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     private static function compileTemplate(string $mode, string $template, array $vars): string
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
-        $str = $template = self::basicCompileTemplate($template, $vars);
-
-        if ($mode === 'twig') {
-            $str = self::twigCompileTemplate($template, $vars);
-
-        } elseif (stripos('TransVars', $mode) !== false) {
-            $str = self::transvarCompileTemplate($template);
-
-        } elseif (stripos('php', $mode) !== false) {
-            $str = self::phpCompileTemplate(self::$templateOptions['file'], $vars);
-        }
+        $template = self::basicCompileTemplate($template, $vars);
+        $template = TransVars::preprocess($template);
+        $str = TransVars::translate($template);
         return $str;
     } // compileTemplate
 
@@ -255,99 +241,6 @@ class TemplateCompiler
         }
         return $template;
     } // basicCompileTemplate
-
-
-    /**
-     * @param string $phpFile
-     * @param array $vars
-     * @return string
-     */
-    public static function phpCompileTemplate(string $phpFile, array $vars): string
-    {
-        $phpFile = CUSTOM_PHP_PATH . $phpFile;
-        $fun = include $phpFile;
-        $out = $fun($vars);
-        return $out;
-    } // phpCompileTemplate
-
-
-    /**
-     * @param string $template
-     * @param array $vars
-     * @return string
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
-     */
-    private static function twigCompileTemplate(string $template, array $vars): string
-    {
-        if (self::$templateOptions['includeSystemVariables']??false) {
-            if (!self::$systemVariables) {
-                self::$systemVariables = TransVars::$variables;
-            }
-            $vars = $vars + self::$systemVariables;
-            $functions = TransVars::findAllMacros();
-        } else {
-            $functions = [];
-        }
-
-        if (str_contains($template, '\\{{')) {
-            list($p1, $p2) = strPosMatching($template, 0, '\\{{', '}}');
-            while ($p1 !== false) {
-                $template = substr($template, 0, $p1).'{\\{'.substr($template, $p1+3);
-                $template = substr($template, 0, $p2).'}\\}'.substr($template, $p2+3);
-                list($p1, $p2) = strPosMatching($template, $p2, '\\{{', '}}');
-            }
-        }
-
-        $templateName = self::$filename ?: 'twig-template';
-
-        $templateOptions = [];
-        $templateOptions[$templateName] = $template;
-        $loader = new \Twig\Loader\ArrayLoader($templateOptions);
-        if (PageFactory::$debug) {
-            $params = ['debug' => true];
-        } else {
-            $params = ['debug' => false, 'cache' => 'site/cache/twig/'];
-        }
-        try {
-            $twig = new \Twig\Environment($loader, $params);
-            $twig->addFilter(new \Twig\TwigFilter('intlDate', 'PgFactory\PageFactoryElements\twigIntlDateFilter'));
-            $twig->addFilter(new \Twig\TwigFilter('intlDateFormat', 'PgFactory\PageFactoryElements\twigIntlDateFormatFilter'));
-
-            foreach ($functions as $name => $function) {
-                $twig->addFunction(new \Twig\TwigFunction($name, $function, ['is_safe' => ['html']]));
-            }
-            $out = $twig->render($templateName, $vars);
-
-            if (str_contains($out, '{\\{')) {
-                $out = str_replace(['{\\{', '}\\}'], ['{{', '}}'], $out);
-            }
-
-            if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
-                self::removeUndefinedPlaceholders($out);
-            }
-        } catch (\Twig\Error\SyntaxError $e) {
-            $errMsg = $e->getMessage();
-            $errMsg = "<div class='pfy-error'>Error in Twig-template:<br>$errMsg</div>";
-            PageFactory::$pg->setOverlay($errMsg, false);
-            $out = $errMsg;
-        }
-        return $out;
-    } // twigCompileTemplate
-
-
-    /**
-     * @param string $template
-     * @param array $vars
-     * @param bool $removeUndefinedPlaceholders
-     * @return string
-     */
-    private static function transvarCompileTemplate(string $template): string
-    {
-        $str = TransVars::translate($template);
-        return $str;
-    } // transvarCompileTemplate
 
 
     /**

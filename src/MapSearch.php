@@ -86,7 +86,7 @@ EOT;
         $out = "<div id='$id' class='pfy-swissmap-container'></div>\n";
 
         if ($this->inx === 1) {
-            PageFactory::$pg->addAssets('https://search.ch/map/api/map.js');
+            Assets::addAssets('https://search.ch/map/api/map.js');
         }
 
         $minHight = ($options['minHeight']??false) ?: '200px';

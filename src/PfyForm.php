@@ -167,11 +167,11 @@ class PfyForm extends Form
             self::$initialized = true;
 
             if ($this->tableOptions['editMode']) {
-                PageFactory::$pg->addAssets('POPUPS');
+                Assets::addAssets('POPUPS');
             }
-            PageFactory::$pg->addAssets('POPUPS');
-            PageFactory::$pg->addAssets('REVEAL');
-            PageFactory::$pg->addAssets('FORMS');
+            Assets::addAssets('POPUPS');
+            Assets::addAssets('REVEAL');
+            Assets::addAssets('FORMS');
 
             if ($formOptions['init'] ?? true) {
                 PageFactory::$pg->addJsReady('pfyFormsHelper.init();');
@@ -357,8 +357,8 @@ class PfyForm extends Form
         }
 
         if ($type === 'password') {
-            $icon = svg('site/plugins/pagefactory-pageelements/assets/icons/show.svg') .
-                svg('site/plugins/pagefactory-pageelements/assets/icons/hide.svg');
+            $icon = svg(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/icons/show.svg') .
+                svg(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/icons/hide.svg');
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
         }
         if ($description = ($rec['description'] ?? '')) {
@@ -691,7 +691,7 @@ EOT;
             $inx = "{$this->formIndex}_$this->revealInx";
             $elemOptions['revealInx'] = $inx;
             $targetId = "pfy-reveal-container-$inx";
-            PageFactory::$pg->addAssets('REVEAL');
+            Assets::addAssets('REVEAL');
 
             $elem1 = $this->addCheckbox("CommentController$inx", $revealLabel);
             $elem1->setHtmlAttribute('class', 'pfy-reveal-controller');
@@ -742,7 +742,7 @@ EOT;
         }
 
         if ($elemOptions['revealTarget']??false) {
-            PageFactory::$pg->addAssets('REVEAL');
+            Assets::addAssets('REVEAL');
             $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
         }
 
@@ -798,7 +798,7 @@ EOT;
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
 
         if ($elemOptions['revealTarget']??false) {
-            PageFactory::$pg->addAssets('REVEAL');
+            Assets::addAssets('REVEAL');
             $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
         }
 
@@ -1011,7 +1011,7 @@ EOT;
                 $html = "<div class='pfy-form-error'>$err</div>\n";
                 mylog($err, 'form-log.txt');
             } else {
-                $logMsg = 'Stored: '.PageFactory::$pageId."[$formInxReceived] ";
+                $logMsg = 'Stored: '.PFY_PAGE_URI."[$formInxReceived] ";
                 $logMsg .= var_r($dataRec);
                 mylog($logMsg, 'form-log.txt');
             }
@@ -1300,7 +1300,7 @@ EOT;
         array_shift($newEvents);
         foreach ($newEvents as $newRec) {
             $res = $this->saveRec($newRec, $recKey);
-//ToDo: eval $res, report errors
+ //ToDo: eval $res, report errors
         }
     } // executeRRule
 
@@ -1322,7 +1322,7 @@ EOT;
 
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
-            $sessKey = "db:" . PageFactory::$pageId . ":$this->formIndex:file";
+            $sessKey = "db:" . PFY_PAGE_URI . ":$this->formIndex:file";
             kirby()->session()->set($sessKey, resolvePath($this->formOptions['file']));
         }
         return $this->db;
@@ -1447,7 +1447,7 @@ EOT;
             $tableOptions = array_merge($tableOptions, $this->formOptions['tableOptions']);
         }
 
-        $file = resolvePath($this->formOptions['file'], relativeToPage: true);
+        $file = resolvePath($this->formOptions['file']);
 
         $showAllFields = $tableOptions['showAllFields']??false;
         $fieldNames = $this->fieldNames;
@@ -1637,7 +1637,7 @@ EOT;
         if (!isset($elemOptions['options'])) {
             $elemOptions['options'] = false;
         } elseif (is_string($elemOptions['options'])) {
-            $elemOptions['options'] = explodeTrimAssoc(',', $elemOptions['options'], splitOnLastMatch:true);
+            $elemOptions['options'] = explodeTrimAssoc(',', $elemOptions['options']);
         } elseif (!is_array($elemOptions['options'])) {
             throw new \Exception("Error: Form argument 'options' must be of type string or array.");
         }
@@ -1702,7 +1702,7 @@ EOT;
         if ($this->formOptions['action'] ?? false) {
             $this->setAction($this->formOptions['action']);
         } else {
-            $this->setAction($_SERVER['REQUEST_URI']); // this page's URL, poss. including ?xy
+            $this->setAction(PFY_PAGE_URL); // this page's URL, poss. including ?xy
         }
 
         list($id, $formClass, $aria) = $this->getHeadAttributes();
@@ -2362,7 +2362,7 @@ EOT;
             $dataRec += $schedRec;
         }
 
-        $dataRec['host'] = PageFactory::$hostUrl;
+        $dataRec['host'] = PFY_HOST_URL;
 
         $to = false;
         $emailFieldName = $this->formOptions['confirmationEmail'];
@@ -2601,7 +2601,7 @@ EOT;
         $aria = '';
         if (($this->tableOptions['editMode'] ?? false) === 'popup') {
             $class .= " pfy-fully-hidden";
-            $aria = 'aria-hidden="true"';
+            $aria = ' aria-hidden="true"';
         }
         return array($id, $class, $aria);
     } // getHeadAttributes
@@ -2669,12 +2669,14 @@ EOT;
             'class' => 'pfy-event-elem pfy-event-elem-from',
             'preset' => $preset,
         ];
+
+        $defaultEventDuration = ($this->formElements[$name]['defaultEventDuration'] ?? ($this->formElements[$name]['defaultDuration']??0));
         $eventElements[$endName] = [
             'type' => 'datetime-local',
             'label' => $endLabel,
             'class' => 'pfy-event-elem pfy-event-elem-till',
             'relatedField' => $startName,
-            'defaultEventDuration' => ($this->formElements[$name]['defaultEventDuration']??0),
+            'defaultEventDuration' => $defaultEventDuration,
         ];
 
         $this->formElements = array_splice_associative($this->formElements, $name, 1, $eventElements);

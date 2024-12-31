@@ -44,7 +44,7 @@ Your browser does not support the video tag.
 EOT;
 
     if ($inx === 1) {
-        PageFactory::$pg->addAssets([
+        Assets::addAssets([
             'media/plugins/pgfactory/pagefactory-pageelements/css/-video.css',
         ]);
     }

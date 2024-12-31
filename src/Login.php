@@ -3,6 +3,7 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Link;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
@@ -31,7 +32,7 @@ class Login
             self::$selfLink = './?login';
         }
         if (str_starts_with(self::$selfLink, './')) {
-            self::$selfLink = PageFactory::$pageUrl . substr(self::$selfLink, 2);
+            self::$selfLink = PFY_PAGE_URL . substr(self::$selfLink, 2);
         }
 
         // check url for arg 'next':
@@ -47,7 +48,7 @@ class Login
         $nextPage = ($options['nextPage']??false) ?: ($options['next']??false);
         if ($nextPage) {
             if (str_starts_with($nextPage, './')) {
-                $nextPage = PageFactory::$pageUrl . substr($nextPage, 2);
+                $nextPage = PFY_PAGE_URL . substr($nextPage, 2);
             }
             self::$nextPage = $nextPage;
         }
@@ -108,7 +109,7 @@ $html
 EOT;
 
         $html = shieldStr($html);
-        PageFactory::$pg->addAssets('LOGIN');
+        Assets::addAssets('LOGIN');
         return $html;
     } // render
 
@@ -121,11 +122,6 @@ EOT;
      */
     private static function renderCombinedLoginForm(string $message = ''): string
     {
-        // get required var defined:
-        if (!TransVars::getVariable('pfy-webmaster-link')) {
-            Utils::prepareStandardVariables();
-        }
-
         $formOptions = [
             'action'             => self::$selfLink,
             'showDirectFeedback' => false,
@@ -183,7 +179,7 @@ EOT;
      */
     private static function renderLoginForm(string $message = ''): string
     {
-        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
+        $urlChangePw = PFY_APP_BASE_URL.'panel/reset-password';
         $labelChangePw = '{{ pfy-login-reset-pw }}';
 
         $formOptions = [
@@ -230,11 +226,11 @@ EOT;
                 kirby()->auth()->verifyChallenge($code);
                 $email = self::getUsersEmail($data);
                 $str = self::renderMsg('pfy-login-success', $email);
-                mylog("Login Code '$code' successfully verified", LOGIN_LOG_FILE);
+                mylog("Login Code '$code' successfully verified", PFY_LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, $str);
 
             } catch (\Exception $e) {
-                mylog("Login Code '$code' failed", LOGIN_LOG_FILE);
+                mylog("Login Code '$code' failed", PFY_LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
             }
 
@@ -246,11 +242,11 @@ EOT;
                     $email = self::getUsersEmail($data);
                     kirby()->auth()->login($email, $password);
                     $str = self::renderMsg('pfy-login-success', $email);
-                    mylog("$email successfully logged in", LOGIN_LOG_FILE);
+                    mylog("$email successfully logged in", PFY_LOGIN_LOG_FILE);
                     reloadAgent(self::$nextPage, $str);
 
                 } catch (\Exception $e) {
-                    mylog("$email login failed", LOGIN_LOG_FILE);
+                    mylog("$email login failed", PFY_LOGIN_LOG_FILE);
                     reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
                 }
 
@@ -259,10 +255,10 @@ EOT;
                     $status = kirby()->auth()->createChallenge($email, mode: 'login');
                     if ($status->status() === 'pending') {
                         self::$challengePending = true;
-                        mylog("Login Code sent to '$email'", LOGIN_LOG_FILE);
+                        mylog("Login Code sent to '$email'", PFY_LOGIN_LOG_FILE);
                     }
                 } catch (\Exception $e) {
-                    mylog("Sending login code to '$email' failed", LOGIN_LOG_FILE);
+                    mylog("Sending login code to '$email' failed", PFY_LOGIN_LOG_FILE);
                     reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
                 }
             }
@@ -320,7 +316,7 @@ EOT;
      */
     private static function renderAccountAdminForm(mixed $username): string
     {
-        $urlChangePw = PageFactory::$appUrl.'panel/reset-password';
+        $urlChangePw = PFY_APP_BASE_URL.'panel/reset-password';
         $labelChangePw = '{{ pfy-login-reset-pw }}';
         $html = <<<EOT
 <div class='pfy-already-logged-in'>

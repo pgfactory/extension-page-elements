@@ -4,6 +4,7 @@ namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
@@ -170,7 +171,8 @@ class DataTable
             if (!str_contains($serviceColumns, 'select')) {
                 $serviceColumns = "select,$serviceColumns";
             }
-            PageFactory::$assets->addAssets('POPUPS, TABLES');
+            Assets::addAssets('POPUPS');
+            Assets::addAssets('TABLES');
         }
         $this->serviceColumns = $serviceColumns;
         $this->tableButtons = $tableButtons;
@@ -197,7 +199,7 @@ class DataTable
         if ($this->interactive && !self::$interactiveInitializee) {
             self::$interactiveInitializee = true;
             PageFactory::$pg->addJs('var pfyDataTable = [];');
-            PageFactory::$pg->addAssets('JQUERY');
+            Assets::addAssets('JQUERY');
         }
     } // __construct
 
@@ -724,12 +726,12 @@ class DataTable
                     $icon = renderIcon('database');
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
                         "type='button' title='{{ pfy-table-archive-recs-title }}'>$icon</button>\n";
-                    PageFactory::$pg->addAssets('POPUPS');
+                    Assets::addAssets('POPUPS');
                     break;
 
                 case 'new':
                 case 'add':
-                $icon = '+';
+                    $icon = renderIcon('plus');
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
                         "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>\n";
                     break;
@@ -738,7 +740,7 @@ class DataTable
                     $icon = renderIcon('trash');
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
                         "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
-                    PageFactory::$pg->addAssets('POPUPS');
+                    Assets::addAssets('POPUPS');
                     break;
 
                 case 'email':
@@ -746,7 +748,7 @@ class DataTable
                     $icon = renderIcon('mail');
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-mail-open-dialog' ".
                         "type='button' title='{{ pfy-table-create-mail-title }}'>$icon</button>\n";
-                    PageFactory::$pg->addAssets('POPUPS');
+                    Assets::addAssets('POPUPS');
                     $mailFieldSelector = 'td-'.translateToClassName($this->mailFieldName);
                     PageFactory::$pg->addJs("const formOwnerEmail = '$this->mailFrom';\nconst mailFieldSelector = '$mailFieldSelector';");
                     break;
@@ -785,7 +787,8 @@ EOT;
      */
     private function activateInteractiveTable(): void
     {
-        PageFactory::$pg->addAssets('TABLES,DATATABLES');
+        Assets::addAssets('TABLES');
+        Assets::addAssets('DATATABLES');
         $this->tableWrapperClass .= ' pfy-interactive';
 
         $order = '';
@@ -803,7 +806,7 @@ EOT;
         $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
         $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
 
-        $jq = <<<EOT
+        $js = <<<EOT
 
 pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
   language: {
@@ -813,7 +816,7 @@ pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
   $scrollable$order$paging$pageLength$orderable
 });
 EOT;
-        PageFactory::$pg->addJq($jq);
+        PageFactory::$pg->addJsReady($js);
     } // activateInteractiveTable
 
 
@@ -861,12 +864,12 @@ EOT;
     private function renderTableDownloadButton(): string
     {
         $button = '';
-        $appUrl = PageFactory::$appUrl;
         if (DataSet::checkOfficeFormatIsAvailable()) {
             $file = $this->exportDownloadDocs();
+            $url = str_replace(PFY_APP_BASE_PATH, PFY_APP_BASE_URL, $file);
             $filename = basename($file);
             $icon = renderIcon('cloud_download_alt');
-            $button = "<a class='pfy-button pfy-button-lean pfy-table-download-start' href='$appUrl$file' title='Download $filename' download>$icon</a>";
+            $button = "<a class='pfy-button pfy-button-lean pfy-table-download-start' href='$url' title='Download $filename' download>$icon</a>";
         }
         return $button;
     } // renderTableDownloadButton

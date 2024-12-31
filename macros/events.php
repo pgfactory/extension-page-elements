@@ -92,7 +92,7 @@ EOT,
     }
 
     if ($inx === 1) {
-        PageFactory::$pg->addAssets('EVENTS');
+        Assets::addAssets('EVENTS');
     }
 
     // assemble output:

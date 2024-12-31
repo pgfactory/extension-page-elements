@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
@@ -21,9 +22,8 @@ class PageElements
     /**
      * @param $pfy
      */
-    public function __construct($pfy = null)
+    public function __construct()
     {
-        $this->pfy = $pfy;
         $this->pg = PageFactory::$pg;
         $this->assets = PageFactory::$assets;
 
@@ -34,7 +34,6 @@ class PageElements
 
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
-        $this->updateScss();
         $this->handleCssRefactor();
         $this->initTooltips();
         $this->cleanDownloadFolder();
@@ -56,31 +55,6 @@ class PageElements
     } // initMacros
 
 
-
-    /**
-     * @return void
-     */
-    private function updateScss(): void
-    {
-        $dir = getDir($this->extensionPath.'scss/*.scss');
-        $targetPath = $this->extensionPath.'assets/css/';
-        foreach ($dir as $file) {
-            if (basename($file[0] !== '#')) {
-                Scss::updateFile($file, $targetPath);
-            }
-        }
-    } // updateScss
-
-
-    /**
-     * @return array
-     */
-    public function getAssetGroups(): array
-    {
-        return PE_ASSET_GROUPS;
-    } // getAssetGroups
-
-
     /**
      * @return void
      */
@@ -92,7 +66,7 @@ class PageElements
         }
         if ($file === '') {
             exit("CSS-Refactoring:<br>Please supply path to CSS file(s)<br>You can use wildcards, ".
-                "e.g. '?cssrefactor=site/plugins/pagefactory/assets/css/*.css'");
+                "e.g. '?cssrefactor=site/plugins/pagefactory/assets/css/*.css'"); //???
         }
 
         if (file_exists($file)) {
@@ -120,7 +94,7 @@ class PageElements
      */
     private function cleanDownloadFolder()
     {
-        $dir = glob(TEMP_DOWNLOAD_PATH.'*');
+        $dir = glob(PFY_TEMP_DOWNLOAD_PATH.'*');
         if ($dir) {
             foreach ($dir as $folder) {
                 if (@filemtime($folder) < (time() - 600)) { // max file age: 10 min
@@ -147,7 +121,7 @@ class PageElements
      */
     protected function initTooltips(): void
     {
-        PageFactory::$pg->addAssets('TOOLTIPS');
+        Assets::addAssets('TOOLTIPS');
         $js = <<<EOT
 
 if (document.querySelector('.pfy-tippy')) {
@@ -208,7 +182,7 @@ EOT;
     static function initOnboardingAid(): void
     {
         $str = '';
-        $url = PageFactory::$absPageUrl;
+        $url = PFY_PAGE_URL;
         if (Permission::isLoggedIn()) {
             $str = <<<EOT
 <a href="$url?onboardingaid" class="pfy-onboardingaid-button pfy-onboardingaid" title="{{ pfy-onboardingaid-title }}">
@@ -269,11 +243,26 @@ EOT;
                 if (!$accessCode) {
                     return false;
                 }
-                $link = PageFactory::$absPageUrl."?a=$accessCode";
+                $link = PFY_PAGE_URL."?a=$accessCode";
             }
         }
         TransVars::setVariable('pfy-user-accesslink', $link);
         return true;
     } // getAccessLink
+
+
+    public static function reset(): void
+    {
+        // delete all compiled js files:
+        $files = getDir(PAGE_ELEMENTS_ASSETS_PATH.'js/*.js');
+        foreach ($files as $file) {
+            if (basename($file)[0] === '-') {
+                unlink($file);
+            }
+        }
+
+        // re-compile js files:
+        compileJs(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
+    } // reset
 
 } // PageElements

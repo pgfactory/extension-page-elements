@@ -43,7 +43,7 @@ EOT,
     $permission = Permission::evaluate($options['permission']);
     $writableGroupName = $options['name'].'_'.$inx;
     $writableGroupName = preg_replace('/\W/', '_', $writableGroupName);
-    $pageId = PageFactory::$pageId;
+    $pageId = page()->id(); //??? PageFactory::$pageId;
     $file = $options['file'] ?: "~data/writable/$pageId.yaml";
     $sessDbFileKey = "db:$pageId:$writableGroupName:file";
     kirby()->session()->set($sessDbFileKey, resolvePath($file));
@@ -111,7 +111,7 @@ $str
 
 EOT;
 
-    PageFactory::$pg->addAssets('WRITABLE');
+    Assets::addAssets('WRITABLE');
 
     return $str;
 };

@@ -195,9 +195,13 @@ const pfyFormsHelper = {
           pfyFormsHelper.presetForm(form);
           pfyFormsHelper.unlockRecs();
           const openInPopup = form.closest('.pfy-popup-bg');
-          if (!wasModified && openInPopup) {
-            mylog('close popup');
-            pfyPopupClose();
+          if (!wasModified) {
+            if (openInPopup) {
+              mylog('close popup');
+              pfyPopupClose();
+            } else {
+              reloadAgent();
+            }
           }
         });
       });
