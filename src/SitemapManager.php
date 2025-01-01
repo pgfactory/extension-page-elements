@@ -35,8 +35,8 @@ class SitemapManager
     public static function updateSitemap(): void
     {
         // only run in debug mode:
-        $debug = Utils::determineDebugState();
-        if (!$debug || !self::updateNecessary()) {
+        $dev = Utils::determineDevState();
+        if (!$dev || !self::updateNecessary()) {
             return;
         }
         self::$allowNonPfyPages = PageFactory::$config['allowNonPfyPages']??false;

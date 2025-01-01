@@ -354,7 +354,7 @@ EOT;
             if ($permissionQuery === true) {
                 $permissionQuery = 'localhost|loggedin';
             }
-            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
+            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
             if ($this->isEnlistAdmin && ($this->inx === 1)) {
                 PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
             }

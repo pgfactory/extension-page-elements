@@ -109,7 +109,7 @@ Assets::addAssetGroups(PE_URL_DEFINITIONS);
 
 Assets::addAssetLocation(PE_ASSET_LOCATIONS);
 
-if (PageFactory::$debug || PageFactory::$forceAssetsUpdate) {
+if (PageFactory::$dev || PageFactory::$forceAssetsUpdate) {
     compileJs(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
 }
 

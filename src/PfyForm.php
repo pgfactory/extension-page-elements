@@ -139,7 +139,7 @@ class PfyForm extends Form
         if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns']) {
             $this->addFormTableWrapper = true;
             $permissionQuery = $this->tableOptions['permission'];
-            $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$debug);
+            $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
         }
 
         $this->handleScheduleOption();
