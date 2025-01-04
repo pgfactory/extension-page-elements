@@ -79,6 +79,9 @@ var pfyReveal = {
   reveal: function(revealContainer, revealController) {
     var target = revealContainer.querySelector('.pfy-reveal-container-inner');
 
+    const container = revealContainer.closest('.pfy-reveal-container');
+    container.removeAttribute('aria-hidden');
+
     target.style.display = 'block';
 
     const boundingBox = target.getBoundingClientRect();
@@ -99,6 +102,9 @@ var pfyReveal = {
 
   unreveal: function(revealContainer, revealController) {
     var target = revealContainer.querySelector('.pfy-reveal-container-inner');
+
+    const container = revealContainer.closest('.pfy-reveal-container');
+    container.setAttribute('aria-hidden', 'true');
 
     var boundingBox = target.getBoundingClientRect();
     var marginTop = -(Math.round(boundingBox.height));
