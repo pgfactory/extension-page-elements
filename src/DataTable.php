@@ -6,6 +6,7 @@ use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
 use PgFactory\PageFactory\TransVars;
@@ -198,7 +199,7 @@ class DataTable
         // interactive option (=> DataTables.js):
         if ($this->interactive && !self::$interactiveInitializee) {
             self::$interactiveInitializee = true;
-            PageFactory::$pg->addJs('var pfyDataTable = [];');
+            Page::addJs('var pfyDataTable = [];');
             Assets::addAssets('JQUERY');
         }
     } // __construct
@@ -304,6 +305,9 @@ class DataTable
     } // sortTableData
 
 
+    /**
+     * @return void
+     */
     private function filterTableData(): void
     {
         $table = $this->tableData;
@@ -750,7 +754,7 @@ class DataTable
                         "type='button' title='{{ pfy-table-create-mail-title }}'>$icon</button>\n";
                     Assets::addAssets('POPUPS');
                     $mailFieldSelector = 'td-'.translateToClassName($this->mailFieldName);
-                    PageFactory::$pg->addJs("const formOwnerEmail = '$this->mailFrom';\nconst mailFieldSelector = '$mailFieldSelector';");
+                    Page::addJs("const formOwnerEmail = '$this->mailFrom';\nconst mailFieldSelector = '$mailFieldSelector';");
                     break;
 
                 case 'download':
@@ -816,7 +820,7 @@ pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
   $scrollable$order$paging$pageLength$orderable
 });
 EOT;
-        PageFactory::$pg->addJsReady($js);
+        Page::addJsReady($js);
     } // activateInteractiveTable
 
 

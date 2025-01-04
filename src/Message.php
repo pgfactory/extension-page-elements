@@ -8,6 +8,11 @@ use PgFactory\PageFactory\TransVars;
 
 class Message extends PageElements
 {
+    /**
+     * @param $msg
+     * @param $mdCompile
+     * @return string
+     */
     public function render($msg, $mdCompile)
     {
         $html = '';
@@ -26,7 +31,11 @@ class Message extends PageElements
     } // render
 
 
-
+    /**
+     * @param string $str
+     * @param $mdCompile
+     * @return void
+     */
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);

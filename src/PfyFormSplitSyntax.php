@@ -8,6 +8,11 @@ class PfyFormSplitSyntax extends PfyForm
 {
     private mixed $lastRendered = false;
 
+    /**
+     * @param array $formElements
+     * @return string
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     public function init(array $formElements): string
     {
         $this->createForm($formElements);

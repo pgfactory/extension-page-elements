@@ -7,6 +7,11 @@ use DateTime;
 
 class Ical
 {
+    /**
+     * @param array $iCalOptions
+     * @return string
+     * @throws \DateMalformedStringException
+     */
     public static function render(array $iCalOptions): string
     {
         $event = Event::create($iCalOptions['title']);

@@ -41,9 +41,9 @@ return function ($args = '')
                 'moved to an archive file.', 1],
             'form' => ['Definition of form fields.', null],
             'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', true],
-//            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],
-//            'publishCallback' => ['[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false],
-//            'output' => ['[true|false] If false, no output will be rendered (useful in conjunction with publish).', true],
+ //            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],
+ //            'publishCallback' => ['[string] Provide name of a script in code/ to render output for the \'description\' field of events. Script name must start with "-" (to distinguish from other types of scripts).', false],
+ //            'output' => ['[true|false] If false, no output will be rendered (useful in conjunction with publish).', true],
         ],
         'summary' => <<<EOT
 
@@ -143,7 +143,7 @@ $style {
 }
 $style2
 EOT;
-        PageFactory::$pg->addCss($style);
+        Page::addCss($style);
     }
 
     return $str; // return [$str]; if result needs to be shielded

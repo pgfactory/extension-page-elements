@@ -1,12 +1,19 @@
 <?php
 
 namespace PgFactory\PageFactoryElements;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 
 
 class Overlay extends PageElements
 {
     public static $inx = 1;
+
+    /**
+     * @param mixed $content
+     * @param $mdCompile
+     * @return string
+     */
     public function render(mixed $content, $mdCompile = true)
     {
         $inx = self::$inx++;
@@ -41,14 +48,19 @@ EOT;
             $jsOptions .= "\tpopupClass: 'pfy-overlay',\n";
         }
         $jsOptions = "{\n$jsOptions }";
-        PageFactory::$pg->addJsReady("pfyPopup($jsOptions);");
+        Page::addJsReady("pfyPopup($jsOptions);");
 
         $this->addAssets('POPUPS');
-        PageFactory::$pg->addBodyTagClass('pfy-overlay-open');
+        Page::addBodyTagClass('pfy-overlay-open');
         return '';
     } // render
 
 
+    /**
+     * @param mixed $options
+     * @param $mdCompile
+     * @return void
+     */
     public function set(mixed $options, $mdCompile = false): void
     {
         $this->render($options, $mdCompile);

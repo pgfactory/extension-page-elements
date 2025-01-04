@@ -7,6 +7,12 @@ class Popup extends PageElements
 {
     public static $inx = 1;
 
+    /**
+     * @param string $msg
+     * @param string $header
+     * @param bool $mdCompile
+     * @return string
+     */
     public function render(string $msg, string $header = '&nbsp;', bool $mdCompile = false): string
     {
         $html = '';
@@ -28,7 +34,12 @@ class Popup extends PageElements
     } // render
 
 
-
+    /**
+     * @param string $str
+     * @param string $header
+     * @param $mdCompile
+     * @return void
+     */
     public function set(string $str, string $header, $mdCompile = false): void
     {
         $str = $this->render($str, $header, $mdCompile);

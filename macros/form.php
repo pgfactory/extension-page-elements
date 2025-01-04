@@ -137,6 +137,9 @@ return function ($args = '')
             'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
 
+            'scriptInjectionFilter' =>	['Activates a filter against script injection attacks. '.
+                'Example: "`<script>alert(\'malicious code\')</script>`".<br>Caution: only disable in justified cases!', true],
+
             'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
 
             'output' =>	['Option to control split syntax rendering: <br>'.

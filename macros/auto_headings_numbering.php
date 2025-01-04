@@ -32,10 +32,10 @@ EOT,
 
     $before = $options['before'];
     // assemble output:
-    Assetx::addAssets('site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
+    Assets::addAssets(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
 //    PageFactory::$pg->addAssets(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
 //    PageFactory::$pg->addAssets('site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
-    PageFactory::$pg->addBodyTagClass('pfy-auto-heading-numbers');
+    Page::addBodyTagClass('pfy-auto-heading-numbers');
     $pg = page();
     if (!$before) {
         $branchNr = '';
@@ -55,7 +55,7 @@ EOT,
         $branchNr = $before;
     }
     $branchNr = $branchNr ? "$branchNr.": '';
-    PageFactory::$pg->addCss("body {--heading-number-before: \"$branchNr\";}");
+    Page::addCss("body {--heading-number-before: \"$branchNr\";}");
 
     return $str;
 }; // auto_headings_numbering

@@ -121,6 +121,7 @@ class PfyForm extends Form
         $formOptions['action']              = $formOptions['action']??false;
         $formOptions['next']                = $formOptions['next']??'~page/';
         $formOptions['callback']            = $formOptions['callback']??false;
+        $formOptions['scriptInjectionFilter']  = $formOptions['scriptInjectionFilter']??true;
         $formOptions['tableOptions']        = $formOptions['tableOptions']??[];
         $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
         $formOptions['dbOptions']['keepDataDuration']   = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
@@ -134,7 +135,7 @@ class PfyForm extends Form
         $this->tableTitle                   = $formOptions['tableTitle']??false;
 
         if ($recLocking) {
-            PageFactory::$pg->addJs('const pfyFormRecLocking = true;');
+            Page::addJs('const pfyFormRecLocking = true;');
         }
         if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns']) {
             $this->addFormTableWrapper = true;
@@ -174,7 +175,7 @@ class PfyForm extends Form
             Assets::addAssets('FORMS');
 
             if ($formOptions['init'] ?? true) {
-                PageFactory::$pg->addJsReady('pfyFormsHelper.init();');
+                Page::addJsReady('pfyFormsHelper.init();');
             }
             $this->activateWindowFreeze();
         }
@@ -261,7 +262,7 @@ class PfyForm extends Form
         $inx = $this->formIndex;
         // handle option labelWidth:
         if ($lWidth = $this->formOptions['labelWidth']) {
-            PageFactory::$pg->addCss(".pfy-form-$inx { --pfy-form-label-width: $lWidth}\n");
+            Page::addCss(".pfy-form-$inx { --pfy-form-label-width: $lWidth}\n");
         }
 
 
@@ -962,6 +963,8 @@ EOT;
 
         $this->restoreBypassedFields($dataRec);
 
+        $this->securityChecks($dataRec);
+
         // handle 'callback' on data received:
         if ($this->formOptions['callback']) {
             list($html, $continueEval) = $this->handleCallback($dataRec);
@@ -1058,7 +1061,7 @@ EOT;
 
             // in case there are multiple forms in the page, hide all others:
             // (nette forms would preset received data in other forms)
-            PageFactory::$pg->addCss('.pfy-form-and-table-wrapper {display: none;}');
+            Page::addCss('.pfy-form-and-table-wrapper {display: none;}');
         }
         $this->formResponse =  $html;
     } // handleReceivedData
@@ -1131,6 +1134,32 @@ EOT;
             }
         }
     } // restoreBypassedFields
+
+
+    /**
+     * Applies security check(s:
+     * - script injection, e.g. "<script>alert('malicious code')</script>"
+     * @param array $dataRec
+     * @return void
+     * @throws \Exception
+     */
+    private function securityChecks(array &$dataRec): void
+    {
+        $crit = $this->formOptions['scriptInjectionFilter'];
+        $crit = ($crit === true) ? 'admin|localhost' : $crit;
+        if (Permission::evaluate($crit)) {
+            return; // skip check
+        }
+
+        // perform script injection check on overy data element:
+        foreach ($dataRec as $name => $value) {
+            if ($value && is_string($value) && str_contains($value, '<')) {
+                $dataRec[$name] = str_replace(['<', '>'], ['&lt;', '&gt;'], $value);
+                mylog("!!! Security check: possible script injection detected in '$name':\n\"$value\"");
+            }
+        }
+    } // securityChecks
+
 
     /**
      * @param array $dataRec
@@ -1908,7 +1937,7 @@ EOT;
         }
 
         // to be on the save side: always invoke robots header when displaying form data.
-        PageFactory::$pg->applyRobotsAttrib();
+        Page::applyRobotsAttrib();
 
         $ds = $this->openDataTable();
         $noData = !$ds->getSize();
@@ -2797,8 +2826,8 @@ EOT;
         $css = ".pfy-form-{$this->formIndex},\n" .
             ".pfy-show-unless-form-data-received,\n" .
             ".pfy-show-unless-form-data-received-$this->formIndex {display:none;}";
-        PageFactory::$pg->addCss($css);
-        PageFactory::$pg->addBodyTagClass('pfy-form-data-received');
+        Page::addCss($css);
+        Page::addBodyTagClass('pfy-form-data-received');
         $this->noShowOpened = true;
         return "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
     } // injectNoShowCssRule
@@ -2824,7 +2853,7 @@ EOT;
     {
         if ($time = ($this->formOptions['windowFreezeTime']??false)) {
             $js = "pfyFormsHelper.freezeWindowAfter('$time');";
-            PageFactory::$pg->addJsReady($js);
+            Page::addJsReady($js);
         }
     } // activateWindowFreeze
 

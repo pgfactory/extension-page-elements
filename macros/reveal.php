@@ -96,7 +96,7 @@ EOT,
   transform: rotate( {$deg2}deg );
 }
 EOT;
-        PageFactory::$pg->addCss($css);
+        Page::addCss($css);
     }
     if ($args['shadow']) {
         $class .= ' pfy-target-shadow';

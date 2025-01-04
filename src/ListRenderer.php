@@ -164,6 +164,12 @@ class ListRenderer
     } // renderFolderContent
 
 
+    /**
+     * @param array $users
+     * @param array $options
+     * @return string
+     * @throws \Exception
+     */
     private static function renderUserTable(array $users, array $options): string
     {
         $dt = new DataTable($users, $options);
@@ -254,6 +260,14 @@ class ListRenderer
     } // parseFolderArgs
 
 
+    /**
+     * @param \Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages
+     * @param array $data
+     * @param array|string $template
+     * @param array $templateOptions
+     * @return string
+     * @throws \Exception
+     */
     private static function renderSubpagesByTemplate(\Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages, array $data, array|string $template, array $templateOptions): string
     {
         foreach ($pages as $page) {

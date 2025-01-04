@@ -9,8 +9,10 @@
 namespace PgFactory\PageFactoryElements;
 use DateTimeZone;
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\Maintenance;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
@@ -85,7 +87,7 @@ class Calendar
         $this->inx =     $args['inx'];
         $this->fields =  $args['form']??[];
         $this->options = $args;
-        $pageId =        PageFactory::$pageId;
+        $pageId =        page()->id();
 
         // get persistent data stored in session rec:
         $this->sessCalRecKey = "pfy.cal.$pageId:$this->inx"; // corresponds to key defined in class Calendar
@@ -94,9 +96,9 @@ class Calendar
         $this->parseOptions($args);
         Assets::addAssets('CALENDAR');
         $locale = str_replace('_', '-', PageFactory::$locale);
-        PageFactory::$pg->addJs("const locale = '$locale';");
+        Page::addJs("const locale = '$locale';");
         $timezone = PageFactory::$timezone;
-        PageFactory::$pg->addJs("const timezone = '$timezone';");
+        Page::addJs("const timezone = '$timezone';");
 
         $this->checkAndFixDB();
 
@@ -151,7 +153,7 @@ $calOptions
     });
 }
 EOT;
-        PageFactory::$pg->addJsReady( $jq );
+        Page::addJsReady( $jq );
 
         $str .= "<div id='$this->id' class='pfy-calendar pfy-calendar-$this->inx $this->class' data-calInx='$this->inx' data-datasrc='DATA-REF'>CAL PLACEHOLDER</div>\n";
 

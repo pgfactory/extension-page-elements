@@ -47,6 +47,9 @@ class Dir
     private string|array $template;
 
 
+    /**
+     * @throws \Kirby\Exception\Exception
+     */
     public function __construct()
     {
         Assets::addAssets('media/plugins/pgfactory/pagefactory-pageelements/css/-dir.css');
@@ -156,6 +159,13 @@ EOT;
     } // renderDir
 
 
+    /**
+     * @param string $path
+     * @param string $pattern
+     * @param int $level
+     * @return string
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private function renderDirHierarchical(string $path, string $pattern, int $level = 1): string
     {
         $out = '';
@@ -435,6 +445,11 @@ EOT;
     } // parseOptions
 
 
+    /**
+     * @param string $str
+     * @return string
+     * @throws \Exception
+     */
     private function markdown(string $str): string
     {
         $md = new MarkdownPlus();

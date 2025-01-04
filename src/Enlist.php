@@ -5,6 +5,7 @@ namespace PgFactory\PageFactoryElements;
 use IntlDateFormatter;
 use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\PfyForm;
@@ -185,7 +186,7 @@ class Enlist
             Assets::addAssets('FORMS');
 
             $adminEmail = $this->options['adminEmail'] ?: PageFactory::$webmasterEmail;
-            PageFactory::$pg->addJs("const adminEmail = '$adminEmail';");
+            Page::addJs("const adminEmail = '$adminEmail';");
         }
 
         $this->handleUserPreset();
@@ -356,7 +357,7 @@ EOT;
             }
             $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
             if ($this->isEnlistAdmin && ($this->inx === 1)) {
-                PageFactory::$pg->addBodyTagClass('pfy-enlist-admin');
+                Page::addBodyTagClass('pfy-enlist-admin');
             }
         }
 
@@ -838,7 +839,7 @@ EOT;
         $html = $form->renderForm($formFields);
         if (str_contains($html, 'class="error"')) {
             $jq = "Enlist.openPopup()";
-            PageFactory::$pg->addJsReady($jq);
+            Page::addJsReady($jq);
         }
         $html = "\n\n<div id='pfy-enlist-form'>\n$html</div>\n<!-- /pfy-enlist-form -->\n\n";
         return $html;
@@ -947,7 +948,7 @@ const userPreset = {
     email: '$emailPreset',
 };
 EOT;
-        PageFactory::$pg->addJs($js);
+        Page::addJs($js);
     } // handleUserPreset
 
 

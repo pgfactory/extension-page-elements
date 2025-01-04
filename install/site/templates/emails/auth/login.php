@@ -1,6 +1,7 @@
 <?php
 
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\TransVars;
 
@@ -19,7 +20,7 @@ $text = str_replace(
     $user->nameOrEmail(),
     $timeout,
     $code,
-    PageFactory::$hostUrl,
+    PFY_APP_BASE_URL,
     $webmasterEmail,
   ],
   $text);
@@ -27,7 +28,7 @@ $text = str_replace(
 if (Permission::isLocalhost()) {
   $code2 = str_replace(' ', '', $code);
   $popup = "<pre>$text</pre>";
-  PageFactory::$pg->setPopup($popup, 'Login Code E-Mail');
+  Page::setPopup($popup, 'Login Code E-Mail');
 }
 
 echo $text;

@@ -9,6 +9,11 @@ class MapSearch
     private $customPOIIcon;
 
 
+    /**
+     * @param array $options
+     * @return string
+     * @throws \Kirby\Exception\Exception
+     */
     public function render(array $options): string
     {
         $this->inx = $options['inx'];
@@ -94,7 +99,7 @@ EOT;
         if (($options['height']??false)) {
             $cssRules .= "height: {$options['height']};";
         }
-        PageFactory::$pg->addCss("#$id { $cssRules }");
+        Page::addCss("#$id { $cssRules }");
 
         $map = "map{$this->inx}";
 
@@ -110,14 +115,16 @@ $map = new SearchChMap({
 
 EOT;
 
-        PageFactory::$pg->addJq($jq);
+        Page::addJsReady($jq);
 
         return $out;
     } // render
 
 
-
-
+    /**
+     * @param string $str
+     * @return string
+     */
     private function getLocation(string $str): string
     {
         // 'street number zip city'
@@ -134,7 +141,11 @@ EOT;
     } // getLocation
 
 
-
+    /**
+     * @param string $customPOIs
+     * @return string
+     * @throws \Exception
+     */
     private function handleCustomPOIs(string $customPOIs): string
     {
         $jq = '';

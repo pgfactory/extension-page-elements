@@ -45,7 +45,7 @@ EOT,
 
         Assets::addAssets('MESSAGES');
         $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";
-        PageFactory::$pg->addBodyEndInjections($html);
+        Page::addBodyEndInjections($html);
     }
     return $sourceCode;
 };

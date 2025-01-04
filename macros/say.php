@@ -106,7 +106,7 @@ EOT;
 </svg>
 
 EOT;
-        PageFactory::$pg->addBodyEndInjections($html);
+        Page::addBodyEndInjections($html);
     }
 
 

@@ -369,6 +369,10 @@ EOT;
     } // removeUnusedFolders
 
 
+    /**
+     * @param $pg
+     * @return void
+     */
     private static function updatePageIndexes($pg)
     {
         self::$pageNr++;
@@ -384,6 +388,11 @@ EOT;
     } // updatePageIndexes
 
 
+    /**
+     * @param $path
+     * @param $index
+     * @return void
+     */
     private static function updateMetaFile($path, $index)
     {
         $txts = glob("$path/".PFY_PAGE_META_FILE_BASENAME."*.txt");

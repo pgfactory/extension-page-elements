@@ -105,7 +105,7 @@ var pfyPopup$inx = pfyPopup({
 $jsArgs});
 
 EOT;
-    PageFactory::$pg->addJsReady($jq);
+    Page::addJsReady($jq);
 
     Assets::addAssets('POPUPS');
 

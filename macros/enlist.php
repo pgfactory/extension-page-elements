@@ -164,7 +164,7 @@ EOT,
         Assets::addAssets('ENLIST');
         Assets::addAssets('POPUPS');
 
-        PageFactory::$pg->applyRobotsAttrib();
+        Page::applyRobotsAttrib();
     }
 
     return $html;
