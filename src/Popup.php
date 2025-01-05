@@ -3,6 +3,10 @@
 namespace PgFactory\PageFactoryElements;
 
 
+use PgFactory\PageFactory\Page;
+use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\compileMarkdown;
+
 class Popup extends PageElements
 {
     public static $inx = 1;
@@ -18,16 +22,16 @@ class Popup extends PageElements
         $html = '';
         if ($msg) {
             if (strpos($msg, '{{') !== false) {
-                $msg = $this->trans->translate($msg);
+                $msg = TransVars::translate($msg);
             }
             if ($mdCompile) {
-                $msg = \PgFactory\PageFactory\compileMarkdown($msg);
+                $msg = compileMarkdown($msg);
             }
 
             $inx = self::$inx++;
             $html = "\t\t<div class='pfy-popup-src pfy-popup-src-$inx'><div class='pfy-popup'>$msg</div></div>\n";
             $jq = "pfyPopup({contentFrom: '.pfy-popup-src-$inx .pfy-popup', header:'$header', draggable: true})";
-            $this->pg->addJq($jq);
+            Page::addJsReady($jq);
             $this->addAssets('POPUPS');
         }
         return $html;
@@ -43,7 +47,7 @@ class Popup extends PageElements
     public function set(string $str, string $header, $mdCompile = false): void
     {
         $str = $this->render($str, $header, $mdCompile);
-        $this->pg->addBodyEndInjections($str);
+        Page::addBodyEndInjections($str);
     } // set
 
 } // Popup

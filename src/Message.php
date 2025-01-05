@@ -3,7 +3,7 @@
 namespace PgFactory\PageFactoryElements;
 
 
-use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\TransVars;
 
 class Message extends PageElements
@@ -25,7 +25,7 @@ class Message extends PageElements
             }
 
             $html = "\t\t<div class='pfy-msgbox'>$msg</div>\n";
-            $this->addAssets('MESSAGES');
+            Page::addAssets('MESSAGES');
         }
         return $html;
     } // render
@@ -39,6 +39,6 @@ class Message extends PageElements
     public function set(string $str, $mdCompile = false): void
     {
         $str = $this->render($str, $mdCompile);
-        $this->pg->addBodyEndInjections($str);
+        Page::addBodyEndInjections($str);
     } // set
 } // Message

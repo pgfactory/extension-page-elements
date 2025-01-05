@@ -2,7 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 use PgFactory\PageFactory\Page;
-use PgFactory\PageFactory\PageFactory as PageFactory;
+use function PgFactory\PageFactory\compileMarkdown;
 
 
 class Overlay extends PageElements
@@ -21,7 +21,7 @@ class Overlay extends PageElements
 
         if (is_string($content)) {
             if ($mdCompile) {
-                $content = \PgFactory\PageFactory\compileMarkdown($content);
+                $content = compileMarkdown($content);
             }
             $content = <<<EOT
     <div id='pfy-overlay-$inx' class='pfy-overlay' style="display: none;">
@@ -30,7 +30,7 @@ $content
         </div>
     </div>
 EOT;
-            $this->pg->addBodyEndInjections($content);
+            Page::addBodyEndInjections($content);
             $jsOptions = <<<EOT
     contentFrom: '#pfy-overlay-$inx .pfy-overlay-inner',
     popupClass: 'pfy-overlay',
