@@ -6,6 +6,7 @@ use IntlDateFormatter;
 use Kirby\Exception\Exception;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\TransVars as TransVars;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\isLocalhost;
 use function \PgFactory\PageFactory\writeFile;
 use function \PgFactory\PageFactory\translateToIdentifier;
@@ -14,7 +15,23 @@ use function \PgFactory\PageFactory\fileTime;
 use function \PgFactory\PageFactory\getFile;
 use function \PgFactory\PageFactory\mylog;
 
-const YEAR_THRESHOLD = 10;
+ // Europe centric (and incomplete) presets:
+if (PageFactory::$langCode === 'en') {
+    define('FULL_DATE_FORMAT', 'EEEE, d MMMM yyyy, h:mm a');
+} elseif (PageFactory::$langCode === 'de') {
+    define('FULL_DATE_FORMAT', "EEEE, d. MMMM yyyy, HH.mm 'Uhr'");
+} elseif (PageFactory::$langCode === 'fr') {
+    define('FULL_DATE_FORMAT', "EEEE, d. MMMM yyyy, HH'h'mm");
+} else {
+    define('FULL_DATE_FORMAT', "EEEE, d. MMMM yyyy, HH:mm");
+}
+if (PageFactory::$langCode === 'en') {
+    define('LONG_DATE_FORMAT',  'EEEE, d MMMM yyyy');
+    define('MEDIUM_DATE_FORMAT',  'd MMM yyyy');
+} else {
+    define('LONG_DATE_FORMAT',  'EEEE, d.MMMM yyyy');
+    define('MEDIUM_DATE_FORMAT',  'EEEE, d.MMM yyyy');
+}
 
 
 /**
@@ -61,6 +78,10 @@ function twigIntlDateFormatFilter(string $arg, string $format): string
  */
 function intlDate(string $format, mixed $time = false): string
 {
+    if (str_contains(',FULL,LONG,MEDIUM,SHORT,RELATIVE_LONG,RELATIVE_MEDIUM,RELATIVE_SHORT,NONE,', ",$format,")) {
+        return intlDateFormat($format, $time);
+    }
+
     $format = resolveYearPlaceholder($format);
     $time = $time ?: time();
     if (!is_numeric($time)) {
@@ -138,9 +159,9 @@ function intlDateFormat(string $format, mixed $time = false): string
     }
 
     switch ($dateFormat) {
-        case 'FULL':   $dateFormat = IntlDateFormatter::FULL; break;
-        case 'LONG':   $dateFormat = IntlDateFormatter::LONG; break;
-        case 'MEDIUM': $dateFormat = IntlDateFormatter::MEDIUM; break;
+        case 'FULL':   $dateFormat = IntlDateFormatter::NONE; $format = FULL_DATE_FORMAT; break;
+        case 'LONG':   $dateFormat = IntlDateFormatter::NONE; $format = LONG_DATE_FORMAT; break;
+        case 'MEDIUM': $dateFormat = IntlDateFormatter::NONE; $format = MEDIUM_DATE_FORMAT; break;
         case 'SHORT':  $dateFormat = IntlDateFormatter::SHORT; break;
         case 'RELATIVE_LONG':   $dateFormat = IntlDateFormatter::RELATIVE_LONG; break;
         case 'RELATIVE_MEDIUM': $dateFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
@@ -159,6 +180,7 @@ function intlDateFormat(string $format, mixed $time = false): string
     }
 
     $fmt = datefmt_create(
+//        Utils::getCurrentLocale(),
         PageFactory::$locale,
         $dateFormat,
         $timeFormat,

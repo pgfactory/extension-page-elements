@@ -611,6 +611,15 @@ const pfyFormsHelper = {
           const input = document.querySelector('#pfy-check-input');
           if (input) {
             input.focus();
+            // for usability: send form without clicking button, if correct key was pressed:
+            const honigtopf = form.querySelector('[tabindex="-1"]');
+            const val = referenceValue.charAt(0).toLowerCase();
+            input.addEventListener('keyup', function (e) {
+              if (e.key.toLowerCase() === val) {
+                honigtopf.value = '';
+                pfyFormsHelper.doSubmitForm(form);
+              }
+            });
           }
         }, 50);
       },

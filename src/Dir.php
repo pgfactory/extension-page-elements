@@ -308,7 +308,7 @@ EOT;
             if (str_starts_with($file, PFY_APP_BASE_PATH . 'content/')) {
                 $url = PFY_APP_BASE_URL . substr(preg_replace('|/\d+_|', '/', $file), 8);
             } else {
-                $url = PFY_APP_BASE_URL . $file;
+                $url = PFY_APP_BASE_URL . str_replace(PFY_APP_BASE_PATH, '', $file);
             }
         }
         $filename = basename($file);
@@ -316,8 +316,8 @@ EOT;
             $filename = preg_replace($this->replacePattern, $this->replace, $filename);
         }
         $basename   = base_name($filename, false);
-        $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
         $label      = str_replace('_', ' ', $basename);
+        $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
         $type       = is_file($file)? 'file' : 'folder';
         $path       = dirname($file) . '/';
         $subPath    = '';

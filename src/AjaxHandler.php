@@ -222,8 +222,9 @@ class AjaxHandler
      */
     private static function handleCalendarRequests(): void
     {
+        $s = kirby()->session()->get();
         self::$sessRec = kirby()->session()->get(self::$sessCalRecKey, []);
-        self::$categories = explode(',', self::$sessRec['categories']??[]);
+        self::$categories = explode(',', self::$sessRec['categories']??'');
 
         if (isset($_GET['get'])) {
             exit(json_encode(self::getCalRecs()));
@@ -317,7 +318,7 @@ class AjaxHandler
             mylog('Error: calendar template missing.');
             exit(json_encode('Error: calendar template missing.'));
         }
-        $data['summary']       = self::compileRec($template, $rec, $templateOptions);
+        $data['summary'] = self::compileRec($template, $rec, $templateOptions);
 
         // compile event description:
         $template = TemplateCompiler::getTemplate($templateOptions, $selector, 'description');

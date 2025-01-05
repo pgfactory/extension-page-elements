@@ -87,7 +87,7 @@ class Calendar
         $this->inx =     $args['inx'];
         $this->fields =  $args['form']??[];
         $this->options = $args;
-        $pageId =        page()->id();
+        $pageId =         str_replace('/', '_',page()->id());
 
         // get persistent data stored in session rec:
         $this->sessCalRecKey = "pfy.cal.$pageId:$this->inx"; // corresponds to key defined in class Calendar
@@ -359,7 +359,7 @@ EOT;
         $this->visibleHours =           $args['visibleHours']??'07:00-21:00';
         $this->userCategories =         $args['userCategories']??false;
         $this->fullCalendarOptions =    $args['fullCalendarOptions'];
-        $pageId =                       PageFactory::$pageId;
+        $pageId =                        str_replace('/', '_', page()->id()); //PageFactory::$pageId;
         $this->sessDbFileKey =              "db:$pageId:$this->inx:file";
 
         $this->headerRightButtons = str_replace(
@@ -418,7 +418,7 @@ EOT;
         // initial date:
         $this->initialDate = $this->sessCalRec['date'] ?? date('Y-m-d');
         $this->sessCalRec['date'] = $this->initialDate;
-        $this->sessCalRec['thisPage'] = PageFactory::$pageRoot;
+        $this->sessCalRec['thisPage'] = PFY_APP_BASE_PATH;
     } // parseOptions
 
 

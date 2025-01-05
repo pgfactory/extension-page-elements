@@ -164,7 +164,7 @@ class PageElements
         $files = getDir($extPath.'variables/');
         if (is_array($files)) {
             foreach ($files as $file) {
-                TransVars::loadVariables($file, doTranslate: true);
+                TransVars::loadVariablesFromFile($file, doTranslate: true);
             }
         }
     } // loadVariables
@@ -240,7 +240,7 @@ class PageElements
      */
     protected function addAssets($assets): void
     {
-        $this->assets->addAssets($assets);
+        Assets::addAssets($assets);
     } // addAssets
 
 

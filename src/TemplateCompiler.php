@@ -13,7 +13,6 @@ use function PgFactory\PageFactory\var_r;
 
 const EVENT_INDEX_PLACEHOLDER = '%%';
 const DEFAULT_OPTIONS = [
-    'mode' => null, // twig,transVars, replace/simple
     'prefix' => '',
     'element' => '',
     'file' => '',
@@ -57,7 +56,6 @@ class TemplateCompiler
         }
 
         $compileMarkdown        = $templateOptions['markdown']??false;
-        $mode                   = $templateOptions['mode']??'simple';
         $prefix                 = $templateOptions['prefix']??'';
         $suffix                 = $templateOptions['suffix']??'';
 
@@ -85,7 +83,7 @@ class TemplateCompiler
                 $out .= $prefix;
                 foreach ($data as $i => $rec) {
                     $elemTempl = self::handleMissingTemplate($template, $rec);
-                    $s = self::compileTemplate($mode, $elemTempl, $rec);
+                    $s = self::compileTemplate($elemTempl, $rec);
                     if ($s && $compileMarkdown) {
                         $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
                     }
@@ -104,7 +102,7 @@ class TemplateCompiler
             // special case: no data available
             return TransVars::getVariable($templateOptions['noDataAvailableText'], true);
         } else {
-            $out = self::compileTemplate($mode, $template, []);
+            $out = self::compileTemplate($template, []);
         }
 
         $out = str_replace(['\\n', '\\t'], ["\n", "\t"], $out);
@@ -199,25 +197,23 @@ class TemplateCompiler
             $templateOptions['templates'] = $templ;
         }
 
-        if ($templateOptions['mode'] === null) {
-            $templateOptions['mode'] = kirby()->option('pgfactory.pagefactory-elements.options.templateCompilerDefaultMode', 'simple');
-        }
         return $templateOptions;
     } // sanitizeTemplateOption
 
 
     /**
-     * @param string $mode
      * @param string $template
      * @param array $vars
      * @return string
      */
-    private static function compileTemplate(string $mode, string $template, array $vars): string
+    private static function compileTemplate(string $template, array $vars): string
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
         $template = self::basicCompileTemplate($template, $vars);
+        TransVars::setTempVariables($vars);
         $template = TransVars::preprocess($template);
         $str = TransVars::translate($template);
+        TransVars::setTempVariables([]);
         return $str;
     } // compileTemplate
 
