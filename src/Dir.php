@@ -378,7 +378,7 @@ EOT;
         $this->includeFiles = str_contains(strtolower($args['include']), 'files');
         $this->includeFolders = str_contains(strtolower($args['include']), 'folders');
         $this->exclude = $args['exclude'];
-        $this->markdown = $args['markdown']??true;
+        $this->markdown = $args['markdown']??false;
         $this->maxAge = $args['maxAge'];
         $this->replaceOnElem = $args['replaceOnElem'];
         $this->modifiers = strtoupper($args['modifiers']);
