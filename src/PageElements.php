@@ -98,9 +98,8 @@ class PageElements
      */
     public function __construct()
     {
-        $this->init();
-
         $this->loadVariables();
+        $this->init();
 
         $this->handleCreateHashRequest();
 

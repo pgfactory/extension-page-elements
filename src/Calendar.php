@@ -95,10 +95,6 @@ class Calendar
 
         $this->parseOptions($args);
         Assets::addAssets('CALENDAR');
-        $locale = str_replace('_', '-', PageFactory::$locale);
-        Page::addJs("const locale = '$locale';");
-        $timezone = PageFactory::$timezone;
-        Page::addJs("const timezone = '$timezone';");
 
         $this->checkAndFixDB();
 
