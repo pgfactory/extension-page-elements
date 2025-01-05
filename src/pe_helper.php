@@ -179,12 +179,20 @@ function intlDateFormat(string $format, mixed $time = false): string
         case 'NONE':   $timeFormat = IntlDateFormatter::NONE; break;
     }
 
+    if (class_exists('PageFactory')) {
+        $systemTimeZone =PageFactory::$timezone;
+        $currentLocale = PageFactory::$locale;
+
+    } else {
+        $systemTimeZone = date_default_timezone_get();
+        $currentLocale = setlocale(LC_ALL, 0);
+    }
+
     $fmt = datefmt_create(
-//        Utils::getCurrentLocale(),
-        PageFactory::$locale,
+        $currentLocale,
         $dateFormat,
         $timeFormat,
-        PageFactory::$timezone,
+        $systemTimeZone,
         IntlDateFormatter::GREGORIAN,
         $format
     );
