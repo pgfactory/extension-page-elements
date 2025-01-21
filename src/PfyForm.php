@@ -633,14 +633,12 @@ EOT;
         }
 
         // handle min:
-        $min = $elemOptions['min']??false;
-        if ($min !== false) {
+        if ($min = ($elemOptions['min']??false)) {
             $elem->addRule(self::Min, 'Min value: %d', $min);
         }
 
         // handle max -> take into account case maxCount:
-        $max = $elemOptions['max']??false;
-        if ($max !== false) {
+        if ($max = ($elemOptions['max']??false)) {
             if ($name === $this->formOptions['maxCountOn']) {
                 // if sign-up limitation is active, limit max input if necessary, unless privileged:
                 list($available, $maxCount) = $this->getAvailableAndMaxCount();
