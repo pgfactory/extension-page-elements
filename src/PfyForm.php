@@ -962,6 +962,8 @@ EOT;
 
         $this->restoreBypassedFields($dataRec);
 
+        $this->securityChecks($dataRec);
+
         // handle 'callback' on data received:
         if ($this->formOptions['callback']) {
             list($html, $continueEval) = $this->handleCallback($dataRec);
@@ -1131,6 +1133,28 @@ EOT;
             }
         }
     } // restoreBypassedFields
+
+
+    /**
+     * Applies security checks:
+     * - script injection, e.g. "<script>alert('malicious code')</script>"
+     * @param array $dataRec
+     * @return void
+     * @throws \Exception
+     */
+    private function securityChecks(array &$dataRec): void
+    {
+        $checkActive = true;
+        foreach ($dataRec as $name => $value) {
+            if ($value && is_string($value) && str_contains($value, '<')) {
+                if ($checkActive) {
+                    $dataRec[$name] = str_replace(['<', '>'], ['&lt;', '&gt;'], $value);
+                }
+                mylog("!!! Security check: possible script injection detected in '$name':\n\"$value\"");
+            }
+        }
+    } // securityChecks
+
 
     /**
      * @param array $dataRec
