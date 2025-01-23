@@ -109,6 +109,7 @@ EOT;
 
         $html = shieldStr($html);
         PageFactory::$pg->addAssets('LOGIN');
+        PageFactory::$pg->applyRobotsAttrib();
         return $html;
     } // render
 
