@@ -5,6 +5,7 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Link;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
@@ -110,6 +111,7 @@ EOT;
 
         $html = shieldStr($html);
         Assets::addAssets('LOGIN');
+        Page::applyRobotsAttrib();
         return $html;
     } // render
 
