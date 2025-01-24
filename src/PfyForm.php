@@ -2654,11 +2654,10 @@ EOT;
             $startName = 'start' . $suffix;
             $endName = 'end' . $suffix;
 
-            // startLabel:
             if (!($startLabel = TransVars::getVariable("pfy-form-event-$startName-label"))) {
                 $startLabel = TransVars::getVariable('pfy-form-event-start-label');
-                if (preg_match('/\W$/', $startLabel)) {
-                    $startLabel =$startLabel . $suffix . substr($startLabel, -1);
+                if (preg_match('/(.*)(\W+)$/', $startLabel, $m)) {
+                    $startLabel = $m[1] . $suffix . $m[2];
 
                 } else {
                     $startLabel = $startLabel . $suffix;
@@ -2668,8 +2667,8 @@ EOT;
             // endLabel:
             if (!($endLabel = TransVars::getVariable("pfy-form-event-$endName-label"))) {
                 $endLabel = TransVars::getVariable('pfy-form-event-end-label');
-                if (preg_match('/\W$/', $endLabel)) {
-                    $endLabel = $endLabel . $suffix . substr($endLabel, -1);
+                if (preg_match('/(.*)(\W+)$/', $endLabel, $m)) {
+                    $endLabel = $m[1] . $suffix . $m[2];
 
                 } else {
                     $endLabel = $endLabel . $suffix;
