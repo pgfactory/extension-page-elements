@@ -68,8 +68,8 @@ return function ($args = '')
 
             'next' =>	['[URL] If set, defines the link target (href) of the "Continue..." response.', false],
 
-            'windowFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
-                'e.g. "+1 hour".', '+1 hour'],
+            'formFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
+                'e.g. "+1 hour" or number of seconds.', '+1 hour'],
 
             'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
                 'Which is followed by a "Continue..." link.'.

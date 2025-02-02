@@ -4,12 +4,12 @@
 
 "use strict";
 
-
 const pfyFormsHelper = {
 
   windowTimeout: false,
+  formInitialized: false,
 
-  init(forms, setFocus, windowFreezeTime = false) {
+  init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
       pfyFormsHelper.initForm(forms, setFocus);
 
@@ -34,6 +34,9 @@ const pfyFormsHelper = {
     }
 
     // initialize freeze timer:
+    if (typeof windowFreezeTime === 'undefined') {
+      windowFreezeTime = (typeof formFreezeTime !== 'undefined') ? formFreezeTime : 0;
+    }
     if (windowFreezeTime) {
       this.freezeWindowAfter(windowFreezeTime);
     }
@@ -41,14 +44,13 @@ const pfyFormsHelper = {
 
 
   initForm(form, setFocus) {
+    if (!this.formInitialized) {
+      this.setupTriggers();
+      this.formInitialized = true;
+      mylog('forms initialized');
+    }
     pfyFormsHelper.handleErrorInForm(form);
-    pfyFormsHelper.setupCancelButtonHandler(form);
-    pfyFormsHelper.setupSubmitHandler(form);
-    pfyFormsHelper.setupModifiedMonitor(form);
-    pfyFormsHelper.setupRevealHandler(form);
-    pfyFormsHelper.setupPwTrigger(form);
     pfyFormsHelper.presetForm(form);
-    pfyFormsHelper.initAutoGrow(form);
 
     if (typeof setFocus !== 'undefined') {
       const input1 = form.querySelector('.pfy-input-wrapper input');
@@ -59,102 +61,143 @@ const pfyFormsHelper = {
   }, // initForm
 
 
-  setupPwTrigger(form) {
-    const pwButtons = form.querySelectorAll('.pfy-form-show-pw ');
-    if (pwButtons) {
-      pwButtons.forEach(function (pwButton) {
-        pwButton.addEventListener('click', function (e) {
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          const btn = e.currentTarget;
-          const wrapper = btn.closest('.pfy-input-wrapper');
-          const pwInput = wrapper.querySelector('input');
-          if (btn.classList.contains('show')) {
-            btn.classList.remove('show');
-            btn.setAttribute('aria-pressed', false);
-            pwInput.setAttribute('type', 'password');
-          } else {
-            btn.classList.add('show');
-            btn.setAttribute('aria-pressed', true);
-            pwInput.setAttribute('type', 'text');
-          }
-        });
-      })
+  setupTriggers() {
+    const parent = this;
+    document.body.addEventListener('click',  (ev) => {
+      parent.cancelButtonHandler(ev);
+      parent.showPwHandler(ev);
+      parent.handleFrozenWindow(ev);
+    });
+
+    document.body.addEventListener('submit',  (ev) => {
+      parent.submitHandler(ev);
+    });
+
+    document.body.addEventListener('change',  (ev) => {
+      parent.setupModifiedMonitor(ev);
+      parent.categoryChangeMonitor(ev);
+      parent.revealHandler(ev);
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      parent.checkFormTimeout(ev);
+    });
+
+    document.body.addEventListener('input',  (ev) => {
+      parent.handleTextareaGrowers(ev);
+    });
+
+  }, // setupTriggers
+
+
+  cancelButtonHandler(ev) {
+    const btn = ev.target.closest('input.pfy-cancel.button');
+    if (!btn) {
+      return;
     }
-  }, // setupPwTrigger
-
-
-  setupModifiedMonitor(form) {
-    const formInputs = form.querySelectorAll('input, textarea, select');
-    if (formInputs) {
-      formInputs.forEach(function (input) {
-        if (input.classList.contains('button')) {
-          return;
-        }
-        // monitor changes:
-        input.addEventListener('change', function () {
-          form.dataset.changed = true;
-        });
-
-        // monitor form-timeout:
-        input.addEventListener('keydown', function () {
-          // check whether page timed out:
-          if (pageLoaded < (Math.floor(Date.now()/1000) - 3600)) {
-            pfyConfirm({
-              text: `{{ pfy-form-timed-out }}`
-            })
-            .then(function () {
-              reloadAgent();
-            });
-          }
-        });
-      });
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    const form = ev.target.closest('.pfy-form');
+    const changed = this.isFormChanged(form);
+    if (changed) {
+      // reset form:
+      pfyFormsHelper.presetForm(form);
+    } else {
+      // check whether in popup, close it:
+      const popup = form.closest('.pfy-popup-bg');
+      if (popup) {
+        pfyPopupClose(popup);
+      }
     }
+  }, // cancelButtonHandler
 
-    const categorySelector = form.querySelector('select[name="category"]');
-    if (categorySelector) {
-      categorySelector.addEventListener('change', function (ev) {
-        const activeCategory = ev.target.value;
-        let wrapperClasses = form.getAttribute('class');
-        wrapperClasses = wrapperClasses.replace(/\s*category-\w+/, '');
-        wrapperClasses += ' category-' + activeCategory;
-        form.setAttribute('class', wrapperClasses);
-      });
+
+  showPwHandler(ev) {
+    // show/hide password:
+    const btn = ev.target.closest('.pfy-form-show-pw');
+    if (btn) {
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      const wrapper = btn.closest('.pfy-input-wrapper');
+      const pwInput = wrapper.querySelector('input');
+      if (btn.classList.contains('show')) {
+        btn.classList.remove('show');
+        btn.setAttribute('aria-pressed', false);
+        pwInput.setAttribute('type', 'password');
+      } else {
+        btn.classList.add('show');
+        btn.setAttribute('aria-pressed', true);
+        pwInput.setAttribute('type', 'text');
+      }
     }
+  }, // showPwHandler
+
+
+  setupModifiedMonitor(ev) {
+      const form = ev.target.closest('.pfy-form');
+      if (form && ev.target.tagName !== 'BUTTON') {
+        form.dataset.changed = true;
+      }
   }, // setupModifiedMonitor
 
 
-  setupRevealHandler(form) {
-
-    const revealControllers = form.querySelectorAll('[data-reveal-target]');
-    if (revealControllers) {
-      revealControllers.forEach(function (revealController) {
-        const targetSel = revealController.dataset.revealTarget;
-        const revealContainer = document.querySelector(targetSel);
-        if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
-          const revealContent = revealContainer.innerHTML;
-          revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-          revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
-        }
-
-        revealController.addEventListener('change', function(ev) {
-          const inpEl = ev.target;
-          let open = inpEl.checked;
-
-          // case radio: option with value == 'true' opens reveal target:
-          if (inpEl.type === 'radio' && inpEl.value !== 'true') {
-            open = false;
-          }
-          if (open) {
-            pfyReveal.reveal(revealContainer, revealController);
-          } else {
-            pfyReveal.unreveal(revealContainer, revealController);
-          }
-        });
+  checkFormTimeout(ev) {
+    if ((typeof pageLoaded !== 'undefined') && (pageLoaded < (Math.floor(Date.now()/1000) - 3600))) {
+      pfyConfirm({
+        text: `{{ pfy-form-timed-out }}`
+      })
+      .then(() => {
+        reloadAgent();
       });
     }
-  }, // setupRevealHandler
+  },
+
+
+  categoryChangeMonitor(ev) {
+    const form = ev.target.closest('.pfy-form');
+    if (form && form.querySelector('select[name="category"]')) {
+      domForOne(form, 'select[name="category"]', (el) => {
+        const activeCategory = ev.target.value;
+        let wrapperClasses = form.getAttribute('class');
+        wrapperClasses = wrapperClasses.replace(/\s*category-\w*/, '');
+        if (activeCategory) {
+          wrapperClasses += ' category-' + activeCategory;
+        }
+        form.setAttribute('class', wrapperClasses);
+      });
+    }
+  }, // categoryChangeMonitor
+
+
+  revealHandler(ev) {
+    const form = ev.target.closest('.pfy-form');
+    domForOne(form, '[data-reveal-target]', (revealController) => {
+      const targetSel = revealController.dataset.revealTarget;
+      const revealContainer = document.querySelector(targetSel);
+
+      // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
+      if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
+        const revealContent = revealContainer.innerHTML;
+        revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
+        revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+      }
+
+      const inpEl = ev.target;
+      let open = inpEl.checked;
+
+      // case radio: option with value == 'true' opens reveal target:
+      if (inpEl.type === 'radio' && inpEl.value !== 'true') {
+        open = false;
+      }
+      if (open) {
+        pfyReveal.reveal(revealContainer, revealController);
+      } else {
+        pfyReveal.unreveal(revealContainer, revealController);
+      }
+    });
+  }, // revealHandler
 
 
   handleErrorInForm(form) {
@@ -172,52 +215,22 @@ const pfyFormsHelper = {
 
 
   setupCancelButtonHandler(form) {
-    const cancelInputs = form.querySelectorAll('[name="_cancel"]');
-    if (cancelInputs.length) {
-      cancelInputs.forEach(function(input) {
-        input.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          const next = input.dataset.next ?? false;
-          if (next) {
-            reloadAgent('', next);
-          }
-
-          const hasErrors = form.classList.contains('pfy-form-has-errors') ||
-              form.querySelector('.pfy-form-elem-alert');
-          if (hasErrors) {
-            reloadAgent();
-          }
-
-          const wasModified = (form.dataset.changed ?? 'false') !== 'false';
-          form.dataset.changed = false;
-          pfyFormsHelper.presetForm(form);
-          pfyFormsHelper.unlockRecs();
-          const openInPopup = form.closest('.pfy-popup-bg');
-          if (!wasModified) {
-            if (openInPopup) {
-              mylog('close popup');
-              pfyPopupClose();
-            } else {
-              reloadAgent();
-            }
-          }
-        });
-      });
-    }
   }, // setupCancelButtonHandler
 
 
-  setupSubmitHandler(form) {
-    form.addEventListener('submit', function(e) {
+  submitHandler(ev) {
+    const form = ev.target.closest('.pfy-form');
+    if (!form) {
+      return;
+    }
+
       if (typeof pfyFormsHelper.submitNow !== 'undefined') {
         return;
       }
-      e.preventDefault();
+      ev.preventDefault();
       const check = pfyFormsHelper.checkHonigtopf(form);
       if (!check) {
-        e.stopPropagation();
+        ev.stopPropagation();
         return;
       }
 
@@ -239,14 +252,13 @@ const pfyFormsHelper = {
           }
         });
         if (!goOn) {
-          e.stopPropagation();
+          ev.stopPropagation();
           return;
         }
       }
 
       pfyFormsHelper.disableForm(form);
       pfyFormsHelper.doSubmitForm(form);
-    });
   }, // setupSubmitHandler
 
 
@@ -257,10 +269,10 @@ const pfyFormsHelper = {
     if (typeof data === 'undefined') {
       data = {};
     }
+    form.dataset.changed = '';
 
     this.presetScalarFields(form, data);
     this.presetChoiceFields(form, data);
-    this.resetFormInx(form);
     this.setRecId(form, recId);
     this.resetErrorStates(form);
     this.prefillComputedFields(form);
@@ -289,8 +301,8 @@ const pfyFormsHelper = {
         if (!type) {
           type = field.tagName.toLowerCase();
         }
-        const readonly = field.getAttribute('readonly') !== null;
-        if (!readonly && typesToSkip.includes(type)) {
+        const readonly = (field.getAttribute('readonly') !== null);
+        if (readonly || typesToSkip.includes(type)) {
           return;
         }
         const val = pfyFormsHelper.getFieldValue(field, data);
@@ -322,7 +334,7 @@ const pfyFormsHelper = {
     if (fields.length) {
       fields.forEach(function (field) {
         const name = field.getAttribute('name');
-        const val = field.getAttribute('value') ?? '';
+        const val = field.getAttribute('value');
         const preset = pfyFormsHelper.getFieldValue(field, data, name);
         field.checked = (val && preset === val);
       });
@@ -381,7 +393,11 @@ const pfyFormsHelper = {
     // reset _formInx hidden field:
     const formInxField = form.querySelector('input[name=_formInx]');
     if (formInxField) {
-      formInxField.value = formInxField.dataset.preset ?? '';
+      if (typeof formInxField.dataset.preset !== 'undefined') {
+        formInxField.value = formInxField.dataset.preset;
+      } else {
+        formInxField.value = '';
+      }
     }
   }, // resetFormInx
 
@@ -415,7 +431,9 @@ const pfyFormsHelper = {
     if ((typeof data !== 'undefined') && (typeof data[name] !== 'undefined')) {
       val = data[name];
     } else {
-      val = field.dataset.preset ?? '';
+      if (typeof field.dataset.preset !== 'undefined') {
+        val = field.dataset.preset;
+      }
     }
     return val;
   }, // getFieldValue
@@ -424,11 +442,17 @@ const pfyFormsHelper = {
   getChoiceFieldValue(field, optionElem, name, data) {
     const dataAvailable = Object.keys(data).length;
     if (typeof data === 'undefined' || !dataAvailable) {
-      return field.dataset.preset ?? '#novalue#';
-      // return field.dataset.preset ?? 'novalue';
+      if (typeof field.dataset.preset !== 'undefined') {
+        return field.dataset.preset;
+      } else {
+        return '#novalue#';
+      }
     }
     name = name.substring(0, name.length - 2);
-    const rec = data[name] ?? false;
+    let rec = false;
+    if (typeof data[name] !== 'undefined') {
+      rec = data[name];
+    }
     if (rec) {
       let sub;
       if ((typeof optionElem !== 'undefined') && (optionElem !== null)) {
@@ -437,7 +461,6 @@ const pfyFormsHelper = {
         sub = field.value;
       }
       const val = rec[sub] ? sub : '#novalue#';
-      // const val = rec[sub] ? sub : 'novalue';
       return val.toString();
     }
     return '';
@@ -457,7 +480,10 @@ const pfyFormsHelper = {
         }
 
         // computed fields are identified by a leading '=' in 'data-preset':
-        let val = field.dataset.preset ?? '';
+        let val = '';
+        if (typeof field.dataset.preset !== 'undefined') {
+          val = field.dataset.preset;
+        }
         const ch1 = val.charAt(0);
         if (ch1 === '=') {
           val = val.substring(1);
@@ -468,7 +494,7 @@ const pfyFormsHelper = {
         }
 
         // handle eventDuration-> field with 'data-event-duration':
-        if (field.dataset.eventDuration ?? '') {
+        if ((typeof field.dataset.eventDuration !== 'undefined') && field.dataset.eventDuration) {
           parent.handleEventFields(form, field);
         }
       });
@@ -478,15 +504,15 @@ const pfyFormsHelper = {
 
   handleEventFields(form, field) {
     const parent = this;
-    const duration = parseInt(field.dataset.eventDuration ?? '');
-    const relatedField = field.dataset.relatedField ?? '';
+    const duration = (typeof (field.dataset.eventDuration) !== 'undefined') ? parseInt(field.dataset.eventDuration) : 0;
+    const relatedField = (typeof field.dataset.relatedField !== 'undefined') ? field.dataset.relatedField : false;
     let $startDate;
     if (relatedField) {
       $startDate = form.querySelector('[name=' + relatedField + ']');
     } else {
       $startDate = form.querySelector('[name=start]');
     }
-    const preset = $startDate.dataset.preset ?? false;
+    const preset = (typeof $startDate.dataset.preset !== 'undefined') ? $startDate.dataset.preset : false;
     const now = new Date();
     const nextFullHour = parent.roundUpMinutes(now);
 
@@ -519,7 +545,7 @@ const pfyFormsHelper = {
     // handle changes in startDate -> adapt endDate:
     $startDate.addEventListener('change', function (e) {
       const start = new Date($startDate.value);
-      const duration = parseInt(field.dataset.eventDuration ?? '');
+      const duration = (typeof field.dataset.eventDuration !== 'undefined') ? parseInt(field.dataset.eventDuration) : 0;
       let newVal = parent.addMinutes(start, duration);
       newVal = parent.fixDatetimeFormat(field, newVal);
       field.value = newVal;
@@ -674,8 +700,7 @@ const pfyFormsHelper = {
 
 
   isFormChanged(form) {
-    const changed = form.dataset.changed??'false';
-    return (changed !== 'false');
+    return (form.dataset.changed === 'true');
   }, // isFormChanged
 
 
@@ -694,18 +719,26 @@ const pfyFormsHelper = {
   }, // isFormChanged
 
 
+  handleTextareaGrowers(ev) {
+    if (!ev.target.closest('.pfy-auto-grow')) {
+      return;
+    }
+    if (ev.target.tagName !== 'TEXTAREA') {
+      return;
+    }
+    const textareaEl = ev.target;
+    const growWrapper = textareaEl.closest('.pfy-input-wrapper');
+    growWrapper.dataset.replicatedValue = textareaEl.value;
+  }, // handleTextareaGrowers
+
+
   initAutoGrow(form) {
     // source: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
-    const growers = document.querySelectorAll(".pfy-auto-grow .pfy-input-wrapper");
-    if (growers) {
-      growers.forEach((grower) => {
-        const textarea = grower.querySelector("textarea");
-        grower.dataset.replicatedValue = textarea.value; // init grower
-        textarea.addEventListener("input", () => {
-          grower.dataset.replicatedValue = textarea.value;
-        });
-      });
-    }
+    // preset replicatedValue:
+    domForEach(form, 'textarea.pfy-auto-grow', (textareaEl) => {
+      const growWrapper = textareaEl.closest('.pfy-input-wrapper');
+      growWrapper.dataset.replicatedValue = textareaEl.value;
+    });
   }, // initAutoGrow
 
 
@@ -741,42 +774,34 @@ const pfyFormsHelper = {
     }
 
     this.windowTimeout = setTimeout(function () {
-      var body = document.body;
+      const body = document.body;
       body.insertAdjacentHTML('beforeend', overlay);
       body.classList.add('pfy-overlay-background-frozen');
-
-      var overlayElement = document.querySelector('.pfy-overlay-background');
-      overlayElement.addEventListener('click', function () {
-        body.classList.remove('pfy-overlay-background-frozen');
-
-        if (typeof onClick === 'function') {
-          overlayElement.remove();
-          var res = onClick();
-          if (res || retrigger) {
-            freezeWindowAfter(delay, onClick, retrigger);
-          }
-        } else {
-          let text = `{{ pfy-form-timeout-alert }}`;
-          if (typeof onClick === 'string') {
-            text = onClick;
-          }
-          pfyConfirm({
-            text: text,
-            buttons: `Cancel,{{ pfy-form-reload-btn }}`,
-          })
-          .then(
-              function () {
-                reloadAgent();
-              },
-              function () {
-                overlayElement.remove();
-                pfyPopupClose();
-                pfyFormsHelper.freezeWindowAfter('1 minute');
-              });
-        }
-      });
-    }, t);
+      }, t);
   }, // freezeWindowAfter
+
+
+  handleFrozenWindow(ev) {
+    const overlayElement = ev.target.closest('.pfy-overlay-background');
+    if (!overlayElement) {
+      return;
+    }
+    document.body.classList.remove('pfy-overlay-background-frozen');
+        pfyConfirm({
+          text: `{{ pfy-form-timeout-alert }}`,
+          buttons: `Cancel,{{ pfy-form-reload-btn }}`,
+        })
+        .then(
+            function () { // Ok, reload
+              reloadAgent();
+            },
+            function () { // Cancel
+              overlayElement.remove();
+              pfyFormsHelper.freezeWindowAfter(4000);
+    //          pfyFormsHelper.freezeWindowAfter('1 minute');
+          });
+
+  }, // handleFrozenWindow
 
 
   setTriggerOnContinueLink()  {
@@ -809,7 +834,6 @@ const pfyFormsHelper = {
         });
       });
     });
-  },
-
+  }, // initRepetitionWidget
 
 }; // pfyFormsHelper

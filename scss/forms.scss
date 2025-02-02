@@ -152,11 +152,11 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       width: 1.4em;
       height: 1.4em;
     }
-    .pfy-icon-close {
+    .pfy-icon-hide {
       display: none;
     }
     &.show {
-      .pfy-icon-close {
+      .pfy-icon-hide {
         display: block;
       }
       .pfy-icon-show {

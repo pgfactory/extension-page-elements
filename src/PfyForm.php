@@ -81,6 +81,12 @@ class PfyForm extends Form
     public function __construct($formOptions = [])
     {
         self::$formInx++;
+        if (self::$formInx > 1) {
+            // if page contains multiple forms, we need to apply check when receiving data:
+            $sessKey = "form:" . PFY_PAGE_URI . ":formCount";
+            kirby()->session()->set($sessKey, self::$formInx);
+        }
+
         $this->formOptions = &$formOptions;
         $tableOptions = $formOptions['tableOptions']??[];
         $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
@@ -279,9 +285,9 @@ class PfyForm extends Form
         }
 
         // standard hidden fields for internal bookkeeping:
-        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId'] ?? '', 'preset' => '']);
-        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'preset' => $this->formIndex]);
-        $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => ($csrf = csrf()), 'preset' => $csrf]);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId'] ?? '']);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'readonly' => '']);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf(), 'readonly' => '']);
 
         $this->fireRenderEvents();
 
@@ -344,7 +350,13 @@ class PfyForm extends Form
                         $id = $m[2][$i] ?: "pfy-input-$formInx-$elemInx-".($i+1);
                         $for = "for='$id'";
                     }
-                    $input1 .= "<span class='pfy-choice-wrapper'><input id='$id' {$m[3][$i]}><label $for>{$m[4][$i]}</label></span>";
+                    $inputAttrs = $m[3][$i];
+                    if (str_contains($inputAttrs, 'id=')) {
+                        $inputEl = "<input $inputAttrs>";
+                    } else {
+                        $inputEl = "<input id='$id' $inputAttrs>";
+                    }
+                    $input1 .= "<span class='pfy-choice-wrapper'>$inputEl<label $for>{$m[4][$i]}</label></span>";
                 }
                 $input = $input1;
             }
@@ -358,8 +370,10 @@ class PfyForm extends Form
         }
 
         if ($type === 'password') {
-            $icon = svg(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/icons/show.svg') .
-                svg(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/icons/hide.svg');
+            $pfyIcons = svg(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
+            Page::addBodyEndInjections($pfyIcons);
+            $icon = "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' class='pfy-icon-show'><use href='#pfy-iconset-show' /></svg>".
+                "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
         }
         if ($description = ($rec['description'] ?? '')) {
@@ -606,7 +620,9 @@ EOT;
         }
 
         // handle presets (resp. value / default):
-        if ($preset = ($elemOptions['preset']??($elemOptions['value']??false))) {
+        $readonly = isset($elemOptions['readonly']);
+        $preset = ($elemOptions['preset']??($elemOptions['value']??false));
+        if ($preset && !$readonly) {
             if (is_bool($preset)) {
                 $preset = $preset?'true':'false';
             }
@@ -945,15 +961,20 @@ EOT;
             $this->showDirectFeedback = false;
         }
 
-        // check presence of $formInxReceived:
-        $formInxReceived = $dataRec['_formInx']??false;
-        if ($formInxReceived === false || isset($_POST['cancel'])) {
+        if (isset($_POST['cancel'])) {
             return;
         }
 
-        // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
-        if (intval($formInxReceived) !== $this->formIndex) {
-            return; // signal 'processing skipped, continue processing'
+        // check presence of $formInxReceived:
+        $formInxReceived = $dataRec['_formInx'] ?? false;
+
+        // check if page contains multiple forms, if so, check and skip the other ones:
+        $sessKey = "form:" . PFY_PAGE_URI . ":formCount";
+        if (kirby()->session()->get($sessKey, false)) {
+            // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
+            if (intval($formInxReceived) !== $this->formIndex) {
+                return; // signal 'processing skipped, continue processing'
+            }
         }
 
         $csrf = $_POST['_csrf']??false;
@@ -2850,9 +2871,14 @@ EOT;
      */
     protected function activateWindowFreeze(): void
     {
-        if ($time = ($this->formOptions['windowFreezeTime']??false)) {
-            $js = "pfyFormsHelper.freezeWindowAfter('$time');";
-            Page::addJsReady($js);
+        if ($time = ($this->formOptions['formFreezeTime']??false)) {
+            if (is_numeric($time)) {
+                $time *= 1000;
+                $js = "const formFreezeTime = $time;";
+            } else {
+                $js = "const formFreezeTime = '$time';";
+            }
+            Page::addJs($js);
         }
     } // activateWindowFreeze
 
