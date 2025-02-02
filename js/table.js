@@ -50,7 +50,7 @@ const tableHelper = {
 
 
   setupUnloadEvent: function(table, tableInx) {
-    if (table.dataset.unloadEventActivated??false) {
+    if ((typeof table.dataset.unloadEventActivated !== 'undefined') && table.dataset.unloadEventActivated) {
       return;
     }
     table.dataset.unloadEventActivated = true;
@@ -212,7 +212,7 @@ const tableHelper = {
           // upon clicking one of the edit buttons:
           tableHelper.disableEditButtons(table);
           const tr = this.closest('tr');
-          const recKey = tr.dataset.reckey ?? '';
+          const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
 
           // get latest data for this record:
           let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
@@ -265,7 +265,7 @@ const tableHelper = {
           // upon clicking one of the edit buttons:
           tableHelper.disableEditButtons(table);
           const tr = this.closest('tr');
-          const recKey = tr.dataset.reckey ?? '';
+          const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
 
           let options = {
             text: `{{ pfy-table-send-rec-popup }}`,
@@ -465,7 +465,7 @@ const tableHelper = {
       const tables = document.querySelectorAll('.pfy-table');
       if (tables) {
         tables.forEach(function (table) {
-          if (table.dataset.unlockExecuted??false) {
+          if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
             return;
           }
           const tableInx = table.dataset.tableinx;
@@ -483,7 +483,7 @@ const tableHelper = {
     } else {
       const patt = 'table[data-tableinx="'+tableInx+'"]';
       const table = document.querySelector(patt);
-      if (table.dataset.unlockExecuted??false) {
+      if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
         return;
       }
       table.dataset.unlockExecuted = true;

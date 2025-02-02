@@ -738,7 +738,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
   }
 
   const parent = this;
-  if (this.options.useDblClick??false) {
+  if ((typeof this.options.useDblClick !== 'undefined') && this.options.useDblClick) {
     this.clicks++;
     if (this.clicks === 1) {
       setTimeout(function () {
