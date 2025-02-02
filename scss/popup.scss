@@ -37,6 +37,7 @@
   .pfy-popup-wrapper { // dialog
     position: relative;
     max-width: 98%;
+    min-width: 10rem;
     vertical-align: middle;
     border: none;
     outline: 1px solid #444;
@@ -60,7 +61,8 @@
     font-family: Helvetica, sans-serif;
     > div {
       min-height: 2.4rem;
-      padding: 0.5rem 1.7rem 0.5rem 1rem;
+      padding: 0.5rem 4rem 0.5rem 1rem;
+      //padding: 0.5rem 1.7rem 0.5rem 1rem;
       color: #eee;
       font-size: 125%;
       cursor: grab;
@@ -72,8 +74,8 @@
 
   .pfy-popup-close-button {
     position: absolute;
-    top: 0.4em;
-    right: 0;
+    top: 0.3rem;
+    right: 0.2rem;
     background: transparent;
     color: #666;
     border: none;
@@ -96,9 +98,12 @@
   .pfy-popup-buttons {
     display: flex;
     justify-content: end;
-    margin: 0 0.8rem 0.8rem 0;
+    margin: 0 0.8rem 0.8rem 0.8rem;
     button {
       margin-left: 5px;
+    }
+    button:first-child {
+      margin-left: 0;
     }
   }
 
