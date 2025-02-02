@@ -21,9 +21,12 @@ return function ($argStr = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'show'      => ['[false|loggedin] Whether to show result or record it silently.', true],
-            'prefix'    => ['What to put in front of result.', null],
-            'postfix'   => ['What to put behind result.', null],
+            'show'      => ['[false|permission-expr] Whether to show result (otherwise counting silently).', true],
+            'prefix'    => ['What to put in front of result.<br>Use "%since%" to inject date since when visits were recorded', null],
+            'suffix'    => ['What to put behind result.<br>Use "%since%" to inject date since when visits were recorded.', null],
+            'pageId'    => ['If defined, visit count of that page is rendered instead of the current page.', null],
+            'dontCount' => ['[true|permission-expr] If true (or permission like "loggedin"), this macro call is not counted.', false],
+            'wrapperTag'=> ['Tag in which to wrap the output.', 'div'],
         ],
         'summary' => <<<EOT
 # countvisits()
@@ -48,8 +51,12 @@ EOT,
     }
 
     // assemble output:
+    $tag = $options["wrapperTag"];
     $obj = new CountVisits();
     $str .= $obj->render($options);
+    if ($str) {
+        $str = "\n\t<$tag class='pfy-countvisits'>$str</$tag>\n";
+    }
 
     return $str;
 };

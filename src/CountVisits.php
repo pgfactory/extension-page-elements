@@ -22,14 +22,24 @@ class CountVisits
     public function render($args): string
     {
         $prefix = $args['prefix'].' ';
-        $postfix = ' '.$args['postfix'];
+        $suffix = ' '.$args['suffix'];
         $show = $args['show'];
         if (is_string($show)) {
             $show = Permission::evaluate($show);
         }
-        $visits = $this->countVisits();
+        if (str_contains($prefix, '%since%')) {
+            $t = strtotime(@file_get_contents(VISITS_SINCE_FILE));
+            $since = date('d-m-Y', $t);
+            $prefix = str_replace('%since%', $since, $prefix);
+        }
+        if (str_contains($suffix, '%since%')) {
+            $t = strtotime(@file_get_contents(VISITS_SINCE_FILE));
+            $since = date('d-m-Y', $t);
+            $suffix = str_replace('%since%', $since, $suffix);
+        }
+        $visits = $this->countVisits($args);
         if ($show) {
-            return "$prefix$visits$postfix";
+            return "$prefix$visits$suffix";
         }
         return '';
     } // render
@@ -39,14 +49,24 @@ class CountVisits
      * @return int|mixed|string
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function countVisits()
+    private function countVisits(array $args): int
     {
         $ipsToIgnore = PageFactory::$config['visitCounterIgnoreIPs']??'';
         $file = VISITS_FILE;
         if (isBot()) {
             $file = VISITS_BOTS_FILE;
         }
-        $pgId = page()->id();
+        if (($args['pageId']??false)) {
+            $pgId = $args['pageId'];
+            $doCount = false;
+        } else {
+            $dontCount = ($args['dontCount']??false);
+            if (is_string($dontCount)) {
+                $dontCount = Permission::evaluate($dontCount);
+            }
+            $doCount = !$dontCount;
+            $pgId = page()->id();
+        }
         $clientIp = $this->getClientIP(true);
         if (!file_exists($file)) {
             preparePath($file);
@@ -60,11 +80,10 @@ class CountVisits
             } else {
                 $count = $counters[$pgId] = 1;
             }
-            if (!str_contains($ipsToIgnore, $clientIp)) { // home
+            if (!str_contains($ipsToIgnore, $clientIp) && $doCount) { // home
                 writeFileLocking($file, $counters);
             }
         }
-        //mylog("IP: $clientIp");
         return $count;
     } // countVisits
 

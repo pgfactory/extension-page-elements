@@ -16,6 +16,10 @@ if (basename(dirname(__FILE__))[0] === '#') {
 }
 
 Kirby::plugin('pgfactory/pagefactory-pageelements', [
+    'snippets' => [     // Macros that are available in templates
+        'countvisits' =>            __DIR__ . '/snippets/countvisits.php',
+    ],
+
     'hooks' => [
         'route:before' => function (\Kirby\Http\Route $route, string $path) {
             // intercept serverLog request: ?log
