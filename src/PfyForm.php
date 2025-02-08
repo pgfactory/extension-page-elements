@@ -372,8 +372,8 @@ class PfyForm extends Form
         if ($type === 'password') {
             $pfyIcons = svg(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
             Page::addBodyEndInjections($pfyIcons);
-            $icon = "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' class='pfy-icon-show'><use href='#pfy-iconset-show' /></svg>".
-                "<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 512 512' xml:space='preserve' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
+            $icon = "<svg viewBox='0 0 512 512' class='pfy-icon-show'><use href='#pfy-iconset-show' /></svg>".
+                "<svg viewBox='0 0 512 512' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
         }
         if ($description = ($rec['description'] ?? '')) {

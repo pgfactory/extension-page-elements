@@ -90,7 +90,7 @@ EOT;
     if ($inx === 1) {
         Assets::addAssets('SAYTTS');
         $html = <<<EOT
-<svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="48" height="48" viewBox="0 0 100 100" fill="none">
 <g>
 <symbol id='pfy-iconset-play'>
 <path d="M82 50L14.5 93.3013V6.69873L82 50Z" fill="currentColor"/>
