@@ -328,6 +328,7 @@ class PfyForm extends Form
         $label = "<span class='pfy-label-wrapper'>$label</span>";
         $input = (string)$elem->getControl();
         $input = str_replace(['&lt;','&gt;'], ['<','>'], $input);
+        $input .= '<span></span>';
 
         // fix for NetteForm's quirk: input outside of label in choice fields
         if (str_contains($input, 'type="radio"') || str_contains($input, 'type="checkbox"')) {
