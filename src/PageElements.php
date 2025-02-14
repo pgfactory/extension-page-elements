@@ -15,7 +15,7 @@ define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
 define('PAGE_ELEMENTS_PATH', 'site/plugins/'.PE_FOLDER_NAME);
 define('PAGE_ELEMENTS_ASSETS_PATH', PAGE_ELEMENTS_PATH . 'assets/');
 define('PAGE_ELEMENTS_ASSETS_ROOT', PFY_APP_BASE_PATH.PAGE_ELEMENTS_ASSETS_PATH);
-define('PAGE_ELEMENTS_URL', PFY_APP_BASE_URL . 'site/plugins/'.PE_FOLDER_NAME . 'assets/');
+define('PAGE_ELEMENTS_URL', PFY_APP_BASE_URL . 'media/plugins/pgfactory/'.PE_FOLDER_NAME);
 define('SYSTEM_PATH',       dirname(__DIR__).'/'); //???
 define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
 define('PATH_TO_APP_ROOT',  '');
@@ -28,63 +28,64 @@ define('PE_ASSET_LOCATIONS', [
 
 const PE_URL_DEFINITIONS = [
     'POPUPS' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-popup.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-popup.js',
+        PAGE_ELEMENTS_URL.'css/-popup.css',
+        PAGE_ELEMENTS_URL.'js/-popup.js',
     ],
     'MESSAGES' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-message.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/message.js',
+        PAGE_ELEMENTS_URL.'css/-message.css',
+        PAGE_ELEMENTS_URL.'js/message.js',
     ],
     'TABLES' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-table.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-table.js',
+        PAGE_ELEMENTS_URL.'css/-table.css',
+        PAGE_ELEMENTS_URL.'js/-table.js',
     ],
     'FORMS' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-forms.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-forms.js',
+        PAGE_ELEMENTS_URL.'css/-forms.css',
+        PAGE_ELEMENTS_URL.'js/-forms.js',
     ],
     'ENLIST' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-enlist.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-enlist.js',
+        PAGE_ELEMENTS_URL.'css/-enlist.css',
+        PAGE_ELEMENTS_URL.'js/-enlist.js',
     ],
     'EVENTS' => [
-        //PAGE_ELEMENTS_ASSETS_PATH.'css/-events.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-events.js',
+        //PAGE_ELEMENTS_URL.'css/-events.css',
+        PAGE_ELEMENTS_URL.'js/-events.js',
     ],
     'DATATABLES' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/datatables.min.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/datatables.min.js',
+        PAGE_ELEMENTS_URL.'css/datatables.min.css',
+        PAGE_ELEMENTS_URL.'js/datatables.min.js',
     ],
     'REVEAL' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'js/reveal.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-reveal.css',
+        PAGE_ELEMENTS_URL.'js/reveal.js',
+        PAGE_ELEMENTS_URL.'css/-reveal.css',
     ],
     'LOGIN' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'js/login.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-login.css',
+        PAGE_ELEMENTS_URL.'js/login.js',
+        PAGE_ELEMENTS_URL.'css/-login.css',
     ],
     'TOOLTIPS' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'css/tippy.min.css',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/popper.min.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/tippy-bundle.umd.min.js',
+        PAGE_ELEMENTS_URL.'css/tippy.min.css',
+        PAGE_ELEMENTS_URL.'js/popper.min.js',
+        PAGE_ELEMENTS_URL.'js/tippy-bundle.umd.min.js',
     ],
     'CALENDAR' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'js/swipe.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/popper.min.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/tippy-bundle.umd.min.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/fullcalendar.min.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'js/-calendar.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-calendar.css',
+        PAGE_ELEMENTS_URL.'js/swipe.js',
+        PAGE_ELEMENTS_URL.'js/popper.min.js',
+        PAGE_ELEMENTS_URL.'js/tippy-bundle.umd.min.js',
+        PAGE_ELEMENTS_URL.'js/fullcalendar.min.js',
+        PAGE_ELEMENTS_URL.'js/-calendar.js',
+        PAGE_ELEMENTS_URL.'css/-calendar.css',
     ],
     'WRITABLE' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'js/writable.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-writable.css',
+        PAGE_ELEMENTS_URL.'js/writable.js',
+        PAGE_ELEMENTS_URL.'css/-writable.css',
     ],
     'SAYTTS' => [
-        PAGE_ELEMENTS_ASSETS_PATH.'js/sayTTS.js',
-        PAGE_ELEMENTS_ASSETS_PATH.'css/-sayTTS.css',
+        PAGE_ELEMENTS_URL.'js/sayTTS.js',
+        PAGE_ELEMENTS_URL.'css/-sayTTS.css',
     ],
 ];
+
 
 require_once __DIR__.'/pe_helper.php';
 
