@@ -2363,6 +2363,7 @@ EOT;
             }
         }
         $dataRec += $eventData;
+        $dataRec['hostUrl'] = PFY_HOST_URL;
 
         $subject = $this->getEmailComponent('subject', $dataRec);
         $message = $this->getEmailComponent('message', $dataRec);
