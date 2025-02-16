@@ -1334,7 +1334,8 @@ EOT;
             '%name%' => $data['Name'],
             '%email%' => $data['Email'],
             '%title%' => $title,
-            '%host%' => PageFactory::$hostUrl,
+            '%host%' => PFY_HOST_URL,
+            '%hostUrl%' => PFY_HOST_URL,
             '%page%' => $this->pagePath,
         ];
         $subject = str_replace(
