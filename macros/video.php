@@ -69,6 +69,7 @@ EOT,
         }
         $startAt = $options['startAt'] ? "&amp;start={$options['startAt']}" : '';
         $html = <<<EOT
+$str
 <iframe $attributes$class src="https://www.youtube.com/embed/$youtube$startAt"$title allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 EOT;
@@ -140,23 +141,32 @@ EOT;
         $attributes .= ' loop';
     }
 
-    if ($caption = ($options['caption']??false)) {
-        $caption = "<div id='pfy-video-caption-$inx' class='pfy-video-caption'>$caption</div>";
-        $attributes .= " aria-describedby='pfy-video-caption-$inx'";
-    }
-
     // assemble output:
-    $str .= <<<EOT
+    if ($caption = ($options['caption']??false)) {
+        $str .= <<<EOT
+
+<figure id="pfy-video-wrapper-$inx" class="pfy-video-wrapper$class"$style>
+  <video$attributes$title>
+$src
+    Your browser does not support the video tag.
+  </video>
+  <figcaption>$caption</figcaption>
+</figure><!-- /pfy-video-wrapper -->
+
+EOT;
+
+    } else {
+        $str .= <<<EOT
 
 <div id="pfy-video-wrapper-$inx" class="pfy-video-wrapper$class"$style>
   <video$attributes$title>
 $src
     Your browser does not support the video tag.
   </video>
-  $caption
 </div><!-- /pfy-video-wrapper -->
 
 EOT;
+    }
 
     if ($inx === 1) {
         Assets::addAssets([
