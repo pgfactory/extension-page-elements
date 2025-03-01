@@ -5,6 +5,8 @@ namespace PgFactory\PageFactory;
  * PageFactory Macro (and Twig Function)
  */
 
+use PgFactory\PageFactoryElements\Video;
+
 if (!defined('PFY_SUPPORTED_VIDEO_FORMATS')) {
     define('PFY_SUPPORTED_VIDEO_FORMATS', ['webm','ogg','mp4']);
 }
@@ -52,128 +54,7 @@ EOT,
         $str = $sourceCode;
     }
 
-    $attributes = '';
-
-    // variant youtube video:
-    $youtube = $options['youtube'];
-    if ($youtube) {
-        $attributes = '';
-        $title = $options['title'] ? " title='{$options['title']}'" : '';
-        $class = $options['class'] ?: $options['wrapperClass'];
-        $class = $class ? " class='$class'" : '';
-        if ($width = ($options['width']??false)) {
-            $attributes .= " width='$width'";
-        }
-        if ($height = ($options['height']??false)) {
-            $attributes .= " height='$height'";
-        }
-        $startAt = $options['startAt'] ? "&amp;start={$options['startAt']}" : '';
-        $html = <<<EOT
-$str
-<iframe $attributes$class src="https://www.youtube.com/embed/$youtube$startAt"$title allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-EOT;
-        return $html;
-    }
-
-    // variant locally stored video:
-    $title = $options['title'] ? " title='{$options['title']}'" : '';
-    $class = $options['class'] ?: $options['wrapperClass'];
-    $class = $class ? " $class" : '';
-    $startAt = $options['startAt'] ? "#t={$options['startAt']}" : '';
-
-    // determine source files:
-    $file = $options['file'] ?: $options['src'];
-    $src = '';
-    // case 1: no comma-separated list, no extension or last car is '*':
-    if (!str_contains($file, ',') && !(pathinfo($file, PATHINFO_EXTENSION)) || (substr($file, -1) === '*')) {
-        $path = dirname($file).'/';
-        $file = resolvePath(rtrim($file, '*'));
-        $files = [];
-        foreach (PFY_SUPPORTED_VIDEO_FORMATS as $ext) {
-            $f = "$file.$ext";
-            if (file_exists($f)) {
-                $files[] = $path.basename($f);
-            } else {
-                $dir = getDir("$file*.$ext");
-                foreach ($dir as $f) {
-                    $files[] = $path.basename($f);
-                }
-            }
-        }
-    // case 2: comma-separated list:
-    } else {
-        $files = explodeTrim(',', $file);
-    }
-    // run through all source files and render <source> tags:
-    foreach ($files as $file) {
-        $ext = pathinfo($file, PATHINFO_EXTENSION);
-        if (in_array($ext, PFY_SUPPORTED_VIDEO_FORMATS)) {
-            $src .= "    <source src='$file$startAt' type='video/$ext'>\n";
-        }
-    }
-
-    $style = '';
-    if ($width = ($options['width']??false)) {
-        $style .= "width:$width;";
-    }
-    if ($height = ($options['height']??false)) {
-        $style .= "height:$height;";
-        if (!$width) {
-            $style .= "width:auto;";
-        }
-    }
-    $style = $style ? ' style="'.$style.'"' : '';
-
-    // misc $attributes:
-    if ($poster = ($options['poster']??false)) {
-        $attributes .= " poster=\"$poster\"";
-    }
-    if ($options['controls']??false) {
-        $attributes .= ' controls';
-    }
-    if ($options['autoplay']??false) {
-        $attributes .= ' autoplay muted';
-    } elseif ($options['muted']??false) {
-        $attributes .= ' muted';
-    }
-    if ($options['loop']??false) {
-        $attributes .= ' loop';
-    }
-
-    // assemble output:
-    if ($caption = ($options['caption']??false)) {
-        $str .= <<<EOT
-
-<figure id="pfy-video-wrapper-$inx" class="pfy-video-wrapper$class"$style>
-  <video$attributes$title>
-$src
-    Your browser does not support the video tag.
-  </video>
-  <figcaption>$caption</figcaption>
-</figure><!-- /pfy-video-wrapper -->
-
-EOT;
-
-    } else {
-        $str .= <<<EOT
-
-<div id="pfy-video-wrapper-$inx" class="pfy-video-wrapper$class"$style>
-  <video$attributes$title>
-$src
-    Your browser does not support the video tag.
-  </video>
-</div><!-- /pfy-video-wrapper -->
-
-EOT;
-    }
-
-    if ($inx === 1) {
-        Assets::addAssets([
-            'media/plugins/pgfactory/pagefactory-pageelements/css/-video.css',
-        ]);
-    }
-
-    return $str; // return [$str]; if result needs to be shielded
+    return $str . Video::render($options);
 };
+
 
