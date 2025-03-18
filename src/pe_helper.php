@@ -78,10 +78,6 @@ function twigIntlDateFormatFilter(string $arg, string $format): string
  */
 function intlDate(string $format, mixed $time = false): string
 {
-    if (str_contains(',FULL,LONG,MEDIUM,SHORT,RELATIVE_LONG,RELATIVE_MEDIUM,RELATIVE_SHORT,NONE,', ",$format,")) {
-        return intlDateFormat($format, $time);
-    }
-
     $format = resolveYearPlaceholder($format);
     $time = $time ?: time();
     if (!is_numeric($time)) {
@@ -90,11 +86,15 @@ function intlDate(string $format, mixed $time = false): string
         $time = intval($time);
     }
 
+    if (str_contains(',FULL,LONG,MEDIUM,SHORT,RELATIVE_LONG,RELATIVE_MEDIUM,RELATIVE_SHORT,NONE,', ",$format,")) {
+        return intlDateFormat($format, $time);
     // simple ISO format:
-    if (!$format || $format === 'ISO') {
+    } elseif (!$format || $format === 'ISO') {
         return date('Y-m-d H:i', $time);
     } elseif ($format === 'ISOT') {
         return date('Y-m-d\TH:i', $time);
+    } elseif ($format === '') {
+        return intlDateFormat('LONG,NONE', $time);
     }
 
     $replacements = [
@@ -179,12 +179,14 @@ function intlDateFormat(string $format, mixed $time = false): string
         case 'NONE':   $timeFormat = IntlDateFormatter::NONE; break;
     }
 
-    if (class_exists('PageFactory')) {
-        $systemTimeZone =PageFactory::$timezone;
-        $currentLocale = PageFactory::$locale;
-
+    if (isset(PageFactory::$timezone)) {
+        $systemTimeZone = PageFactory::$timezone;
     } else {
         $systemTimeZone = date_default_timezone_get();
+    }
+    if (isset(PageFactory::$locale)) {
+        $currentLocale = PageFactory::$locale;
+    } else {
         $currentLocale = setlocale(LC_ALL, 0);
     }
 
