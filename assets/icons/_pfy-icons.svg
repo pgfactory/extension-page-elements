@@ -69,4 +69,49 @@ l-55 -92 42 -73 c177 -312 479 -615 815 -817 l106 -65 -255 -255 -256 -256 73
 </symbol>
 
 
+<symbol id='pfy-iconset-play' fill="currentColor">
+<g style="transform: translate(8%, 9%)">
+<path d="M179.07,105L30.93,210V0L179.07,105z"/>
+</g>
+</symbol>
+
+
+<symbol id='pfy-iconset-pause' fill="currentColor">
+<g style="transform: translate(8%, 8%) scale(0.41, 0.41);">
+	<rect y="20.885" class="st0" width="188.088" height="470.23"/>
+	<rect x="323.912" y="20.885" class="st0" width="188.088" height="470.23"/>
+</g>
+</symbol>
+
+
+<symbol id='pfy-iconset-next' fill="currentColor">
+<g style="transform: translate(11.1%, 8%) scale(9, 9);">
+  <polygon points="7.7 23.9 4.8 21.1 13.9 12 4.8 2.9 7.7 0.1 19.6 12 7.7 23.9"/>
+</g>
+</symbol>
+
+
+<symbol id='pfy-iconset-prev' fill="currentColor">
+<g style="transform: translate(0, 8%) scale(-9, 9); transform-origin: 9.2% 0%;">
+  <polygon points="7.7 23.9 4.8 21.1 13.9 12 4.8 2.9 7.7 0.1 19.6 12 7.7 23.9"/>
+</g>
+</symbol>
+
+
+<symbol id='pfy-iconset-ff' fill="currentColor">
+<g transform="scale(-1,1)" transform-origin="center">
+	<path d="M21,1l3,3l-8,8l8,8l-3,3L10,12L21,1z M11,1l3,3l-8,8l8,8l-3,3L0,12L11,1z"/>
+</g>
+
+
+<symbol id='pfy-iconset-fb' fill="currentColor">
+<g>
+	<path d="M21,1l3,3l-8,8l8,8l-3,3L10,12L21,1z M11,1l3,3l-8,8l8,8l-3,3L0,12L11,1z"/>
+</g>
+</symbol>
+
+
+</symbol>
+
+
 </svg>

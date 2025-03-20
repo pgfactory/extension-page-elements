@@ -13,6 +13,7 @@ use Nette\Utils\Html;
 use Kirby\Email\PHPMailer;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
+use PgFactory\PageFactoryElements\PageElements;
 use PgFactory\PageFactoryElements\TemplateCompiler;
 use RRule\RRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
@@ -371,8 +372,7 @@ class PfyForm extends Form
         }
 
         if ($type === 'password') {
-            $pfyIcons = svg(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
-            Page::addBodyEndInjections($pfyIcons);
+            PageElements::loadIcons();
             $icon = "<svg viewBox='0 0 512 512' class='pfy-icon-show'><use href='#pfy-iconset-show' /></svg>".
                 "<svg viewBox='0 0 512 512' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";

@@ -94,6 +94,7 @@ class PageElements
 {
     public $pfy;
     public $extensionPath;
+    private static $iconsLoaded = false;
     /**
      * @param $pfy
      */
@@ -397,5 +398,15 @@ EOT;
         // re-compile js files:
         compileJs(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
     } // reset
+
+
+    public static function loadIcons(): void
+    {
+        if (!self::$iconsLoaded) {
+            self::$iconsLoaded = true;
+            $pfyIcons = svg(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
+            Page::addBodyEndInjections($pfyIcons);
+        }
+    } // loadIcons()
 
 } // PageElements
