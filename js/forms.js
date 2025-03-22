@@ -797,8 +797,7 @@ const pfyFormsHelper = {
             },
             function () { // Cancel
               overlayElement.remove();
-              pfyFormsHelper.freezeWindowAfter(4000);
-    //          pfyFormsHelper.freezeWindowAfter('1 minute');
+              pfyFormsHelper.freezeWindowAfter('1 minute');
           });
 
   }, // handleFrozenWindow
