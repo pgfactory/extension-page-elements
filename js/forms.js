@@ -47,7 +47,7 @@ const pfyFormsHelper = {
     if (!this.formInitialized) {
       this.setupTriggers();
       this.formInitialized = true;
-      mylog('forms initialized');
+      //mylog('forms initialized');
     }
     pfyFormsHelper.handleErrorInForm(form);
     pfyFormsHelper.presetForm(form);
