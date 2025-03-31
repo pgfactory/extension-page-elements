@@ -195,6 +195,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     label {
       padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
       padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
+      width: calc(100% - 1.5em);
+      vertical-align: middle;
     }
   }
   .pfy-choice-wrapper {

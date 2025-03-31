@@ -1688,7 +1688,19 @@ EOT;
         if (!isset($elemOptions['options'])) {
             $elemOptions['options'] = false;
         } elseif (is_string($elemOptions['options'])) {
-            $elemOptions['options'] = explodeTrimAssoc(',', $elemOptions['options']);
+            // parse string like "key:value,..." or "value1,value2...":
+            $args = $elemOptions['options'];
+            $res = [];
+            if ($options = parseArgumentStr($args)) {
+                foreach ($options as $k => $value) {
+                    if (is_int($k)) {
+                        $res[$value] = $value;
+                    } else {
+                        $res[$k] = $value;
+                    }
+                }
+            }
+            $elemOptions['options'] = $res;
         } elseif (!is_array($elemOptions['options'])) {
             throw new \Exception("Error: Form argument 'options' must be of type string or array.");
         }
