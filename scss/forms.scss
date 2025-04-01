@@ -179,15 +179,16 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       height: 1em;
       width: 1em;
       margin-right: 0.4em;
-      transform: translateY(3px);
+      transform: translateY(0.2em);
       font-size: 1em;
     }
     input, textarea, select {
       line-height: 1em;
       color:            $inputColor;
+      font-size: inherit;
       background-color: $inputBg;
       border: $inputBorder;
-      border-radius: 4px;
+      border-radius: 0.2em;
     }
   }
   .pfy-choice .pfy-input-wrapper {
@@ -195,7 +196,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     label {
       padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
       padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
-      width: calc(100% - 1.5em);
+      width: calc(100% - 1.8em);
       vertical-align: middle;
     }
   }
@@ -333,7 +334,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     background: $tooltipBg;
     color: $tooltipColor;
     z-index: 1;
-    border-radius: 3px;
+    border-radius: 0.16em;
     padding: 5px;
     box-shadow: 0 0 5px #888;
   }
@@ -396,6 +397,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       @include _pfy-button;
       width: fit-content;
       margin-right: 0.3em;
+      font-size: inherit;
       &.pfy-submit.button {
         border: 1px solid black;
       }
@@ -454,7 +456,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
           width: 1em;
         }
         label {
-          width: calc(100% - 1.6em);
+          width: calc(100% - 1.8em);
         }
 
       }
@@ -600,6 +602,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     margin-bottom: 3px;
     border-width: 1px;
     padding: 4px 5px;
+    font-size: inherit;
   }
 
   input.pfy-upload,
