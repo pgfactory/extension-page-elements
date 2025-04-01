@@ -873,7 +873,9 @@ EOT;
             $url = str_replace(PFY_APP_BASE_PATH, PFY_APP_BASE_URL, $file);
             $filename = basename($file);
             $icon = renderIcon('cloud_download_alt');
-            $button = "<a class='pfy-button pfy-button-lean pfy-table-download-start' href='$url' title='Download $filename' download>$icon</a>";
+            $button = "<button class='pfy-button pfy-button-lean pfy-table-download-start' role='button'>$icon</button>";
+            $button .= "<a class='pfy-dispno' href='$url' download='$filename'>$icon</a>";
+//            $button = "<a class='pfy-button pfy-button-lean pfy-table-download-start' href='$url' title='Download $filename' download>$icon</a>";
         }
         return $button;
     } // renderTableDownloadButton

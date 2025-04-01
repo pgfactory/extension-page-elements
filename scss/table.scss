@@ -9,6 +9,7 @@ $focus-color: orange;
             margin-bottom: 3px;
             display: inline-block;
             height: 2em;
+            font-size: 0.8em;
         }
     }
     /* === pfy-tables  */
@@ -30,12 +31,8 @@ $focus-color: orange;
             background: #eee;
         }
     }
-
-  .td-row-selector {
-    width: 2.4em;
-  }
-  .td-row-number {
-    width: 2.5em;
+  .pfy-row-selector input {
+    font-size: inherit;
   }
   .pfy-table-new-rec {
     width: 2em;

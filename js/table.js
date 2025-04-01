@@ -24,9 +24,24 @@ const tableHelper = {
         tableHelper.setupSendButtons(table, tableInx);
         tableHelper.setupNewRecButton(table, tableInx);
         tableHelper.setupModifiedMonitor(table, tableInx);
+        tableHelper.setupDownloadButtonHandler(table, tableInx);
       });
     }
   }, // init
+
+
+  setupDownloadButtonHandler(table, tableInx) {
+    domForOne('.pfy-table-download-start', downloadBtn => {
+      downloadBtn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const btnEl = ev.target.closest('.pfy-table-download-start');
+        domForOne(btnEl.parentElement, 'a', aEl => {
+          aEl.click();
+        });
+      });
+    });
+  }, // setupDownloadButtonHandler
 
 
   setupModifiedMonitor(table, tableInx) {
