@@ -7,7 +7,6 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\Page;
-use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
@@ -82,6 +81,7 @@ class DataTable
     private static bool $interactiveInitializee = false;
     private mixed $mailFrom;
     private mixed $mailFieldName;
+    private array $computedCells = [];
 
     /**
      * @param string|array $dataSrc
@@ -130,6 +130,13 @@ class DataTable
         $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
         $this->showRowNumbers = $options['showRowNumbers'] ?? false; //??? obsolete?
         $this->showRowSelectors = $options['showRowSelectors'] ?? false;
+        if ($computedCells = $options['computedCells'] ?? '') {
+            $computedCells = explodeTrim(',', $computedCells);
+            foreach ($computedCells as $col) {
+                list($key, $value) = preg_split('/=/', $col, 2);
+                $this->computedCells[$key] = $value;
+            }
+        }
 
         $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
         $this->translateHeaders = $options['translateHeaders'] ?? false;
@@ -527,6 +534,12 @@ class DataTable
                     $class = translateToClassName($elem);
                 }
             }
+
+            // skip sub-elements starting with '_':
+            if (str_contains($c, '._')) {
+                continue;
+            }
+
             $this->elementLabels[] = $c;
             if ($this->translateHeaders) {
                 // original:  if (!preg_match('/[^-\w\s]/', $elem)) {
@@ -607,6 +620,10 @@ class DataTable
                 }
                 $i++;
                 $v = $rec[$k]??'';
+
+                // tableOptions '':
+                list($v, $data) = $this->handleComputedCells($k, $rec, $v, $data, $key);
+
                 if (is_array($v)) {
                     if (isset($v['_'])) {
                         $v = $v['_'];
@@ -1013,5 +1030,37 @@ EOT;
         $message = str_replace('%email%', $email, $message);
         reloadAgent('', message: $message);
     } // sendRec
+
+
+    /**
+     * @param mixed $k
+     * @param mixed $rec
+     * @param mixed $v
+     * @param array $data
+     * @param mixed $key
+     * @return array|void
+     */
+    private function handleComputedCells(mixed $k, mixed $rec, mixed $v, array $data, mixed $key)
+    {
+        if (in_array($k, array_keys($this->computedCells))) {
+            $instr = $this->computedCells[$k];
+            while (preg_match_all('/\$([\w.]+)/', $instr, $m)) {
+                foreach ($m[1] as $ii => $vv) {
+                    $x = $rec[$vv] ?? '';
+                    $instr = str_replace($m[0][$ii], $x, $instr);
+                }
+            }
+            if ($instr) {
+                try {
+                    $instr = "return $instr;";
+                    $v = eval($instr);
+                    $data[$key][$k] = $v;
+                } catch (\Exception $e) {
+                    exit("Error: $e");
+                }
+            }
+        }
+        return array($v, $data);
+    } // handleComputedCells
 
 } // DataTable
