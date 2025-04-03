@@ -1513,8 +1513,8 @@ EOT;
                 continue;
             }
             $elem = $this->formElements[$fieldName]??[];
-            if ($elem['label']??false) {
-                $fieldNames[$fieldName] = trim($elem['label'], ': ');
+            if ($elem['name']??false) {
+                $fieldNames[$fieldName] =  $elem['name'];
             }
         }
 
@@ -1623,7 +1623,7 @@ EOT;
         }
 
         // if elem marked by asterisk, remove it - will be visualized by class required:
-        if ($label && $label[strlen($label) - 1] === '*') {
+        if ($label && is_string($label) && $label[strlen($label) - 1] === '*') {
             $elemOptions['required'] = true;
             $label = str_replace('*', '', $label);
         }
@@ -1692,8 +1692,13 @@ EOT;
             $args = $elemOptions['options'];
             $res = [];
             if ($options = parseArgumentStr($args)) {
+                if (preg_match('/^\s*,/', $args)) {
+                    // fix special case where first option is empty (which is suppressed by parseArgumentStr():
+                    $res[] = '';
+                }
                 foreach ($options as $k => $value) {
-                    if (is_int($k)) {
+                    if (str_starts_with($k,'_anonInx')) {
+                        // handle argument without key (identified as "_anonInxN"):
                         $res[$value] = $value;
                     } else {
                         $res[$k] = $value;
