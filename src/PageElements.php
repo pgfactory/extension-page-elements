@@ -9,6 +9,7 @@ use PgFactory\PageFactory\Scss as Scss;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\createHash;
 use function \PgFactory\PageFactory\getDir;
+use function PgFactory\PageFactory\isAdmin;
 use function \PgFactory\PageFactory\rrmdir;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
@@ -103,7 +104,7 @@ class PageElements
         $this->loadVariables();
         $this->init();
 
-        $this->handleCreateHashRequest();
+        $this->handleAdminRequests();
 
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
@@ -268,6 +269,33 @@ EOT;
     } // initTooltips
 
 
+    public function showHelp(): string
+    {
+        $str = <<<EOT
+@@@ .pfy-general-help
+### PageElements
+
+[?hash](./?hash)       12em>> creates new hash code 
+[?purge-old](./?purge-old)      >> purges old apps in root directory (e.g. '/＃dev')
+
+@@@
+EOT;
+        return $str;
+    } // showHelp
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function handleAdminRequests(): void
+    {
+        $this->handleCreateHashRequest();
+        $this->handleCleanupRequest();
+
+    } // handleAdminRequests
+
+
     /**
      * @return void
      * @throws \Exception
@@ -279,6 +307,28 @@ EOT;
             exit($hash);
         }
     } // handleCreateHashRequest
+
+
+    /**
+     * @return void
+     */
+    private function handleCleanupRequest(): void
+    {
+        if (isset($_GET['purge-old'])) {
+            if (!isAdmin()) {
+                exit('You need admin privileges to perform "?purge-old".');
+            }
+            echo 'Deleting old versions:<br>';
+            $oldDirs = glob(dirname(PFY_APP_BASE_PATH).'/#*');
+            foreach ($oldDirs as $dir) {
+                if (is_dir($dir)) {
+                    echo($dir.'<br>');
+                    rrmdir($dir);
+                }
+            }
+            exit('done');
+        }
+    } // handleCleanupRequest
 
 
     /**
@@ -400,6 +450,9 @@ EOT;
     } // reset
 
 
+    /**
+     * @return void
+     */
     public static function loadIcons(): void
     {
         if (!self::$iconsLoaded) {
