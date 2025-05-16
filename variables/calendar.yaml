@@ -186,5 +186,8 @@ pfy-cal-context-delete-label:
     de: Löschen
     _:  Delete
 
+pfy-cal-no-permission-others-category:
+    _: "You don't have permission to change entries belonging to other users."
 
-
+pfy-warning-insufficient-privileges:
+    _: "You don't have permission to modify this calendar entry."

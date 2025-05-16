@@ -710,7 +710,7 @@ PfyCalendar.prototype.performChecks = function(calEv = false) {
   if (!this.editPermission) {
     mylog('User has insufficient privileges to edit calendar');
     if (this.editPermission === null) {
-      this.pfyPopup('{{ pfy-warning-insufficient-privileges }}');
+      this.pfyPopup(`{{ pfy-warning-insufficient-privileges }}`);
     }
     return false;
   }
