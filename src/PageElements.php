@@ -3,6 +3,7 @@
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\CompileJs;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
@@ -150,7 +151,7 @@ class PageElements
         Assets::addAssetLocation(PE_ASSET_LOCATIONS);
 
         if (PageFactory::$dev || PageFactory::$forceAssetsUpdate) {
-            compileJs(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
+            CompileJs::compileAll(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
         }
     } // init
 
@@ -446,7 +447,7 @@ EOT;
         }
 
         // re-compile js files:
-        compileJs(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
+        CompileJs::compileAll(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
     } // reset
 
 
