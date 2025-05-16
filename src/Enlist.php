@@ -1516,6 +1516,9 @@ EOT;
                 // if not found, check PFY variables:
                 $value = TransVars::getVariable($m[1]);
             }
+            if (!is_string($value)) {
+                $value = '';
+            }
             $fieldValue = str_replace($m[0], $value, $fieldValue);
         }
         return $fieldValue;
