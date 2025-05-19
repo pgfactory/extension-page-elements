@@ -14,77 +14,75 @@ use function PgFactory\PageFactory\isAdmin;
 use function \PgFactory\PageFactory\rrmdir;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
-define('PAGE_ELEMENTS_PATH', 'site/plugins/'.PE_FOLDER_NAME);
-define('PAGE_ELEMENTS_ASSETS_PATH', PAGE_ELEMENTS_PATH . 'assets/');
-define('PAGE_ELEMENTS_ASSETS_ROOT', PFY_APP_BASE_PATH.PAGE_ELEMENTS_ASSETS_PATH);
-define('PAGE_ELEMENTS_URL', PFY_APP_BASE_URL . 'media/plugins/pgfactory/'.PE_FOLDER_NAME);
+define('PE_PATH', 'site/plugins/'.PE_FOLDER_NAME);
+define('PE_ASSETS_PATH', PE_PATH . 'assets/');
+define('PE_ASSETS_ROOT', PFY_APP_BASE_PATH.PE_ASSETS_PATH);
 define('SYSTEM_PATH',       dirname(__DIR__).'/'); //???
 define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
 define('PATH_TO_APP_ROOT',  '');
 
 
 define('PE_ASSET_LOCATIONS', [
-    PAGE_ELEMENTS_PATH.'assets/css/' => PAGE_ELEMENTS_PATH.'scss/*',
+    PE_PATH.'assets/css/' => PE_PATH.'scss/*',
 ]);
 
-
-const PE_URL_DEFINITIONS = [
+const PE_PATH_DEFINITIONS = [
     'POPUPS' => [
-        PAGE_ELEMENTS_URL.'css/-popup.css',
-        PAGE_ELEMENTS_URL.'js/-popup.js',
+        PE_ASSETS_PATH.'css/-popup.css',
+        PE_ASSETS_PATH.'js/-popup.js',
     ],
     'MESSAGES' => [
-        PAGE_ELEMENTS_URL.'css/-message.css',
-        PAGE_ELEMENTS_URL.'js/message.js',
+        PE_ASSETS_PATH.'css/-message.css',
+        PE_ASSETS_PATH.'js/message.js',
     ],
     'TABLES' => [
-        PAGE_ELEMENTS_URL.'css/-table.css',
-        PAGE_ELEMENTS_URL.'js/-table.js',
+        PE_ASSETS_PATH.'css/-table.css',
+        PE_ASSETS_PATH.'js/-table.js',
     ],
     'FORMS' => [
-        PAGE_ELEMENTS_URL.'css/-forms.css',
-        PAGE_ELEMENTS_URL.'js/-forms.js',
+        PE_ASSETS_PATH.'css/-forms.css',
+        PE_ASSETS_PATH.'js/-forms.js',
     ],
     'ENLIST' => [
-        PAGE_ELEMENTS_URL.'css/-enlist.css',
-        PAGE_ELEMENTS_URL.'js/-enlist.js',
+        PE_ASSETS_PATH.'css/-enlist.css',
+        PE_ASSETS_PATH.'js/-enlist.js',
     ],
     'EVENTS' => [
-        //PAGE_ELEMENTS_URL.'css/-events.css',
-        PAGE_ELEMENTS_URL.'js/-events.js',
+        //PE_ASSETS_PATH.'css/-events.css',
+        PE_ASSETS_PATH.'js/-events.js',
     ],
     'DATATABLES' => [
-        PAGE_ELEMENTS_URL.'css/datatables.min.css',
-        PAGE_ELEMENTS_URL.'js/datatables.min.js',
+        PE_ASSETS_PATH.'css/datatables.min.css',
+        PE_ASSETS_PATH.'js/datatables.min.js',
     ],
     'REVEAL' => [
-        PAGE_ELEMENTS_URL.'js/reveal.js',
-        PAGE_ELEMENTS_URL.'css/-reveal.css',
+        PE_ASSETS_PATH.'js/reveal.js',
+        PE_ASSETS_PATH.'css/-reveal.css',
     ],
     'LOGIN' => [
-        PAGE_ELEMENTS_URL.'js/login.js',
-        PAGE_ELEMENTS_URL.'css/-login.css',
+        PE_ASSETS_PATH.'js/login.js',
+        PE_ASSETS_PATH.'css/-login.css',
     ],
     'TOOLTIPS' => [
-        PAGE_ELEMENTS_URL.'css/tippy.min.css',
-        PAGE_ELEMENTS_URL.'js/popper.min.js',
-        PAGE_ELEMENTS_URL.'js/tippy-bundle.umd.min.js',
+        PE_ASSETS_PATH.'css/tippy.min.css',
+        PE_ASSETS_PATH.'js/popper.min.js',
+        PE_ASSETS_PATH.'js/tippy-bundle.umd.min.js',
     ],
     'CALENDAR' => [
-        PAGE_ELEMENTS_URL.'js/swipe.js',
-        PAGE_ELEMENTS_URL.'js/popper.min.js',
-        PAGE_ELEMENTS_URL.'js/tippy-bundle.umd.min.js',
-        PAGE_ELEMENTS_URL.'js/fullcalendar.min.js',
-        PAGE_ELEMENTS_URL.'js/-calendar.js',
-        PAGE_ELEMENTS_URL.'css/-calendar.css',
+        PE_ASSETS_PATH.'js/swipe.js',
+        PE_ASSETS_PATH.'js/popper.min.js',
+        PE_ASSETS_PATH.'js/tippy-bundle.umd.min.js',
+        PE_ASSETS_PATH.'js/fullcalendar.min.js',
+        PE_ASSETS_PATH.'js/-calendar.js',
+        PE_ASSETS_PATH.'css/-calendar.css',
     ],
     'WRITABLE' => [
-        PAGE_ELEMENTS_URL.'js/writable.js',
-        PAGE_ELEMENTS_URL.'css/-writable.css',
+        PE_ASSETS_PATH.'js/writable.js',
+        PE_ASSETS_PATH.'css/-writable.css',
     ],
     'SAYTTS' => [
-        PAGE_ELEMENTS_URL.'js/sayTTS.js',
-        PAGE_ELEMENTS_URL.'css/-sayTTS.css',
+        PE_ASSETS_PATH.'js/sayTTS.js',
+        PE_ASSETS_PATH.'css/-sayTTS.css',
     ],
 ];
 
@@ -144,14 +142,14 @@ class PageElements
             SitemapManager::updateSitemap();
         }
 
-        Assets::addAssets(PAGE_ELEMENTS_ASSETS_PATH.'js/pe-helper.js');
+        Assets::addAssets(PE_ASSETS_PATH.'js/pe-helper.js');
 
-        Assets::addAssetGroups(PE_URL_DEFINITIONS);
+        Assets::addAssetGroups(PE_PATH_DEFINITIONS);
 
         Assets::addAssetLocation(PE_ASSET_LOCATIONS);
 
         if (PageFactory::$dev || PageFactory::$forceAssetsUpdate) {
-            CompileJs::compileAll(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
+            CompileJs::compileAll(PE_PATH.'js/', PE_ASSETS_PATH.'js/');
         }
     } // init
 
@@ -439,7 +437,7 @@ EOT;
     public static function reset(): void
     {
         // delete all compiled js files:
-        $files = getDir(PAGE_ELEMENTS_ASSETS_PATH.'js/*.js');
+        $files = getDir(PE_ASSETS_PATH.'js/*.js');
         foreach ($files as $file) {
             if (basename($file)[0] === '-') {
                 unlink($file);
@@ -447,7 +445,7 @@ EOT;
         }
 
         // re-compile js files:
-        CompileJs::compileAll(PAGE_ELEMENTS_PATH.'js/', PAGE_ELEMENTS_ASSETS_PATH.'js/');
+        CompileJs::compileAll(PE_PATH.'js/', PE_ASSETS_PATH.'js/');
     } // reset
 
 
