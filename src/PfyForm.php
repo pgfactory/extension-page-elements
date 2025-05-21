@@ -1045,7 +1045,7 @@ EOT;
         // if no error (i.e. error-message in $html) -> notify owner & create feedback:
         if (!$html) {
             if ($this->formOptions['mailTo']) {
-                $this->notifyOwner($dataRec);
+                $this->sendOwnerNotification($dataRec);
             }
 
             if ($this->formOptions['confirmationText']) {
@@ -1435,7 +1435,7 @@ EOT;
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function notifyOwner(array $dataRec): void
+    private function sendOwnerNotification(array $dataRec): void
     {
         $formOptions = $this->formOptions;
         $out = '';
@@ -1475,11 +1475,17 @@ EOT;
         $message = TransVars::translate($message);
 
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
+
+        // dev mode -> override $to:
+        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.options.email_dev_mode_override'))) {
+            $to = $mailOverride;
+        }
+
         if (str_contains($to, ',')) {
             $to = explodeTrim(',', $to);
         }
         $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
-    } // notifyOwner
+    } // sendOwnerNotification
 
 
 
