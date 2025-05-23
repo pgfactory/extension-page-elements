@@ -1373,7 +1373,8 @@ EOT;
 
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
-            $sessKey = "db:" . PFY_PAGE_URI . ":$this->formIndex:file";
+            $pgUri = str_replace('/', '_', rtrim(PFY_PAGE_URI, '/'));
+            $sessKey = "db:$pgUri:$this->formIndex:file";
             kirby()->session()->set($sessKey, resolvePath($this->formOptions['file']));
         }
         return $this->db;
