@@ -127,7 +127,7 @@ const tableHelper = {
             }
           };
         }
-        currentlyOpenPopup = pfyPopup(options);
+        pfyPopup(options);
       });
     }
   }, // setupOpenDeleteRecordsDialog
@@ -205,7 +205,7 @@ const tableHelper = {
             }
           };
         }
-        currentlyOpenPopup = pfyPopup(options);
+        pfyPopup(options);
       });
     }
   }, // setupOpenArchiveRecordsDialog
@@ -238,11 +238,11 @@ const tableHelper = {
           mylog('fetching data record '+recKey);
           execAjaxPromise(args, {})
             .then(function (data) {
+              tableHelper.enableEditButtons(table);
               if (data.status === 'error') {
                 // handle case where rec locked by somebody else:
                 mylog('Rec locked.');
                 const row = table.querySelector('[data-reckey='+recKey+']');
-                tableHelper.enableEditButtons(table);
                 row.classList.add('pfy-rec-locked');
                 return;
               }
@@ -307,7 +307,7 @@ const tableHelper = {
             options.onOk = function() {
               resolve( true );
             };
-            currentlyOpenPopup = pfyPopup( options );
+            pfyPopup( options );
           });
         });
       });
@@ -343,7 +343,7 @@ const tableHelper = {
             id: 'pfy-popup-form',
             onOpen: function () {
               mylog('prepareEditForm - onOpen new');
-              const form = document.querySelector('#pfy-popup-form .pfy-form');
+              const form = document.querySelector('.pfy-popup-wrapper .pfy-form');
               if (form) {
                 form.removeAttribute('aria-hidden');
                 form.removeAttribute('id');
@@ -380,7 +380,7 @@ const tableHelper = {
 
 
   setupCancelButton: function(table, tableInx) {
-    const cancelInputs = document.querySelectorAll('#pfy-popup-form input.pfy-cancel');
+    const cancelInputs = document.querySelectorAll('.pfy-popup-wrapper .pfy-form input.pfy-cancel');
     if (cancelInputs.length) {
       cancelInputs.forEach(function(input) {
         input.addEventListener('click', function(e) {
@@ -400,7 +400,6 @@ const tableHelper = {
     const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     if (editbyPopupMode) {
       const options = {
-        id: 'pfy-popup-form',
         header: `{{ pfy-table-edit-rec-popup-header }}`,
         contentFrom: parentForm,
         closeOnBgClick: false,
@@ -408,7 +407,7 @@ const tableHelper = {
           tableHelper.unlockRecs(tableInx);
         },
         onOpen: function () {
-          const form = document.querySelector('#pfy-popup-form .pfy-form');
+          const form = document.querySelector('.pfy-popup-wrapper .pfy-form');
           if (form) {
             pfyFormsHelper.init(form);
             pfyFormsHelper.setupCancelButtonHandler(form);
