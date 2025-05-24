@@ -20,6 +20,7 @@ use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 use function PgFactory\PageFactory\writeFile;
+use function PgFactory\PageFactory\preparePath;
 
 const ENLIST_INFO_ICON      = 'ⓘ';
 const ENLIST_MAIL_ICON      = '✉';
@@ -1449,18 +1450,20 @@ EOT;
         $start  = $rec['start'];
         $ics = $this->createICalRecord($rec);
 
-        $date = date('Y-m-d\TH:i', strtotime($start));
-        $file = "~download/enlist/$date.ics";
+        $date = date('Y-m-d\THi', strtotime($start));
+        $file = "~/media/pgfactory/$date.ics";
         if ($saveToFile) {
-            writeFile($file, $ics);
+            $filePath = resolvePath($file);
+            preparePath($filePath, 0755);
+            writeFile($filePath, $ics, 0710);
         }
-
+        $url = Utils::resolveUrls($file, true);
 
         $calIcon = ENLIST_CALENDAR_ICON;
         $iCal = <<<EOT
 
 <div class='pfy-enlist-ical-wrapper'>
-<a href="$file" download="$start" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
+<a href="$url" download="$date.ics" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
 </div>
 
 EOT;
