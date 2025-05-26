@@ -19,8 +19,6 @@ use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\translateToFilename;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\explodeTrimAssoc;
-use function PgFactory\PageFactory\writeFile;
-use function PgFactory\PageFactory\preparePath;
 
 const ENLIST_INFO_ICON      = 'ⓘ';
 const ENLIST_MAIL_ICON      = '✉';
@@ -1437,7 +1435,7 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private function renderICal(bool $saveToFile = true): string
+    private function renderICal(): string
     {
         if (!($this->event??false)) {
             return '';
@@ -1447,85 +1445,8 @@ EOT;
         if (!($this->options['ical'] ?? false)) {
             return '';
         }
-        $start  = $rec['start'];
-        $ics = $this->createICalRecord($rec);
-
-        $date = date('Y-m-d\THi', strtotime($start));
-        $file = "~/media/pgfactory/$date.ics";
-        if ($saveToFile) {
-            $filePath = resolvePath($file);
-            preparePath($filePath, 0755);
-            writeFile($filePath, $ics, 0710);
-        }
-        $url = Utils::resolveUrls($file, true);
-
-        $calIcon = ENLIST_CALENDAR_ICON;
-        $iCal = <<<EOT
-
-<div class='pfy-enlist-ical-wrapper'>
-<a href="$url" download="$date.ics" title="{{ pfy-enlist-ical-tooltip }}">$calIcon</a>
-</div>
-
-EOT;
-
+        $iCal = Ical::render($rec, $this->options['ical']);
         return $iCal;
     } // renderICal
-
-
-    /**
-     * @param array $rec
-     * @return string
-     * @throws \Exception
-     */
-    private function createICalRecord(array $rec): string
-    {
-        if (is_array($iCalArgs = $this->options['ical'])) {
-            $iCalArgs += ICAL_DEFAULT_OPTIONS;
-
-        } elseif (is_string($iCalArgs)) {
-            $iCalArgs = ICAL_DEFAULT_OPTIONS;
-            $iCalArgs['title'] = $this->options['ical'];
-        }
-
-        $icalOptions = [
-            'start'         => $rec['start'],
-            'end'           => $rec['end'],
-            'title'         => $this->compileICalElement($iCalArgs['title'], $rec),
-            'location'      => $this->compileICalElement($iCalArgs['location'], $rec),
-            'description'   => $this->compileICalElement($iCalArgs['description'], $rec),
-            'organizer'     => $this->compileICalElement($iCalArgs['organizer'], $rec),
-            'status'        => $this->compileICalElement($iCalArgs['status'], $rec),
-            'fullDay'       => $this->compileICalElement($iCalArgs['fullDay'], $rec),
-            'uniqueIdentifier' => $this->compileICalElement($iCalArgs['uniqueIdentifier'], $rec),
-        ];
-        $cal = Ical::render($icalOptions);
-        return $cal;
-    } // createICalRecord
-
-
-    /**
-     * @param string $fieldValue
-     * @param array $rec
-     * @return string
-     */
-    private function compileICalElement(string $fieldValue, array $rec): string
-    {
-        // replace %placeholders% with values from current rec:
-        while (preg_match('/%(.{2,20}?)%/', $fieldValue, $m)) {
-            // check current rec for matching field:
-            if (isset($rec[$m[1]])) {
-                $value = $rec[$m[1]]??'';
-            } else {
-                // if not found, check PFY variables:
-                $value = TransVars::getVariable($m[1]);
-            }
-            if (!is_string($value)) {
-                $value = '';
-            }
-            $fieldValue = str_replace($m[0], $value, $fieldValue);
-        }
-        return $fieldValue;
-    } // compileICalElement
-
 
 } // Enlist
