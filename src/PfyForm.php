@@ -1478,7 +1478,7 @@ EOT;
         $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
 
         // dev mode -> override $to:
-        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.options.email_dev_mode_override'))) {
+        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.email_dev_mode_override'))) {
             $to = $mailOverride;
         }
 
@@ -1697,6 +1697,9 @@ EOT;
         } elseif (is_string($elemOptions['options'])) {
             // parse string like "key:value,..." or "value1,value2...":
             $args = $elemOptions['options'];
+            if (($args[0]??'') === ',') {
+                $args = "''".$args;
+            }
             $res = [];
             if ($options = parseArgumentStr($args)) {
                 if (preg_match('/^\s*,/', $args)) {
