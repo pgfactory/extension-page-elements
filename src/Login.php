@@ -54,7 +54,7 @@ class Login
             self::$nextPage = $nextPage;
         }
 
-        $defaultLoginMode = kirby()->option('pgfactory.pagefactory-elements.options.login-mode', 'login');
+        $defaultLoginMode = kirby()->option('pgfactory.pagefactory-elements.login-mode', 'login');
         self::$loginMode = ($options['mode']??false) ?: $defaultLoginMode;
     } // init
 
@@ -68,7 +68,7 @@ class Login
     {
         $wrapperClass = '';
         if ($username = PageFactory::$userName) {
-            if (kirby()->option('pgfactory.pagefactory-elements.options.allowChangePassword')) {
+            if (kirby()->option('pgfactory.pagefactory-elements.allowChangePassword')) {
                 $html = self::renderAccountAdminForm($username);
             } else {
                 $html = self::renderLogoutForm($username);

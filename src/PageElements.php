@@ -129,7 +129,7 @@ class PageElements
         session_write_close();
 
         // run init-code if requested in config.php:
-        if ($code = kirby()->option('pgfactory.pagefactory-elements.options.initCode')) {
+        if ($code = kirby()->option('pgfactory.pagefactory-elements.initCode')) {
             $code = PFY_APP_BASE_PATH . 'site/custom/code/'.$code;
             if (file_exists($code)) {
                 require_once $code;
@@ -137,7 +137,7 @@ class PageElements
         }
 
         // activate site-manager if requested:
-        if (kirby()->option('pgfactory.pagefactory-elements.options.activateSitemapManager')) {
+        if (kirby()->option('pgfactory.pagefactory-elements.activateSitemapManager')) {
             require_once __DIR__ . '/SitemapManager.php';
             SitemapManager::updateSitemap();
         }

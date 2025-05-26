@@ -1,7 +1,7 @@
 
 // 'auth.challenge.email.from' => 'webmaster@domain.net',
 
-    'pgfactory.pagefactory-elements.options' => [
+    'pgfactory.pagefactory-elements' => [
 //        'templateCompilerDefaultMode' => 'twig', // default mode for TemplateCompiler, e.g. used by macro form()
 //        'allowChangePassword'         => true,
 //        'initCode'                    => 'init.php', // run init code in site/custom/code/

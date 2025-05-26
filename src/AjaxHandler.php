@@ -108,7 +108,7 @@ class AjaxHandler
             define('PFY_LOGS_PATH', PFY_APP_BASE_PATH . '/site/logs/');
         }
         $ip = $_SERVER['REMOTE_ADDR'];
-        if (option('pgfactory.pagefactory-elements.options.debug_logIP', false)) {
+        if (option('pgfactory.pagefactory-elements.debug_logIP', false)) {
             $text = "[$ip]  $text";
         }
         require_once PFY_APP_BASE_PATH . 'site/plugins/pagefactory/src/helper.php';

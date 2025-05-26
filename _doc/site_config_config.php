@@ -1,10 +1,10 @@
 
 // to automatically install:
-//  sed -e '/pgfactory.pagefactory-elements.options/r site/plugins/pagefactory-pageelements/_doc/config.php' site/config/config.php > site/config/config.php1
+//  sed -e '/pgfactory.pagefactory-elements/r site/plugins/pagefactory-pageelements/_doc/config.php' site/config/config.php > site/config/config.php1
 //
 // config options to insert into site/config/config.php:
 
-    'pgfactory.pagefactory-elements.options' => [
+    'pgfactory.pagefactory-elements' => [
         'allowChangePassword' => true,
 //        'initCode' => 'init.php',         // run init code in site/custom/code/
 //        'login-mode' => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
@@ -44,6 +44,6 @@ permissions:
 
 Using config options:
 
-    kirby()->option('pgfactory.pagefactory-elements.options.allowChangePassword');
+    kirby()->option('pgfactory.pagefactory-elements.allowChangePassword');
 
 */
