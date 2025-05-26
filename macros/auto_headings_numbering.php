@@ -32,9 +32,7 @@ EOT,
 
     $before = $options['before'];
     // assemble output:
-    Assets::addAssets(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
-//    PageFactory::$pg->addAssets(PFY_APP_BASE_PATH . 'site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
-//    PageFactory::$pg->addAssets('site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
+    Assets::addAssets('site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
     Page::addBodyTagClass('pfy-auto-heading-numbers');
     $pg = page();
     if (!$before) {

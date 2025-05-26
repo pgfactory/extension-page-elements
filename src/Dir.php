@@ -52,7 +52,7 @@ class Dir
      */
     public function __construct()
     {
-        Assets::addAssets('media/plugins/pgfactory/pagefactory-pageelements/css/-dir.css');
+        Assets::addAssets('site/plugins/pagefactory-pageelements/assets/css/-dir.css');
     } // __construct
 
 
