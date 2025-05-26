@@ -20,7 +20,7 @@
       summary {
         padding-top: var(--mdp-accordion-summary-padding, 0rem);
         padding-bottom: var(--mdp-accordion-summary-padding, 0rem);
-        padding-left: calc(1.2em + var(--mdp-accordion-summary-indent, 0rem));
+        padding-left: 0;
       }
 
       summary:before {

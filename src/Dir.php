@@ -14,6 +14,7 @@ use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
+use function PgFactory\PageFactory\shieldStr;
 
 const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
 
@@ -39,12 +40,10 @@ class Dir
     private $deep;
     private $hierarchical;
     private $download;
-    private $pattern = '';
     private $replacePattern = '';
     private $replace = '';
     private $templateOptions = [];
     private string|array $folderTemplate;
-    private string|array $template;
 
 
     /**
@@ -80,7 +79,7 @@ class Dir
         }
 
         if ($this->hierarchical) {
-            $this->template = TemplateCompiler::getTemplate($this->templateOptions);
+//            TemplateCompiler::getTemplate($this->templateOptions); //ToDo: check whether needed
             $this->folderTemplate = TemplateCompiler::getTemplate($this->templateOptions, useAsElement: 'folderElement');
             $str = $this->renderDirHierarchical($path, $pattern, 1);
 
@@ -117,9 +116,6 @@ EOT;
      * @param int $level
      * @return string
      * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     private function renderDir(string $path, string $pattern, string $class = ''): string
     {
@@ -197,7 +193,8 @@ $subdir
 $p
 
 EOT;
-            $out .= $this->markdown($subdir);
+            $subdir = $this->markdown($subdir);
+            $out .= shieldStr($subdir);
         }
         $out .= $this->renderDir($path, $pattern, "pfy-dir-lvl-$level");
         return $out;
@@ -369,6 +366,7 @@ EOT;
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
         $templateOptions['noDataAvailableText'] = '';
+        $templateOptions['markdown'] = false;
 
         $this->templateOptions = $templateOptions;
 
@@ -419,7 +417,6 @@ EOT;
         } else {
             $pattern = '*';
         }
-        $this->pattern = $pattern;
         $this->path = dir_name($this->path);
         if ($this->path) {
             $this->path = fixPath($this->path);
