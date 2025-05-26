@@ -275,6 +275,7 @@ EOT;
 ### PageElements
 
 [?hash](./?hash)       12em>> creates new hash code 
+[?reset&data](./?reset&data)       12em>> resets app and copies data from production DB to site/custom/data/ 
 [?purge-old](./?purge-old)      >> purges old apps in root directory (e.g. '/＃dev')
 
 @@@
