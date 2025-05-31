@@ -330,9 +330,6 @@ class PfyForm extends Form
         $label = (string)$elem->getLabel();
         $label = str_replace(['&lt;','&gt;'], ['<','>'], $label);
 
-        if (str_contains(($rec['label'] ?? ''), '*')) {
-            $rec['required'] = true;
-        }
         $label = "<span class='pfy-label-wrapper'>$label</span>";
         $input = (string)$elem->getControl();
         $input = str_replace(['&lt;','&gt;'], ['<','>'], $input);
