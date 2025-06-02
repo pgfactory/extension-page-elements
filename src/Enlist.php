@@ -2,7 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
-use IntlDateFormatter;
+//use IntlDateFormatter;
 use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
@@ -25,19 +25,7 @@ const ENLIST_MAIL_ICON      = '✉';
 const ENLIST_ADD_ICON       = '+';
 const ENLIST_MODIFY_ICON    = '✎';
 const ENLIST_DELETE_ICON    = '−';
-const ENLIST_CALENDAR_ICON  = '📅';
-
 const DEFAULT_DATA_PATH     = 'enlist/';
-
-const ICAL_DEFAULT_OPTIONS = [
-    'title' => '',
-    'location' => '',
-    'description' => '',
-    'organizer' => '',
-    'status' => '',
-    'fullDay' => false,
-    'uniqueIdentifier' => '',
-];
 
 
 class Enlist
@@ -305,6 +293,7 @@ EOT;
                 $this->inx = 0;
             }
         }
+        $options['tooltip'] = '{{ pfy-enlist-ical-tooltip }}';
         $this->options = $options;
 
         $title = $title0 = $this->prepStaticOption('title', '');
@@ -1446,6 +1435,13 @@ EOT;
             return '';
         }
         $iCal = Ical::render($rec, $this->options['ical']);
+        $iCal = <<<EOT
+
+<div class='pfy-enlist-ical-wrapper'>
+$iCal
+</div>
+
+EOT;
         return $iCal;
     } // renderICal
 

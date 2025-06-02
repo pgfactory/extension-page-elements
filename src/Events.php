@@ -14,23 +14,18 @@
 
 namespace PgFactory\PageFactoryElements;
 
-use PgFactory\MarkdownPlus\MarkdownPlus;
 use PgFactory\PageFactory\DataSet as DataSet;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
-use RRule\RRule;
-
 
 class Events extends DataSet
 {
     public $filetime;
-    private static array $timePlaceholders = [];
 
     /**
-    //     * @param string $file
      * @param array $options
      * @throws \Exception
      */
@@ -84,11 +79,26 @@ class Events extends DataSet
             return '{{ pfy-no-event-found }}';
         }
 
-        $events = $this->handleExpections($events);
+        $events = $this->handleExceptions($events);
+
+        if (($this->options['iCalOptions']??null) !== null) {
+            if ($this->options['iCalOptions']['saveAllToFile']??false) {
+                $icalLink = $this->getICalLink($events);
+                TransVars::setVariable('icalLinkToAll', $icalLink);
+            }
+            $outputOption = $options['output'] ?? '';
+            if ($outputOption === false) {
+                return '';
+            } elseif ($outputOption === 'ical') {
+                return $icalLink;
+            }
+            // $this->options['iCalOptions']['icalLinkToAll'] = $icalLink;
+        }
 
         // render by compiling data with template:
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
         $template = TemplateCompiler::getTemplate($templateOptions, $options['category']??null);
+        $this->handleICal($template, $events);
         $mdStr = TemplateCompiler::compile($template, $events, $templateOptions);
 
         // finalize:
@@ -109,6 +119,51 @@ class Events extends DataSet
             return $mdStr;
         }
     } // render
+
+
+    /**
+     * @param string $template
+     * @param array $events
+     * @return void
+     */
+    private function handleICal(string $template, array &$events): void
+    {
+        if (!preg_match('/\{\{\s*icalLink\s*}}/', $template)) {
+            return;
+        }
+
+        foreach ($events as $i => $event) {
+            $link = $this->getICalLink([$event]);
+            $events[$i]['icalLink'] = $link;
+        }
+    } // handleICal
+
+
+    /**
+     * @param array $events
+     * @return string
+     * @throws \Exception
+     */
+    private function getICalLink(array $events): string
+    {
+        $iCalOptions = $this->options['iCalOptions'];
+        $iCalOptions += [
+            'tooltip' => '{{ pfy-ical-link-tooltip }}',
+            'linkText' => '{{ pfy-ical-link-text }}',
+        ];
+        $ical = new Ical($events, $iCalOptions);
+        $tTargetFile = $ical->getTargetFileTime();
+
+        $dataFile = resolvePath($this->options['file']);
+        $tDataFile = fileTime($dataFile);
+        if ($tDataFile > $tTargetFile) {
+            $ical->saveToFile();
+        }
+
+        $link = $ical->renderIcsLink();
+
+        return $link;
+    } // getICalLink
 
 
     // 0 (Sun) bis 6 (Sat)
@@ -211,7 +266,7 @@ class Events extends DataSet
      * @return array
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function handleExpections(array $events): array
+    private function handleExceptions(array $events): array
     {
         $exceptions = [];
         // get exceptions definition:
@@ -260,7 +315,7 @@ class Events extends DataSet
             }
         }
         return $events;
-    } // handleExpections
+    } // handleExceptions
 
 
     /**
@@ -270,7 +325,7 @@ class Events extends DataSet
      */
     private function getData(string $category): array
     {
-        $data = $this->data();
+        $data = $this->data(true);
 
         $sortedData = [];
         $inx = 1;

@@ -422,6 +422,17 @@ pfy-enlist-ical-tooltip:
   _:  Download/install calendar entry.
 
 
+#--- iCal ------------------------------
+pfy-ical-link-tooltip:
+  'de': Anklicken um herunterzuladen, dann Datei doppelklicken für Eintrag in Agenda
+  '_': Click to download and save, then double click saved file to store in calendar
+
+pfy-ical-link-text:
+  'de': '%icon% Herunterladen und in meine Agenda eintragen...'
+  '_': '%icon% Download and add to my calendar...'
+
+
+
 #--- Login ------------------------------
 pfy-login:
   _:  Login
