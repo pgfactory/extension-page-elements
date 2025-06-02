@@ -42,6 +42,12 @@ return function ($args = '')
                 'current year or month etc. Example: `timePattern: Y` or `timePattern: l` .'.
                 'Values `M` (=Jan), `F` (=January), `D` (=Mon), `l` (=Monday) are translated to local language.', null],
             'wrap' => ['[bool] If false, omits the normally applied DIV wrapper, i.e. renders just as stated in the template.', true],
+            'iCalOptions' => ['[array] Specifies options for ical creation.<br>In particular defines how to populate ical elements '.
+                '(title, location, description, organizer, status, fullDay, uniqueIdentifier).<br>'.
+                'E.g. iCalOptions: { title: "[XY] \%category\%" }', null],
+            'output' => ['[false|ical] If set to "ical", the output is a link to an .ics file which contains the collection '.
+                'of all targeted events. False omits output, just updates ics file.<br>If arg is omitted, the ics-link (per event) '.
+                'can be rendered by the template as \{{ icalLink }}.', null],
         ],
         'summary' => <<<EOT
 
@@ -80,6 +86,23 @@ For this use the special format `Yn`, where n is the number of days to switch ea
 - \{{ pfy-event-source-filetime-unknown }}
 
 {{ vgap }}
+
+## Working Example
+
+    \{{ events(
+        category: Concert
+        file: '~config/events.yaml'
+        count: 3
+        template: { file: '~page/templates.yaml' }
+        iCalOptions: {
+            title: '[XY] %Title%'  \// renders value of field "Title" in data source
+            location: '%Location%'
+            description: '%Descriptino%'
+            organizer: 'The Organizer'
+            prefix: '[xy]'      \// prefix for ical files
+        }
+    ) }}
+
 EOT,
     ];
 
