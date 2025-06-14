@@ -27,20 +27,41 @@ class ListRenderer
     public static function renderUserList($options): string
     {
         $users = Utils::getUsers($options); // -> $options['role'] and $options['reversed']
+        // Get labels of all user recs:
+        $labels = self::getUserRecLabels($users);
 
         if ($options['table']??false) {
             $tableOptions = $options['table']??[];
+            if ($tableOptions === true) {
+                $tableOptions = [];
+            }
             if (!($tableOptions['tableHeaders']??false)) {
-                if ($rec0 = reset($users)) {
-                    $tableOptions['tableHeaders'] = array_keys($rec0);
-                }
+                $tableOptions['tableHeaders'] = $labels;
             }
             $str = self::renderUserTable($users, $tableOptions);
 
         } else {
-            $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template'] ?? []);
-            $template = TemplateCompiler::getTemplate($templateOptions, $options['selector'] ?? '');
-            $str = TemplateCompiler::compile($template, $users, $templateOptions);
+            $templateOptions = $options['template'] ?? [];
+            if ($templateOptions === 'help') {
+                $out = "<h3>Available Elements for Users:</h3>\n";
+                foreach ($labels as $label) {
+                    $out .= "<div>\%$label\%</div>\n";
+                }
+                return $out;
+
+            } elseif (!(($templateOptions['element']??false) || ($templateOptions['file']??false))) {
+                $template = "<> %Username%\n";
+                foreach ($labels as $label) {
+                    if ($label === 'Username') {
+                        continue;
+                    }
+                    $template .= "{% if $label %} $label:    >> %$label%\n {% endif %}\n";
+                }
+                $template .= "\n<>\n";
+                $templateOptions['element'] = $template;
+            }
+            $templateOptions = TemplateCompiler::sanitizeTemplateOption($templateOptions);
+            $str = TemplateCompiler::compile($users, $templateOptions);
         }
         if (!$str) {
             $text = TransVars::getVariable('pfy-list-empty', true);
@@ -159,7 +180,7 @@ class ListRenderer
             $data[] = $rec;
         }
 
-        $out = TemplateCompiler::compile($template, $data, $templateOptions);
+        $out = TemplateCompiler::compile($data, $templateOptions);
         return $out;
     } // renderFolderContent
 
@@ -299,7 +320,24 @@ class ListRenderer
             $data[] = $rec;
         }
 
-        return TemplateCompiler::compile($template, $data, $templateOptions);
+        return TemplateCompiler::compile($data, $templateOptions);
     } // renderSubpagesByTemplate
+
+
+    /**
+     * @param array|string $users
+     * @return array
+     */
+    private static function getUserRecLabels(array|string $users): array
+    {
+        $labels = [];
+        foreach ($users as $user) {
+            foreach ($user as $key => $val) {
+                $labels[$key] = true;
+            }
+        }
+        $labels = array_keys($labels);
+        return $labels;
+    } // getUserRecLabels
 
 } // class ListRenderer
