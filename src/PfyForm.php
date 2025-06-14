@@ -41,6 +41,7 @@ class PfyForm extends Form
 {
     private array $formOptions;
     private array $elemOptions;
+    private array $origReceivedData;
     private array $tableOptions = [];
     private array $fieldNames = [];
     protected array $formElements = [];
@@ -1053,7 +1054,7 @@ EOT;
             $html = "<div class='pfy-form-success'>$response</div>\n";
 
             // handle optional confirmation mail:
-            $html .= $this->handleConfirmationMail($dataRec);
+            $html .= $this->sendConfirmationMail($dataRec);
         }
 
 
@@ -1186,6 +1187,8 @@ EOT;
      */
     private function normalizeData(array $dataRec): array|string
     {
+        $this->origReceivedData = $dataRec;
+
         foreach ($dataRec as $name => $value) {
             // handle special case "rrule":
             if ($name === 'rrule') {
@@ -1426,65 +1429,6 @@ EOT;
         }
         return false;
     } // saveRec
-
-
-    /**
-     * @param array $dataRec
-     * @return void
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    private function sendOwnerNotification(array $dataRec): void
-    {
-        $formOptions = $this->formOptions;
-        $out = '';
-        $labelLen = 0;
-        foreach ($dataRec as $key => $value) {
-            $labelLen = max($labelLen, strlen($key));
-        }
-        $labelLen += 5;
-        foreach ($dataRec as $key => $value) {
-            if ($key[0] === '_') {
-                continue;
-            }
-            $type = $this->formElements[$key]['type']??false;
-            if ($type === 'password') {
-                $value = '*****';
-            }
-            $key = str_pad("$key: ", $labelLen, '. ');
-            if (is_array($value)) {
-                $value = $value[ARRAY_SUMMARY_NAME]??'';
-            }
-            $out .= "$key$value\n";
-        }
-        TransVars::setVariable("_data_", $out);
-
-        if ($label = ($this->formOptions['ownerNotificationLabel']??'')) {
-            TransVars::setVariable('pfy-form-owner-notification-label', $label);
-        }
-
-        $this->propagateDataToVariables($dataRec);
-
-        $subject = TransVars::getVariable('pfy-form-owner-notification-subject');
-        $subject = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $subject);
-        $subject = TransVars::translate($subject);
-
-        $message = TransVars::getVariable('pfy-form-owner-notification-body');
-        $message = preg_replace('/%([\w-]*)%/', "{{ _$1_ }}", $message);
-        $message = TransVars::translate($message);
-
-        $to = $formOptions['mailTo']?: TransVars::getVariable('webmaster_email');
-
-        // dev mode -> override $to:
-        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.email_dev_mode_override'))) {
-            $to = $mailOverride;
-        }
-
-        if (str_contains($to, ',')) {
-            $to = explodeTrim(',', $to);
-        }
-        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
-    } // sendOwnerNotification
-
 
 
     /**
@@ -2371,14 +2315,65 @@ EOT;
 
     /**
      * @param array $dataRec
+     * @return void
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
+    private function sendOwnerNotification(array $dataRec): void
+    {
+        $out = '';
+        $labelLen = 0;
+        foreach ($dataRec as $key => $value) {
+            $labelLen = max($labelLen, strlen($key));
+        }
+        $labelLen += 5;
+        $dataRec = $this->origReceivedData + $dataRec;
+        foreach ($dataRec as $key => $value) {
+            if ($key[0] === '_') {
+                continue;
+            }
+            $type = $this->formElements[$key]['type']??false;
+            if ($type === 'password') {
+                $value = '*****';
+            }
+            $key1 = str_pad("$key: ", $labelLen, '. ');
+            if (is_array($value)) {
+                $value = $value[ARRAY_SUMMARY_NAME]??'';
+            }
+            $out .= "$key1 $value\n";
+            $dataRec[$key] = $value;
+        }
+        $dataRec['_data_'] = $out;
+
+        list($subject, $message) = $this->getEmailComponents('notificationTemplate', $dataRec, 'pfy-form-owner-notification');
+
+        $to = $this->formOptions['mailTo']?: PageFactory::$webmasterEmail;
+        if ($to === true) {
+            $to = PageFactory::$webmasterEmail;
+        }
+
+        // dev mode -> override $to:
+        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.emailDevModeOverride'))) {
+            $to = $mailOverride;
+        }
+
+        if (str_contains($to, ',')) {
+            $to = explodeTrim(',', $to);
+        }
+        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
+    } // sendOwnerNotification
+
+
+    /**
+     * @param array $dataRec
      * @return mixed
      * @throws \Exception
      */
-    private function handleConfirmationMail(array $dataRec): mixed
+    private function sendConfirmationMail(array $dataRec): mixed
     {
-        if (!($confirmationMail = $this->formOptions['confirmationEmail']??false)) {
+        if (!($confirmationMail = $this->formOptions['confirmationEmailTo']??false)) {
             return '';
         }
+        $dataRec = $this->origReceivedData + $dataRec;
         $eventData = $this->auxBannerValues;
         foreach ($eventData as $key => $value) {
             $value = TransVars::getVariable($value, true);
@@ -2389,12 +2384,12 @@ EOT;
         $dataRec += $eventData;
         $dataRec['hostUrl'] = PFY_HOST_URL;
 
-        $subject = $this->getEmailComponent('subject', $dataRec);
-        $message = $this->getEmailComponent('message', $dataRec);
+        list($subject, $message) = $this->getEmailComponents('confirmationTemplate', $dataRec, 'pfy-confirmation-response');
 
         if (str_contains($confirmationMail, '@')) {
             $to = $confirmationMail;
         } else {
+            $confirmationMail = str_replace('-', '_', $confirmationMail);
             $to = $dataRec[$confirmationMail]??false;
         }
         if ($to) {
@@ -2406,24 +2401,67 @@ EOT;
 
 
     /**
+     * @param string $varName       name of transvar that contains elements 'subject' and 'message',
+     *                              each optionally containing language variants like de: xxx, _: yyy
+     * @param array $dataRec
+     * @param string $legacyVarName if transver[varName] not exists, falls back to transver[$legacyVarName-subject] resp.
+     *                              transver[$legacyVarName-message] resp. transver[$legacyVarName-body]
+     *
      * @return array
-     * @throws \Exception
      */
-    private function getEmailComponent(string $selector, array $dataRec): string
+    private function getEmailComponents(string $varName, array $dataRec, string $legacyVarName = ''): array
     {
-        $confirmationEmailTemplate = ($this->formOptions['confirmationEmailTemplate']??true);
-        if ($confirmationEmailTemplate === true) {
-            $template = TransVars::getVariable("pfy-confirmation-response-$selector");
-            $out = TemplateCompiler::basicCompileTemplate($template, $dataRec);
+        $subject = '';
+        $message = '';
+        $confirmationEmailTemplateVar =  $this->formOptions[$varName] ?? $varName;
+        if ($confirmationEmailTemplate = TransVars::$transVars[$confirmationEmailTemplateVar] ?? false) {
+            $subject = $confirmationEmailTemplate['subject']??false;
+            $subject = TransVars::selectLangVariantOfTransVar($subject);
 
-        } else {
-            $templateOptions = TemplateCompiler::sanitizeTemplateOption($confirmationEmailTemplate);
-            $template = TemplateCompiler::getTemplate($templateOptions, $selector);
-            $out = TemplateCompiler::compile($template, $dataRec, $templateOptions);
+            $message = $confirmationEmailTemplate['message']??false;
+            $message = TransVars::selectLangVariantOfTransVar($message);
         }
-        $out = str_replace([' BR ', '\\n'], "\n", $out);
-        return $out;
-    } // getEmailComponent
+
+        $subject = $subject ?: TransVars::getVariable($legacyVarName.'-subject', varNameIfNotFound:true);
+        $message = $message ?: (TransVars::getVariable($legacyVarName.'-body') ?: TransVars::getVariable($legacyVarName.'-message', varNameIfNotFound:true));
+
+        $dataRec['host'] = PFY_HOST_URL;
+
+        $subject = $this->compileTempate($subject, $dataRec);
+        $message = $this->compileTempate($message, $dataRec);
+
+        return [$subject, $message];
+    } // getEmailComponents
+
+
+    /**
+     * @param string $str
+     * @param array $dataRec
+     * @return string
+     */
+    private function compileTempate(string $str, array $dataRec): string
+    {
+        $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
+
+        if (preg_match_all('/%([\w-]{1,16})%/', $str, $m)) {
+            $dataRec = $this->origReceivedData;
+            foreach ($m[1] as $i => $v) {
+                if (isset($dataRec[$v])) {
+                    $str = str_replace($m[0][$i], $dataRec[$v], $str);
+                }
+            }
+        }
+
+        $str = str_replace([' BR ', '\\n', '<br>'], "\n", $str);
+        if (str_contains($str, "'{=={'")) {
+            $str = str_replace("'{=={'", '{{', $str);
+            $str = TransVars::translate($str);
+        }
+        if (str_contains($str, '{{')) {
+            $str = TransVars::translate($str);
+        }
+        return $str;
+    } // $str
 
 
     /**
@@ -2788,11 +2826,11 @@ EOT;
             'class' => 'pfy-rrule-elem pfy-rrule-elem-freq',
             'info' => '{{ pfy-form-rrule-freq-info }}',
             'options' =>
-                'NONE:{{ pfy-form-rrule-none-option }},'.
-                'DAILY:{{ pfy-form-rrule-daily-option }},'.
-                'WEEKLY:{{ pfy-form-rrule-weekly-option }},'.
-                'MONTHLY:{{ pfy-form-rrule-monthly-option }},'.
-                'YEARLY:{{ pfy-form-rrule-yearly-option }}',
+                'NONE:"{{ pfy-form-rrule-none-option }}",'.
+                'DAILY:"{{ pfy-form-rrule-daily-option }}",'.
+                'WEEKLY:"{{ pfy-form-rrule-weekly-option }}",'.
+                'MONTHLY:"{{ pfy-form-rrule-monthly-option }}",'.
+                'YEARLY:"{{ pfy-form-rrule-yearly-option }}"',
         ];
 
         $eventElements['_repeatEventBody'] = [

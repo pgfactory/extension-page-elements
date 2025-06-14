@@ -295,6 +295,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     max-width: 100vw;
     overflow-x: auto;
     position: relative;
+    font-size: 12pt;
+    outline: 1px solid magenta;
+    outline-offset: 0.5em;
   }
   .pfy-table-edit-popup .pfy-table-data-output-wrapper {
     margin-top: 0;

@@ -222,7 +222,6 @@ class AjaxHandler
      */
     private static function handleCalendarRequests(): void
     {
-        $s = kirby()->session()->get();
         self::$sessRec = kirby()->session()->get(self::$sessCalRecKey, []);
         self::$categories = explode(',', self::$sessRec['categories']??'');
 
@@ -310,19 +309,12 @@ class AjaxHandler
         $data['_creator'] = $rec['creator']??'';
 
         $templateOptions = (self::$sessRec['template']??[]);
-        $selector = $rec['category'] ?? null;
 
         // compile event summary:
-        $template = TemplateCompiler::getTemplate($templateOptions, $selector);
-        if (!$template) {
-            mylog('Error: calendar template missing.');
-            exit(json_encode('Error: calendar template missing.'));
-        }
-        $data['summary'] = self::compileRec($template, $rec, $templateOptions);
+        $data['summary'] = self::compileRec($rec, $templateOptions);
 
         // compile event description:
-        $template = TemplateCompiler::getTemplate($templateOptions, $selector, 'description');
-        $data['description'] = self::compileRec($template, $rec, $templateOptions, 'description');
+        $data['description'] = self::compileRec($rec, $templateOptions, 'description');
 
         return $data;
     } // _assembleRec
@@ -481,11 +473,8 @@ class AjaxHandler
      * @param string $template
      * @param array $eventRec
      * @return string
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
-    private static function compileRec(string $template, array $eventRec, array $templateOptions, string $elemToUse = 'element'): string
+    private static function compileRec(array $eventRec, array $templateOptions, string $elemToUse = 'element'): string
     {
         $category = $eventRec['category']??'';
         $catInx = array_search($category, self::$categories);
@@ -502,12 +491,13 @@ class AjaxHandler
         $eventRec['time'] = $timeRange;
 
         // case 'allday' event:
-        if (strlen($eventRec['start']) < 16) {
-            if (self::$templates['allday']??false) {
-                $template = self::$templates['allday'];
-            }
-        }
-        $str = TemplateCompiler::compile($template, $eventRec, $templateOptions);
+//        if (strlen($eventRec['start']) < 16) {
+//            if (self::$templates['allday']??false) {
+//                $template = self::$templates['allday'];
+//            }
+//        }
+        $templateOptions['templates'][$category] = $templateOptions['templates'][$category][$elemToUse]??'';
+        $str = TemplateCompiler::compile($eventRec, $templateOptions);
 
         if ($elemToUse === 'element') {
             $str = <<<EOT

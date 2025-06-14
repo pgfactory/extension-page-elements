@@ -27,17 +27,19 @@ pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
   de: '{{ pfy-form-owner-notification-label }} auf %host%'
   _:  '{{ pfy-form-owner-notification-label }} on %host%'
 
-pfy-form-owner-notification-body:
+pfy-form-owner-notification-message:
   de: |
     Guten Tag
     Es gibt eine {{ pfy-form-owner-notification-label }}:
-    %data%
-    Beste Grüsse, der Webmaster
+    
+    %_data_%
+
   _:  |
     Hello
     We received a {{ pfy-form-owner-notification-label }}:
-    %data%
-    Best regards, the webmaster
+    
+    %_data_%
+    
 
 #
 pfy-form-required-info:
@@ -89,7 +91,6 @@ pfy-form-honeypot-failed:
   de: 'Das klappte nicht, Ihre Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuchen Sie es erneut.'
   de2: 'Das klappte nicht, deine Daten wurden noch <strong>nicht</strong> übermittelt.</p><p>Bitte versuche es erneut.'
   _:  'That didn´t work, your data has <strong>not</strong> been submitted.</p><p>Please try again.'
-//  _:  'That didn\'t work, your data has <strong>not</strong> been submitted.</p><p>Please try again.'
 
 pfy-form-confirmation-email-sent:
   de: 'Wir haben Ihnen eine Bestätigung per E-Mail geschickt.'
@@ -104,44 +105,44 @@ pfy-confirmation-response-element-empty:
   de: '&lt; leer &gt;'
   _:  '&lt; empty &gt;'
 
-pfy-confirmation-response-subject:
-  de: 'Anmeldebestätigung von {{ hostUrl }}'
-  _:  'Sign-up confirmation from {{ hostUrl }}'
-
-pfy-confirmation-response-message:
-  de: |
-    Guten Tag {{ _First_Name_ }} {{ _Last_Name_ }}
-    
-    Vielen Dank für Ihre Anmeldung.
-    
-    Details:
-    Datum:	      {{ _date_ }}
-    Zeit:	      {{ _time_ }}
-    Ort:	      {{ _location_ }}
-    
-    Wir freuen uns, sie bald zu sehen.
-    
-    Im Verhinderungsfalle bitten wir um frühzeitige Benachrichtigung.
-    
-    Beste Grüsse
-    Das Organisationsteam
-
-  _:  |
-    Hello {{ _First_Name_ }} {{ _Last_Name_ }}
-  
-    Thanks a lot for your registration.
-  
-    Details:
-    Date:	      {{ _date_ }}
-    Time:	      {{ _time_ }}
-    Location:	  {{ _location_ }}
-  
-    We are looking forward to seeing you soon.
-    
-    Please send us a note in case you cannot participate.
-    
-    Best Regards
-    The organisation team
+#pfy-confirmation-response-subject:
+#  de: 'Anmeldebestätigung von %host%'
+#  _:  'Sign-up confirmation from %host%'
+#
+#pfy-confirmation-response-message:
+#  de: |
+#    Guten Tag %First_Name% %Last_Name%
+#
+#    Vielen Dank für Ihre Anmeldung.
+#
+#    Details:
+#    Datum:	      %date%
+#    Zeit:	      %time%
+#    Ort:	      %location%
+#
+#    Wir freuen uns, sie bald zu sehen.
+#
+#    Im Verhinderungsfalle bitten wir um frühzeitige Benachrichtigung.
+#
+#    Beste Grüsse
+#    Das Organisationsteam
+#
+#  _:  |
+#    Hello %First_Name% %Last_Name%
+#
+#    Thanks a lot for your registration.
+#
+#    Details:
+#    Date:	      %date%
+#    Time:	      %time%
+#    Location:	  %location%
+#
+#    We are looking forward to seeing you soon.
+#
+#    Please send us a note in case you cannot participate.
+#
+#    Best Regards
+#    The organisation team
 
 pfy-form-rec-deleted-confirmation:
   de: 'Der Eintrag wurde gelöscht.'

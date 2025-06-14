@@ -42,7 +42,23 @@ return function ($args = '')
             'ownerNotificationTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
             'mailTo' =>	['Synonym for "ownerNotificationTo".', false],
 
-            'ownerNotificationLabel' =>	['If set, is used in owner notifications as a brief form description.', false],
+            'ownerNotificationTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
+                'Each may contain sub-elements containing language variants, such as "de" or "_".'.
+                'If not template is specified, TransVars "pfy-form-owner-notification-subject" and "pfy-form-owner-notification-message" '.
+                'are used instead.', null],
+
+            'confirmationEmailTo' =>	['[name-of-email-field] If set to the name of an '.
+                'e-mail field within the form, a confirmation mail will be sent.<br>'.
+                'Variables ``&#123;&#123; pfy-confirmation-response-subject }}`` and '.
+                '``&#123;&#123; pfy-confirmation-response-message }}`` are used to compose message. '.
+                'Use placeholders like ``%key%`` to render corresponding form fields.', null],
+
+            'confirmationEmail' =>	['Synonym for "confirmationEmailTo".', null],
+
+            'confirmationEmailTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
+                'Each may contain sub-elements containing language variants, such as "de" or "_".'.
+                'If not template is specified, TransVars "pfy-confirmation-response-subject" and "pfy-confirmation-response-message" '.
+                'are used instead..', null],
 
             'mailFrom' =>	['The address from which service emails are sent. (default: "{{ webmaster_email }}").', false],
             'mailFromName' =>	['Name from which service emails are sent.', ''],
@@ -122,15 +138,6 @@ return function ($args = '')
 
             'interactiveTable' =>	['[bool] If true, data table can be interactively sorted and filtered.', false],
 
-            'confirmationEmail' =>	['[name-of-email-field] If set to the name of an '.
-                'e-mail field within the form, a confirmation mail will be sent.', false],
-
-            'confirmationEmailTemplate' =>	['[name-of-template-file,true] This defines '.
-                'what to put into the mail. If true, standard variables will be used: ``&#123;&#123;pfy-confirmation-response-subject }}`` '.
-                'and ``&#123;&#123;pfy-confirmation-response-message }}``.<br>Alternatively, you can specify the name of a template file. <br>'.
-                'All form-inputs are available as variables of the form ``&#123;&#123; <strong>&#95;fieldName&#95;</strong> }}`` '
-                , true],
-
             'emailFieldName' =>	['[name-of-email-field] Replaces option "confirmationEmail", if that is not used. '.
                 'Identifies the field containing an e-mail address within the dataset. It is used by tableOptions "mail"', false],
 
@@ -158,19 +165,46 @@ return function ($args = '')
 
 #### Example:
 
-    @@@ .pfy-screen-only
-    ## Form
-    @@@
+    \// Frontmatter:
+    variables:
+    
+    notificationTemplate:
+        subject:
+            de: 'Neue Anmeldung auf %host%'
+            _:  'New sign-up on %host%'
+        message:
+            de: |
+                Guten Tag
+                Es gibt eine Anmeldung:
+                %\_data\_%    \// -> predefined shorthand that lists all received data elements
+                Beste Grüsse
+            _:  |
+                Hello
+                We received a sign-up:
+                %\_data_\%
+                Best regards
+    
+    confirmationTemplate:
+        subject: 'Sign-up confirmation from %host%'
+        message: 'Hello %Name% ... Time: \{{ %start%|date('H:i') }}...'
+    \-\-\-\-
+
     \{{ form(
-    \//=== form arguments:
         file:			'\~data/db.yaml',
-        showData:       true
-        maxCount:       12
-    \//=== form fields:
+        editData:       true
+        tableOptions:    {interactive:true}
+        ownerNotificationTo: true \// 'true' for webmaster-email or explicit e-mail address 
+        ownerNotificationTemplate: notificationTemplate
+        confirmationEmailTo: EMail \// -> name of e-mail field below 
+        confirmationEmailTemplate: confirmationTemplate
+        \//maxCount:       12
+        \//deadline:       2025-06-03
+
         Name:           { required:true }
         Name2:          { antiSpam:Name }
-        Comment:		{ type: textarea },
-    \//=== buttons:
+        EMail:          { type:email }
+        Comment:		{ type:textarea },
+
         cancel:    		{ },
         submit:    		{ },
         ) 
@@ -300,6 +334,10 @@ EOT,
     // ownerNotificationTo synonyme for mailTo:
     if ($options['ownerNotificationTo']??false) {
         $options['mailTo'] = $options['ownerNotificationTo'];
+    }
+    // ownerNotificationTo synonyme for mailTo:
+    if ($options['confirmationEmail']??false) {
+        $options['confirmationEmailTo'] = $options['confirmationEmail'];
     }
 
     if (($options['maxCount']??false) && !($options['minRows']??false)) {
