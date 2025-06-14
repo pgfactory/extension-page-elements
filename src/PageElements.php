@@ -27,6 +27,14 @@ define('PE_ASSET_LOCATIONS', [
 ]);
 
 const PE_PATH_DEFINITIONS = [
+    'PE' => [
+        PE_ASSETS_PATH.'css/-pe.css',
+        // PE_ASSETS_PATH.'js/-pe.js',
+    ],
+    'DIR' => [
+        PE_ASSETS_PATH.'css/-dir.css',
+        PE_ASSETS_PATH.'js/-dir.js',
+    ],
     'POPUPS' => [
         PE_ASSETS_PATH.'css/-popup.css',
         PE_ASSETS_PATH.'js/-popup.js',
@@ -113,6 +121,7 @@ class PageElements
         self::initOnboardingAid();
 
         $this->handleUrlRequests();
+        Assets::addAssets('PE');
     } // __construct
 
 
