@@ -16,6 +16,8 @@ namespace PgFactory\PageFactoryElements;
 
 use PgFactory\PageFactory\DataSet as DataSet;
 use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\Utils;
+use RRule\RRule;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\resolvePath;
@@ -42,6 +44,16 @@ class Events extends DataSet
                 $this->filetime = date("d.F Y", $ftime);
             } else {
                 $this->filetime = '{|! pfy-event-source-filetime-unknown !|}';
+            }
+        }
+        if (isset($options['macroName']) && isset($options['template'])) {
+            if (is_array($options['template'])) {
+                $options['template']['_macroName'] = $options['macroName'];
+            } else {
+                $template = $options['template'];
+                $options['template'] = [];
+                $options['template']['element'] = $template;
+                $options['template']['_macroName'] = $options['macroName'];
             }
         }
         $this->options = $options;
@@ -81,8 +93,8 @@ class Events extends DataSet
 
         $events = $this->handleExceptions($events);
 
-        if (($this->options['iCalOptions']??null) !== null) {
-            if ($this->options['iCalOptions']['saveAllToFile']??false) {
+        if (($this->options['iCal']??null) !== null) {
+            if ($this->options['iCal']['saveAllToFile']??false) {
                 $icalLink = $this->getICalLink($events);
                 TransVars::setVariable('icalLinkToAll', $icalLink);
             }
@@ -92,14 +104,12 @@ class Events extends DataSet
             } elseif ($outputOption === 'ical') {
                 return $icalLink;
             }
-            // $this->options['iCalOptions']['icalLinkToAll'] = $icalLink;
+            $this->injectICalLinks($events);
         }
 
         // render by compiling data with template:
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
-        $template = TemplateCompiler::getTemplate($templateOptions, $options['category']??null);
-        $this->handleICal($template, $events);
-        $mdStr = TemplateCompiler::compile($template, $events, $templateOptions);
+        $mdStr = TemplateCompiler::compile($events, $templateOptions);
 
         // finalize:
         $mdStr = $this->cleanup($mdStr);
@@ -122,21 +132,17 @@ class Events extends DataSet
 
 
     /**
-     * @param string $template
      * @param array $events
      * @return void
+     * @throws \Exception
      */
-    private function handleICal(string $template, array &$events): void
+    private function injectICalLinks(array &$events): void
     {
-        if (!preg_match('/\{\{\s*icalLink\s*}}/', $template)) {
-            return;
-        }
-
         foreach ($events as $i => $event) {
             $link = $this->getICalLink([$event]);
             $events[$i]['icalLink'] = $link;
         }
-    } // handleICal
+    } // injectICalLinks
 
 
     /**
@@ -146,7 +152,7 @@ class Events extends DataSet
      */
     private function getICalLink(array $events): string
     {
-        $iCalOptions = $this->options['iCalOptions'];
+        $iCalOptions = $this->options['iCal'];
         $iCalOptions += [
             'tooltip' => '{{ pfy-ical-link-tooltip }}',
             'linkText' => '{{ pfy-ical-link-text }}',
@@ -160,9 +166,14 @@ class Events extends DataSet
             $ical->saveToFile();
         }
 
-        $link = $ical->renderIcsLink();
+        if ($iCalOptions['saveAllToFile']??false) {
+            $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
+            $url = Utils::normalizePath($url);
+        } else {
+            $url = $ical->getTargetFile();
 
-        return $link;
+        }
+        return $url;
     } // getICalLink
 
 
@@ -345,16 +356,16 @@ class Events extends DataSet
         }
 
         if ($category) {
-            if (str_contains($category, '|')) {
-                $tmpData = [];
-                $categories = explodeTrim('|', $category);
-                foreach ($categories as $category) {
-                    $data = array_filter($sortedData, function ($rec) use ($category) {
-                        return $category === ($rec['category'] ?? false);
-                    });
-                    $tmpData = array_merge($tmpData, $data);
-                }
-                $sortedData = $tmpData;
+            if (strpbrk($category, '|,')) {
+                $categories = explodeTrim('|,', $category);
+                $sortedData = array_filter($sortedData, function ($rec) use ($categories) {
+                    foreach ($categories as $category) {
+                        if ($category === ($rec['category'] ?? false)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
             } else {
                 $sortedData = array_filter($sortedData, function ($rec) use ($category) {
                     return $category === ($rec['category'] ?? false);
@@ -517,10 +528,9 @@ class Events extends DataSet
         $nextEvents = array_splice($sortedData, $nextEventInx, $count);
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
-        $template = TemplateCompiler::getTemplate($templateOptions, $category);
 
         foreach ($nextEvents as $i => $rec) {
-            $eventBanner = TemplateCompiler::compile($template, $rec, $templateOptions);
+            $eventBanner = TemplateCompiler::compile($rec, $templateOptions);
             $nextEvents[$i]['eventBanner'] = $eventBanner;
         }
 

@@ -11,6 +11,7 @@ const Enlist = {
     this.addEventListeners();
     this.initTooltips();
     this.initPlaceholders();
+    this.setupDownloadButtonHandler();
   }, // init
 
   initPlaceholders: function () {
@@ -400,6 +401,20 @@ const Enlist = {
       });
     }
   }, // setupCancelHandler
+
+
+  setupDownloadButtonHandler() {
+      document.body.addEventListener('click', function (ev) {
+        const btnEl = ev.target.closest('.pfy-enlist-ical-button');
+        if (btnEl) {
+          ev.stopPropagation();
+          ev.preventDefault();
+          domForOne(btnEl.parentElement, 'a', aEl => {
+            aEl.click();
+          });
+        }
+      });
+  },
 
 }; // Enlist
 

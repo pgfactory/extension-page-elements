@@ -271,10 +271,22 @@
   }
 
   .pfy-enlist-ical-wrapper {
-    padding: 0.4em 0.3em 0 0;
-    user-select: none;
-    cursor: pointer;
-    height: 1.5em;
+    padding: 0;
+    a {
+      padding: 0.4em 0.3em 0 0;
+      user-select: none;
+      cursor: pointer;
+      height: 1.5em;
+    }
+    button {
+      margin: 1px;
+      padding: 0;
+      user-select: none;
+      cursor: pointer;
+      font-size: 120%;
+      width: 1.5em;
+      height: 1.5em;
+    }
   }
 
   .pfy-enlist-hide-num .pfy-enlist-row-num {

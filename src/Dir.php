@@ -3,8 +3,9 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\MarkdownPlus;
+use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
-use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\dir_name;
@@ -19,11 +20,19 @@ use function PgFactory\PageFactory\shieldStr;
 const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
+const DEFAULT_FOLDER_DOWNLOAD_ICONE = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
+
+if (!defined('PFY_DOWNLOAD_PATH')) {
+    define('PFY_DOWNLOAD_PATH', '~/download/');
+}
 
 class Dir
 {
     public static $inx = 1;
     private $path;
+    private $url;
+    private string $absPath;
+    private int $absPathLen;
     private $origPathLen = '';
     private $id;
     private $class = '';
@@ -43,7 +52,9 @@ class Dir
     private $replacePattern = '';
     private $replace = '';
     private $templateOptions = [];
-    private string|array $folderTemplate;
+    private array $realLocations = [];
+    private bool $permission;
+    private bool $enableFolderDownload;
 
 
     /**
@@ -51,7 +62,8 @@ class Dir
      */
     public function __construct()
     {
-        Assets::addAssets('site/plugins/pagefactory-pageelements/assets/css/-dir.css');
+        Assets::addAssets('DIR');
+        Assets::addAssets('POPUPS');
     } // __construct
 
 
@@ -65,6 +77,9 @@ class Dir
         $inx = self::$inx++;
 
         list($path, $pattern) = $this->parseOptions($args, $inx);
+        if (!$this->permission) {
+            return '{{ pfy-download-insufficient-permissions }}';
+        }
         $this->origPathLen = strlen($path);
         $dirOffset = get('dir');
         if ($dirOffset === '.') {
@@ -79,8 +94,6 @@ class Dir
         }
 
         if ($this->hierarchical) {
-//            TemplateCompiler::getTemplate($this->templateOptions); //ToDo: check whether needed
-            $this->folderTemplate = TemplateCompiler::getTemplate($this->templateOptions, useAsElement: 'folderElement');
             $str = $this->renderDirHierarchical($path, $pattern, 1);
 
         } else {
@@ -105,6 +118,15 @@ $str
 </div>
 EOT;
         }
+        if (($inx === 1)) {
+            $realLocations = $this->realLocations;
+
+        } else {
+            $realLocations = kirby()->session()->get('pfy.realLocations', []);
+            $realLocations = $realLocations + $this->realLocations;
+        }
+        kirby()->session()->set('pfy.realLocations', $realLocations);
+        kirby()->session()->set('pfy.downloadPermission', $this->permission);
 
         return $str;
     } // render
@@ -137,8 +159,7 @@ EOT;
         }
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($this->templateOptions);
-        $template = TemplateCompiler::getTemplate($templateOptions);
-        $currLevelFiles = TemplateCompiler::compile($template, $data, $templateOptions);
+        $currLevelFiles = TemplateCompiler::compile($data, $templateOptions);
 
         $class = ($this->class ?: 'pfy-dir') . " $class";
 
@@ -178,7 +199,7 @@ EOT;
             $fileVars = $this->extractFileDescriptorVars(rtrim($folder, '/'));
             $templateOptions = $this->templateOptions;
             $templateOptions['markdown'] = false;
-            $label = TemplateCompiler::compile($this->folderTemplate, $fileVars, $templateOptions);
+            $label = TemplateCompiler::compile($fileVars, $templateOptions, elementSelector:'folderElement');
             $p = '';
             if (preg_match('/^(<\d*>\s*)(.*)/', $label, $m)) {
                 $p = $m[1];
@@ -308,6 +329,9 @@ EOT;
                 $url = PFY_APP_BASE_URL . str_replace(PFY_APP_BASE_PATH, '', $file);
             }
         }
+        $subPath = substr($file, $this->absPathLen);
+        $url = $this->url . $subPath;
+        $this->realLocations[$subPath] = $file;
         $filename = basename($file);
         if ($this->replaceOnElem) {
             $filename = preg_replace($this->replacePattern, $this->replace, $filename);
@@ -345,6 +369,7 @@ EOT;
         return $out;
     } // extractFileDescriptorVars
 
+    
     /**
      * @param $args
      * @param int $inx
@@ -360,17 +385,23 @@ EOT;
             $options['template'] = [];
             $options['template']['element'] = $options['template'];
         }
+        $this->enableFolderDownload = $args['enableFolderDownload']??true;
         $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
         $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
+        if ($this->enableFolderDownload) {
+            $options['template']['folderElement'] .= DEFAULT_FOLDER_DOWNLOAD_ICONE;
+        }
         $options['template']['markdown'] ??= true;
 
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
         $templateOptions['noDataAvailableText'] = '';
-        $templateOptions['markdown'] = false;
 
         $this->templateOptions = $templateOptions;
 
         $this->path = $args['path'];
+        $this->absPath = Utils::resolvePath($args['path']);
+        $this->absPathLen = strlen($this->absPath);
+        $this->url = Utils::resolveUrls(PFY_DOWNLOAD_PATH);
         $this->id = $args['id'];
         $this->wrapperClass = $args['class'];
         $this->includeFiles = str_contains(strtolower($args['include']), 'files');
@@ -427,6 +458,7 @@ EOT;
             $this->path = '~page/';
         }
 
+        $this->permission = Permission::evaluate($args['permission']);
 
         if ($this->id) {
             $this->id = " id='{$this->id}'";

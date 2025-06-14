@@ -2,7 +2,6 @@
 
 namespace PgFactory\PageFactoryElements;
 
-//use IntlDateFormatter;
 use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
@@ -13,6 +12,7 @@ use PgFactory\PageFactory\Utils;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\createHash;
+use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
@@ -41,6 +41,7 @@ class Enlist
     private $nTotalSlots = 0;
     private bool $addFieldAdded = false;
     private $db;
+    private $dataFile;
     private $dataset;
     private $datasets;
     private $datasetName;
@@ -579,6 +580,7 @@ EOT;
         }
         $file = "~data/$path$filename.yaml";
         $file = resolvePath($file);
+        $this->dataFile = $file;
         $this->db = new DataSet($file, [
             'masterFileRecKeyType' => 'origKey',
             'masterFileRecKeySort' => true,
@@ -1429,20 +1431,33 @@ EOT;
         if (!($this->event??false)) {
             return '';
         }
-
         $rec    = $this->event;
-        if (!($this->options['ical'] ?? false)) {
+        $icalOptions = $this->options['ical'] ?? false;
+        if (!$icalOptions) {
             return '';
         }
-        $iCal = Ical::render($rec, $this->options['ical']);
-        $iCal = <<<EOT
+        $icalOptions['linkText'] = '%icon%';
+        $icalOptions['tooltip'] = '{{ pfy-enlist-ical-tooltip }}';
+        $icalOptions['prefix'] = $icalOptions['shortName']??'';
+        $icalOptions['asButton'] = true;
+        $iCal = new Ical([$rec], $icalOptions);
+
+        $tTargetFile = $iCal->getTargetFileTime();
+        $dataFile = $this->dataFile;
+        $tDataFile = fileTime($dataFile);
+        if ($tDataFile > $tTargetFile) {
+            $iCal->saveToFile();
+        }
+
+        $link = $iCal->renderIcsLink();
+        $out = <<<EOT
 
 <div class='pfy-enlist-ical-wrapper'>
-$iCal
+$link
 </div>
 
 EOT;
-        return $iCal;
+        return $out;
     } // renderICal
 
 } // Enlist

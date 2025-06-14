@@ -1,6 +1,7 @@
 <?php
 
 namespace PgFactory\PageFactoryElements;
+use PgFactory\MarkdownPlus\MarkdownPlus;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use DateTime;
@@ -14,7 +15,7 @@ use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToFilename;
 
-const ICAL_DOWNLOAD_PATH = '~/media/pgfactory/ical/';
+const ICAL_DOWNLOAD_PATH = PFY_TEMP_PATH.'ical/';
 const ICAL_DEFAULT_OPTIONS = [
     'title' => '',
     'location' => '',
@@ -60,6 +61,15 @@ class Ical
 
 
     /**
+     * @return string
+     */
+    public function getTargetFile(): string
+    {
+        return $this->targetFileUrl;
+    } // getTargetFile
+
+
+    /**
      * @return void
      * @throws \Exception
      */
@@ -68,7 +78,7 @@ class Ical
         $icsStr = $this->renderICalStr();
         $filePath = $this->targetFilePath;
         preparePath($filePath, 0755);
-        writeFile($filePath, $icsStr, permissions: 0710);
+        writeFile($filePath, $icsStr, permissions: 0644);
     } // saveToFile
 
 
@@ -78,12 +88,25 @@ class Ical
     public function renderIcsLink(): string
     {
         $url = $this->targetFileUrl;
+        $asButton = $this->options['asButton'] ?? false;
         $tooltip = $this->options['tooltip']??'';
-        $linkText = ($this->options['linkText']??false) ?: '{{ pfy-ical-link-text }}';
-        $linkText = TransVars::translate($linkText);
+        $linkText = ($this->options['linkText']??null);
+        if ($linkText === null) {
+            $linkText = '{{ pfy-ical-link-text }}';
+        }
+        if ($linkText) {
+            $linkText = TransVars::translate($linkText);
+        }
         $calIcon = ($this->options['icon']??'') ?: ICAL_CALENDAR_ICON;
         $linkText = str_replace('%icon%', $calIcon, $linkText);
-        $link = "<a href='$url' download='$this->filename' title='$tooltip'>$linkText</a>";
+        $mdp = new MarkdownPlus();
+        $linkText = $mdp->compileParagraph($linkText);
+        if ($asButton) {
+            $link = "<button class='pfy-enlist-ical-button pfy-button pfy-button-lean' title='$tooltip' type='button'>$linkText</button>";
+            $link .= "<a href='$url' download='$this->filename' class='pfy-dispno'>$linkText</a>";
+        } else {
+            $link = "<a href='$url' download='$this->filename' title='$tooltip'>$linkText</a>";
+        }
         return $link;
     } // renderIcsLink
 
@@ -260,12 +283,16 @@ class Ical
             $this->path = '';
             $this->filename = $filename;
         }
-        if ($prefix_) {
-            $this->path = $prefix_ . $this->path;
+        if (($this->path[0]??'') === '~') {
+            $file = $this->path . $this->filename;
+        } else {
+            if ($prefix_) {
+                $this->path = $prefix_ . $this->path;
+            }
+            $file = ICAL_DOWNLOAD_PATH . $this->path . $this->filename;
         }
-        $file = ICAL_DOWNLOAD_PATH . $this->path . $this->filename;
         $this->targetFilePath = resolvePath($file);
-        $this->targetFileUrl  = Utils::resolveUrls($file);
+        $this->targetFileUrl  = Utils::resolveUrls($file, forResoucres:true);
     } // determineTargetFile
 
 } // Ical

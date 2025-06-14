@@ -10,18 +10,20 @@ return function($argStr = '')
     $config =  [
         'options' => [
             'path' => ['Selects the folder to be read. May include an optional '.
-                'selection pattern  (-> \'glob style\', e.g. "*.pdf" or "{&#92;&#42;.js,&#92;&#42;.css}")', false],
-            'id' => ['Id to be applied to the enclosing li-tag (Default: pfy-dir-#)', false],
+                'selection pattern  (-> \'glob style\', e.g. "*.pdf" or "{&#92;&#42;.js,&#92;&#42;.css}")', null],
+            'id' => ['Id to be applied to the enclosing li-tag (Default: pfy-dir-#)', null],
             'class' => ['Class to be applied to the enclosing li-tag (Default: pfy-dir)', 'pfy-dir'],
             'include' => ['[FILES,FOLDERS] Defines what to include in output', 'files'],
-            'exclude' => ['Regex pattern by which to exclude specific elements.', false],
+            'exclude' => ['Regex pattern by which to exclude specific elements.', null],
+            'permission' => ['If set, defines whether visitor has permission to download.', 'loggedin|localhost'],
             'asLinks' => ['Render elements as links.', false],
+            'enableFolderDownload' => ['If true, folders can be downloaded as a zip file.', true],
             'template' => ['[text,file] The template based on which output is rendered.', null],
             'modifiers' => ['[REVERSE, REVERSE_FOLDERS, INCLUDE_PATH, DEEP, HIERARCHICAL, DOWNLOAD] '.
-                'Activates miscellaneous modes.', false],
+                'Activates miscellaneous modes.', 'DEEP,HIERARCHICAL'],
             'replaceOnElem' => ['(pattern,replace) If defined, regular expression is applied to each element. '.
-                'Example: remove leading underscore:  "^_,&#39;&#39;"', false],
-            'maxAge' => ['[integer] Maximum age of file (in number of days).', false],
+                'Example: remove leading underscore:  "^_,&#39;&#39;"', null],
+            'maxAge' => ['[integer] Maximum age of file (in number of days).', null],
         ],
         'summary' => <<<EOT
 # dir()

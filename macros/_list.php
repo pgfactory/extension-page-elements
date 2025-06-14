@@ -32,6 +32,8 @@ return function ($argStr = '')
             'suffix' => ['Optional text that is rendered after the output', null],
             'markdown' => ['If true, output is markdown compiled.', null],
             'reversed' => ['If true, output is rendered in reversed order.', false],
+            'table' => ['(array|bool) If type=users, this results in users being listed in a table.<br>'.
+                'E.g. `\{{ list(users, table:{interactive:true}) }}` .', false],
             'asLinks' => ['If true and type=subpages or dir, listed elements are wrapped in &lt;a> tags.', false],
             'wrapperClass' => ['Class applied to the wrapper tag.', null],
             'wrapperTag' => ['Defines the wrapper tag. If false, no wrapper is applied.', 'div'],

@@ -421,7 +421,6 @@ pfy-enlist-ical-tooltip:
   de: Kalendereintrag herunterladen/installieren.
   _:  Download/install calendar entry.
 
-
 #--- iCal ------------------------------
 pfy-ical-link-tooltip:
   'de': Anklicken um herunterzuladen, dann Datei doppelklicken für Eintrag in Agenda
@@ -674,5 +673,23 @@ pfy-dir-sub-folder:
 pfy-dir-sub-folder-tail:
   de: '»'
   _:  '"'
+
+pfy-dir-download-icon-tooltip:
+  de: 'Den ganzen Ordner als Zip-Datei herunter laden.'
+  _:  'Download the entire folder as a zip file.'
+
+pfy-download-insufficient-permissions:
+  de: '–– Sie müssen angemeldet sein, um diesen Inhalt sehen zu können. ––'
+  de2: '–– Du musst angemeldet sein, um diesen Inhalt sehen zu können. ––'
+  _:  '–– You need to be logged in to see this content. ––'
+
+pfy-download-popup-header:
+  de: 'Bestätigen'
+  _:  'Confirm'
+
+pfy-download-popup-text:
+  de: 'Wollen Sie den ganzen Ordner als Zip-Datei herunter laden?'
+  de2: 'Willst du den ganzen Ordner als Zip-Datei herunter laden?'
+  _:  'Do you want to download the entire folder as a zip file?'
 
 
