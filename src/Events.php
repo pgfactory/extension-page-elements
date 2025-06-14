@@ -170,7 +170,7 @@ class Events extends DataSet
             $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
             $url = Utils::normalizePath($url);
         } else {
-            $url = $ical->getTargetFile();
+            $url = $ical->renderIcsLink();
 
         }
         return $url;
