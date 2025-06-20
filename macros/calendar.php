@@ -70,10 +70,8 @@ Renders a calendar which gets events from a DB designated by 'file'.
         }
     
         template: {
-            file:		~page/cal-template.yaml
+            file:		\~page/cal-template.yaml
             selector: 	Keynote
-            mode: 		twig
-            includeSystemVariables: true
             compileMarkdown:	false
         }
     ) }}

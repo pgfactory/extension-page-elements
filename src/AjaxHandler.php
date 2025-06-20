@@ -337,10 +337,29 @@ class AjaxHandler
         $db = self::openDb();
         $data = $db->data(includeMetaFields:true, recKeyType: 'index');
         foreach ($data as $i => $rec) {
-            if ($rec['start'] < $from || $rec['end'] > $till) {
-                unset($data[$i]);
-                continue;
+            if ($rec['allday']??false) {
+                $start = $rec['start'];
+                $end   = $rec['end'];
+                if (!(
+                    ($start > $from && $end < $till) ||     //   | -- |
+                    ($start < $from && $end > $till) ||     // --|----|--
+                    ($start < $from && $end > $from) ||     // --|--  |
+                    ($start < $till && $end > $till)        //   |  --|--
+                    )) {
+                    unset($data[$i]);
+                    continue;
+                }
+
+            } else {
+                if ($rec['start'] < $from || $rec['end'] > $till) {
+                    unset($data[$i]);
+                    continue;
+                }
             }
+//            if ($rec['start'] < $from || $rec['end'] > $till) {
+//                unset($data[$i]);
+//                continue;
+//            }
             if ($categories) {
                 $cat = $rec['category']??'unknown';
                 if (!str_contains(",$categories,", ",$cat,")) {
@@ -491,12 +510,22 @@ class AjaxHandler
         $eventRec['time'] = $timeRange;
 
         // case 'allday' event:
-//        if (strlen($eventRec['start']) < 16) {
-//            if (self::$templates['allday']??false) {
-//                $template = self::$templates['allday'];
-//            }
-//        }
-        $templateOptions['templates'][$category] = $templateOptions['templates'][$category][$elemToUse]??'';
+        if (strlen($eventRec['start']) < 16) {
+            if (self::$templates['allday']??false) {
+                $template = self::$templates['allday'];
+            }
+        }
+
+        if (isset($templateOptions['templates'][$category][$elemToUse])) {
+            // requested template found:
+            $templateOptions['templates'][$category] = $templateOptions['templates'][$category][$elemToUse];
+            // requested template not found, but default found:
+        } elseif (isset($templateOptions['templates']['_'][$elemToUse])) {
+            $templateOptions['templates'][$category] = $templateOptions['templates']['_'][$elemToUse];
+        } else {
+            // no matching template found, falling back to standard template:
+            $templateOptions['templates'][$category] = self::getDefaultEventTemplate($eventRec);
+        }
         $str = TemplateCompiler::compile($eventRec, $templateOptions);
 
         if ($elemToUse === 'element') {
@@ -511,6 +540,24 @@ EOT;
         }
         return $str;
     } // compileRec
+
+
+    /**
+     * @param array $vars
+     * @return string
+     */
+    private static function getDefaultEventTemplate(array $vars): string
+    {
+        $template = '';
+        foreach (array_keys($vars) as $key) {
+            if ((($key[0]??'') === '_') || str_contains('allday,category,rrule,maxCount,creator', $key)) {
+                continue;
+            }
+            $template .= "<div><span>$key:</span> <span>{{ $key }}</span></div>\n";
+        }
+
+        return $template;
+    } // getDefaultEventTemplate
 
 
     /**

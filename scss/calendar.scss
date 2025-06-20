@@ -49,9 +49,10 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     text-wrap: wrap;
     overflow-y: auto;
   }
-  .fc-v-event .fc-event-main {
+  .fc-v-event .fc-event-main,
+  .fc-daygrid-day-events {
     &, a {
-      color: $eventTextColor;
+      --fc-event-text-color: $eventTextColor;
     }
   }
 

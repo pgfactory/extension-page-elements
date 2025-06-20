@@ -34,7 +34,6 @@ define('CUSTOM_PHP_PATH', PFY_APP_BASE_PATH . 'site/templates/custom/');
 
 class TemplateCompiler
 {
-    private static array $systemVariables = [];
     private static array $templateOptions;
 
     /**
@@ -278,6 +277,9 @@ class TemplateCompiler
         $template = '';
         // if no template available, just output all fields in $vars as <dl>:
         foreach (array_keys($vars) as $key) {
+            if (($key[0]??'') === '_') {
+                continue;
+            }
             $template .= "<dt>$key:</dt><dd>{{ $key }}</dd>\n";
         }
         $template = "<dl class='pfy-dl-as-table'>\n$template\n</dl>\n<hr>\n";
