@@ -32,6 +32,7 @@ function PfyCalendar() {
   this.tippyInstance = false;
   this.clicks = 0;
   this.calEvs = {};
+  this.fullCalendarOptions = null;
   return this;
 } // PfyCalendar
 
@@ -50,6 +51,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   this.options = options;
   this.editPermission = this.options.edit || this.options.admin;
   this.freezePast = options.freezePast;
+  this.fullCalendarOptions = options.fullCalendarOptions;
 
   // Setting default values for 'calDayStart' property
   if (typeof options.fullCalendarOptions.slotMinTime !== 'undefined') {
@@ -490,7 +492,7 @@ PfyCalendar.prototype.checkFreeze = function(calEv, checkAgainstEnd = false) {
   if (this.options.admin || !this.freezePast) {
     return true;
   }
-  const now = new Date().toLocaleString('sv', { timeZone: timezone }).replace(' ', 'T');
+  const now = new Date().toLocaleString('sv', { timeZone: this.fullCalendarOptions.timeZone }).replace(' ', 'T');
   let  d = null;
   if (typeof calEv.dateStr !== 'undefined') {
     d = calEv.dateStr;

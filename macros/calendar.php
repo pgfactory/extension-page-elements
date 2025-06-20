@@ -54,26 +54,31 @@ Renders a calendar which gets events from a DB designated by 'file'.
 ## Example
 
     \{{ calendar(
-        file: '~config/events.yaml'
+        file: ~config/events.yaml
         edit: 'localhost|loggedin'
         categories: ',Keynote,Presentation,Panel,internal'
+        // freezePast: false
+        defaultView: month
     
         form: {
-            allday:	        {type: 'checkbox'},
-            category:       {type: 'dropdown', options: ',Keynote,Presentation,Panel,internal'},
-            Topic:	        {type: 'text',     class: 'pfy-cal-title'},
-            Event:	        {type: 'event', defaultEventDuration: 120, repeatable: true},
+            allday:	        {type: 'checkbox', label: '\{{ pfy-cal-allday-event-label }}:', class: 'reversed pfy-cal-allday'},
+            //category -> automatically inserted from above
+            Topic:	        {type: text,     class: 'pfy-cal-title'},
+            Event:	        {type: event, defaultEventDuration: 120, repeatable: true},
             Location:       {type: text}
-            Description:    {type: 'textarea'},
-            cancel:         {}
-            submit:         {type: submit, label: Save}
-        }
+            // maxCount:       {type: integer, label:'\{{ vailable-seats-label }}', min:1}
+            Description:    {type: textarea},
+            cancelled:      {type: checkbox, label:'\{{ event-cancelled-label }}:'}
     
+            cancel:         {}
+            submit:         {type: submit, label: \{{ event-submit-label }} }
+        }
         template: {
             file:		\~page/cal-template.yaml
-            selector: 	Keynote
-            compileMarkdown:	false
+            markdown:	true
         }
+        useDblClick: true
+    
     ) }}
     
 ### Sample Template \~page/cal-template.yaml

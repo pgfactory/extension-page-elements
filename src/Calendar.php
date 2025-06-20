@@ -192,6 +192,23 @@ EOT;
             ];
         }
 
+        // if category selector is missing, inject it automatically based on categories defined for the calendar:
+        if (!isset($formFields['category'])) {
+            $categoryField = $this->categories? ['type' => 'dropdown', 'label' => '{{ pfy-cal-category-label }}:', 'options' => $this->categories] : false;
+            if (isset($formFields['allday'])) {
+                $new = [];
+                foreach ($formFields as $key => $field) {
+                    $new[$key] = $formFields[$key];
+                    if ($key === 'allday') {
+                        $new['category'] = $categoryField;
+                    }
+                }
+                $formFields = $new;
+            } else {
+                $formFields = ['category' => $categoryField] + $formFields;
+            }
+        }
+
         // 'defaultDuration' is synonym for 'defaultEventDuration':
         if (($formFields['Event']['defaultDuration']??false) !== false) {
             $formFields['Event']['defaultEventDuration'] = $formFields['Event']['defaultDuration'];
@@ -238,6 +255,7 @@ EOT;
      */
     private function formCallback(&$dataRec): mixed
     {
+        $res = true;
         if ($this->adminPermStr !== 'false') {
             $res = true;
         } elseif ($this->edPermStr !== 'false') {
@@ -274,7 +292,6 @@ EOT;
                 if ($dataRec['allday']??false) {
                     $dataRec['end'] = date('Y-m-d', $end + 86400);
                 }
-                $res = true;
             }
         } else {
             $res = [
