@@ -16,7 +16,7 @@ use function \PgFactory\PageFactory\rrmdir;
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
 define('PE_PATH', 'site/plugins/'.PE_FOLDER_NAME);
 define('PE_ASSETS_PATH', PE_PATH . 'assets/');
-define('PE_ASSETS_ROOT', PFY_APP_BASE_PATH.PE_ASSETS_PATH);
+define('PE_ASSETS_ROOT', PFY_KIRBY_BASE_PATH.PE_ASSETS_PATH);
 define('SYSTEM_PATH',       dirname(__DIR__).'/'); //???
 define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
 define('PATH_TO_APP_ROOT',  '');
@@ -139,7 +139,7 @@ class PageElements
 
         // run init-code if requested in config.php:
         if ($code = kirby()->option('pgfactory.pagefactory-elements.initCode')) {
-            $code = PFY_APP_BASE_PATH . 'site/custom/code/'.$code;
+            $code = PFY_KIRBY_BASE_PATH . 'site/custom/code/'.$code;
             if (file_exists($code)) {
                 require_once $code;
             }
@@ -328,7 +328,7 @@ EOT;
                 exit('You need admin privileges to perform "?purge-old".');
             }
             echo 'Deleting old versions:<br>';
-            $oldDirs = glob(dirname(PFY_APP_BASE_PATH).'/#*');
+            $oldDirs = glob(dirname(PFY_KIRBY_BASE_PATH).'/#*');
             foreach ($oldDirs as $dir) {
                 if (is_dir($dir)) {
                     echo($dir.'<br>');
@@ -466,7 +466,7 @@ EOT;
     {
         if (!self::$iconsLoaded) {
             self::$iconsLoaded = true;
-            $pfyIcons = svg(PFY_APP_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
+            $pfyIcons = svg(PFY_KIRBY_BASE_PATH.'site/plugins/pagefactory-pageelements/assets/icons/_pfy-icons.svg');
             Page::addBodyEndInjections($pfyIcons);
         }
     } // loadIcons()

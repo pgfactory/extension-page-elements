@@ -431,7 +431,7 @@ EOT;
         // initial date:
         $this->initialDate = $this->sessCalRec['date'] ?? date('Y-m-d');
         $this->sessCalRec['date'] = $this->initialDate;
-        $this->sessCalRec['thisPage'] = PFY_APP_BASE_PATH;
+        $this->sessCalRec['thisPage'] = PFY_KIRBY_BASE_PATH;
     } // parseOptions
 
 

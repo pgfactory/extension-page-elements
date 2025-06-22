@@ -35,7 +35,7 @@ Kirby::plugin('pgfactory/pagefactory-pageelements', [
             if ($final && ($_GET??false) && isset($_REQUEST['ajax'])) {
                 if (!preg_match('/^(panel|media|api)/', $path)) {
                     if (!defined('PFY_CACHE_PATH')) {
-                        define('PFY_CACHE_PATH', PFY_APP_BASE_PATH . 'site/cache/pagefactory/');
+                        define('PFY_CACHE_PATH', PFY_KIRBY_BASE_PATH . 'site/cache/pagefactory/');
                     }
                     require_once __DIR__ . "/src/AjaxHandler.php";
                     AjaxHandler::exec($result);

@@ -323,10 +323,10 @@ EOT;
             $date = $m[0];
         }
         if (!($url = $this->parseUrlFile($file))) {
-            if (str_starts_with($file, PFY_APP_BASE_PATH . 'content/')) {
+            if (str_starts_with($file, PFY_KIRBY_BASE_PATH . 'content/')) {
                 $url = PFY_APP_BASE_URL . substr(preg_replace('|/\d+_|', '/', $file), 8);
             } else {
-                $url = PFY_APP_BASE_URL . str_replace(PFY_APP_BASE_PATH, '', $file);
+                $url = PFY_APP_BASE_URL . str_replace(PFY_KIRBY_BASE_PATH, '', $file);
             }
         }
         $subPath = substr($file, $this->absPathLen);

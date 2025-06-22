@@ -15,8 +15,8 @@ use function \PgFactory\PageFactory\reloadAgent;
 use function \PgFactory\PageFactory\rrmdir;
 
 
-define('SITEMAP_FILE',          PFY_APP_BASE_PATH . 'site/config/sitemap.txt');
-define('SITEMAP_CONTROL_FILE',  PFY_APP_BASE_PATH . 'content/site.txt');
+define('SITEMAP_FILE',          PFY_KIRBY_BASE_PATH . 'site/config/sitemap.txt');
+define('SITEMAP_CONTROL_FILE',  PFY_KIRBY_BASE_PATH . 'content/site.txt');
 
 class SitemapManager
 {
@@ -67,7 +67,7 @@ class SitemapManager
         if (file_exists(SITEMAP_FILE)) {
             $firstLine = fgets(fopen(SITEMAP_FILE, 'r'));
         }
-        $contentHash = md5(implode('', getDirDeep(PFY_APP_BASE_PATH . 'content/*', true)));
+        $contentHash = md5(implode('', getDirDeep(PFY_KIRBY_BASE_PATH . 'content/*', true)));
         $contentHash = "// hash: $contentHash\n";
         return (($firstLine !== $contentHash) || ($tSitemapFile !== $tSitemapControlFile));
     } // updateNecessary
@@ -84,7 +84,7 @@ class SitemapManager
         if ($zap) {
             $zap = "\n\n$zap";
         }
-        $contentHash = md5(implode('', getDirDeep(PFY_APP_BASE_PATH . 'content/*', true)));
+        $contentHash = md5(implode('', getDirDeep(PFY_KIRBY_BASE_PATH . 'content/*', true)));
         $contentHash = "// hash: $contentHash\n";
         $siteStructure = self::readSiteStructure();
         file_put_contents(SITEMAP_FILE, "$contentHash$siteStructure$zap");
@@ -103,7 +103,7 @@ class SitemapManager
         $sitemap = getFile(SITEMAP_FILE, removeComments: 'c');
         self::$supportedLanguages = kirby()->languages()->codes();
         $paths = [];
-        $paths[-1] = PFY_APP_BASE_PATH . 'content/';
+        $paths[-1] = PFY_KIRBY_BASE_PATH . 'content/';
         $requiredFolders = [];
 
         $lastLevel = 99;
@@ -333,13 +333,13 @@ class SitemapManager
     {
         $doDelete = isset($_GET['delete-folders']);
         $requiredFolders = array_keys($requiredFolders);
-        $actualFolders = getDirDeep(PFY_APP_BASE_PATH . 'content/', onlyDir: true);
+        $actualFolders = getDirDeep(PFY_KIRBY_BASE_PATH . 'content/', onlyDir: true);
         $deletedFolders = '';
         foreach ($actualFolders as $folder) {
-            if (($folder === PFY_APP_BASE_PATH . 'content/') ||
-                str_starts_with($folder, PFY_APP_BASE_PATH . 'content/assets/') ||
-                str_starts_with($folder, PFY_APP_BASE_PATH . 'content/error/') ||
-                str_ends_with($folder, PFY_APP_BASE_PATH . '_drafts/')) {
+            if (($folder === PFY_KIRBY_BASE_PATH . 'content/') ||
+                str_starts_with($folder, PFY_KIRBY_BASE_PATH . 'content/assets/') ||
+                str_starts_with($folder, PFY_KIRBY_BASE_PATH . 'content/error/') ||
+                str_ends_with($folder, PFY_KIRBY_BASE_PATH . '_drafts/')) {
                 continue;
             }
             if (!in_array($folder, $requiredFolders)) {

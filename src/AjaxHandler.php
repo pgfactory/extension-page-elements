@@ -105,13 +105,13 @@ class AjaxHandler
             $text = json_encode($text);
         }
         if (!defined('PFY_LOGS_PATH')) {
-            define('PFY_LOGS_PATH', PFY_APP_BASE_PATH . '/site/logs/');
+            define('PFY_LOGS_PATH', PFY_KIRBY_BASE_PATH . '/site/logs/');
         }
         $ip = $_SERVER['REMOTE_ADDR'];
         if (option('pgfactory.pagefactory-elements.debug_logIP', false)) {
             $text = "[$ip]  $text";
         }
-        require_once PFY_APP_BASE_PATH . 'site/plugins/pagefactory/src/helper.php';
+        require_once PFY_KIRBY_BASE_PATH . 'site/plugins/pagefactory/src/helper.php';
         mylog($text, $logFile);
         exit('"ok"');
     } // serverLog

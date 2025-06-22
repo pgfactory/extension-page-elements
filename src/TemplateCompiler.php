@@ -30,7 +30,7 @@ const DEFAULT_OPTIONS = [
     'newlineReplace' => '<br>',
 ];
 
-define('CUSTOM_PHP_PATH', PFY_APP_BASE_PATH . 'site/templates/custom/');
+define('CUSTOM_PHP_PATH', PFY_KIRBY_BASE_PATH . 'site/templates/custom/');
 
 class TemplateCompiler
 {
