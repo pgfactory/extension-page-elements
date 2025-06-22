@@ -13,6 +13,7 @@ use function PgFactory\PageFactory\createHash;
 use function \PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\isAdmin;
+use function PgFactory\PageFactory\isLocalhost;
 use function \PgFactory\PageFactory\rrmdir;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
@@ -345,16 +346,29 @@ EOT;
      */
     private function purgeHistoryFolders()
     {
-        if (!isAdmin()) {
+        if (!isAdmin() && !isLocalhost()) {
             exit('You need admin privileges to perform "?purge".');
         }
         echo 'Deleting ".history/" folders:<br>';
-        $oldDirs = getDirDeep(PFY_KIRBY_BASE_PATH.'*.history', onlyDir:true);
-        foreach ($oldDirs as $dir) {
+        $historyDirs = getDirDeep(PFY_KIRBY_BASE_PATH.'*.history', onlyDir:true);
+        foreach ($historyDirs as $dir) {
             if (is_dir($dir)) {
                 echo($dir.'<br>');
                 rrmdir($dir);
             }
+        }
+
+        if ($dataPath = kirby()->option('pgfactory.pagefactory.productionModeDataPath')) {
+            echo 'Deleting ".history/" folders in "$dataPath":<br>';
+            $path = Utils::normalizePath(PFY_KIRBY_BASE_PATH . $dataPath);
+            $historyDirs = getDirDeep($path.'*.history', onlyDir:true);
+            foreach ($historyDirs as $dir) {
+                if (is_dir($dir)) {
+                    echo($dir.'<br>');
+                    rrmdir($dir);
+                }
+            }
+
         }
         Utils::resetAll();
         Utils::handleDevDataUpdate();
@@ -372,8 +386,8 @@ EOT;
             exit('You need admin privileges to perform "?purge-old".');
         }
         echo 'Deleting old versions:<br>';
-        $oldDirs = glob(dirname(PFY_KIRBY_BASE_PATH).'/#*');
-        foreach ($oldDirs as $dir) {
+        $oldAppDirs = glob(dirname(PFY_KIRBY_BASE_PATH).'/#*');
+        foreach ($oldAppDirs as $dir) {
             if (is_dir($dir)) {
                 echo($dir.'<br>');
                 rrmdir($dir);
