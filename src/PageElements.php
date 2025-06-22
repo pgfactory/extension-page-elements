@@ -8,8 +8,10 @@ use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\Scss as Scss;
 use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
 use function \PgFactory\PageFactory\getDir;
+use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\isAdmin;
 use function \PgFactory\PageFactory\rrmdir;
 
@@ -277,6 +279,9 @@ EOT;
     } // initTooltips
 
 
+    /**
+     * @return string
+     */
     public function showHelp(): string
     {
         $str = <<<EOT
@@ -285,6 +290,7 @@ EOT;
 
 [?hash](./?hash)       12em>> creates new hash code 
 [?reset&data](./?reset&data)       12em>> resets app and copies data from production DB to site/custom/data/ 
+[?purge](./?purge)      >> purges ".history/" folders used by data storage
 [?purge-old](./?purge-old)      >> purges old apps in root directory (e.g. '/＃dev')
 
 @@@
@@ -323,21 +329,59 @@ EOT;
      */
     private function handleCleanupRequest(): void
     {
+        if (isset($_GET['purge'])) {
+            $this->purgeHistoryFolders();
+        }
+
         if (isset($_GET['purge-old'])) {
-            if (!isAdmin()) {
-                exit('You need admin privileges to perform "?purge-old".');
-            }
-            echo 'Deleting old versions:<br>';
-            $oldDirs = glob(dirname(PFY_KIRBY_BASE_PATH).'/#*');
-            foreach ($oldDirs as $dir) {
-                if (is_dir($dir)) {
-                    echo($dir.'<br>');
-                    rrmdir($dir);
-                }
-            }
-            exit('done');
+            $this->purgeOldVersionFolders();
         }
     } // handleCleanupRequest
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function purgeHistoryFolders()
+    {
+        if (!isAdmin()) {
+            exit('You need admin privileges to perform "?purge".');
+        }
+        echo 'Deleting ".history/" folders:<br>';
+        $oldDirs = getDirDeep(PFY_KIRBY_BASE_PATH.'*.history', onlyDir:true);
+        foreach ($oldDirs as $dir) {
+            if (is_dir($dir)) {
+                echo($dir.'<br>');
+                rrmdir($dir);
+            }
+        }
+        Utils::resetAll();
+        Utils::handleDevDataUpdate();
+        Utils::setInstallationCheckFile();
+        exit('done');
+    } // purgeHistoryFolders
+
+
+    /**
+     * @return void
+     */
+    private function purgeOldVersionFolders()
+    {
+        if (!isAdmin()) {
+            exit('You need admin privileges to perform "?purge-old".');
+        }
+        echo 'Deleting old versions:<br>';
+        $oldDirs = glob(dirname(PFY_KIRBY_BASE_PATH).'/#*');
+        foreach ($oldDirs as $dir) {
+            if (is_dir($dir)) {
+                echo($dir.'<br>');
+                rrmdir($dir);
+            }
+        }
+        exit('done');
+    } // purgeOldVersionFolders
+
 
 
     /**
