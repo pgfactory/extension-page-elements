@@ -22,7 +22,6 @@ const DEFAULT_OPTIONS = [
     'selector' => '',
     'asLinks' => false,
     'noDataAvailableText' => 'pfy-no-data-available',
-    'includeSystemVariables' => false,
     'removeUndefinedPlaceholders' => false,
     'markdown' => true,
     'wrapperPrefix' => '',
