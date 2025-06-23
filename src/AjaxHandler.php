@@ -307,6 +307,10 @@ class AjaxHandler
         $data['start'] = $rec['start'];
         $data['end']   = $rec['end'];
         $data['_creator'] = $rec['creator']??'';
+        if ($rec['allday']??false) {
+            // fix allday event -> add 1 day to end to conform with user logic:
+            $data['end'] = date('Y-m-d', strtotime($data['end']) + 86400);
+        }
 
         $templateOptions = (self::$sessRec['template']??[]);
 
@@ -356,10 +360,6 @@ class AjaxHandler
                     continue;
                 }
             }
-//            if ($rec['start'] < $from || $rec['end'] > $till) {
-//                unset($data[$i]);
-//                continue;
-//            }
             if ($categories) {
                 $cat = $rec['category']??'unknown';
                 if (!str_contains(",$categories,", ",$cat,")) {

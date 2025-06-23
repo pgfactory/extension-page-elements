@@ -287,11 +287,6 @@ EOT;
                         ];
                     }
                 }
-            } else {
-                // fix allday event -> add 1 day to end to conform with user logic:
-                if ($dataRec['allday']??false) {
-                    $dataRec['end'] = date('Y-m-d', $end + 86400);
-                }
             }
         } else {
             $res = [
