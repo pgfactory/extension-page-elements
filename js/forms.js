@@ -77,6 +77,7 @@ const pfyFormsHelper = {
       parent.setupModifiedMonitor(ev);
       parent.categoryChangeMonitor(ev);
       parent.revealHandler(ev);
+      parent.repetitionChangeHandler(ev);
     });
 
     document.addEventListener('keydown', (ev) => {
@@ -815,24 +816,23 @@ const pfyFormsHelper = {
   }, // setTriggerOnContinueLink
 
 
-  initRepetitionWidget: function (wrapperEl = null) {
-    domForEach(wrapperEl, '.pfy-form-rrule-wrapper', function (rruleWrapper) {
-      domForOne(rruleWrapper, '.pfy-rrule-elem-freq', function (select) {
-        select.addEventListener('change', function (ev) {
-          const selectEl = ev.target;
-          const details = selectEl.closest('details');
-          const rruleBody = details.querySelector('.pfy-form-rrule-body-wrapper');
-          const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
-          if (selectedFreq === 'NONE') {
-            details.open = false;
-            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper' ;
-          } else {
-            details.open = true;
-            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
-          }
-        });
-      });
-    });
-  }, // initRepetitionWidget
+  repetitionChangeHandler(ev) {
+    const selectEl = ev.target;
+    const wrapper = selectEl.closest('.pfy-form-rrule-wrapper');
+    if (!wrapper) {
+      return;
+    }
+
+    const details = selectEl.closest('details');
+    const rruleBody = details.querySelector('.pfy-form-rrule-body-wrapper');
+    const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
+    if (selectedFreq === 'NONE') {
+      details.open = false;
+      rruleBody.classList.value = 'pfy-form-rrule-body-wrapper' ;
+    } else {
+      details.open = true;
+      rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
+    }
+  }, // repetitionChangeHandler
 
 }; // pfyFormsHelper

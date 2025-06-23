@@ -209,7 +209,8 @@ class PfyForm extends Form
 
         if ($formResponse) {
             $this->injectNoShowCssRule();
-            $formTopBanner = $this->renderFormTopBanner();
+            $formTopBanner = $this->injectScrollToFormJs();
+            $formTopBanner .= $this->renderFormTopBanner();
 
             if (!$this->isFormAdmin) {
                 return "$formTopBanner\n$formResponse";
@@ -2915,6 +2916,21 @@ EOT;
         $this->noShowOpened = true;
         return "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
     } // injectNoShowCssRule
+
+
+    /**
+     * @return void
+     */
+    protected function injectScrollToFormJs(): string
+    {
+        $js = <<<EOT
+            domForOne('#pfy-form-top', (el) => {
+                el.scrollIntoView({behavior: "smooth"});
+            });
+EOT;
+        Page::addJsReady($js);
+        return "<div id='pfy-form-top'></div>\n";
+    } // injectScrollToFormJs
 
 
     /**
