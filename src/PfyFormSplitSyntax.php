@@ -114,7 +114,7 @@ class PfyFormSplitSyntax extends PfyForm
         } else {
             $upTo = array_search($uptoWhich, $names);
             if ($upTo === false) {
-                throw new \Exception("Form element unknown: '$uptoWhich'");
+                exit("Split-Form element unknown: '$uptoWhich'");
             }
             $this->lastRendered = ($upTo === $lastElemInx)? true: $upTo;
         }
