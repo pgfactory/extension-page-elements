@@ -45,6 +45,8 @@ $inputWidth:            var(--pfy-form-input-width, 22em);
 $rowGapHeight:          var(--pfy-form-row-gap-height, 1em);
 $formWidth:             var(--pfy-form-width, 28em);
 
+$addressZipWidth:       var(--pfy-zip-input-width, 4em);
+
 $inputColor:            var(--pfy-form-input-color, var(--pfy-form-input-color-default));
 $inputBg:               var(--pfy-form-field-background-color, var(--pfy-form-field-background-color-default));
 $inputBorder:           var(--pfy-form-field-border, var(--pfy-form-field-border-default));
@@ -438,7 +440,41 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     .pfy-elem-wrapper.button {
       margin-right: 3px;
     }
-  }
+
+    // composed address fields:
+    div.pfy-address-zip {
+      position: relative;
+      --pfy-form-input-width: $addressZipWidth;
+      width: calc(#{$addressZipWidth} + 9.5em);
+      display: inline-block;
+      margin-top: 0;
+      .pfy-input-wrapper {
+        position: unset;
+      }
+      .pfy-label-wrapper {
+        opacity: 0;
+      }
+      .pfy-form-field-description {
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin-top: 0.2em;
+        padding-left: 0;
+      }
+    }
+    div.pfy-address-city {
+      width: calc(100% - 10.5em - #{$addressZipWidth});
+      display: inline-block;
+      margin-top: 0;
+      .pfy-label-wrapper {
+        display: none;
+      }
+      .pfy-input-wrapper {
+        width: 100%;
+      }
+    }
+
+  } // large screen
 
 
   // === small screen ========================================

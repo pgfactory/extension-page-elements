@@ -26,7 +26,7 @@ const FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
     'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
-    'event,'.
+    'event,address,'.
     'button,reset,submit,cancel,@import,literal,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
@@ -2670,6 +2670,8 @@ EOT;
             $type = ($rec['type']??false);
             if ($type === 'event') {
                 $this->composeEventElement($name, $rec);
+            } elseif ($type === 'address') {
+                $this->composeAddressElement($name, $rec);
             }
         }
     } // handleComposedFields
@@ -2799,6 +2801,90 @@ EOT;
             $this->composeRruleElement($name, $rec);
         }
     } // composeEventElement
+
+
+    /**
+     * @param int|string $name
+     * @param array $rec
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    private function composeAddressElement(int|string $name, array $rec): void
+    {
+        if ($labels = ($this->formElements[$name]['label']??'')) {
+            $labels = parseArgumentStr($labels);
+        }
+        if ($infos = ($this->formElements[$name]['info']??'')) {
+            $infos = parseArgumentStr($infos);
+        }
+        if ($presets = ($this->formElements[$name]['preset']??'')) {
+            $presets = parseArgumentStr($presets);
+        }
+        if ($names = ($this->formElements[$name]['name']??'')) {
+            $names = parseArgumentStr($names);
+        }
+
+        $addressElements = [];
+
+        $elName = ($names['street']??false) ?: 'street';
+        $addressElements[$elName] = [
+            'type' => 'text',
+            'label' => '{{ pfy-form-address-street-label }}',
+            'class' => 'pfy-address-elem pfy-address-street',
+        ];
+        if ($labels['street']??false) {
+            $addressElements[$elName]['label'] = $labels['street'];
+        }
+        if ($infos['street']??false) {
+            $addressElements[$elName]['info'] = $infos['street'];
+        }
+        if ($presets['street']??false) {
+            $addressElements[$elName]['preset'] = $presets['street'];
+        }
+
+        $elName = ($names['zip']??false) ?: 'zip';
+        $addressElements[$elName] = [
+            'type' => 'text',
+            'label' => '{{ pfy-form-address-zip-label }}',
+            'class' => 'pfy-address-elem pfy-address-zip',
+            'description' => '{{ pfy-form-address-combined-label }}',
+        ];
+        if ($labels['zip']??false) {
+            $addressElements[$elName]['label'] = $labels['zip'];
+        }
+        if ($infos['zip']??false) {
+            $addressElements[$elName]['info'] = $infos['zip'];
+        }
+        if ($presets['zip']??false) {
+            $addressElements[$elName]['preset'] = $presets['zip'];
+        }
+        if ($names['zip']??false) {
+            $addressElements[$elName]['name'] = $names['zip'];
+        }
+
+        $elName = ($names['city']??false) ?: 'city';
+        $addressElements[$elName] = [
+            'type' => 'text',
+            'label' => '{{ pfy-form-address-city-label }}',
+            'class' => 'pfy-address-elem pfy-address-city',
+        ];
+        if ($labels['city']??false) {
+            $addressElements[$elName]['lebel'] = $labels['city'];
+        }
+        if ($infos['city']??false) {
+            $addressElements[$elName]['info'] = $infos['city'];
+        }
+        if ($presets['city']??false) {
+            $addressElements[$elName]['preset'] = $presets['city'];
+        }
+        if ($names['city']??false) {
+            $addressElements[$elName]['name'] = $names['city'];
+        }
+
+
+        $this->formElements = array_splice_associative($this->formElements, $name, 1, $addressElements);
+
+    } // composeAddressElement
 
 
     /**

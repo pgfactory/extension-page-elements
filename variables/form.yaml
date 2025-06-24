@@ -244,6 +244,26 @@ problemWithFormBanner:
     %%%
 
 
+# === Address =========================================
+pfy-form-address-street-label:
+  de: 'Strasse:'
+  _:  'Street:'
+
+
+pfy-form-address-zip-label:
+  de: 'PLZ:'
+  _:  'Zip:'
+
+
+pfy-form-address-city-label:
+  de: 'Ort:'
+  _:  'City:'
+
+pfy-form-address-combined-label:
+  de: 'PLZ Ort:'
+  _:  'Zip City:'
+
+# === Events ==========================================
 pfy-form-event-start-label:
   de: 'Von:'
   _:  'From:'
