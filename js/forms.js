@@ -47,6 +47,7 @@ const pfyFormsHelper = {
     if (!this.formInitialized) {
       this.setupTriggers();
       this.formInitialized = true;
+      this.revealHandlers();
       //mylog('forms initialized');
     }
     pfyFormsHelper.handleErrorInForm(form);
@@ -76,7 +77,7 @@ const pfyFormsHelper = {
     document.body.addEventListener('change',  (ev) => {
       parent.setupModifiedMonitor(ev);
       parent.categoryChangeMonitor(ev);
-      parent.revealHandler(ev);
+      parent.revealHandler(ev.target);
       parent.repetitionChangeHandler(ev);
     });
 
@@ -172,8 +173,16 @@ const pfyFormsHelper = {
   }, // categoryChangeMonitor
 
 
-  revealHandler(ev) {
-    const form = ev.target.closest('.pfy-form');
+  revealHandlers(el) {
+    const parent = this;
+    domForEach('.pfy-form', (el) => {
+      parent.revealHandler(el);
+    })
+  }, // revealHandlers
+
+
+  revealHandler(el) {
+    const form = el.closest('.pfy-form');
     domForOne(form, '[data-reveal-target]', (revealController) => {
       const targetSel = revealController.dataset.revealTarget;
       const revealContainer = document.querySelector(targetSel);
@@ -185,7 +194,7 @@ const pfyFormsHelper = {
         revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
       }
 
-      const inpEl = ev.target;
+      const inpEl = el;
       let open = inpEl.checked;
 
       // case radio: option with value == 'true' opens reveal target:
@@ -199,6 +208,34 @@ const pfyFormsHelper = {
       }
     });
   }, // revealHandler
+
+//  revealHandler(ev) {
+//    const form = ev.target.closest('.pfy-form');
+//    domForOne(form, '[data-reveal-target]', (revealController) => {
+//      const targetSel = revealController.dataset.revealTarget;
+//      const revealContainer = document.querySelector(targetSel);
+//
+//      // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
+//      if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
+//        const revealContent = revealContainer.innerHTML;
+//        revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
+//        revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+//      }
+//
+//      const inpEl = ev.target;
+//      let open = inpEl.checked;
+//
+//      // case radio: option with value == 'true' opens reveal target:
+//      if (inpEl.type === 'radio' && inpEl.value !== 'true') {
+//        open = false;
+//      }
+//      if (open) {
+//        pfyReveal.reveal(revealContainer, revealController);
+//      } else {
+//        pfyReveal.unreveal(revealContainer, revealController);
+//      }
+//    });
+//  }, // revealHandler
 
 
   handleErrorInForm(form) {
