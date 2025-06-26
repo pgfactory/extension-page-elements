@@ -371,6 +371,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       padding: 0.4em;
       display: block;
       color: $fieldDescriptorColor;
+      &:empty {
+        display: none;
+      }
     }
     .pfy-input-wrapper .error {
       color: $errorColor;
