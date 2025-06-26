@@ -45,7 +45,7 @@ $inputWidth:            var(--pfy-form-input-width, 22em);
 $rowGapHeight:          var(--pfy-form-row-gap-height, 1em);
 $formWidth:             var(--pfy-form-width, 28em);
 
-$addressZipWidth:       var(--pfy-zip-input-width, 4em);
+$addressZipWidth:       var(--pfy-zip-input-width, 4.5em);
 
 $inputColor:            var(--pfy-form-input-color, var(--pfy-form-input-color-default));
 $inputBg:               var(--pfy-form-field-background-color, var(--pfy-form-field-background-color-default));
@@ -84,7 +84,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     --pfy-form-readonly-field-bg-default:       #f8f8f8;
 
     --pfy-form-reveal-border: 1px solid #eee;
-    //--pfy-form-reveal-bg: #eee;
   }
 
   input[type=cancel],
@@ -116,9 +115,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-choice {
-    &.pfy-horizontal label {
-      padding-right: 1em;
-    }
     .pfy-label-wrapper {
       margin-top: calc((#{$inputHeight} - 1em) / 2);
     }
@@ -444,8 +440,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     // composed address fields:
     div.pfy-address-zip {
       position: relative;
-      --pfy-form-input-width: $addressZipWidth;
-      width: calc(#{$addressZipWidth} + 9.5em);
+      --pfy-form-input-width: var(--pfy-zip-input-width, 4.5em); //scss compiler bug? $addressZipWidth
+      width: calc(#{$addressZipWidth} + #{$labelWidth} + 0.4em);
       display: inline-block;
       margin-top: 0;
       .pfy-input-wrapper {
@@ -463,7 +459,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       }
     }
     div.pfy-address-city {
-      width: calc(100% - 10.5em - #{$addressZipWidth});
+      width: calc(100% - #{$addressZipWidth} - #{$labelWidth} - 1em);
+      margin-left: 0.2em;
       display: inline-block;
       margin-top: 0;
       .pfy-label-wrapper {
