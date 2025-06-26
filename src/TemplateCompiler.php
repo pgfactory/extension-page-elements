@@ -3,12 +3,9 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\MarkdownPlus;
-use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\shieldStr;
-use function PgFactory\PageFactory\strPosMatching;
 use function PgFactory\PageFactory\var_r;
 
 const EVENT_INDEX_PLACEHOLDER = '%%';
@@ -209,8 +206,10 @@ class TemplateCompiler
                         }
                     }
                 }
+                $templateOptions['templates'] = $templ;
+            } elseif (is_string($templ)) {
+                $templateOptions['element'] = $templ;
             }
-            $templateOptions['templates'] = $templ;
         }
 
         return $templateOptions;
@@ -227,7 +226,7 @@ class TemplateCompiler
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
         $template = self::basicCompileTemplate($template, $vars);
         TransVars::setTempVariables($vars);
-        $template = TransVars::preprocess($template);
+        $template = TwigLight::compile($template);
         $str = TransVars::translate($template);
         TransVars::setTempVariables([]);
         return $str;
