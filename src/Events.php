@@ -405,7 +405,7 @@ class Events extends DataSet
         }
 
         if ($found !== false) {
-            $found = $found + $offset;
+            $found = $found + (int)$offset;
             if ($found < 0 || $found >= sizeof($sortedData)) {
                 return false;
             }
