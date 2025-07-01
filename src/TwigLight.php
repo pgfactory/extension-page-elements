@@ -45,7 +45,7 @@ class TwigLight
 
         // unshield {' and '}':
         $tokens = array_map(function ($value) {
-            return str_replace(['&#123;&#123;', '&#125;&#125;'], ['{{', '}}'], $value);
+            return preg_replace(['/&#123;(?! %)/', '/(?<! %)&#125;/'], ['{', '}'], $value);
         }, $tokens);
 
         return array_values($tokens);
@@ -58,11 +58,11 @@ class TwigLight
      * @param $condition
      * @return array
      */
-    static function evalTokens(array $tokens, int $i = -1, $condition = true): array
+    static function evalTokens(array $tokens, int $i = -1, $level = 0): array
     {
         $output = '';
+        $ifTrue = $ifFalse = '';
         $i++;
-        $elseClause = '';
         while ($i < count($tokens)) {
             $token = $tokens[$i];
             switch (true) {
@@ -70,57 +70,67 @@ class TwigLight
                     $varname = trim($matches[1]);
                     if (!preg_match('/\W/', $varname)) {
                         // condition contains nothing but a string, i.e. a variable:
-                        $condition1 = (bool)TransVars::getVariable($varname);
+                        $condition = (bool)TransVars::getVariable($varname);
                     } else {
                         // condition contains special characters, so try to evaluate it as a PHP expression:
-                        $expr = '';
-                        $tok = strtok($varname, ' ');
-                        $tok = TransVars::getVariable($tok, varNameIfNotFound:true);
-                        if (!preg_match('/\W/', $tok)) {
-                            $tok = "'$tok'";
-                        }
-                        $expr .= "$tok ";
-                        while ($tok !== false) {
-                            $tok = strtok(' ');
-                            if ($tok !== false) {
-                                $tok = TransVars::getVariable($tok, varNameIfNotFound:true);
-                                if (!preg_match('/\W/', $tok)) {
-                                    $tok = "'$tok'";
-                                }
-                                $expr .= "$tok ";
-                            }
-                        }
-                        try {
-                            $condition1 = eval('return ' . $expr . ';');
-                        } catch (\Exception $e) {
-                            $condition1 = false;
-                        }
+                        $condition = self::evalExpression($varname);
                     }
-                    // decend into nexted if-else-endif structure:
-                    list($out, $i) = self::evalTokens($tokens, $i, $condition1);
+                    // descend into nexted if-else-endif structure:
+                    list($out, $ifTrue, $ifFalse, $i) = self::evalTokens($tokens, $i, $level + 1);
                     $output .= $out;
-                    break;
-
-                case $token === '{% else %}':
-                    $elseClause = true;
-                    break;
-
-                case $token === '{% endif %}':
-                    if (!$condition) {
-                        $output = $elseClause;
+                    if ($condition) {
+                        $output .= $ifTrue;
+                    } else {
+                        $output .= $ifFalse;
                     }
-                    return [$output, $i, $condition];
+                    break;
+
+                case preg_match('/\{%\s*else\s*%}/', $token):
+                    $ifTrue = $output;
+                    list($out, $ifFalse, $dummy, $i) = self::evalTokens($tokens, $i, $level + 1);
+                    return [$out, $ifTrue, $ifFalse, $i];
+
+                case preg_match('/\{%\s*endif\s*%}/', $token):
+                    return ['', $output, $ifFalse, $i];
 
                 default:
-                    if ($elseClause) {
-                        $elseClause = $token;
-                    } else {
-                        $output .= $token;
-                    }
+                    $output .= $token;
             }
             $i++;
         }
-        return [$output, $i, $condition];
+        return [$output, $ifTrue, $ifFalse, $i];
     } // evalTokens
+
+
+    /**
+     * @param string $varname
+     * @return mixed
+     */
+    private static function evalExpression(string $varname): mixed
+    {
+        $expr = '';
+        $tok = strtok($varname, ' ');
+        $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
+        if (!preg_match('/\W/', $tok)) {
+            $tok = "'$tok'";
+        }
+        $expr .= "$tok ";
+        while ($tok !== false) {
+            $tok = strtok(' ');
+            if ($tok !== false) {
+                $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
+                if (!preg_match('/\W/', $tok)) {
+                    $tok = "'$tok'";
+                }
+                $expr .= "$tok ";
+            }
+        }
+        try {
+            $condition1 = eval('return ' . $expr . ';');
+        } catch (\Exception $e) {
+            $condition1 = false;
+        }
+        return $condition1;
+    } // evalExpression
 
 } // TwigLight
