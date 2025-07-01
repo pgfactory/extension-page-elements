@@ -175,67 +175,37 @@ const pfyFormsHelper = {
 
   revealHandlers(el) {
     const parent = this;
-    domForEach('.pfy-form', (el) => {
+    domForEach('.pfy-form [data-reveal-target]', (el) => {
       parent.revealHandler(el);
     })
   }, // revealHandlers
 
 
   revealHandler(el) {
-    const form = el.closest('.pfy-form');
-    domForOne(form, '[data-reveal-target]', (revealController) => {
-      const targetSel = revealController.dataset.revealTarget;
-      const revealContainer = document.querySelector(targetSel);
+    const revealController = el.closest('[data-reveal-target]');
+    const targetSel = revealController.dataset.revealTarget;
+    const revealContainer = document.querySelector(targetSel);
 
-      // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
-      if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
-        const revealContent = revealContainer.innerHTML;
-        revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-        revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
-      }
+    // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
+    if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
+      const revealContent = revealContainer.innerHTML;
+      revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
+      revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
+    }
 
-      const inpEl = el;
-      let open = inpEl.checked;
+    const inpEl = el;
+    let open = inpEl.checked;
 
-      // case radio: option with value == 'true' opens reveal target:
-      if (inpEl.type === 'radio' && inpEl.value !== 'true') {
-        open = false;
-      }
-      if (open) {
-        pfyReveal.reveal(revealContainer, revealController);
-      } else {
-        pfyReveal.unreveal(revealContainer, revealController);
-      }
-    });
+    // case radio: option with value == 'true' opens reveal target:
+    if (inpEl.type === 'radio' && inpEl.value !== 'true') {
+      open = false;
+    }
+    if (open) {
+      pfyReveal.reveal(revealContainer, revealController);
+    } else {
+      pfyReveal.unreveal(revealContainer, revealController);
+    }
   }, // revealHandler
-
-//  revealHandler(ev) {
-//    const form = ev.target.closest('.pfy-form');
-//    domForOne(form, '[data-reveal-target]', (revealController) => {
-//      const targetSel = revealController.dataset.revealTarget;
-//      const revealContainer = document.querySelector(targetSel);
-//
-//      // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
-//      if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
-//        const revealContent = revealContainer.innerHTML;
-//        revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-//        revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
-//      }
-//
-//      const inpEl = ev.target;
-//      let open = inpEl.checked;
-//
-//      // case radio: option with value == 'true' opens reveal target:
-//      if (inpEl.type === 'radio' && inpEl.value !== 'true') {
-//        open = false;
-//      }
-//      if (open) {
-//        pfyReveal.reveal(revealContainer, revealController);
-//      } else {
-//        pfyReveal.unreveal(revealContainer, revealController);
-//      }
-//    });
-//  }, // revealHandler
 
 
   handleErrorInForm(form) {
@@ -871,5 +841,27 @@ const pfyFormsHelper = {
       rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
     }
   }, // repetitionChangeHandler
+
+
+  // used by calendar.js:
+  initRepetitionWidget(wrapperEl = null) {
+    domForEach(wrapperEl, '.pfy-form-rrule-wrapper', function (rruleWrapper) {
+      domForOne(rruleWrapper, '.pfy-rrule-elem-freq', function (select) {
+        select.addEventListener('change', function (ev) {
+          const selectEl = ev.target;
+          const details = selectEl.closest('details');
+          const rruleBody = details.querySelector('.pfy-form-rrule-body-wrapper');
+          const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
+          if (selectedFreq === 'NONE') {
+            details.open = false;
+            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper' ;
+          } else {
+            details.open = true;
+            rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
+          }
+        });
+      });
+    });
+  }, // initRepetitionWidget
 
 }; // pfyFormsHelper
