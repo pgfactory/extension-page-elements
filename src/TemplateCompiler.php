@@ -81,14 +81,17 @@ class TemplateCompiler
 
 
         $out = '';
-        $out .= $prefix;
         foreach ($data as $i => $rec) {
             // allow selection of category and element from fields in $rec:
             $categorySel = $rec[$categorySelector] ?? $categorySelector;
             $elementSel  = $rec[$elementSelector] ?? $elementSelector;
             // get the applicable template:
             $template = self::getTemplate($templateOptions, $categorySel, $elementSel);
-            if (trim($template)) {
+            if (is_array($template)) {
+                $prefix = (string)(($template['prefix']??false) ?: $prefix);
+                $suffix = (string)(($template['suffix']??false) ?: $suffix);
+                $template = (string)($template[$elementSel]??'');
+            } elseif (trim($template)) {
                 if ($compileMarkdown) {
                     $template .= "\n";
                 }
@@ -106,7 +109,7 @@ class TemplateCompiler
             }
             $out .= $s . $sepPlaceholder;
         }
-        $out .= $suffix;
+        $out = "$prefix$out$suffix";
         if ($sepPlaceholder) {
             $out = substr_replace($out, '', strrpos($out, '{!!!}'), 5);
             $out = str_replace($sepPlaceholder, $separator, $out);
@@ -150,11 +153,10 @@ class TemplateCompiler
                     $tmplateToUse = $templates[$categoryField];
                 } elseif (isset($templates[$elementSelector])) {
                     $tmplateToUse = $templates[$elementSelector];
+                } elseif (isset($templates['_'])) {
+                    $tmplateToUse = $templates['_'];
                 } else {
                     $tmplateToUse = reset($templates);
-                }
-                if (is_array($tmplateToUse)) {
-                    $tmplateToUse = (string) $tmplateToUse[$elementSelector] ?? '';
                 }
             } else {
                 $tmplateToUse = (string) $templates;
