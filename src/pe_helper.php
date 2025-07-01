@@ -35,41 +35,6 @@ if (PageFactory::$langCode === 'en') {
 
 
 /**
- * Twig-filter wrapper for  intlDate()
- * -> compiles "date()-style" (eg. Y-m-d) format and translates to local language.
- * @param string $arg
- * @param string $format
- * @return string
- */
-function twigIntlDateFilter($arg, string $format): string
-{
-    if (!$arg) {
-        if (isLocalhost()) {
-            throw new Exception("Error: value missing (for twigIntlDateFilter($format)");
-        } else {
-            return '???';
-        }
-    }
-    $time = strtotime($arg);
-    return intlDate($format, $time);
-} // twigIntlDateFilter
-
-
-/**
- * Twig-filter wrapper for  intlDateFormat()
- * -> compiles "intlDate()-style" (eg. YYYY-MMM-dd) format and translates to local language.
- * @param string $arg
- * @param string $format
- * @return string
- */
-function twigIntlDateFormatFilter(string $arg, string $format): string
-{
-    $time = strtotime($arg);
-    return intlDateFormat($format, $time);
-} // twigIntlDateFilter
-
-
-/**
  * Compiles format string to localized date string.
  * Supports syntax 'Ynnn', where nnn is number of days to early switch to next year.
  * @param string $format
