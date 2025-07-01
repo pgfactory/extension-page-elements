@@ -121,7 +121,7 @@ class PageElements
         $this->handleCssRefactor();
         $this->initTooltips();
         $this->cleanDownloadFolder();
-        self::initOnboardingAid();
+        $this->initOnboardingAid();
 
         $this->handleUrlRequests();
         Assets::addAssets('PE');
@@ -163,6 +163,8 @@ class PageElements
         if (PageFactory::$dev || PageFactory::$forceAssetsUpdate) {
             CompileJs::compileAll(PE_PATH.'js/', PE_ASSETS_PATH.'js/');
         }
+
+        self::handleCoop(); // Cross-Origin-Opener-Policy: same-origin
     } // init
 
 
@@ -418,7 +420,7 @@ EOT;
         // handle ?onboardingaid:
         //   => request later handled by Login::loginCallback()
         if (isset($_GET['onboardingaid'])) {
-            self::renderOnboardingAid();
+            $this->renderOnboardingAid();
         }
     } // handleUrlRequests
 
@@ -426,7 +428,7 @@ EOT;
     /**
      * @return void
      */
-    static function initOnboardingAid(): void
+    private function initOnboardingAid(): void
     {
         $str = '';
         $url = PFY_PAGE_URL;
@@ -446,10 +448,10 @@ EOT;
      * @return void
      * @throws \Exception
      */
-    static function renderOnboardingAid(): void
+    private function renderOnboardingAid(): void
     {
         if ($user = Permission::getLoggedInUser()) {
-            if (self::getAccessLink($user)) {
+            if ($this->getAccessLink($user)) {
                 $str = <<<EOT
 
 <section class="pfy-section-wrapper">
@@ -481,7 +483,7 @@ EOT;
      * @param $user
      * @return bool
      */
-    static function getAccessLink($user): bool
+    private function getAccessLink($user): bool
     {
         $link = '';
         if ($content = $user->content()) {
@@ -496,6 +498,17 @@ EOT;
         TransVars::setVariable('pfy-user-accesslink', $link);
         return true;
     } // getAccessLink
+
+
+    /**
+     * @return void
+     */
+    private static function handleCoop(): void
+    {
+        if (option('pgfactory.pagefactory-elements.enableCoop')) {
+            header('Cross-Origin-Opener-Policy: same-origin');
+        }
+    } // handleCoop
 
 
     /**
