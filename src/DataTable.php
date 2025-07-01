@@ -119,7 +119,7 @@ class DataTable
         $this->rowClasses = $options['rowClasses']??[];
         $this->rowIds = $options['rowIds']??[];
         $this->tdClass = $options['tdClass']??'';
-        $this->tableWrapperClass = ($options['tableWrapperClass']??false) ?: 'pfy-table-wrapper';
+        $this->tableWrapperClass = ($options['tableWrapperClass']??false) ?: (($options['wrapperClass']??false) ?: 'pfy-table-wrapper');
         $this->dataReference = $options['dataReference']??false; // whether to include data-elemkey and data-reckey
         $this->footers = ($options['footers']??false) ?: ($options['footer']??false);
         $this->caption = $options['caption']??false;
