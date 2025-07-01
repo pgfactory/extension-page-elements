@@ -386,7 +386,7 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
     domForOne(form, '[name=start]', (startElem) => {
       let startVal = startElem.dataset.orig || startElem.value;
       startElem.setAttribute('type', 'datetime-local');
-      if (startVal.length < 16) {
+      if (startVal && startVal.length < 16) {
         startVal += 'T12:00';
       }
       startElem.value = startVal;
@@ -394,7 +394,8 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
     domForOne(form, '[name=end]', (endElem) => {
       let endVal = endElem.dataset.orig || endElem.value;
       endElem.setAttribute('type', 'datetime-local');
-      if (endVal.length < 16) {
+      if (endVal && endVal.length < 16) {
+
         endVal += 'T13:00';
       }
       endElem.value = endVal;
