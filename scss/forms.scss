@@ -807,7 +807,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     display: none;
   }
   .pfy-spinner-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     width: 100dvw;
     height: 100dvh;
