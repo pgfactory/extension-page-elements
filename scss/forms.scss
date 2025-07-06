@@ -802,6 +802,30 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     //    }
     //  }
   }
+
+  .pfy-form-hidden-spinner {
+    display: none;
+  }
+  .pfy-spinner-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100dvw;
+    height: 100dvh;
+    background: #0008;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
+    img {
+      width: 80px;
+      height: 80px;
+      z-index: 1;
+    }
+  }
+  &:has(.pfy-spinner-overlay) {
+    position: relative;
+    overflow: hidden;
+  }
 } // .pfy-default-styling
 
 

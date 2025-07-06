@@ -33,6 +33,7 @@ const FORMS_SUPPORTED_TYPES =
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
 const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
+const SPINNER = PFY_APP_BASE_URL.'media/plugins/pgfactory/pagefactory-pageelements/icons/spinner3.gif';
 
 mb_internal_encoding("utf-8");
 
@@ -1835,6 +1836,7 @@ EOT;
 
         $html .= $this->getRenderer()->render($this, 'end'); // </form>
 
+        $html .= $this->renderHiddenSpinner();
         $html .= "</div><!-- /pfy-form-wrapper -->\n\n\n";
         return $html;
     } // _renderFormTail
@@ -1995,6 +1997,15 @@ EOT;
         }
         return $html;
     } // renderProblemWithFormBanner
+
+
+    /**
+     * @return string
+     */
+    protected function renderHiddenSpinner(): string
+    {
+        return "<div class='pfy-form-hidden-spinner'><img data-src='".SPINNER."' alt=' '></div>";
+    } // renderHiddenSpinner
 
 
     /**

@@ -40,6 +40,8 @@ const pfyFormsHelper = {
     if (windowFreezeTime) {
       this.freezeWindowAfter(windowFreezeTime);
     }
+
+    this.initSpinner();
   }, // init
 
 
@@ -183,6 +185,9 @@ const pfyFormsHelper = {
 
   revealHandler(el) {
     const revealController = el.closest('[data-reveal-target]');
+    if (!revealController || typeof revealController.dataset === 'undefined' || typeof revealController.dataset.revealTarget === 'undefined') {
+      return;
+    }
     const targetSel = revealController.dataset.revealTarget;
     const revealContainer = document.querySelector(targetSel);
 
@@ -288,15 +293,24 @@ const pfyFormsHelper = {
   }, // presetForm
 
 
-  disableForm(form, value = true)  {
-    // disable form buttons:
-    const frmButtons = form.querySelectorAll('[name="_submit"]');
-    if (frmButtons) {
-      frmButtons.forEach(function (frmButton) {
-        frmButton.disabled = value;
-      });
-    }
+  disableForm(form)  {
+    const formWrapper = form.closest('.pfy-form-wrapper');
+    domForOne(formWrapper, '.pfy-form-hidden-spinner img', (el) => {
+      const url = el.getAttribute('src');
+      const spinnerOverlay = document.createElement('div');
+      spinnerOverlay.setAttribute('class', 'pfy-spinner-overlay');
+      spinnerOverlay.innerHTML = `<img src='${url}'>`;
+      document.body.appendChild(spinnerOverlay);
+      mylog('spinnerOverlay');
+    });
   }, // disableForm
+
+
+  enableForm(form)  {
+    domForOne('.pfy-spinner-overlay', (el) => {
+      el.remove();
+    });
+  }, // enableForm
 
 
   presetScalarFields(form, data) {
@@ -809,6 +823,14 @@ const pfyFormsHelper = {
           });
 
   }, // handleFrozenWindow
+
+
+  initSpinner() {
+   domForEach('.pfy-form-hidden-spinner img[data-src]', (el) => {
+     const url = el.dataset.src;
+     el.setAttribute('src', url);
+   });
+  }, // initSpinner
 
 
   setTriggerOnContinueLink()  {
