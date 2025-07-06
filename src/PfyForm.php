@@ -405,6 +405,10 @@ class PfyForm extends Form
         } elseif (($type === 'textarea') && ($rec['reveal'] ?? false)) {
             $inx = $rec['revealInx'];
             $controllerLabel = $rec['reveal'];
+            if ($controllerLabel === true) {
+                $controllerLabel = TransVars::getVariable('pfy-form-default-reveal-label');
+                $controllerLabel = str_replace('%name%', $name, $controllerLabel);
+            }
             $html = <<<EOT
 <div class="pfy-elem-wrapper pfy-reveal-controller">
 <span class="pfy-reveal-controller-label"><label for="frm-CommentController$inx" class=""><input type="checkbox" name="CommentController$inx" class="pfy-reveal-controller" aria-controls="pfy-reveal-container-$inx" data-reveal-target="#pfy-reveal-container-$inx" data-icon-closed="+" data-icon-open="∣" id="frm-CommentController$inx" aria-expanded="false">$controllerLabel</label></span>

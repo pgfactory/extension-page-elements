@@ -203,7 +203,7 @@ return function ($args = '')
         Name:           { required:true }
         Name2:          { antiSpam:Name }
         EMail:          { type:email }
-        Comment:		{ type:textarea },
+        Comment:		{ type:textarea, reveal:true },
 
         cancel:    		{ },
         submit:    		{ },
@@ -247,7 +247,7 @@ All:
 : - antiSpam        >> [string] -> see below
 
 textarea:
-: - reveal      >> [string] If set, textarea is hidden until label is clicked
+: - reveal      >> [string|true] If set, textarea is hidden until label is clicked
 
 number/integer/range:
 : - min         >> [integer]

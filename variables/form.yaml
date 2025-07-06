@@ -244,6 +244,11 @@ problemWithFormBanner:
     %%%
 
 
+# === Reveal =========================================
+pfy-form-default-reveal-label:
+  de: '%name% hinzufügen'
+  _:  'Add %name%'
+
 # === Address =========================================
 pfy-form-address-street-label:
   de: 'Strasse:'
