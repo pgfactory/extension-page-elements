@@ -520,6 +520,7 @@ class DataTable
 
         $out .= "  <thead>\n    <tr class='pfy-table-header pfy-row-0'>\n";
         $headerRow = array_shift($data);
+        $headerKeys = array_keys($headerRow);
         $this->elementLabels = [];
         $i = 0;
         foreach ($headerRow as $c => $elem) {
@@ -531,7 +532,8 @@ class DataTable
                 $class = "pfy-service-row {$this->serviceColArray[$i]}";
             } else {
                 if (!($class = ($this->colClasses[$i-1]??false))) {
-                    $class = translateToClassName($elem);
+                    $cl = ($headerKeys[$i-1]??false) ?: $elem;
+                    $class = 'pfy-col-'.translateToClassName($cl);
                 }
             }
 
@@ -547,7 +549,12 @@ class DataTable
                     $elem = $e;
                 }
             }
-            $out .= "      <th class='pfy-col-$i $class'>$elem</th>\n";
+            $class = "pfy-col-$i $class";
+            $this->colClasses[$i-1] = $class;
+            if (isset($this->serviceColArray[$i])) {
+                $class .= " {$this->serviceColArray[$i]}";
+            }
+            $out .= "      <th class='$class'>$elem</th>\n";
         }
         $out .= "    </tr>\n  </thead>\n";
         return $out;
@@ -614,6 +621,7 @@ class DataTable
 
             $out .= "    <tr class='pfy-row-$r $rowClass$emptyRowClass'$recKey>\n";
             $i = 0;
+            $emptyRow = '';
             foreach ($elemKeys as $c => $k) {
                 if ($c === '_locked') {
                     continue;
@@ -634,7 +642,7 @@ class DataTable
                 if ($this->colClasses[$i-1]??false) {
                     $class = $this->colClasses[$i-1];
                 } elseif (!preg_match('/^\{\{.*}}$/', $k)) {
-                    $class = 'td-'.translateToClassName($k);
+                    $class = translateToClassName($k);
                 } else {
                     $class = '';
                 }
@@ -647,20 +655,39 @@ class DataTable
                     }
                     $v = "<div$tdClass>$v</div>";
                 }
-                $class = $class? "$class $serviceRow": $serviceRow;
                 if ($this->dataReference && ($kk = array_search($k, $this->columnKeys))) {
                     $elemid = " data-elemkey='$kk'";
                 } else {
                     $elemid = '';
                 }
-                $out .= "      <td class='pfy-col-$i $class'$elemid>$v</td>\n";
+                $class = $this->colClasses[$i-1];
+                $out .= "      <td class='$class'$elemid>$v</td>\n";
+                $ii = str_contains($class, 'pfy-row-number') ? '%row%' : '&nbsp;';
+                $emptyRow .= "      <td class='$class'$elemid>$ii</td>\n";
             }
             $out .= "    </tr>\n";
+        }
+
+        if ($this->minRows && $r < $this->minRows) {
+            $out .= $this->fillWithEmptyRows($r, $emptyRow);
         }
         $out .= "  </tbody>\n";
         return $out;
     } // renderTableBody
 
+
+    private function fillWithEmptyRows(int $r, string $emptyRow):string
+    {
+        $out = '';
+        $emptyRowClass = ' pfy-empty-row';
+        for (; $r < $this->minRows; $r++) {
+            $rowClass = $this->rowClasses[$r]??'';
+            $out .= "    <tr class='pfy-row-$r $rowClass$emptyRowClass'>\n";
+            $out .= str_replace('%row%', $r+1, $emptyRow);
+            $out .= "    </tr>\n";
+        }
+        return $out;
+    } // fillWithEmptyRows
 
 
     /**
@@ -692,8 +719,8 @@ class DataTable
                 }
             }
             $out .= "  <tfoot>\n";
-            $out .= "    <tr>\n";
-            $c = 1;
+            $out .= "    <tr class='pfy-table-footer-row'>\n";
+            $c = 0;
             foreach ($this->elementLabels as $key) {
                 if ($key === '_locked') {
                     continue;
@@ -714,7 +741,8 @@ class DataTable
                 } else {
                     $val = '&nbsp;';
                 }
-                $out .= "      <td class='pfy-col-$c'>$val</td>\n";
+                $colClass = $this->colClasses[$c]??'';
+                $out .= "      <td class='$colClass'>$val</td>\n";
                 $c++;
             }
             $out .= "    </tr>\n";
