@@ -390,7 +390,10 @@ class Events extends DataSet
         if ($from) {
             $targetDateT = resolveTimePlaceholders($from);
         } else {
-            $targetDateT = strtotime(date('Y-m-d ')); // round down to last midnight
+            $targetDateT = strtotime(date('Y-m-d')); // round down to last midnight
+        }
+        if ($options['shift']??0) {
+            $targetDateT += $options['shift'] * 86400; // shift target date by n days
         }
 
         // find the record
