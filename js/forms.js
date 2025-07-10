@@ -270,7 +270,7 @@ const pfyFormsHelper = {
         }
       }
 
-      pfyFormsHelper.disableForm(form);
+      pfyFormsHelper.disableForm();
       pfyFormsHelper.doSubmitForm(form);
   }, // setupSubmitHandler
 
@@ -293,23 +293,13 @@ const pfyFormsHelper = {
   }, // presetForm
 
 
-  disableForm(form)  {
-    const formWrapper = form.closest('.pfy-form-wrapper');
-    domForOne(formWrapper, '.pfy-form-hidden-spinner img', (el) => {
-      const url = el.getAttribute('src');
-      const spinnerOverlay = document.createElement('div');
-      spinnerOverlay.setAttribute('class', 'pfy-spinner-overlay');
-      spinnerOverlay.innerHTML = `<img src='${url}'>`;
-      document.body.appendChild(spinnerOverlay);
-      mylog('spinnerOverlay');
-    });
+  disableForm()  {
+    showBusySpinner();
   }, // disableForm
 
 
-  enableForm(form)  {
-    domForOne('.pfy-spinner-overlay', (el) => {
-      el.remove();
-    });
+  enableForm()  {
+    hideBusySpinner();
   }, // enableForm
 
 
