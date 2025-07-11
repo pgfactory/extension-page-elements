@@ -330,6 +330,10 @@ class PfyForm extends Form
                 exit($e);
             }
         }
+
+        if ($rec['autocomplete']??false) {
+            $elem->setHtmlAttribute('autocomplete', $rec['autocomplete']);
+        }
         $label = (string)$elem->getLabel();
         $label = str_replace(['&lt;','&gt;'], ['<','>'], $label);
 
@@ -1621,6 +1625,21 @@ EOT;
             }
         }
 
+        // handle autocomplete:
+        if (isset($elemOptions['autocomplete'])) {
+            $ac = $elemOptions['autocomplete'];
+            if (is_bool($ac)) {
+                $ac = $ac ? 'true' : 'false';
+            }
+            $elemOptions['autocomplete'] = $ac;
+        } else {
+            if ($acAssoc = option('pgfactory.pagefactory-elements.formAutofillAssoc')) {
+                if ($acAssoc[$_name]??false) {
+                    $ac = $acAssoc[$_name];
+                    $elemOptions['autocomplete'] = $ac;
+                }
+            }
+        }
 
         if (!str_contains(FORMS_SUPPORTED_TYPES, ",$type,")) {
             throw new \Exception("Forms: requested type not supported: '$type'");
@@ -1840,7 +1859,6 @@ EOT;
 
         $html .= $this->getRenderer()->render($this, 'end'); // </form>
 
-        $html .= $this->renderHiddenSpinner();
         $html .= "</div><!-- /pfy-form-wrapper -->\n\n\n";
         return $html;
     } // _renderFormTail
@@ -2001,15 +2019,6 @@ EOT;
         }
         return $html;
     } // renderProblemWithFormBanner
-
-
-    /**
-     * @return string
-     */
-    protected function renderHiddenSpinner(): string
-    {
-        return "<div class='pfy-form-hidden-spinner'><img data-src='".SPINNER."' alt=' '></div>";
-    } // renderHiddenSpinner
 
 
     /**

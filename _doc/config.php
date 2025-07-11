@@ -3,6 +3,13 @@
 
     'pgfactory.pagefactory-elements' => [
         'enableCoop' => true,            // automatically inject HTTP header 'Cross-Origin-Opener-Policy: same-origin'
+//        'formAutofillAssoc' => [    // used in forms to apply 'autocomplete' attribute based on field names
+//          'vorname'       => 'given-name',
+//          'name'          => 'family-name',
+//          'nachname'      => 'family-name',
+//          'benutzername'  => 'username',
+//          'e_mail'        => 'email', // applies to both e-mail and e_mail
+//        ],
 //        'templateCompilerDefaultMode' => 'twig', // default mode for TemplateCompiler, e.g. used by macro form()
 //        'allowChangePassword'         => true,
 //        'initCode'                    => 'init.php', // run init code in site/custom/code/

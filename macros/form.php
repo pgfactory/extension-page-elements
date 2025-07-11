@@ -240,6 +240,7 @@ All:
 : - placeholder   >> [string] 
 : - preset   >> [any] initial value (also: 'default' or 'value')
 : - required    >> [bool,identifier]
+: - autocomplete    [string|bool]
 : - disabled    >> [bool]
 : - readonly    >> [bool]
 : - info        >> [string] info icon showing info text as tooltip
