@@ -60,7 +60,6 @@ $focus-color: orange;
     position: relative;
     padding-top: calc((1em - 10pt) * 0.5);
     .pfy-table-buttons {
-      position: absolute;
       z-index: 2;
       top: 0;
       .pfy-button {
@@ -106,11 +105,51 @@ $focus-color: orange;
     padding-left: 0.5em;
   }
 
-  .dataTables_wrapper {
-    .dataTables_length,
-    .dataTables_filter {
-      text-align: right;
+  // interactive -> dataTables:
+  .pfy-table-wrapper {
+    padding-top: 2.3em;
+
+    .pfy-table-buttons,
+    .dt-search {
+      position: absolute;
+    }
+    .pfy-table-buttons {
+      top: 0.3em;
+    }
+    div.dt-container div.dt-layout-row {
+      margin: 0;
+    }
+    div.dt-container {
+      position: unset;
+    }
+    .dt-search {
+      top: 0;
+      right: 0;
+      margin: 0;
     }
   }
+  .dt-layout-full {
+    overflow-x: auto;
+  }
+
 } // pfy-default-styling
 
+#pfy.pfy-default-styling {
+  .dt-search {
+    margin: 0;
+    input::placeholder {
+      text-align: right;
+      font-style: italic;
+      opacity: 0;
+    }
+  }
+}
+
+@media screen and (max-width: 340px) {
+  .dt-search label {
+    display: none;
+  }
+  #pfy.pfy-default-styling .dt-search input::placeholder {
+      opacity: 1;
+  }
+}

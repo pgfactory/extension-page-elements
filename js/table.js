@@ -26,6 +26,7 @@ const tableHelper = {
         tableHelper.setupModifiedMonitor(table, tableInx);
         tableHelper.setupDownloadButtonHandler(table, tableInx);
       });
+      tableHelper.setupInteractiveFilterHack();
     }
   }, // init
 
@@ -42,6 +43,19 @@ const tableHelper = {
       });
     });
   }, // setupDownloadButtonHandler
+
+
+  setupInteractiveFilterHack() {
+    // for filter field, copy label text to placeholder, in case table is too narrow to show label:
+    setTimeout(function () {
+      domForAll('.dt-search', el => {
+        let text = el.querySelector('label').innerText;
+        text = text.replace(/:$/, '');
+        const input = el.querySelector('input');
+        input.setAttribute('placeholder', text);
+      });
+    }, 50);
+  }, // setupInteractiveFilterHack
 
 
   setupModifiedMonitor(table, tableInx) {

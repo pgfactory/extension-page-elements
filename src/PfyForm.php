@@ -1485,7 +1485,7 @@ EOT;
         $tableOptions['mailFrom']             = ($this->formOptions['mailFrom']??false) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']        = ($this->formOptions['confirmationEmail']??false) ?: $this->formOptions['emailFieldName']??false;
         $tableOptions['includeTimestamp']     = ($tableOptions['includeTimestamp']??false) ?: $this->formOptions['tableOptions']['includeTimestamp']??true;
-
+// columnDefs
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
         $this->dataTable = new DataTable($file, $tableOptions);

@@ -647,9 +647,7 @@ class DataTable
                     $class = '';
                 }
                 $serviceRow = $this->serviceColArray[$i]??'';
-                if ($serviceRow) {
-                    $class .= ' pfy-service-row';
-                } else {
+                if (!$serviceRow) {
                     if ($this->shieldCellContent) {
                         $v = htmlspecialchars($v);
                     }
@@ -845,15 +843,32 @@ EOT;
         $pageLength = '';
         $orderable = '';
         $scrollable = '';
+/* $scrollable not working, header widths unequal to body col widths
         if ($this->scrollable) {
             $scrollable = <<<EOT
 scrollCollapse: true, scrollY: '$this->scrollable',
 
 EOT;
         }
-
+*/
         $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
         $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
+/*
+columnDefs: [
+        { targets: [0, 1], visible: true},
+        { targets: '_all', visible: false }
+    ]
+ */
+        $columnDefs = <<<EOT
+
+  columnDefs: [
+        { targets: [0], width: '2em'},
+        { targets: [5], width: '9.5em'},
+//        { targets: [0, 1, 5], width: '2em'},
+    ],
+//  columns: [{ width: '2em' }, null, null, null, null, null],
+EOT;
+
 
         $js = <<<EOT
 
@@ -862,9 +877,19 @@ pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
     search: '$searchButtonLabel:',
     info: '_TOTAL_ $pfyDatatablesRecords'
   },
-  $scrollable$order$paging$pageLength$orderable
+  $scrollable$order$paging$pageLength$orderable$columnDefs
 });
 EOT;
+//        $js = <<<EOT
+//
+//pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
+//  language: {
+//    search: '$searchButtonLabel:',
+//    info: '_TOTAL_ $pfyDatatablesRecords'
+//  },
+//  $scrollable$order$paging$pageLength$orderable
+//});
+//EOT;
         Page::addJsReady($js);
     } // activateInteractiveTable
 
