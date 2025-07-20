@@ -288,6 +288,63 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     min-width: 1rem;
   }
 
+  // === side-by-side ============================================
+  .pfy-side-by-side {
+    &.pfy-form-and-table-wrapper {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-start;
+      gap: 1em;
+
+      .pfy-table-data-output-wrapper {
+        flex: 1 0 auto;
+        overflow-x: auto;
+        width: calc(100% - 26em);
+      }
+    }
+
+    .pfy-form-wrapper {
+      flex: 0 0 26em;
+      outline: 1px dotted gray;
+      outline-offset: 3px;
+    }
+
+    .pfy-table-data-output-wrapper {
+      outline: 1px dotted gray;
+      outline-offset: 3px;
+      margin-top: 0;
+      td > div {
+        height: 2em;
+        overflow-y: auto;
+      }
+    }
+
+    .pfy-row-selected {
+      &, td {
+        background: #f8f8f8;
+      }
+    }
+    .pfy-form-readonly .pfy-form {
+      input, textarea, select {
+        pointer-events: none;
+        background: white;
+        border: 1px solid #0001;
+      }
+      .pfy-cancel, .pfy-submit {
+        opacity: 0;
+      }
+    }
+
+    .pfy-table-data-output-header {
+      display: none;
+    }
+
+    td:not(.pfy-service-col) {
+      cursor: pointer;
+    }
+  } // .pfy-side-by-side
+
+
   // === table ===================================================
   .pfy-table-data-output-wrapper {
     margin-top: 3em;
@@ -741,7 +798,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 
 
   .pfy-form-and-table-wrapper {
-    .pfy-empty-row td:not(.pfy-row-number).pfy-service-row * {
+    .pfy-empty-row td:not(.pfy-row-number).pfy-service-col * {
       display: none;
     }
     .pfy-table .pfy-row-button {

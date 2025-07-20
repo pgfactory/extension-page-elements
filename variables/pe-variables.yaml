@@ -114,8 +114,8 @@ pfy-table-reckey-header:
   _:  Record key
 
 pfy-table-timestamp-header:
-  de: Zeit
-  _:  Time
+  de: Zeitstempel
+  _:  Timestamp
 
 # Popups
 pfy-confirm-header:

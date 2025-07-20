@@ -56,6 +56,10 @@ const pfyFormsHelper = {
     pfyFormsHelper.presetForm(form);
 
     if (typeof setFocus !== 'undefined') {
+      if (form.closest('.pfy-form-readonly')) {
+        console.log('readonly - skipping setCursor');
+        return;
+      }
       const input1 = form.querySelector('.pfy-input-wrapper input');
       if (input1) {
         input1.focus();
@@ -114,6 +118,12 @@ const pfyFormsHelper = {
         pfyPopupClose(popup);
       }
     }
+
+    const formWrapper = form.closest('.pfy-form-wrapper');
+    if (formWrapper && formWrapper.dataset.readonly) {
+      formWrapper.classList.add('pfy-form-readonly');
+    }
+
   }, // cancelButtonHandler
 
 
@@ -438,6 +448,9 @@ const pfyFormsHelper = {
   getFieldValue(field, data, name) {
     if (typeof name === 'undefined') {
       name = field.getAttribute('name');
+    }
+    if (typeof data === 'undefined') {
+      return '';
     }
     let val = '';
     if ((typeof data !== 'undefined') && (typeof data[name] !== 'undefined')) {

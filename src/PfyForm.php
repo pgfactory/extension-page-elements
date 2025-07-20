@@ -33,14 +33,70 @@ const FORMS_SUPPORTED_TYPES =
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
 const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
-const SPINNER = PFY_KIRBY_ASSETS_BASE_URL.'media/plugins/pgfactory/pagefactory-pageelements/icons/spinner3.gif';
-
+const FORM_OPTIONS = [
+    'file' => false,
+    'confirmationText' => false,
+    'mailTo' => false,
+    'maxCount' => false,
+    'maxCountOn' => false,
+    'labelWidth' => false,
+    'formTop' => false,
+    'formHint' => false,
+    'formBottom' => false,
+    'confirmationEmail' => '',
+    'emailFieldName' => '',
+    'mailFrom' => false,
+    'mailFromName' => false,
+    'deadline' => false,
+    'id' => false,
+    'class' => false,
+    'wrapperClass' => false,
+    'outerWrapperClass' => '',
+    'action' => '~page/',
+    'next' => '~page/',
+    'callback' => false,
+    'scriptInjectionFilter' => true,
+    'dbOptions' => [
+        'keepDataDuration' => DEFAULT_KEEP_OLD_DATA_DURATION,
+        'keepDataOnField' => false,
+        'masterFileRecKeyType' => 'index',
+        'includeMeta' => true,
+    ],
+    'showDirectFeedback' => true,
+    'recLocking' => false,
+    'sideBySide' => false,
+    'readonly' => false,
+    'recId' => '',
+    'init' => true,
+];
+const TABLE_OPTIONS = [
+    'permission' => 'localhost,loggedin',
+    'tableTitle' => false,
+    'tableButtons' => false,
+    'serviceColumns' => false,
+    'editMode' => 'inpage',
+    'showData' => false,
+    'scrollHints' => false,
+    'placeholderForUndefined' => '',
+    'minRows' => false,
+    'obfuscateRows' => false,
+    'sort' => false,
+    'tableHeaders' => false, //???
+    'footers' => false,
+    'interactive' => false,
+    'includeSystemFields' => false,
+    'announceEmptyTable' => false,
+    'showAllFields' => false,
+    'shieldCellContent' => false,
+    'includeTimestamp' => true,
+];
 mb_internal_encoding("utf-8");
 
 
 class PfyForm extends Form
 {
     private array $formOptions;
+    private string $file;
     private array $elemOptions;
     private array $origReceivedData;
     private array $tableOptions = [];
@@ -70,12 +126,14 @@ class PfyForm extends Form
 
     // Output controlling states:
     protected bool $showDirectFeedback = true;
-    protected    mixed $formResponse = '';
+    protected mixed $formResponse = '';
     protected  bool $isFormAdmin = false;
     protected bool $showForm = true;
     private static bool $initialized = false;
-
     private static array $scheduleRecs = [];
+    private bool $readonly = false;
+    private bool $recLocking = false;
+    private bool $sideBySide = false;
 
     /**
      * @param $formOptions
@@ -90,63 +148,12 @@ class PfyForm extends Form
             kirby()->session()->set($sessKey, self::$formInx);
         }
 
-        $this->formOptions = &$formOptions;
-        $tableOptions = $formOptions['tableOptions']??[];
-        $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
+        $formOptions = $this->parseOptions($formOptions);
 
-        $tableOptions['showData']           = $formOptions['showData']??false;
-        $tableOptions['editTable']          = $formOptions['editData']??false;
-        $tableOptions['permission']         = $formOptions['permission']??false;
-        $tableOptions['tableButtons']       = $formOptions['tableButtons']??false;
-        $tableOptions['serviceColumns']     = $formOptions['serviceColumns']??false;
-        $tableOptions['sort']               = $formOptions['sortData']??false;
-        $tableOptions['footers']            = $formOptions['tableFooters']??false;
-        $tableOptions['minRows']            = $formOptions['minRows']??false;
-        if ($formOptions['interactiveTable']??false) {
-            $tableOptions['interactive']    = $formOptions['interactiveTable'];
-        }
-        $tableOptions['includeSystemFields']= $formOptions['includeSystemFields']??false;
-        $this->tableOptions                 = $this->parseTableOptions($tableOptions);
-        unset($tableOptions);
-
-        // make sure essential options are instantiated:
-        $formOptions['file']                = $formOptions['file']??false;
-        $formOptions['confirmationText']    = $formOptions['confirmationText']??false;
-        $formOptions['mailTo']              = $formOptions['mailTo']??false;
-        $formOptions['maxCount']            = $formOptions['maxCount']??false;
-        $formOptions['maxCountOn']          = $formOptions['maxCountOn']??false;
-        $formOptions['labelWidth']          = $formOptions['labelWidth']??false;
-        $formOptions['formTop']             = $formOptions['formTop']??false;
-        $formOptions['formHint']            = $formOptions['formHint']??false;
-        $formOptions['formBottom']          = $formOptions['formBottom']??false;
-        $formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
-        $formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
-        $formOptions['mailFrom']            = $formOptions['mailFrom']??false;
-        $formOptions['mailFromName']        = $formOptions['mailFromName']??false;
-        $formOptions['deadline']            = $formOptions['deadline']??false;
-        $formOptions['id']                  = $formOptions['id']??false;
-        $formOptions['class']               = $formOptions['class']??false;
-        $formOptions['wrapperClass']        = $formOptions['wrapperClass']??false;
-        $formOptions['action']              = $formOptions['action']??false;
-        $formOptions['next']                = $formOptions['next']??'~page/';
-        $formOptions['callback']            = $formOptions['callback']??false;
-        $formOptions['scriptInjectionFilter']  = $formOptions['scriptInjectionFilter']??true;
-        $formOptions['tableOptions']        = $formOptions['tableOptions']??[];
-        $formOptions['dbOptions']           = $formOptions['dbOptions']??[];
-        $formOptions['dbOptions']['keepDataDuration']   = $formOptions['dbOptions']['keepDataDuration']?? DEFAULT_KEEP_OLD_DATA_DURATION;
-        $formOptions['dbOptions']['keepDataOnField']    = $formOptions['dbOptions']['keepDataOnField']?? false;
-        $formOptions['dbOptions']['masterFileRecKeyType'] = ($formOptions['dbOptions']['masterFileRecKeyType']??false)?: 'index';
-        $formOptions['dbOptions']['includeMeta'] = ($formOptions['dbOptions']['includeMeta']??false)?: true;
-
-        $this->showDirectFeedback           = $formOptions['showDirectFeedback']??true;
-        $recLocking                         = $formOptions['recLocking']??false;
-        $this->formWrapperClass             = $formOptions['wrapperClass']? ' '.$formOptions['wrapperClass'] :'';
-        $this->tableTitle                   = $formOptions['tableTitle']??false;
-
-        if ($recLocking) {
+        if ($this->recLocking) {
             Page::addJs('const pfyFormRecLocking = true;');
         }
-        if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns']) {
+        if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns'] || $this->sideBySide) {
             $this->addFormTableWrapper = true;
             $permissionQuery = $this->tableOptions['permission'];
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
@@ -183,7 +190,7 @@ class PfyForm extends Form
             Assets::addAssets('REVEAL');
             Assets::addAssets('FORMS');
 
-            if ($formOptions['init'] ?? true) {
+            if ($formOptions['init']) {
                 Page::addJsReady('pfyFormsHelper.init();');
             }
             $this->activateWindowFreeze();
@@ -289,7 +296,7 @@ class PfyForm extends Form
         }
 
         // standard hidden fields for internal bookkeeping:
-        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId'] ?? '']);
+        $this->addElement('', ['type' => 'hidden', 'name' => '_reckey', 'value' => $this->formOptions['recId']]);
         $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'readonly' => '']);
         $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf(), 'readonly' => '']);
 
@@ -495,7 +502,7 @@ EOT;
         $elemOptions['elemInx'] = $this->elemInx;
 
         // determine $label, $name, $type and $subType:
-        list($label, $name, $type) = $this->parseOptions($elemOptions);
+        list($label, $name, $type) = $this->parseElementOptions($elemOptions);
         if ($name === null) { // this is the case if antiSpam is suppressed by edit-rec option
             return;
         }
@@ -571,7 +578,7 @@ EOT;
             case 'cancel':
             case 'reset':
                 $elem = $this->addButton('_cancel', $label);
-                if ($next = ($elemOptions['next']??false)) {
+                if ($next = ($this->formOptions['next'])) {
                     $elem->setHtmlAttribute('data-next', $next);
                 }
             break;
@@ -695,7 +702,7 @@ EOT;
             unset($this->fieldNames[$name]);
         }
 
-        // note: 'info' option handled in parseOptions()
+        // note: 'info' option handled in parseElementOptions()
     } // addElement
 
 
@@ -1037,7 +1044,7 @@ EOT;
         $this->handleUploads($dataRec);
 
         // if 'file' defined, save received data:
-        if ($this->formOptions['file']) {
+        if ($this->file) {
             $err = $this->storeSubmittedData($dataRec, $recKey);
             if ($err) {
                 $err = TransVars::getVariable($err, true);
@@ -1070,7 +1077,7 @@ EOT;
 
         // add 'continue...' if direct feedback is active:
         if ($this->showDirectFeedback) {
-            $next = $this->formOptions['next'] ?: '~page/';
+            $next = $this->formOptions['next'];
             $class = 'pfy-form-success-continue';
             if ($next === '~page/') {
                 $class .= ' pfy-form-continue-same';
@@ -1376,16 +1383,16 @@ EOT;
         if ($this->db) {
             return $this->db;
         }
-        if (!$this->formOptions['file']) {
+        if (!$this->file) {
             return false;
         }
-        $this->db = new DataSet($this->formOptions['file'], $this->formOptions['dbOptions']);
+        $this->db = new DataSet($this->file, $this->formOptions['dbOptions']);
 
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
             $pgUri = str_replace('/', '_', rtrim(PFY_PAGE_URI, '/'));
             $sessKey = "db:$pgUri:$this->formIndex:file";
-            kirby()->session()->set($sessKey, resolvePath($this->formOptions['file']));
+            kirby()->session()->set($sessKey, resolvePath($this->file));
         }
         return $this->db;
     } // openDB
@@ -1456,7 +1463,7 @@ EOT;
             $tableOptions = array_merge($tableOptions, $this->formOptions['tableOptions']);
         }
 
-        $file = resolvePath($this->formOptions['file']);
+        $file = resolvePath($this->file);
 
         $showAllFields = $tableOptions['showAllFields']??false;
         $fieldNames = $this->fieldNames;
@@ -1478,13 +1485,13 @@ EOT;
 
         $tableOptions['tableHeaders']         = $fieldNames;
         $tableOptions['masterFileRecKeyType'] = 'index';
-        $tableOptions['tdClass']              = 'pfy-scroll-hints';
+        if ($tableOptions['scrollHints']) {
+            $tableOptions['tdClass'] = 'pfy-scroll-hints';
+        }
         $tableOptions['markLocked']           = false; //true;
         $tableOptions['obfuscateRecKeys']     = true;
-        $tableOptions['shieldCellContent']    = $this->formOptions['tableOptions']['shieldCellContent']??false;
         $tableOptions['mailFrom']             = ($this->formOptions['mailFrom']??false) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']        = ($this->formOptions['confirmationEmail']??false) ?: $this->formOptions['emailFieldName']??false;
-        $tableOptions['includeTimestamp']     = ($tableOptions['includeTimestamp']??false) ?: $this->formOptions['tableOptions']['includeTimestamp']??true;
 // columnDefs
         $tableOptions = $this->setObfuscatePassword($tableOptions);
         
@@ -1494,18 +1501,55 @@ EOT;
 
 
     /**
+     * @param array $formOptions
+     * @return array
+     */
+    private function parseOptions(array $formOptions): array
+    {
+        $this->formOptions = $formOptions + FORM_OPTIONS;
+        $formOptions = &$this->formOptions;
+
+        // make sure essential options are instantiated:
+        $formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
+        $formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
+        $formOptions['next']                = $formOptions['next'] ?: FORM_OPTIONS['next'];
+
+        $this->file                         = $formOptions['file'];
+        $this->showDirectFeedback           = $formOptions['showDirectFeedback'];
+        $this->recLocking                   = $formOptions['recLocking'];
+        $this->formWrapperClass             = $formOptions['wrapperClass']? ' '.$formOptions['wrapperClass'] :'';
+        $this->sideBySide                   = $formOptions['sideBySide'];
+        if ($this->sideBySide) {
+            $this->showDirectFeedback = false;
+        }
+        $this->readonly                     = $formOptions['readonly'];
+
+        $tableOptions = $formOptions['tableOptions']??[];
+        $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
+
+        $tableOptions['file']               = $formOptions['file'];
+        $tableOptions['showData']           = $formOptions['showData'];
+        $tableOptions['editTable']          = $formOptions['editData'];
+        $this->tableOptions                 = $this->parseTableOptions($tableOptions);
+        unset($tableOptions);
+
+        unset($formOptions['tableOptions']);
+        unset($formOptions['editData']);
+        unset($formOptions['showData']);
+
+        return $formOptions;
+    } // parseOptions
+
+
+    /**
      * @param array $tableOptions
      * @return array
      */
     private function parseTableOptions(array $tableOptions): array
     {
-        $tableOptions['file'] = $this->formOptions['file']??false;
-        $tableOptions['permission'] = $tableOptions['permission']??false;
-        $tableOptions['tableButtons'] = $tableOptions['tableButtons']??false;
-        $tableOptions['serviceColumns'] = $tableOptions['serviceColumns']??false;
-        $tableOptions['editMode'] = $tableOptions['editMode']??false;
-        $showData = $tableOptions['showData'];
+        $tableOptions += TABLE_OPTIONS;
 
+        $showData = $tableOptions['showData'];
         $editTable = $tableOptions['editTable'];
         if (!$tableOptions['file'] || (!$showData && !$editTable)) {
             return $tableOptions;
@@ -1514,39 +1558,42 @@ EOT;
         // handle editTable:
         if ($editTable) {
             if ($editTable === true) {
-                $tableOptions['permission'] = 'localhost,loggedin';
                 $tableOptions['tableButtons'] = 'delete,download';
                 $tableOptions['serviceColumns'] = 'select,num';
-                $tableOptions['editMode'] = 'inpage';
+
             } elseif ($editTable === 'popup') {
-                $tableOptions['permission'] = 'localhost,loggedin';
                 $tableOptions['tableButtons'] = 'delete,download,add';
                 $tableOptions['serviceColumns'] = 'select,num,edit';
                 $tableOptions['editMode'] = 'popup';
+
             } elseif (is_array($editTable)) {
                 $tableOptions = $editTable + $tableOptions;
-                $tableOptions['permission'] = $editTable['permission'] ?? 'localhost,loggedin';
-                $tableOptions['tableButtons'] = $editTable['tableButtons'] ?? 'download';
-                $tableOptions['serviceColumns'] = $editTable['serviceColumns'] ?? 'select,num';
-                $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
+                $tableOptions['editMode'] = $tableOptions['mode'] ?? 'inpage';
             } else {
-                $tableOptions['editMode'] = $editTable['mode'] ?? 'inpage';
+                $tableOptions['editMode'] = $tableOptions['mode'] ?? 'inpage';
             }
 
         // handle showData:
         } elseif ($showData) {
             if ($showData === true) {
-                $tableOptions['permission'] = 'localhost,loggedin';
                 $tableOptions['tableButtons'] = 'download';
                 $tableOptions['serviceColumns'] = 'num';
             } else {
-                $tableOptions['permission'] = $showData['permission']??'localhost,loggedin';
+                $tableOptions['permission'] = $showData['permission']??$tableOptions['permission'];
                 $tableOptions['tableButtons'] = $showData['tableButtons']??'download';
                 $tableOptions['serviceColumns'] = $showData['serviceColumns']??'';
             }
         }
 
+        if ($tableOptions['tableTitle']) {
+            $this->tableTitle = $tableOptions['tableTitle'];
+        }
         unset($tableOptions['editTable']);
+
+        if ($this->sideBySide) {
+            $this->formOptions['showDirectFeedback'] = false;
+            $this->formOptions['outerWrapperClass'] .= ' pfy-side-by-side';
+        }
 
         return $tableOptions;
     } // parseTableOptions
@@ -1557,7 +1604,7 @@ EOT;
      * @return array
      * @throws \Exception
      */
-    private function parseOptions(array &$elemOptions): array
+    private function parseElementOptions(array &$elemOptions): array
     {
         $label = $elemOptions['label'] ?? false;
         $name = $elemOptions['name'] ?? false;
@@ -1689,7 +1736,7 @@ EOT;
         $elemOptions['autoGrow'] = $elemOptions['autoGrow']??true;
 
         return array($label, $name, $type);
-    } // parseOptions
+    } // parseElementOptions
 
 
     /**
@@ -1701,10 +1748,14 @@ EOT;
         $formInx = $this->formIndex;
 
         if ($this->addFormTableWrapper) {
-            $html .= "<div class='pfy-form-and-table-wrapper'>\n";
+            $class = $this->formOptions['outerWrapperClass'];
+            $html .= "<div class='pfy-form-and-table-wrapper $class'>\n";
         }
 
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
+        if ($this->readonly) {
+            $wrapperClass .= ' pfy-form-readonly';
+        }
         $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
         return $html;
     } // renderFormWrapperHead
@@ -1947,7 +1998,7 @@ EOT;
      */
     protected function renderDataTable(): string
     {
-        if (!(($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->formOptions['file'] && $this->isFormAdmin)) {
+        if (!(($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->file && $this->isFormAdmin)) {
             return '';
         }
 
@@ -1978,10 +2029,13 @@ EOT;
         $html = $ds ? $ds->render() : '';
         $header = '';
         if ($this->tableOptions['editMode'] !== 'popup') {
-            if ($this->tableTitle) {
-                $header .= compileMarkdown($this->tableTitle);
+            if (!$this->tableTitle) {
+                $header = '<div class="pfy-table-data-output-header">{{ pfy-table-data-output-header }}</div>';
+            } elseif (!preg_match('/\W/', $this->tableTitle)) {
+                $header = "<div class='pfy-table-data-output-header'>$this->tableTitle</div>";
             } else {
-                $header = '<p class="pfy-table-data-output-header">{{ pfy-table-data-output-header }}</p>';
+                $header = compileMarkdown($this->tableTitle);
+                $header = "<div class='pfy-table-data-output-header'>$header</div>";
             }
         }
         if ($html) {
@@ -2266,9 +2320,9 @@ EOT;
         }
 
         $nextT = date('_Y-m-d', strtotime($nextEvent['start']));
-        $file = $this->formOptions['file'];
+        $file = $this->file;
         $file = fileExt($file, true).$nextT.'.'.fileExt($file);
-        $this->formOptions['file'] = $file;
+        $this->file = $file;
 
         foreach ($nextEvent as $key => $value) {
             if (!is_scalar($value)) {

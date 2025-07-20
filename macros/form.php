@@ -33,7 +33,9 @@ return function ($args = '')
             'class' =>	['Class applied to the form element.<br>(Note: to prevent default coloring of form, override class '.
                 'without "pfy-form-colored")', 'pfy-form-colored'],
 
-            'wrapperClass' =>	['Class applied to the form wrapper.', false],
+            'wrapperClass' =>	['Class applied to the form wrapper.', null],
+
+            'outerWrapperClass' =>	['Class applied to the outer div wrapping form and table.', null],
 
             'labelWidth' =>	['Sets the label width (-> defines CSS-variable ``-\-form-label-width``)', false],
 
@@ -118,19 +120,10 @@ return function ($args = '')
 
             'recLocking' =>	['[bool] Defines, whether record-locking shall be activated while editing a record.', false],
 
-            'sortData' =>	['[bool] Defines, whether data table shall be sorted and on which column.', false],
-
             'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
                 'in output table.', false],
 
-            'tableTitle' =>	['If set, defines the title above the data-table in markdown format.<br>'.
-                'If option ``schedule`` is active, placeholders of type `%key%` are replaced with values from the '.
-                'event record', false],
-
             'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', null],
-
-            'tableFooters' =>	['(recId:\'%sum%\' or \'%count%\' or \'string\') '.
-                'Adds a footer row to the table showing counts and sums for specified columns..', false],
 
             'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
                 'empty rows up to given number. BR '.
@@ -158,6 +151,11 @@ return function ($args = '')
 
             'problemWithFormBanner' =>	['If true, a banner is added below the form, providing the '.
                 'webmaster-email to contact in case of problems with the form.', true],
+
+            'readonly' =>	['If true, adds class "pfy-form-readonly" to form wrapper class -> '.
+                '-> freezes entire form.', false],
+            'sideBySide' =>	['If true, the data table will be rendered next to the form. '.
+                'Moreover, clicking a row will present the corresponding record in the from.', false],
         ],
         'summary' => <<<EOT
 
