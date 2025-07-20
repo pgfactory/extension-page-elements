@@ -26,6 +26,7 @@ const tableHelper = {
         tableHelper.setupModifiedMonitor(table, tableInx);
         tableHelper.setupDownloadButtonHandler(table, tableInx);
       });
+      tableHelper.setupRowTriggers();
       tableHelper.setupInteractiveFilterHack();
     }
   }, // init
@@ -225,7 +226,40 @@ const tableHelper = {
   }, // setupOpenArchiveRecordsDialog
 
 
+  setupRowTriggers: function () {
+    const parent = this;
+    document.addEventListener('click', function (ev) {
+      const el = ev.target;
+      if (!el.closest('.pfy-table') || el.closest('.pfy-service-col')) {
+        return;
+      }
+      parent.handleRowTrigger(el);
+    });
+    document.addEventListener('keydown', function (ev) {
+      const el = ev.target;
+      if (el.closest('.pfy-elem-wrapper') || el.closest('.dt-input')) {
+        return;
+      }
+      domForEach('.pfy-row-selected', el => {
+        const key = ev.key;
+        if (key === 'ArrowUp') {
+          el = el.previousElementSibling;
+        } else if (key === 'ArrowDown') {
+          el = el.nextElementSibling;
+        } else {
+          return;
+        }
+        if (el) {
+          parent.handleRowTrigger(el);
+        }
+      });
+      ev.preventDefault();
+    });
+  }, // setupRowTriggers
+
+
   setupEditButtons: function (table, tableInx) {
+    const parent = this;
     const tableFormWrapper = table.closest('.pfy-form-and-table-wrapper');
     if (!tableFormWrapper) {
       return;
@@ -237,40 +271,8 @@ const tableHelper = {
     const editBtns = table.querySelectorAll('td .pfy-row-edit-button');
     if (editBtns && editBtns.length) {
       editBtns.forEach(function (editBtn) {
-        editBtn.addEventListener('click', function () {
-          // upon clicking one of the edit buttons:
-          tableHelper.disableEditButtons(table);
-          const tr = this.closest('tr');
-          const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
-
-          // get latest data for this record:
-          let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
-          if (tableHelper.formRecLocking) {
-            args += '&lock';
-            tableHelper.recLocked = true;
-          }
-          mylog('fetching data record '+recKey);
-          execAjaxPromise(args, {})
-            .then(function (data) {
-              tableHelper.enableEditButtons(table);
-              if (data.status === 'error') {
-                // handle case where rec locked by somebody else:
-                mylog('Rec locked.');
-                const row = table.querySelector('[data-reckey='+recKey+']');
-                row.classList.add('pfy-rec-locked');
-                return;
-              }
-              // popup is open, now prepare the form, inject obtained data:
-              mylog(data);
-              tableHelper.prepareEditForm(table, tableForm, recKey, data, editBtn, tableInx);
-              const input1 = tableForm.querySelector('input');
-              if (input1) {
-                input1.focus();
-              }
-            })
-            .then(function (msg) {
-            });
-          editBtn.setAttribute('aria-expanded', 'true');
+        editBtn.addEventListener('click', function (ev) {
+          parent.fillForm(ev.target, table, tableForm, tableInx, editBtn);
         });
       });
     }
@@ -279,14 +281,6 @@ const tableHelper = {
 
   setupSendButtons: function (table, tableInx) {
     const parent = this;
-    const tableFormWrapper = table.closest('.pfy-form-and-table-wrapper');
-    if (!tableFormWrapper) {
-      return;
-    }
-    const tableForm = tableFormWrapper.querySelector('.pfy-form');
-    if (!tableForm) {
-      return;
-    }
     const sendBtns = table.querySelectorAll('td .pfy-row-send-button');
     if (sendBtns && sendBtns.length) {
       sendBtns.forEach(function (sendBtn) {
@@ -410,6 +404,76 @@ const tableHelper = {
   }, // setupCancelButton
 
 
+  handleRowTrigger: function(el) {
+    const tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
+    const tableForm = tableFormWrapper.querySelector('.pfy-form');
+    const table = el.closest('table');
+    const tr = el.closest('tr');
+    if (tr && tr.classList.contains('pfy-row-selected')) {
+      pfyFormsHelper.presetForm(tableForm);
+      tr.classList.remove('pfy-row-selected');
+      return;
+    }
+
+    domForEach(table, 'tr', tr => {
+      tr.classList.remove('pfy-row-selected');
+    });
+    //    const tableInxEL = tableFormWrapper.querySelector('[name=tableinx]');
+    const tableInxEL = tableFormWrapper.querySelector('[data-tableinx]');
+    if (!tableInxEL) {
+      return;
+    }
+    const tableInx = tableInxEL.dataset.tableinx;
+    if (tr) {
+      tr.classList.add('pfy-row-selected');
+      this.fillForm(el, table, tableForm, tableInx, null);
+    }
+  }, // handleRowTrigger
+
+
+  fillForm: function (el, table, tableForm, tableInx, editBtn) {
+    // upon clicking one of the edit buttons:
+    tableHelper.disableEditButtons(table);
+    const tr = el.closest('tr');
+    const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
+
+    // get latest data for this record:
+    let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
+    if (tableHelper.formRecLocking) {
+      args += '&lock';
+      tableHelper.recLocked = true;
+    }
+    mylog('fetching data record '+recKey);
+    execAjaxPromise(args, {})
+      .then(function (data) {
+        tableHelper.enableEditButtons(table);
+        if (data.status === 'error') {
+          // handle case where rec locked by somebody else:
+          mylog('Rec locked.');
+          const row = table.querySelector('[data-reckey='+recKey+']');
+          row.classList.add('pfy-rec-locked');
+          return;
+        }
+        // popup is open, now prepare the form, inject obtained data:
+        mylog(data);
+        tableHelper.prepareEditForm(table, tableForm, recKey, data, editBtn, tableInx);
+        const formWrapperReadonly = tableForm.closest('.pfy-form-readonly');
+        if (formWrapperReadonly) {
+          formWrapperReadonly.classList.remove('pfy-form-readonly');
+          formWrapperReadonly.dataset.readonly = true;
+        }
+
+        tableForm.dataset.changed = true;
+      })
+      .then(function (msg) {
+      });
+    if (editBtn) {
+      editBtn.setAttribute('aria-expanded', 'true');
+    }
+
+  }, // fillForm
+
+
   prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
     const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     if (editbyPopupMode) {
@@ -435,7 +499,9 @@ const tableHelper = {
       tableHelper.popupForm(options, editbyPopupMode, parentForm)
         .then(function (data) {
           tableHelper.enableEditButtons(table);
-          editBtn.setAttribute('aria-expanded', 'false');
+          if (editBtn) {
+            editBtn.setAttribute('aria-expanded', 'false');
+          }
         })
    } else {
       pfyFormsHelper.presetForm(parentForm, data, recKey);

@@ -5,14 +5,17 @@ $focus-color: orange;
 .pfy-default-styling {
 
     .pfy-table-wrapper {
-        .pfy-button {
+      container-type: inline-size;
+
+      .pfy-button {
             margin-bottom: 3px;
             display: inline-block;
             height: 2em;
             font-size: 0.8em;
         }
     }
-    /* === pfy-tables  */
+
+    /* === pfy-table  */
     .pfy-table {
         border-collapse: collapse;
 
@@ -20,9 +23,12 @@ $focus-color: orange;
             vertical-align: top;
         }
         td, th {
-            padding: 0.5em 0.6em 0.2em 0.6em;
+            padding: 0;
             border: 1px solid #ddd;
             font-size: 90%;
+        }
+        th, td > div {
+          padding: 0.5em 0.6em 0.2em 0.6em;
         }
         thead th {
             background: #eee;
@@ -54,6 +60,25 @@ $focus-color: orange;
     opacity: 0.5;
   }
 
+  .pfy-row-button {
+    padding: 0.3em 0.5em;
+  }
+  .pfy-row-edit-button,
+  .pfy-row-send-button {
+    width: 2em;
+    padding: 0;
+  }
+
+  .pfy-table-header {
+    .pfy-service-col .dt-column-order {
+      display: none;
+    }
+  }
+
+  th.pfy-service-col  > div {
+      min-width: 1em;
+  }
+
 
   .pfy-interactive {
     // DataTabes messes up position of table buttons, so we try to fix it:
@@ -68,7 +93,7 @@ $focus-color: orange;
         vertical-align: top;
       }
     }
-    .pfy-service-row {
+    .pfy-service-col {
       text-align: center;
       padding: 3px 0 0 0;
       &::before,
@@ -86,7 +111,7 @@ $focus-color: orange;
         max-width: 4em;
       }
     }
-    th.pfy-service-row {
+    th.pfy-service-col {
       vertical-align: middle;
       text-align: center;
     }
@@ -134,22 +159,40 @@ $focus-color: orange;
 
 } // pfy-default-styling
 
+// === DataTables Filter widget ==============================
+.pfy-default-styling {
+  .dt-search input::placeholder {
+      opacity: 0;
+  }
+}
 #pfy.pfy-default-styling {
   .dt-search {
     margin: 0;
     input::placeholder {
       text-align: right;
       font-style: italic;
-      opacity: 0;
     }
   }
 }
 
 @media screen and (max-width: 340px) {
-  .dt-search label {
-    display: none;
-  }
-  #pfy.pfy-default-styling .dt-search input::placeholder {
+  .pfy-default-styling .dt-search {
+    label {
+      display: none;
+    }
+    input::placeholder {
       opacity: 1;
+    }
+  }
+}
+
+@container (width < 18em) {
+  .pfy-default-styling .dt-search {
+    label {
+      display: none;
+    }
+    input::placeholder {
+      opacity: 1;
+    }
   }
 }

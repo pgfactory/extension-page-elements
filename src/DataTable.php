@@ -82,6 +82,7 @@ class DataTable
     private mixed $mailFrom;
     private mixed $mailFieldName;
     private array $computedCells = [];
+    private mixed $callMaxHeight = false;
 
     /**
      * @param string|array $dataSrc
@@ -114,7 +115,7 @@ class DataTable
         }
 
         $this->tableId = ($options['tableId']??false) ?: "pfy-table-$this->inx";
-        $this->tableClass = ($options['tableClass']??false) ?: 'pfy-table';
+        $this->tableClass = ($options['tableClass']??false) ?: "pfy-table pfy-table-$this->inx";
         $this->colClasses = $options['colClasses']??[];
         $this->rowClasses = $options['rowClasses']??[];
         $this->rowIds = $options['rowIds']??[];
@@ -126,6 +127,12 @@ class DataTable
         $this->captionAbove = (($options['captionPosition']??false) ?: 'b')[0] === 'a';
         $this->interactive = $options['interactive'] ?? false;
         $this->scrollable = $options['scrollable'] ?? false;
+        if (($options['scrollHints']??null) === null) {
+            $scrollHints = false;
+        } else {
+            $scrollHints = $options['scrollHints'];
+        }
+        $this->callMaxHeight = $options['callMaxHeight'] ?? false;
         $tableButtons = $options['tableButtons'] ?? false;
         $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
         $this->showRowNumbers = $options['showRowNumbers'] ?? false; //??? obsolete?
@@ -187,8 +194,10 @@ class DataTable
 
         // table headers:
         if ($this->tableHeaders) {
-            if (!is_array($this->tableHeaders)) {
-                $this->parseArrayArg('tableHeaders');
+            if ($this->tableHeaders === true) {
+                $this->tableHeaders = array_values($this->data2Dset->elementKeys);
+            } elseif (!is_array($this->tableHeaders)) {
+                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
             }
             if ($this->includeSystemElements) {
                 $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
@@ -208,6 +217,22 @@ class DataTable
             self::$interactiveInitializee = true;
             Page::addJs('var pfyDataTable = [];');
             Assets::addAssets('JQUERY');
+        }
+
+        if ($this->callMaxHeight) {
+            $css = <<<EOT
+.pfy-table-$this->inx td > div {
+    max-height: $this->callMaxHeight;
+    overflow-y: auto;
+}
+EOT;
+            Page::addCss($css);
+            if (($options['scrollHints']??null) === null) {
+                $scrollHints = true;
+            }
+        }
+        if ($scrollHints) {
+            $this->tdClass .= ' pfy-scroll-hints';
         }
     } // __construct
 
@@ -388,13 +413,14 @@ class DataTable
                 $serviceColumns[$i] = 'pfy-row-send';
 
             } else {
-                // check whether element is defined as "Header:TableCell"
+                // check whether element is defined as "Header:TableCell",
+                //   where TableCell may contain an ":icon:"
                 if (preg_match('|^([\w\s/]+):(.*)|', $elem, $m)) {
-                    $hdr = $m[1];
+                    $hdrCell = $m[1];
                     $elem = $m[2];
-                    $serviceColumns[$i] = strtolower("pfy-row-$hdr");
+                    $serviceColumns[$i] = strtolower("pfy-row-$hdrCell");
                 } else {
-                    $hdr = false;
+                    $hdrCell = $elem;
                     $serviceColumns[$i] = 'pfy-row-'.translateToClassName($elem);
                 }
                 if (!str_contains($elem, '<')) {
@@ -405,10 +431,10 @@ class DataTable
                     $class = translateToClassName($elem);
                     $elem = "<button class='pfy-button pfy-row-button $class' type='button'$title1>$elem</button>";
                 }
-                if ($hdr) {
-                    $hdr = MdPlusHelper::renderIcon($hdr, $title);
+                if ($hdrCell) {
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, $title);
                 }
-                $this->injectColumn($elem, $hdr, isServiceCol: true);
+                $this->injectColumn($elem, $hdrCell, isServiceCol: true);
             }
             $i--;
         }
@@ -529,7 +555,7 @@ class DataTable
             }
             $i++;
             if (isset($this->serviceColArray[$i])) {
-                $class = "pfy-service-row {$this->serviceColArray[$i]}";
+                $class = "pfy-service-col {$this->serviceColArray[$i]}";
             } else {
                 if (!($class = ($this->colClasses[$i-1]??false))) {
                     $cl = ($headerKeys[$i-1]??false) ?: $elem;
@@ -843,32 +869,43 @@ EOT;
         $pageLength = '';
         $orderable = '';
         $scrollable = '';
-/* $scrollable not working, header widths unequal to body col widths
-        if ($this->scrollable) {
-            $scrollable = <<<EOT
-scrollCollapse: true, scrollY: '$this->scrollable',
+        /* $scrollable not working, header widths unequal to body col widths
+                if ($this->scrollable) {
+                    $scrollable = <<<EOT
+        scrollCollapse: true, scrollY: '$this->scrollable',
 
-EOT;
-        }
-*/
+        EOT;
+                }
+        */
         $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
         $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
-/*
-columnDefs: [
-        { targets: [0, 1], visible: true},
-        { targets: '_all', visible: false }
-    ]
- */
-        $columnDefs = <<<EOT
-
-  columnDefs: [
-        { targets: [0], width: '2em'},
-        { targets: [5], width: '9.5em'},
-//        { targets: [0, 1, 5], width: '2em'},
-    ],
-//  columns: [{ width: '2em' }, null, null, null, null, null],
-EOT;
-
+///*
+//columnDefs: [
+//        { targets: [0, 1], visible: true},
+//        { targets: '_all', visible: false }
+//    ]
+// */
+//        $columnDefs = <<<EOT
+//
+//  columnDefs: [
+//        { targets: [0], width: '2em'},
+//        { targets: [5], width: '9.5em'},
+////        { targets: [0, 1, 5], width: '2em'},
+//    ],
+////  columns: [{ width: '2em' }, null, null, null, null, null],
+//EOT;
+//
+//
+//        $js = <<<EOT
+//
+//pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
+//  language: {
+//    search: '$searchButtonLabel:',
+//    info: '_TOTAL_ $pfyDatatablesRecords'
+//  },
+//  $scrollable$order$paging$pageLength$orderable$columnDefs
+//});
+//EOT;
 
         $js = <<<EOT
 
@@ -877,19 +914,9 @@ pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
     search: '$searchButtonLabel:',
     info: '_TOTAL_ $pfyDatatablesRecords'
   },
-  $scrollable$order$paging$pageLength$orderable$columnDefs
+  $scrollable$order$paging$pageLength$orderable
 });
 EOT;
-//        $js = <<<EOT
-//
-//pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
-//  language: {
-//    search: '$searchButtonLabel:',
-//    info: '_TOTAL_ $pfyDatatablesRecords'
-//  },
-//  $scrollable$order$paging$pageLength$orderable
-//});
-//EOT;
         Page::addJsReady($js);
     } // activateInteractiveTable
 
@@ -956,7 +983,8 @@ EOT;
      */
     private function exportDownloadDocs(): string
     {
-        return $this->data2Dset->export(fileType: 'office');
+        $includeMeta = $this->includeTimestamp ? 'timestamp' : '';
+        return $this->data2Dset->export(fileType: 'office', includeMeta:$includeMeta);
     } // exportDownloadDocs
 
 

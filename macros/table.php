@@ -29,7 +29,6 @@ return function ($argStr = '')
             'dataReference' => ["If true, rec-keys (as 'data-reckey') and element-names (as 'data-elemkey') are included in table. ".
                 "If dataReference is a string, it is added to the table-wrapper div as 'data-ref'.", false],
             'interactive' => ['If true, module "Datatables" is activated, providing for interactive features such as sorting, searching etc.', false],
-            'scrollable' => ['[height]', false],
             'edit' => ['[true|{options}] Shorthand for defining table-buttons, service-columns, permissions and mode.<br>'.
                 'E.g. ``edit:{tableButtons:"delete,download,custom", serviceColumns:"select,num,custom", '.
                 'permission:"admin"}``. <br>``edit:true`` activates default options.', false],
@@ -42,6 +41,9 @@ return function ($argStr = '')
             'masterFileRecKeyType' => ['Controls under what kind of key data is stored.', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
+            'callMaxHeight' => ['(css length) If set, .', false],
+            'scrollHints' => ['(bool) If true, .', null],
+            'includeTimestamp' => ['(bool) If true, .', null],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
             'filter' => ['{name:xy, value:xy} Filters out data records not complying with given criteria.', false],
             'reversed' => ['If true, the table is presented in reversed order.', false],
