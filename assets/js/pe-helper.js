@@ -16,6 +16,52 @@ window.onload = function() {
 }
 
 
+/**
+ * Causes the browser to open a new mail window using the default mail app.
+ * options:
+ *  {
+ *    to:
+ *    subject:
+ *    body:
+ *  }
+ */
+function initiateMail(options) {
+  let to = '';
+  if (options.to??false) {
+    to = options.to;
+  }
+  let url = `mailto:${to}`;
+
+  if (options.subject??false) {
+    options.subject = encodeURI(options.subject);
+    url = appendToUrl(url, `subject=${subject}`);
+  }
+
+  if (options.body??false) {
+    options.body = encodeURI(options.body);
+    url = appendToUrl(url, `body=${options.body}`);
+  }
+
+  window.location.href = url;
+} // initiateMail
+
+
+function initiatePhoneCall(options) {
+  let to = '';
+  if (typeof options === 'string') {
+    to = options;
+  } else if (options.to??false) {
+    to = options.to;
+  }
+
+  if (to) {
+    to = to.replace(/\s/g, '');
+    window.location.href = `tel:${to}`;
+  }
+} // initiateMail
+
+
+
 function serverLog(text, logFileName) {
   let url = appendToUrl(window.location.href, '?ajax&log=' +  encodeURI(text));
   mylog('url: ' + url);
@@ -113,7 +159,7 @@ function execAjaxPromise(cmd, options, url = false) {
         resolve(json);
       });
   });
-}
+} // execAjaxPromise
 
 
 
