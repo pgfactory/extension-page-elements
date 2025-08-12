@@ -126,7 +126,7 @@ EOT;
     {
         $formOptions = [
             'action'             => self::$selfLink,
-            'showDirectFeedback' => false,
+            'showFeedbackInpage' => false,
             'class'              => 'pfy-form-colored',
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
@@ -148,9 +148,9 @@ EOT;
         $labelLoginUnPw = '{{ pfy-login-default }}';
 
         $formElements = [
-            'email'     => ['label' => '{{ pfy-login-email }}:',   'name' => 'pfy-login-email', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
-            'password'  => ['label' => '{{ pfy-login-password }}:', 'name' => 'pfy-login-password', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
-            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfy-login-code', 'info' => $infoOnCode, 'class' => 'pfy-login-code'],
+            'email'     => ['label' => '{{ pfy-login-email }}:',   'name' => 'pfyLoginEmail', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
+            'password'  => ['label' => '{{ pfy-login-password }}:', 'name' => 'pfyLoginPassword', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
+            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfyLoginCode', 'info' => $infoOnCode, 'class' => 'pfy-login-code'],
             'cancel'    => ['next' => self::$nextPage],
             'subm-unpw' => ['type' => 'submit', 'label' => '{{ pfy-login-button }}', 'class' => 'pfy-login-unpw'],
             'subm-otc'  => ['type' => 'submit', 'label' => '{{ pfy-login-pwless-button }}', 'class' => 'pfy-login-otc'],
@@ -186,7 +186,7 @@ EOT;
 
         $formOptions = [
             'action'             => self::$selfLink,
-            'showDirectFeedback' => false,
+            'showFeedbackInpage' => false,
             'callback'           => function($data) { return self::loginCallback($data); },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => $message,
