@@ -41,14 +41,21 @@ return function ($argStr = '')
             'masterFileRecKeyType' => ['Controls under what kind of key data is stored.', null],
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'showRowSelectors' => ['If true, prepends a column with checkboxes to select rows.', false],
-            'callMaxHeight' => ['(css length) If set, .', false],
+            'cellMinHeight' => ['(css length) If set, adds styling instructions for cell\'s min height.', false],
+            'cellMaxHeight' => ['(css length) If set, adds styling instructions for cell\'s max height.', false],
             'scrollHints' => ['(bool) If true, .', null],
             'includeTimestamp' => ['(bool) If true, .', null],
+            'paging' => ['If true, data is presented using paging.', false],
+            'minRows' => ['If set, table will be filled with empty lines up to the given number of rows.', false],
+            'computedCells' => ['(key=value) If set, data is .', false],
             'sort' => ['(element name) If set, data is sorted on given data element.', false],
+            'order' => ['synonum for "sort"', false],
             'filter' => ['{name:xy, value:xy} Filters out data records not complying with given criteria.', false],
             'reversed' => ['If true, the table is presented in reversed order.', false],
             'placeholderForUndefined' => ['Defines the string which will be placed in cells for which a value is missing.', '?'],
-            'export' => ['(true|filename) If set, the table data is exported to files in Xslx and Ods format.', false],        ],
+            'export' => ['(true|filename) If set, the table data is exported to files in Xslx and Ods format.', false],
+            'rowCallback' => ['(false|function-name) If set, .', false],
+            ],
         'summary' => <<<EOT
 # table()
 
@@ -83,6 +90,9 @@ EOT,
             $args['tableButtons'] = $edit['tableButtons']??'';
             $args['serviceColumns'] = $edit['serviceColumns']??'';
         }
+    }
+    if ($args['sort']) {
+        $args['order'] = $args['sort'];
     }
     if ($args['editableBy']) {
         $args['permission'] = $args['editableBy'];

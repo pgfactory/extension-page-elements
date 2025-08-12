@@ -8,6 +8,7 @@
 const tableHelper = {
   formRecLocking: false,
   recLocked: false,
+  downloadButtonInitialized: false,
 
   init: function () {
     this.formRecLocking = (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking;
@@ -15,35 +16,26 @@ const tableHelper = {
     const tables = document.querySelectorAll('.pfy-table');
     if ((typeof tables !== 'undefined') && tables.length) {
       tables.forEach(function (table) {
-        const tableInx = table.dataset.tableinx;
         tableHelper.setupPropagateCheckbox(table);
         tableHelper.setupOpenDeleteRecordsDialog(table);
         tableHelper.setupOpenCreateMailDialog(table);
         tableHelper.setupOpenArchiveRecordsDialog(table);
-        tableHelper.setupEditButtons(table, tableInx);
-        tableHelper.setupSendButtons(table, tableInx);
-        tableHelper.setupNewRecButton(table, tableInx);
-        tableHelper.setupModifiedMonitor(table, tableInx);
-        tableHelper.setupDownloadButtonHandler(table, tableInx);
+        tableHelper.setupTableButtons(table);
+
+        // row service buttons:
+        tableHelper.setupSendButtons(table);
+        const tableInx = table.dataset.tableinx;
+        // extension when called by PfyForms:
+        if (table.closest('.pfy-form-and-table-wrapper')) {
+          tableHelper.setupEditButtons(table, tableInx);
+          tableHelper.setupNewRecButton(table, tableInx);
+        }
+        tableHelper.setupRowTriggers(table);
+        tableHelper.setupViewButtons(table, tableInx);
       });
-      tableHelper.setupRowTriggers();
       tableHelper.setupInteractiveFilterHack();
     }
   }, // init
-
-
-  setupDownloadButtonHandler(table, tableInx) {
-    domForOne('.pfy-table-download-start', downloadBtn => {
-      downloadBtn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        ev.preventDefault();
-        const btnEl = ev.target.closest('.pfy-table-download-start');
-        domForOne(btnEl.parentElement, 'a', aEl => {
-          aEl.click();
-        });
-      });
-    });
-  }, // setupDownloadButtonHandler
 
 
   setupInteractiveFilterHack() {
@@ -59,51 +51,23 @@ const tableHelper = {
   }, // setupInteractiveFilterHack
 
 
-  setupModifiedMonitor(table, tableInx) {
-    if (!tableHelper.formRecLocking) {
-      return;
-    }
-    const wrapper = table.closest('.pfy-form-and-table-wrapper');
-    const form = wrapper.querySelector('.pfy-form');
-    const formInputs = form.querySelectorAll('input, textarea, select');
-    if (formInputs) {
-      formInputs.forEach(function (input) {
-        if (input.classList.contains('button')) {
-          return;
-        }
-        input.addEventListener('change', function () {
-          tableHelper.setupUnloadEvent(table, tableInx);
-        });
-      });
-    }
-  }, // setupModifiedMonitor
-
-
-  setupUnloadEvent: function(table, tableInx) {
-    if ((typeof table.dataset.unloadEventActivated !== 'undefined') && table.dataset.unloadEventActivated) {
-      return;
-    }
-    table.dataset.unloadEventActivated = true;
-    mylog('unload handler activeted (' + tableInx + ')');
-    window.addEventListener('beforeunload', (event) => {
-      tableHelper.unlockRecs(tableInx);
-    });
-  }, // setupUnloadEvent
-
-
   setupPropagateCheckbox: function (table) {
-    const hdrCheckbox = table.querySelector('thead .pfy-row-selector input[type=checkbox]');
-    if (hdrCheckbox) {
-      hdrCheckbox.addEventListener('change', function () {
-        var isChecked = this.checked;
-        const checkboxes = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]');
-        if (checkboxes.length) {
-          checkboxes.forEach(function(rowCheckbox) {
-            rowCheckbox.checked = isChecked;
-          });
-        }
+    const thead = table.querySelector('thead');
+    thead.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.pfy-row-selector')) {
+        return;
+      }
+      ev.stopImmediatePropagation();
+      let checkboxEl = ev.target;
+      if (checkboxEl.nodeName !== 'INPUT') {
+        checkboxEl = checkboxEl.querySelector('input');
+        checkboxEl.checked = !checkboxEl.checked;
+      }
+      var isChecked = checkboxEl.checked;
+      domForEach('tbody .pfy-row-selector input[type=checkbox]', rowCheckbox => {
+        rowCheckbox.checked = isChecked;
       });
-    }
+    });
   }, // setupPropagateCheckbox
 
 
@@ -148,45 +112,6 @@ const tableHelper = {
   }, // setupOpenDeleteRecordsDialog
 
 
-  setupOpenCreateMailDialog: function (table) {
-    const parent = this;
-    const wrapper = table.closest('.pfy-table-wrapper');
-    const form = wrapper.querySelector('form');
-    if (!form) {
-      return;
-    }
-    const mailButton = form.querySelector('.pfy-table-mail-open-dialog');
-    if (mailButton) {
-      mailButton.addEventListener('click', function (e) {
-        e.stopPropagation();
-        let mailAddresses = '';
-        let selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
-        if (!selected.length) {
-          // -> if none selected, include all
-          selected = table.querySelectorAll('tbody .pfy-row-selector input');
-        }
-        if (selected.length) {
-          let selector = '';
-          selected.forEach(function (el) {
-            const row = el.closest('tr');
-            el = row.querySelector('.'+mailFieldSelector);
-            if (el) {
-              const email = el.innerText;
-              mailAddresses += ',' + email;
-            }
-          });
-        }
-
-        mailAddresses = mailAddresses.replace(/^[,;]/, '');
-        mylog('MailTo: ' + mailAddresses);
-        const to = (typeof formOwnerEmail !== 'undefined') ? formOwnerEmail : 'me@domain.net';
-        const url = `mailto:${to}?bcc=${mailAddresses}`;
-        window.location.href = url;
-      });
-    }
-  }, // setupOpenCreateMailDialog
-
-
   setupOpenArchiveRecordsDialog: function (table) {
     const wrapper = table.closest('.pfy-table-wrapper');
     const form = wrapper.querySelector('form');
@@ -226,21 +151,58 @@ const tableHelper = {
   }, // setupOpenArchiveRecordsDialog
 
 
-  setupRowTriggers: function () {
+  setupOpenCreateMailDialog: function (table) {
     const parent = this;
-    document.addEventListener('click', function (ev) {
-      const el = ev.target;
-      if (!el.closest('.pfy-table') || el.closest('.pfy-service-col')) {
-        return;
+    const wrapper = table.closest('.pfy-table-wrapper');
+    const form = wrapper.querySelector('form');
+    if (!form) {
+      return;
+    }
+    const mailButton = form.querySelector('.pfy-table-mail-open-dialog');
+    if (mailButton) {
+      mailButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        let mailAddresses = '';
+        let selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
+        if (!selected.length) {
+          // -> if none selected, include all
+          selected = table.querySelectorAll('tbody .pfy-row-selector input');
+        }
+        if (selected.length) {
+          let selector = '';
+          selected.forEach(function (el) {
+            const row = el.closest('tr');
+            el = row.querySelector('.'+mailFieldSelector);
+            if (el) {
+              const email = el.innerText;
+              mailAddresses += ',' + email;
+            }
+          });
+        }
+
+        mailAddresses = mailAddresses.replace(/^[,;]/, '');
+        mylog('MailTo: ' + mailAddresses);
+        const to = (typeof formOwnerEmail !== 'undefined') ? formOwnerEmail : 'me@domain.net';
+        const url = `mailto:${to}?bcc=${mailAddresses}`;
+        window.location.href = url;
+      });
+    }
+  }, // setupOpenCreateMailDialog
+
+
+  setupRowTriggers: function (table) {
+    const parent = this;
+    const tbody = table.querySelector('tbody');
+    // handle clicks on row:
+    tbody.addEventListener('click', function (ev) {
+      if (!ev.target.closest('.pfy-service-col')) {
+        parent.handleRowTrigger(ev);
       }
-      parent.handleRowTrigger(el);
     });
-    document.addEventListener('keydown', function (ev) {
-      const el = ev.target;
-      if (el.closest('.pfy-elem-wrapper') || el.closest('.dt-input')) {
-        return;
-      }
-      domForEach('.pfy-row-selected', el => {
+
+    // if a row is selected, handle up and down cursor keys:
+    tbody.addEventListener('keydown', function (ev) {
+      domForEach(ev.target, '.pfy-row-selected', el => {
         const key = ev.key;
         if (key === 'ArrowUp') {
           el = el.previousElementSibling;
@@ -250,7 +212,7 @@ const tableHelper = {
           return;
         }
         if (el) {
-          parent.handleRowTrigger(el);
+          parent.handleRowTrigger(ev);
         }
       });
       ev.preventDefault();
@@ -272,6 +234,7 @@ const tableHelper = {
     if (editBtns && editBtns.length) {
       editBtns.forEach(function (editBtn) {
         editBtn.addEventListener('click', function (ev) {
+          ev.stopImmediatePropagation();
           parent.fillForm(ev.target, table, tableForm, tableInx, editBtn);
         });
       });
@@ -279,7 +242,71 @@ const tableHelper = {
   }, // setupEditButtons
 
 
-  setupSendButtons: function (table, tableInx) {
+  setupViewButtons: function (table, tableInx) {
+    const parent = this;
+    const templateClass = '.pfy-table-view-template-' + tableInx;
+    const viewTemplateEl = document.querySelector(templateClass);
+    if (!viewTemplateEl) {
+      return;
+    }
+    const viewBtns = table.querySelectorAll('td .pfy-row-view-button');
+    if (viewBtns && viewBtns.length) {
+      viewBtns.forEach(function (viewBtn) {
+        viewBtn.addEventListener('click', function (ev) {
+          ev.stopImmediatePropagation();
+          parent.showViewTemplate(ev.target, table, tableInx, templateClass);
+        });
+      });
+    }
+  }, // setupViewButtons
+
+
+
+  // === Table Button Handlers:
+
+  setupTableButtons: function (table) {
+    tableHelper.setupDownloadButtonHandler();
+    tableHelper.setupTableWidgetHandler(table);
+  }, // setupTableButtons
+
+
+  setupDownloadButtonHandler: function() {
+    if (this.downloadButtonInitialized) {
+      return;
+    }
+    this.downloadButtonInitialized = true;
+    domForOne('.pfy-table-download-start', downloadBtn => {
+      downloadBtn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const btnEl = ev.target.closest('.pfy-table-download-start');
+        domForOne(btnEl.parentElement, 'a', aEl => {
+          aEl.click();
+        });
+      });
+    });
+  }, // setupDownloadButtonHandler
+
+
+  setupTableWidgetHandler: function () {
+    domForEach('.pfy-table-buttons select', selectWidget => {
+      selectWidget.addEventListener('change', function (ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const selectEl = ev.target;
+        const selectedOption = selectEl.value;
+        const callback = selectEl.dataset.callback;
+        if (typeof callback === 'string' && callback && (typeof window[callback] === 'function')) {
+          window[callback](ev, selectedOption);
+        } else {
+          console.log(`table widget callback function "${callback}" missing.`);
+        }
+      });
+    });
+  }, // setupTableWidgetHandler
+
+
+  setupSendButtons: function (table) {
     const parent = this;
     const sendBtns = table.querySelectorAll('td .pfy-row-send-button');
     if (sendBtns && sendBtns.length) {
@@ -287,36 +314,21 @@ const tableHelper = {
         sendBtn.addEventListener('click', function () {
           // upon clicking one of the edit buttons:
           tableHelper.disableEditButtons(table);
-          const tr = this.closest('tr');
-          const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
-
-          let options = {
-            text: `{{ pfy-table-send-rec-popup }}`,
-            triggerSource : true,
-            closeOnBgClick: true,
-            closeButton: true,
-            buttons: 'Cancel,Continue',
-            header: `{{ pfy-table-send-rec-header }}`,
-            onContinue: parent.doSendRec,
-            callbackArg: recKey,
-            onOpen: function () {
-              setTimeout(function () {
-                const input = document.getElementById('pfy-table-send-rec-input');
-                input.focus();
-              }, 50);
-            },
-            onClose: function () {
-              parent.enableEditButtons(table);
-            },
-          };
-          options.header = `{{ pfy-table-send-rec-header }}`;
-
-          return new Promise(function(resolve, reject) {
-            options.onOk = function() {
-              resolve( true );
-            };
-            pfyPopup( options );
+          const headers = [];
+          let i = 0;
+          domForAll(table, 'th:not(.pfy-service-col)', th => {
+            let str = th.innerText + ':';
+            str = str.padEnd(6, ' ') + '\t\t';
+            headers[i++] = str;
           });
+          const tr = this.closest('tr');
+          let body = '\n\n';
+          i = 0;
+          domForAll(tr, 'td:not(.pfy-service-col) div', el => {
+            body += `${headers[i++]} ${el.innerText}\n`;
+          })
+          console.log(`send: ${body}`);
+          initiateMail({body: body});
         });
       });
     }
@@ -404,31 +416,107 @@ const tableHelper = {
   }, // setupCancelButton
 
 
-  handleRowTrigger: function(el) {
-    const tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
-    const tableForm = tableFormWrapper.querySelector('.pfy-form');
-    const table = el.closest('table');
-    const tr = el.closest('tr');
-    if (tr && tr.classList.contains('pfy-row-selected')) {
-      pfyFormsHelper.presetForm(tableForm);
-      tr.classList.remove('pfy-row-selected');
+  handleRowTrigger: async function(ev) {
+    const el = ev.target;
+    const tableWrapperEl = el.closest('.pfy-table-wrapper');
+    const rowCallback = tableWrapperEl.dataset.rowCallback;
+    if (!rowCallback) {
       return;
     }
 
-    domForEach(table, 'tr', tr => {
-      tr.classList.remove('pfy-row-selected');
-    });
-    //    const tableInxEL = tableFormWrapper.querySelector('[name=tableinx]');
-    const tableInxEL = tableFormWrapper.querySelector('[data-tableinx]');
-    if (!tableInxEL) {
+    // invoke row callback function:
+    if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
+      let res = await window[rowCallback](ev);
+      if (!res) {
+        return;
+      }
+    }
+
+    // default callback handler for tables linked with a form:
+    const tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
+    if (!tableFormWrapper) {
       return;
     }
-    const tableInx = tableInxEL.dataset.tableinx;
-    if (tr) {
-      tr.classList.add('pfy-row-selected');
-      this.fillForm(el, table, tableForm, tableInx, null);
+
+    if (pfyFormsHelper.isFormModified(tableFormWrapper)) {
+      pfyConfirm({
+        text: `{{ pfy-tableform-data-modified-warning }}`,
+      }).then(
+        () => {
+          // after confirmation:
+          this.defaultRowClickHandler(el, tableFormWrapper);
+        },
+        () => { mylog('denied');  }
+      );
+    } else {
+      this.defaultRowClickHandler(el, tableFormWrapper);
     }
   }, // handleRowTrigger
+
+//  handleRowTrigger: function(ev) {
+//    const el = ev.target;
+//    const tableWrapperEl = el.closest('.pfy-table-wrapper');
+//    const rowCallback = tableWrapperEl.dataset.rowCallback;
+//    if (!rowCallback) {
+//      return;
+//    }
+//
+//    // invoke row callback function:
+//    if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
+//      let res = window[rowCallback](ev);
+//      if (!res) {
+//        return;
+//      }
+//    }
+//
+//    // default callback handler for tables linked with a form:
+//    const tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
+//    if (!tableFormWrapper) {
+//      return;
+//    }
+//
+//    if (pfyFormsHelper.isFormModified(tableFormWrapper)) {
+//      pfyConfirm({
+//        text: `{{ pfy-tableform-data-modified-warning }}`,
+//      }).then(
+//        () => {
+//          // after confirmation:
+//          this.defaultRowClickHandler(el, tableFormWrapper);
+//        },
+//        () => { mylog('denied');  }
+//      );
+//    } else {
+//      this.defaultRowClickHandler(el, tableFormWrapper);
+//    }
+//  }, // handleRowTrigger
+
+
+  defaultRowClickHandler: function(el, tableFormWrapper) {
+    if (typeof tableFormWrapper === 'undefined') {
+      tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
+    }
+    const tableEl = el.closest('.pfy-table');
+    const tableForm = tableFormWrapper.querySelector('.pfy-form');
+    const tr = el.closest('tr');
+    if (tr && tr.classList.contains('pfy-row-selected')) {
+      pfyFormsHelper.presetForm(tableForm); // reset form
+      tr.classList.remove('pfy-row-selected');
+
+    } else {
+      domForEach(tableEl, 'tr', tr => {
+        tr.classList.remove('pfy-row-selected');
+      });
+      const tableInxEL = tableFormWrapper.querySelector('[data-tableinx]');
+      if (!tableInxEL) {
+        return;
+      }
+      const tableInx = tableInxEL.dataset.tableinx;
+      if (tr) {
+        tr.classList.add('pfy-row-selected');
+        this.fillForm(el, tableEl, tableForm, tableInx, null);
+      }
+    }
+  }, // defaultRowClickHandler
 
 
   fillForm: function (el, table, tableForm, tableInx, editBtn) {
@@ -438,40 +526,51 @@ const tableHelper = {
     const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
 
     // get latest data for this record:
-    let args = 'getRec='+recKey+'&datasrcinx='+tableInx;
-    if (tableHelper.formRecLocking) {
-      args += '&lock';
-      tableHelper.recLocked = true;
-    }
-    mylog('fetching data record '+recKey);
-    execAjaxPromise(args, {})
-      .then(function (data) {
-        tableHelper.enableEditButtons(table);
-        if (data.status === 'error') {
-          // handle case where rec locked by somebody else:
-          mylog('Rec locked.');
-          const row = table.querySelector('[data-reckey='+recKey+']');
-          row.classList.add('pfy-rec-locked');
-          return;
-        }
-        // popup is open, now prepare the form, inject obtained data:
-        mylog(data);
-        tableHelper.prepareEditForm(table, tableForm, recKey, data, editBtn, tableInx);
-        const formWrapperReadonly = tableForm.closest('.pfy-form-readonly');
-        if (formWrapperReadonly) {
-          formWrapperReadonly.classList.remove('pfy-form-readonly');
-          formWrapperReadonly.dataset.readonly = true;
-        }
+    const formInx = tableForm.querySelector('[name=_formInx]').value
+    domForOne('.pfy-form-' + formInx, form => {
+      pfyFormsHelper.fetchDataAndFillForm(form, recKey, true);
+    });
 
-        tableForm.dataset.changed = true;
-      })
-      .then(function (msg) {
-      });
-    if (editBtn) {
+    if (typeof editBtn !== 'undefined' && editBtn) {
       editBtn.setAttribute('aria-expanded', 'true');
     }
-
   }, // fillForm
+
+
+  showViewTemplate: function (el, table, tableInx, templateClass) {
+    const row = el.closest('tr');
+    let data = {};
+    let names = [];
+    let i = 0;
+    const popupTemplateSelector = '.pfy-popup-container ';
+    pfyPopup({
+      contentFrom: '.pfy-table-wrapper ' + templateClass,
+      modal: false,
+      scrollHints: false,
+      closeOnBgClick: true,
+      onOpen: () => {
+        domForEach(`.pfy-table-${tableInx} th`, el => {
+          if (el.closest('.pfy-service-col')) {
+            return;
+          }
+          names[i++] = el.dataset.elemname;
+        });
+        i = 0;
+        domForEach(row, 'td > div', el => {
+          if (el.closest('.pfy-service-col')) {
+            return;
+          }
+          data[names[i++]] = el.innerText;
+        });
+        const aaa = document.querySelector(popupTemplateSelector);
+        domForEach(popupTemplateSelector + '  td + td', tdEl => {
+          const name = tdEl.innerText.replace(/%/g, '');
+          tdEl.innerText = data[name];
+        });
+      },
+
+    });
+  }, // showViewTemplate
 
 
   prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
@@ -488,7 +587,6 @@ const tableHelper = {
           const form = document.querySelector('.pfy-popup-wrapper .pfy-form');
           if (form) {
             pfyFormsHelper.init(form);
-            pfyFormsHelper.setupCancelButtonHandler(form);
             pfyFormsHelper.presetForm(form, data, recKey);
             tableHelper.setupCancelButton(table, tableInx);
             form.removeAttribute('aria-hidden');
@@ -602,6 +700,15 @@ const tableHelper = {
     }
     pfyDataTable[tableInx].search( filterStr ).draw();
   }, // filter
+
+
+  activateDataTablesFilter: function(table, value) {
+    domForOne(table, '.dt-search input', filterEl => {
+      filterEl.value = value;
+      filterEl.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  } ,// activateDataTablesFilter
+
 
 }; // tableHelper
 

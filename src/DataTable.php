@@ -12,12 +12,14 @@ use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function \PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\isLoggedIn;
+use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\translateToClassName;
 use function \PgFactory\PageFactory\translateToIdentifier;
 use function \PgFactory\PageFactory\array_splice_assoc;
 use function \PgFactory\PageFactory\renderIcon;
 use function \PgFactory\PageFactory\fileExt;
 use function \PgFactory\PageFactory\reloadAgent;
+use function \PgFactory\PageFactory\parseArgumentStr;
 
 
 const TABLE_SUM_SYMBOL = '%sum%';
@@ -30,9 +32,62 @@ if (!function_exists('array_is_list')) {
     }
 }
 
+const PFY_TABLE_DEFAULT_OPTIONS = [
+    'masterFileRecKeyType' => 'index',
+    'tableName' => '',
+    'tableId' => '',
+    'tableClass' => '',
+    'tableWrapperClass' => '',
+    'tdClass' => '',
+    'colClasses' => [],
+    'rowIds' => [],
+    'rowClasses' => [],
+    'dataReference' => false,
+    'caption' => false,
+    'captionPosition' => 'below',
+    'markLocked' => false,
+    'obfuscateRecKeys' => false,
+    'mailFrom' => '',
+    'mailFieldName' => '',
+    'permission' => false, //'localhost,loggedin',
+    'tableTitle' => false,
+    'tableButtons' => false,
+    'serviceColumns' => false,
+    'showRowNumbers' => false,
+    'showRowSelectors' => false,
+    'computedCells' => false,
+    'translateHeaders' => false,
+    'editMode' => 'inpage',
+    'showData' => false,
+    'placeholderForUndefined' => '',
+    'cellMinHeight' => false,
+    'cellMaxHeight' => false,
+    'minRows' => false,
+    'rowCallback' => '',
+    'obfuscateRows' => false,
+    'paging' => false,
+    'order' => false,
+    'filter' => false,
+    'reversed' => false,
+    'export' => false,
+    'headers' => false,
+    'footers' => false,
+    'interactive' => false,
+    'scrollable' => false,
+    'scrollHints' => null,
+    'includeSystemElements' => false,
+    'includeSystemFields' => false,
+    'includeTimestamp' => false,
+    'announceEmptyTable' => true,
+    'showAllFields' => false,
+    'shieldCellContent' => false,
+];
+
 
 class DataTable
 {
+    private array $options;
+    private $file = false;
     private $tableData;
     private $tableHeaders;
     private bool $translateHeaders;
@@ -40,7 +95,7 @@ class DataTable
     private $tdClass;
     private $tableWrapperClass;
     private $dataReference;
-    private $tableButtons;
+    private array $tableButtons;
     public int $inx;
     private string $tableId;
     private $footers;
@@ -51,15 +106,16 @@ class DataTable
     private string $showRowNumbers;
     private mixed $showRowSelectors;
     private string $serviceColumns;
-    private array $serviceColArray = [];
     private mixed $editMode;
-    private string $sort;
+    private string $order;
+    private mixed $paging = false;
     private array|bool $filter;
     private bool $reversed;
     private $minRows;
+    private string|false $rowCallback;
     private string $export;
     private bool|string $includeSystemElements;
-    private bool $includeTimestamp;
+    private bool|null $includeTimestamp;
     private $elementLabels;
     protected $markLocked;
     protected $isTableAdmin;
@@ -67,11 +123,10 @@ class DataTable
     public bool $announceEmptyTable;
     private $archiveDb;
     private $data2Dset;
+    private array $columns = [];
     private $nRows;
     private $nCols;
     private $officeFormatAvailable = false;
-    private $columnKeys = [];
-    private $file = false;
     private array $colClasses;
     private array $rowClasses;
     private array $rowIds;
@@ -82,7 +137,9 @@ class DataTable
     private mixed $mailFrom;
     private mixed $mailFieldName;
     private array $computedCells = [];
-    private mixed $callMaxHeight = false;
+    private mixed $cellMaxHeight = false;
+    private string $nameAttr = '';
+    private string $viewTemplate = '';
 
     /**
      * @param string|array $dataSrc
@@ -93,147 +150,11 @@ class DataTable
     {
         self::$tableInx++;
         $this->inx = self::$tableInx;
+        $this->nameAttr = "row-sel-$this->inx";
 
-        if (!isset($options['headers'])) {
-            $options['headers'] = true;
-        }
-        if (is_string($dataSrc)) {
-            $this->file = $dataSrc;
-            $this->data2Dset = new Data2DSet($dataSrc, $options);
-        } elseif (is_array($dataSrc)) {
-            $this->tableData = $dataSrc;
-            $options['tableName'] = ($options['tableName']??false) ?: "table-$this->inx";
-            $this->data2Dset = new Data2DSet($dataSrc, $options);
-        }
-
-        if (isset($_GET['delete']) || isset($_GET['archive'])) {
-            // skip, if no recKeys supplied or recKeys belong to some other table:
-            if (($_POST['pfy-reckey']??false) && ($this->inx == ($_POST['tableinx']??false))) {
-                $mode = isset($_GET['delete']) ? 'delete' : 'archive';
-                $this->handleTableRequests($mode);
-            }
-        }
-
-        $this->tableId = ($options['tableId']??false) ?: "pfy-table-$this->inx";
-        $this->tableClass = ($options['tableClass']??false) ?: "pfy-table pfy-table-$this->inx";
-        $this->colClasses = $options['colClasses']??[];
-        $this->rowClasses = $options['rowClasses']??[];
-        $this->rowIds = $options['rowIds']??[];
-        $this->tdClass = $options['tdClass']??'';
-        $this->tableWrapperClass = ($options['tableWrapperClass']??false) ?: (($options['wrapperClass']??false) ?: 'pfy-table-wrapper');
-        $this->dataReference = $options['dataReference']??false; // whether to include data-elemkey and data-reckey
-        $this->footers = ($options['footers']??false) ?: ($options['footer']??false);
-        $this->caption = $options['caption']??false;
-        $this->captionAbove = (($options['captionPosition']??false) ?: 'b')[0] === 'a';
-        $this->interactive = $options['interactive'] ?? false;
-        $this->scrollable = $options['scrollable'] ?? false;
-        if (($options['scrollHints']??null) === null) {
-            $scrollHints = false;
-        } else {
-            $scrollHints = $options['scrollHints'];
-        }
-        $this->callMaxHeight = $options['callMaxHeight'] ?? false;
-        $tableButtons = $options['tableButtons'] ?? false;
-        $serviceColumns = $options['serviceColumns'] ?? false; // num,select,edit,...
-        $this->showRowNumbers = $options['showRowNumbers'] ?? false; //??? obsolete?
-        $this->showRowSelectors = $options['showRowSelectors'] ?? false;
-        if ($computedCells = $options['computedCells'] ?? '') {
-            $computedCells = explodeTrim(',', $computedCells);
-            foreach ($computedCells as $col) {
-                list($key, $value) = preg_split('/=/', $col, 2);
-                $this->computedCells[$key] = $value;
-            }
-        }
-
-        $this->tableHeaders = $options['tableHeaders'] ?? ($options['headers'] ?? false);
-        $this->translateHeaders = $options['translateHeaders'] ?? false;
-        $this->editMode = ($options['editMode']??false) ?: 'inpage';
-        $this->announceEmptyTable = $options['announceEmptyTable'] ?? true;
-        if ($this->editMode === 'popup') {
-            $this->announceEmptyTable = false;
-            $this->tableClass .= ' pfy-table-edit-popup';
-        }
-        $permission = $options['permission'] ?? false;
-
-        $this->sort = $options['sort'] ?? false;
-        $this->filter = $options['filter'] ?? false;
-        $this->reversed = $options['reversed'] ?? false;
-        $this->minRows = $options['minRows'] ?? false;
-        $this->export = $options['export'] ?? false;
-        $this->includeSystemElements = $options['includeSystemElements'] ?? false;
-        $this->includeTimestamp     = $options['includeTimestamp'] ?? false;
-        $this->markLocked = $options['markLocked'] ?? false;
-        $this->placeholderForUndefined = ($options['placeholderForUndefined']??'?');
-
-        $this->shieldCellContent = $options['shieldCellContent'] ?? false;
-
-        $this->mailFieldName = $options['mailFieldName'] ?? false;
-        $this->mailFrom = $options['mailFrom'] ?? false;
-
-        if ($permission === true) {
-            $permission = 'localhost|loggedin';
-        }
-        $this->isTableAdmin = Permission::evaluate($permission);
-        // precautions for non-privileged access: only allow download and num:
-        if (!$this->isTableAdmin) {
-            $tableButtons = str_contains($tableButtons, 'download') ? 'download' : '';
-            $serviceColumns = str_replace(['edit', 'select'],'', $serviceColumns);
-        } else {
-            $this->dataReference = true;
-        }
-
-        if (str_contains($tableButtons, 'delete') || str_contains($tableButtons, 'archive')) {
-            if (!str_contains($serviceColumns, 'select')) {
-                $serviceColumns = "select,$serviceColumns";
-            }
-            Assets::addAssets('POPUPS');
-            Assets::addAssets('TABLES');
-        }
-        $this->serviceColumns = $serviceColumns;
-        $this->tableButtons = $tableButtons;
-
-        // table headers:
-        if ($this->tableHeaders) {
-            if ($this->tableHeaders === true) {
-                $this->tableHeaders = array_values($this->data2Dset->elementKeys);
-            } elseif (!is_array($this->tableHeaders)) {
-                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
-            }
-            if ($this->includeSystemElements) {
-                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
-                $this->tableHeaders['_reckey'] = TransVars::getVariable('pfy-table-reckey-header');
-            }
-            if ($this->includeTimestamp && !isset($this->tableHeaders['_timestamp'])) {
-                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
-            }
-        }
-        // table footers:
-        if ($this->footers && !is_array($this->footers)) {
-            $this->parseArrayArg('footers');
-        }
-
-        // interactive option (=> DataTables.js):
-        if ($this->interactive && !self::$interactiveInitializee) {
-            self::$interactiveInitializee = true;
-            Page::addJs('var pfyDataTable = [];');
-            Assets::addAssets('JQUERY');
-        }
-
-        if ($this->callMaxHeight) {
-            $css = <<<EOT
-.pfy-table-$this->inx td > div {
-    max-height: $this->callMaxHeight;
-    overflow-y: auto;
-}
-EOT;
-            Page::addCss($css);
-            if (($options['scrollHints']??null) === null) {
-                $scrollHints = true;
-            }
-        }
-        if ($scrollHints) {
-            $this->tdClass .= ' pfy-scroll-hints';
-        }
+        $this->parseOptions($dataSrc, $options);
+        $this->prepareTableData();
+        $this->handleDataRequests();
     } // __construct
 
 
@@ -243,26 +164,27 @@ EOT;
      */
     public function render(): string
     {
-        $this->prepareTableData();
+        $this->prepareColumnDefs();
 
         if (isset($_GET['sendto']) && isLoggedIn()) {
             $this->sendRec($_GET['sendto']??false, $_GET['recid']??false);
         }
 
-        if (sizeof($this->tableData) < 2) {
+        if (sizeof($this->tableData) === 0) {
             if ($this->announceEmptyTable) {
                 return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
             }
         }
 
-        // inject service rows: select(delete), row-numbers, edit-buttons
-        $this->prependServiceColumns();
-
         if ($this->interactive) {
             $this->activateInteractiveTable();
         }
 
-        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass'>\n";
+        $rowCallback = $this->rowCallback ? " data-row-callback='$this->rowCallback'" : '';
+
+
+        // === Assemble Table ================================================================
+        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass'$rowCallback>\n";
         $out .= $this->renderTableButtons();
 
 
@@ -280,263 +202,22 @@ EOT;
         if ($this->tableButtons) {
             $out .= "  </form><!-- /table-form -->\n";
         }
+
+        $out .= $this->viewTemplate;
+
         $out .= "</div> <!-- /$this->tableWrapperClass -->\n\n";
         return $out;
     } // render
 
 
-
-    /**
-     * @return void
-     * @throws \Exception
-     */
-    private function prepareTableData(): void
-    {
-        if (!$this->tableData) {
-            // fetch data from datasource:
-            $this->tableData = $this->data2Dset->normalizeData(false, $this->placeholderForUndefined, $this->tableHeaders);
-
-        } else {
-            // data already exists in $this->tableData -> amend it for table output:
-            $data = [];
-            $data['_hdr'] = $this->tableHeaders;
-            foreach ($this->tableData as $dataRec) {
-                $rec = [];
-                foreach ($this->tableHeaders as $key => $value) {
-                    $rec[$key] = $this->data2Dset->normalizeDataElement($key, $dataRec[$key]??($dataRec[$value]??''));
-                }
-                $data[] = $rec;
-            }
-            $this->tableData = $data;
-        }
-        if ($this->sort) {
-            $this->sortTableData();
-        }
-        if ($this->filter) {
-            $this->filterTableData();
-        }
-    } // prepareTableData
-
-
-    /**
-     * @return void
-     */
-    private function sortTableData(): void
-    {
-        $table = $this->tableData;
-        $this->tableData = [];
-        $this->tableData['_hdr'] = array_shift($table);
-        uasort($table, function ($a,$b) {
-            return strcmp($a[$this->sort]??'', $b[$this->sort]??'');
-        });
-
-        if ($this->reversed) {
-            $table = array_reverse($table, true);
-        }
-        $this->tableData = $this->tableData + $table;
-    } // sortTableData
-
-
-    /**
-     * @return void
-     */
-    private function filterTableData(): void
-    {
-        $table = $this->tableData;
-        $this->tableData = [];
-        $this->tableData['_hdr'] = array_shift($table);
-
-        $filterElem = $this->filter['name']??false;
-        $filterValue = $this->filter['value']??false;
-        if (!$filterElem || !$filterValue) {
-            return;
-        }
-        $filterOp = $this->filter['op']??'===';
-
-        if ($filterOp === '===') {
-            $table = array_filter($table, function ($rec) use ($filterElem, $filterValue) {
-                return $rec[$filterElem] === $filterValue;
-            });
-        } else {
-            $table = array_filter($table, function ($rec) use ($filterElem, $filterValue, $filterOp) {
-                $v = $rec[$filterElem];
-                $expr = "return \"$v\" $filterOp \"$filterValue\";";
-                try {
-                    $res = eval($expr);
-                } catch (\Exception $e) {
-                    $res = false;
-                }
-                return $res;
-            });
-        }
-
-        $this->tableData = $this->tableData + $table;
-    } // filterTableData
-
-
-    /**
-     * Injects rows into data and header for delete,edit,row-numbers.
-     * @return void
-     */
-    private function prependServiceColumns(): void
-    {
-        if (!$this->serviceColumns) {
-            return;
-        }
-        $servCols = explodeTrim(',', $this->serviceColumns, true);
-        $serviceColumns = [];
-        $i = sizeof($servCols);
-        foreach (array_reverse($servCols) as $elem) {
-            if (str_starts_with($elem, 'num')) {
-                $hdrCell = TransVars::getVariable('pfy-row-number-header');
-                $this->injectColumn('pfy-row-number', $hdrCell, isServiceCol: true);
-                $serviceColumns[$i] = 'pfy-row-number';
-
-            } elseif (str_starts_with($elem, 'select')) {
-                $this->injectColumn('pfy-row-selector', isServiceCol: true);
-                $serviceColumns[$i] = 'pfy-row-selector';
-
-            } elseif (str_starts_with($elem, 'edit')) {
-                $icon = MdPlusHelper::renderIcon('edit');
-                $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-edit-header');
-                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
-                $this->injectColumn($cell, $hdrCell, isServiceCol: true);
-                $serviceColumns[$i] = 'pfy-row-edit';
-
-            } elseif (str_starts_with($elem, 'send')) {
-                $icon = MdPlusHelper::renderIcon('mail_send');
-                $cell = "<button class='pfy-button pfy-row-button pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-send-header');
-                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-send-rec-title }}');
-                $this->injectColumn($cell, $hdrCell, isServiceCol: true);
-                $serviceColumns[$i] = 'pfy-row-send';
-
-            } else {
-                // check whether element is defined as "Header:TableCell",
-                //   where TableCell may contain an ":icon:"
-                if (preg_match('|^([\w\s/]+):(.*)|', $elem, $m)) {
-                    $hdrCell = $m[1];
-                    $elem = $m[2];
-                    $serviceColumns[$i] = strtolower("pfy-row-$hdrCell");
-                } else {
-                    $hdrCell = $elem;
-                    $serviceColumns[$i] = 'pfy-row-'.translateToClassName($elem);
-                }
-                if (!str_contains($elem, '<')) {
-                    $title = $title1 = $this->parseForIcon($elem);
-                    if ($title1) {
-                        $title1 = " title='$title1'";
-                    }
-                    $class = translateToClassName($elem);
-                    $elem = "<button class='pfy-button pfy-row-button $class' type='button'$title1>$elem</button>";
-                }
-                if ($hdrCell) {
-                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, $title);
-                }
-                $this->injectColumn($elem, $hdrCell, isServiceCol: true);
-            }
-            $i--;
-        }
-
-        $this->serviceColArray = $serviceColumns;
-    } // prependServiceColumns
-
-
-    /**
-     * Icon-name may contain title attrib as "icon_name/title text..."
-     * @param string $str
-     * @return string
-     * @throws \Exception
-     */
-    private function parseForIcon(string &$str): string
-    {
-        $title = '';
-        if (str_contains($str, '/')) {
-            list($str, $title) = explode('/', $str, 2);
-        }
-        $str = MdPlusHelper::renderIcon($str);
-        return $title;
-    } // parseForIcon
-
-
-    /**
-     * Injects a new column of data into the array.
-     * Examples:
-     *     injectColumn('%row-numbers', '#')
-     *     injectColumn('%row-selectors')
-     *     injectColumn('const', 'hdr const', -1)
-     *     injectColumn(col: 3)
-     * @param int $col          target column
-     * @param mixed $newElement new element (as comma-separated-list), default is checkbox
-     * @return array
-     */
-    private function injectColumn(string $newElement = '', mixed $headElement = '', int $col = 0, $isServiceCol = false): void
-    {
-        $data = &$this->tableData;
-        $newCol = [];
-        $this->nRows = sizeof($this->tableData);
-        $fillWith = '';
-        // negative col -> count from right, -1 == last or append
-        if ($col < 0) {
-            $col = $this->nCols + $col + 1;
-        }
-        $newElemName = $headElement ?: "col-$col";
-
-        if ($isServiceCol) {
-            // case row-number:
-            if ($newElement === 'pfy-row-number') {
-                $newCol = range(0, $this->nRows - 1);
-
-            // case row-selector:
-            } elseif ($newElement === 'pfy-row-selector') {
-                $fillWith = '<input type="checkbox"%nameAttr>';
-                $headElement = '';
-                $newElemName = 'pfy-row-selector';
-
-            // case other content:
-            } elseif (is_string($newElement)) {
-                $fillWith = $newElement;
-                $newCol = [$headElement];
-            }
-        }
-
-        $newCol[0] = $headElement ?: $fillWith;
-        $newCol = array_pad($newCol, $this->nRows, $fillWith);
-
-        // fix $this->elementLabels accordingly:
-        $name = translateToIdentifier($headElement);
-        if (is_array($this->tableHeaders)) {
-            array_splice_assoc($this->tableHeaders, $col, $col, [$name => $headElement]);
-        }
-
-        $i = 0;
-        foreach ($data as $key => $rec) {
-            $newElem = str_replace('%nameAttr'," name='pfy-reckey[]' value='$key'", $newCol[$i]);
-
-            // prevent injection for empty rows:
-            if (is_numeric($key) && ($newElement !== 'pfy-row-number')) {
-                $newElem = '&nbsp;';
-            }
-
-            $newElem = [$newElemName => $newElem];
-            array_splice_assoc($rec, $col, 0, $newElem);
-            $data[$key] = $rec;
-            $i++;
-        }
-        $this->nCols++;
-    } // injectColumn
-
-
+    // === Render Table =============================================================================
     /**
      * Renders table wrapper, <table> and <thead> section
      * @return string
      */
     private function renderTableHead(): string
     {
-        $data = &$this->tableData;
         $out = "<table id='$this->tableId' class='$this->tableClass' data-tableinx='$this->inx'>\n";
-
         // caption:
         if ($this->caption) {
             $style = $this->captionAbove? '': ' style="caption-side: bottom;"'; // use style to push caption below table
@@ -545,47 +226,13 @@ EOT;
         }
 
         $out .= "  <thead>\n    <tr class='pfy-table-header pfy-row-0'>\n";
-        $headerRow = array_shift($data);
-        $headerKeys = array_keys($headerRow);
-        $this->elementLabels = [];
-        $i = 0;
-        foreach ($headerRow as $c => $elem) {
-            if ($c === '_locked') {
-                continue;
-            }
-            $i++;
-            if (isset($this->serviceColArray[$i])) {
-                $class = "pfy-service-col {$this->serviceColArray[$i]}";
-            } else {
-                if (!($class = ($this->colClasses[$i-1]??false))) {
-                    $cl = ($headerKeys[$i-1]??false) ?: $elem;
-                    $class = 'pfy-col-'.translateToClassName($cl);
-                }
-            }
-
-            // skip sub-elements starting with '_':
-            if (str_contains($c, '._')) {
-                continue;
-            }
-
-            $this->elementLabels[] = $c;
-            if ($this->translateHeaders) {
-                // original:  if (!preg_match('/[^-\w\s]/', $elem)) {
-                if ($e = TransVars::getVariable($elem)) {
-                    $elem = $e;
-                }
-            }
-            $class = "pfy-col-$i $class";
-            $this->colClasses[$i-1] = $class;
-            if (isset($this->serviceColArray[$i])) {
-                $class .= " {$this->serviceColArray[$i]}";
-            }
-            $out .= "      <th class='$class'>$elem</th>\n";
+        foreach ($this->columns as $rec) {
+            $out .= "      <th {$rec['hdrAttrib']}>{$rec['hdrContent']}</th>\n";
         }
+
         $out .= "    </tr>\n  </thead>\n";
         return $out;
     } // renderTableHead
-
 
 
     /**
@@ -594,124 +241,56 @@ EOT;
      */
     private function renderTableBody(): string
     {
-        $data = &$this->tableData;
-        $elemKeys = $this->elementLabels;
-        $tdClass = $this->tdClass? " class='$this->tdClass'": '';
+        $data = $this->tableData;
+        $placeholderForUndefined = $this->placeholderForUndefined;
+
         $out = "  <tbody>\n";
         $r = 0;
-        foreach ($data as $key => $rec) {
-            if ($this->dataReference) {
-                if ($this->rowIds[$r]??false) {
-                    $key = $this->rowIds[$r];
-                }
-                $recKey = " data-reckey='$key'";
-            } else {
-                $recKey = '';
-            }
-            $rowClass = $this->rowClasses[$r]??'';
+        foreach ($data as $recKey => $dataRec) {
             $r++;
+            $rowClass = '';
+            $out .= "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
 
-            $emptyRowClass = '';
-            // for first row: check whether data rec contains but empty elements:
-            if ($r === 1 && $this->data2Dset) {
-                $rawRec = $this->data2Dset->getRec($key);
-                if ($rawRec && is_array($rawRec)) {
-                    $isNotEmpty = (bool)array_filter($rawRec, function ($e) {
-                        if (is_string($e)) {
-                            return (bool)$e;
-                        } elseif (is_array($e)) {
-                            return array_filter($e, function ($el) {
-                                if (is_string($el)) {
-                                    return (bool)$el;
-                                } else {
-                                    return true;
-                                }
-                            });
-                        } else {
-                            return true;
-                        }
-                    });
-                    if (!$isNotEmpty) {
-                        $emptyRowClass = ' pfy-empty-row';
-                    }
+            foreach ($this->columns as $c => $def) {
+                $cell = $def['cellContent'];
+                if (($cell[0]??'') === '=') {
+                    $cell = $this->handleComputedCells($recKey, $r, $c, substr($cell,1));
+
+                } elseif (($cell[0]??'') === '$') {
+                    $elemKey = substr($cell, 1);
+                    $cell = $dataRec[$elemKey] ?? $placeholderForUndefined;
+                    $cell = "<div>$cell</div>";
+
+                } elseif ($cell === '%num') {
+                    $cell = $r;
                 }
+
+                if (str_contains($cell, '%reckey')) {
+                    $cell = str_replace('%reckey',$recKey, $cell);
+                }
+                $out .= "      <td {$def['cellAttrib']}>$cell</td>\n";
             }
 
-            // mark record if locked:
-            if ($this->markLocked) {
-                if ($rec['_locked']??false) {
-                    $rowClass = ' pfy-rec-locked';
-                }
-                unset($rec['_locked']);
-            }
-
-            $out .= "    <tr class='pfy-row-$r $rowClass$emptyRowClass'$recKey>\n";
-            $i = 0;
-            $emptyRow = '';
-            foreach ($elemKeys as $c => $k) {
-                if ($c === '_locked') {
-                    continue;
-                }
-                $i++;
-                $v = $rec[$k]??'';
-
-                // tableOptions '':
-                list($v, $data) = $this->handleComputedCells($k, $rec, $v, $data, $key);
-
-                if (is_array($v)) {
-                    if (isset($v['_'])) {
-                        $v = $v['_'];
-                    } else {
-                        $v = implode(',', $v);
-                    }
-                }
-                if ($this->colClasses[$i-1]??false) {
-                    $class = $this->colClasses[$i-1];
-                } elseif (!preg_match('/^\{\{.*}}$/', $k)) {
-                    $class = translateToClassName($k);
-                } else {
-                    $class = '';
-                }
-                $serviceRow = $this->serviceColArray[$i]??'';
-                if (!$serviceRow) {
-                    if ($this->shieldCellContent) {
-                        $v = htmlspecialchars($v);
-                    }
-                    $v = "<div$tdClass>$v</div>";
-                }
-                if ($this->dataReference && ($kk = array_search($k, $this->columnKeys))) {
-                    $elemid = " data-elemkey='$kk'";
-                } else {
-                    $elemid = '';
-                }
-                $class = $this->colClasses[$i-1];
-                $out .= "      <td class='$class'$elemid>$v</td>\n";
-                $ii = str_contains($class, 'pfy-row-number') ? '%row%' : '&nbsp;';
-                $emptyRow .= "      <td class='$class'$elemid>$ii</td>\n";
-            }
             $out .= "    </tr>\n";
         }
 
         if ($this->minRows && $r < $this->minRows) {
-            $out .= $this->fillWithEmptyRows($r, $emptyRow);
+            for ($r++; $r <= $this->minRows; $r++) {
+                $out .= "    <tr class='pfy-row-$r $rowClass pfy-empty-row'>\n";
+                foreach ($this->columns as $def) {
+                    $cell = $def['cellContent'];
+                    if ($cell === '%num') {
+                        $cell = $r;
+                    } else {
+                        $cell = '<div></div>';
+                    }
+                    $out .= "      <td {$def['cellAttrib']}>$cell</td>\n";
+                }
+            }
         }
         $out .= "  </tbody>\n";
         return $out;
     } // renderTableBody
-
-
-    private function fillWithEmptyRows(int $r, string $emptyRow):string
-    {
-        $out = '';
-        $emptyRowClass = ' pfy-empty-row';
-        for (; $r < $this->minRows; $r++) {
-            $rowClass = $this->rowClasses[$r]??'';
-            $out .= "    <tr class='pfy-row-$r $rowClass$emptyRowClass'>\n";
-            $out .= str_replace('%row%', $r+1, $emptyRow);
-            $out .= "    </tr>\n";
-        }
-        return $out;
-    } // fillWithEmptyRows
 
 
     /**
@@ -776,6 +355,175 @@ EOT;
     } // renderTableFooter
 
 
+
+
+    // === Aux Methods ================================================================================
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function prepareTableData(): void
+    {
+        if ($this->file) {
+            $this->data2Dset = new Data2DSet($this->file, $this->options);
+            $this->tableData = $this->data2Dset->data();
+
+        } elseif ($this->tableData) {
+            $this->options['tableName'] = ($this->options['tableName'] ?? false) ?: "table-$this->inx";
+            $this->data2Dset = new Data2DSet($this->tableData, $this->options);
+            $this->tableData = $this->data2Dset->normalizeData();
+        } else {
+            throw new \Exception("DataTable: either file or array required as input");
+        }
+    } // prepareTableData
+
+
+    /**
+     * @return void
+     */
+    private function prepareColumnDefs()
+    {
+        // inject service rows: select(delete), row-numbers, edit-buttons
+        $this->prepareServiceColumns();
+
+        $tdClass = $this->tdClass? " $this->tdClass": '';
+        $colHeaders = $this->tableHeaders ?: $this->data2Dset->getColHeaders();
+        $i = sizeof($this->columns) + 1;
+        foreach ($colHeaders as $key => $value) {
+            if ($this->translateHeaders) {
+                if ($v = TransVars::getVariable($value)) {
+                    $value = $v;
+                }
+            }
+            $dataElemName = "data-elemname='$key'";
+            $class = 'pfy-col-'.translateToClassName($value);
+            $class = "pfy-col-$i $class";
+
+            $cell = "\$$key";
+            if ($this->computedCells[$key]?? false) {
+                $cell = '='.$this->computedCells[$key];
+            }
+
+            $this->columns[] = [
+                'hdrContent' => $value, // -> attributes for header elements
+                'hdrAttrib' => "class='$class$tdClass' $dataElemName",
+                'cellContent' => $cell, // -> means to be replaced by data value
+                'cellAttrib' => "class='$class'",
+                'key' => $key,
+            ];
+            $i++;
+        }
+    } // prepareColumnDefs
+
+
+    /**
+     * Injects rows into data and header for delete,edit,row-numbers.
+     * @return void
+     */
+    private function prepareServiceColumns(): void
+    {
+        if (!$this->serviceColumns) {
+            return;
+        }
+        $tdClass = $this->tdClass? " $this->tdClass": '';
+        $servCols = explodeTrim(',', $this->serviceColumns, true);
+        $serviceColumns = [];
+        $i = 1;
+        foreach ($servCols as $elem) {
+            if (str_starts_with($elem, 'select')) {
+                $cell = '<input type="checkbox" name="reckey[]" value="%reckey">';
+                $hdr = '<input type="checkbox">';
+                $class = 'pfy-row-selector';
+
+            } elseif (str_starts_with($elem, 'num')) {
+                $cell = '%num';
+                $hdr = TransVars::getVariable('pfy-row-number-header');
+                $class = 'pfy-row-number';
+
+            } elseif (str_starts_with($elem, 'edit')) {
+                $icon = MdPlusHelper::renderIcon('edit');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-edit-header', varNameIfNotFound:true);
+                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
+                }
+                $hdr = $hdrCell;
+                $class = 'pfy-row-edit';
+
+            } elseif (str_starts_with($elem, 'view')) {
+                $icon = MdPlusHelper::renderIcon('eye');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-view-button' type='button' title='{{ pfy-table-view-rec-title }}'>$icon</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-view-header', varNameIfNotFound:true);
+                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-view-rec-title }}');
+                }
+                $hdr = $hdrCell;
+                $class = 'pfy-row-view';
+                $this->renderViewTemplate();
+
+            } elseif (str_starts_with($elem, 'send')) {
+                $icon = MdPlusHelper::renderIcon('mail_send');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>$icon</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-send-header');
+                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-send-rec-title }}');
+                $hdr = $hdrCell;
+                $class = 'pfy-row-send';
+
+            } else {
+                // check whether element is defined as "Header:TableCell",
+                //   where TableCell may contain an ":icon:"
+                if (preg_match('|^([\w\s/]+):(.*)|', $elem, $m)) {
+                    $hdrCell = $m[1];
+                    $cell = $m[2];
+                    $class = strtolower("pfy-row-$hdrCell");
+                } else {
+                    $hdrCell = $elem;
+                    $cell = $elem;
+                    $class = 'pfy-row-'.translateToClassName($elem);
+                }
+                if (!str_contains($cell, '<')) {
+                    $title = $title1 = $this->parseForIcon($cell);
+                    if ($title1) {
+                        $title1 = " title='$title1'";
+                    }
+                    $class = 'pfy-col-'.translateToClassName($cell);
+                    $cell = "<button class='pfy-button pfy-row-button $class' type='button'$title1>$cell</button>";
+                }
+                if ($hdrCell) {
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, $title);
+                }
+                $hdr = $hdrCell;
+            }
+            $serviceColumns[] = [
+                'hdrContent' => $hdr, // -> attributes for header elements
+                'hdrAttrib' => "class='pfy-col-$i pfy-service-col $class'",
+                'cellContent' => $cell, // -> means to be replaced by data value
+                'cellAttrib' => "class='pfy-col-$i pfy-service-col $class$tdClass'",
+            ];
+            $i++;
+        }
+
+        $this->columns = $serviceColumns;
+    } // prepareServiceColumns
+
+
+    /**
+     * Icon-name may contain title attrib as "icon_name/title text..."
+     * @param string $str
+     * @return string
+     * @throws \Exception
+     */
+    private function parseForIcon(string &$str): string
+    {
+        $title = '';
+        if (str_contains($str, '/')) {
+            list($str, $title) = explode('/', $str, 2);
+        }
+        $str = MdPlusHelper::renderIcon($str);
+        return $title;
+    } // parseForIcon
+
+
     /**
      * Renders buttons for table's buttons row: delete,new,download etc.
      * @return string
@@ -791,10 +539,18 @@ EOT;
         $out .= "  <form method='post'>\n"; // form around table for selectors
         $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
 
-        $tableButtons = explodeTrim(',', $this->tableButtons);
         $buttons = '';
-        foreach ($tableButtons as $i => $tableButton) {
-            switch ($tableButton) {
+        $i = -1;
+        foreach ($this->tableButtons as $key => $tableButton) {
+            $i++;
+            if (is_string($tableButton)) {
+                $type = $tableButton;
+                $label = $tableButton;
+            } elseif (is_array($tableButton)) {
+                $type = ($tableButton['type']??false) ? $tableButton['type'] : $key;
+                $label = ($tableButton['label']??false) ? $tableButton['label'] : $key;
+            }
+            switch ($type) {
                 case 'archive':
                     $icon = renderIcon('database');
                     $button = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
@@ -830,12 +586,17 @@ EOT;
                     $button = $this->renderTableDownloadButton();
                     break;
 
+                case 'dropdown':
+                    $button = $this->renderTableDropdownButton($tableButton, $label);
+                    break;
+
                 default:
-                    if (str_contains($tableButton, '<')) {
-                        $button = $tableButton;
+                    if (str_contains($label, '<')) {
+                        $button = $label;
                     } else {
-                        $class = translateToClassName($tableButton);
-                        $button = "<button id='pfy-table-button-$this->inx-$i' class='pfy-button pfy-button-lean $class' type='button'>$tableButton</button>";
+                        $class = translateToClassName($label);
+                        $callback = ($tableButton['callback']??false) ? " data-callback='{$tableButton['callback']}'" : '';
+                        $button = "<button id='pfy-table-button-$this->inx-$i' class='pfy-button pfy-button-lean $class' type='button'$callback>$label</button>";
                     }
             }
             $buttons .= $button."\n";
@@ -860,15 +621,43 @@ EOT;
      */
     private function activateInteractiveTable(): void
     {
-        Assets::addAssets('TABLES');
         Assets::addAssets('DATATABLES');
         $this->tableWrapperClass .= ' pfy-interactive';
+        // layout:
+        $layout = [
+            'topStart' => '',
+            'bottomStart' => 'info',
+            'bottomEnd' => '',
+        ];
 
-        $order = '';
-        $paging = 'paging: false,';
-        $pageLength = '';
+        // paging:
+        $paging = $entriesPerPageLabel = '';
+        if ($this->paging) {
+            $layout = [
+                'topStart' => 'info',
+                'bottomStart' => 'pageLength',
+                'bottomEnd' => 'paging',
+            ];
+            if (is_numeric($this->paging)) {
+                $pageLength = str_contains(',10,25,50,100,', ",$this->paging,") ? $this->paging : '10';
+                $paging = "lengthMenu: [10, 25, 50, 100],\n  pageLength: $pageLength,";
+            } elseif ($this->paging === true) {
+                $paging = "lengthMenu: [10, 25, 50, 100],";
+            } else {
+                $paging = "$this->paging,";
+            }
+
+            $entriesPerPageLabel = TransVars::getVariable('pfy-table-entries-per-page-label');
+            if ($entriesPerPageLabel) {
+                $entriesPerPageLabel = "lengthMenu: '$entriesPerPageLabel',";
+            }
+        }
         $orderable = '';
         $scrollable = '';
+        $order = '';
+        if ($this->order) {
+            $order = "order: { name: '$this->order', dir: 'asc' },\n";
+        }
         /* $scrollable not working, header widths unequal to body col widths
                 if ($this->scrollable) {
                     $scrollable = <<<EOT
@@ -879,82 +668,26 @@ EOT;
         */
         $searchButtonLabel = TransVars::getVariable('pfy-datatables-filter-label');
         $pfyDatatablesRecords = TransVars::getVariable('pfy-datatables-records');
-///*
-//columnDefs: [
-//        { targets: [0, 1], visible: true},
-//        { targets: '_all', visible: false }
-//    ]
-// */
-//        $columnDefs = <<<EOT
-//
-//  columnDefs: [
-//        { targets: [0], width: '2em'},
-//        { targets: [5], width: '9.5em'},
-////        { targets: [0, 1, 5], width: '2em'},
-//    ],
-////  columns: [{ width: '2em' }, null, null, null, null, null],
-//EOT;
-//
-//
-//        $js = <<<EOT
-//
-//pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
-//  language: {
-//    search: '$searchButtonLabel:',
-//    info: '_TOTAL_ $pfyDatatablesRecords'
-//  },
-//  $scrollable$order$paging$pageLength$orderable$columnDefs
-//});
-//EOT;
 
         $js = <<<EOT
 
 pfyDataTable[$this->inx] = new DataTable('#$this->tableId', {
   language: {
     search: '$searchButtonLabel:',
-    info: '_TOTAL_ $pfyDatatablesRecords'
+    info: '_TOTAL_ $pfyDatatablesRecords',
+    $entriesPerPageLabel
   },
-  $scrollable$order$paging$pageLength$orderable
+  layout: {
+    topStart:    '{$layout['topStart']}',
+    bottomStart: '{$layout['bottomStart']}',
+    bottomEnd:   '{$layout['bottomEnd']}',
+  },
+  $paging
+  $scrollable$order$orderable
 });
 EOT;
         Page::addJsReady($js);
     } // activateInteractiveTable
-
-
-    /**
-     * Handles requests to delete records, reloads page.
-     * @return void
-     * @throws \Exception
-     */
-    private function handleTableRequests($mode): void
-    {
-        $archiveMode = ($mode === 'archive');
-        if ($archiveMode) {
-            $archiveFile = $this->file;
-            $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
-            $this->archiveDb = new DataSet($archiveFile);
-        }
-        $keysSelected = $_POST['pfy-reckey'];
-        if ($keysSelected) {
-            if ($this->data2Dset) {
-                foreach ($keysSelected as $key) {
-                    if (strlen($key) > 4) { // skip _hdr and empty records
-                        if ($archiveMode) {
-                            $this->archive($key);
-                        } else {
-                            $this->data2Dset->remove($key);
-                        }
-                    }
-                }
-                $this->data2Dset->flush();
-            } else {
-                throw new \Exception("Error: DataTable operating in array-, not file-mode");
-            }
-        }
-        unset($_POST['pfy-reckey']);
-        $msg = TransVars::getVariable('pfy-form-rec-deleted');
-        reloadAgent(message: $msg);
-    } // handleTableRequests
 
 
     /**
@@ -965,14 +698,55 @@ EOT;
     private function renderTableDownloadButton(): string
     {
         $button = '';
-        if (DataSet::checkOfficeFormatIsAvailable()) {
+        if (Data2DSet::checkOfficeFormatIsAvailable()) {
             $url = $this->exportDownloadDocs();
+            if (!$url) {
+                return '';
+            }
             $filename = basename($url);
             $icon = renderIcon('cloud_download_alt');
             $button = "<button class='pfy-button pfy-button-lean pfy-table-download-start' role='button'>$icon</button>";
             $button .= "<a class='pfy-dispno' href='$url' download='$filename'>$icon</a>";
         }
         return $button;
+    } // renderTableDownloadButton
+
+
+    private function renderTableDropdownButton(array $tableButton, string $label): string
+    {
+        $dropdown = '';
+        $callback = ($tableButton['callback']??false) ? " data-callback='{$tableButton['callback']}'" : '';
+        $options = ($tableButton['options']??false) ? $tableButton['options'] : [];
+        $title = ($tableButton['title']??false) ? " title='{$tableButton['title']}'" : '';
+        $id = ($tableButton['id']??false) ? " id='{$tableButton['id']}'" : '';
+        if (is_string($options)) {
+            $options = explodeTrim(',', $options);
+        }
+        foreach ($options as $option) {
+            if (str_contains($option, ':')) {
+                list($value, $option) = explode(':', $option);
+            } else {
+                $value = $option;
+            }
+            $dropdown .= "  <option value='$value'>$option</option>\n";
+        }
+
+        $dropdown = <<<EOT
+<select$id class="pfy-table-buttons-select-widget" $callback$title>
+$dropdown
+</select>
+
+EOT;
+        if ($label) {
+            $dropdown = <<<EOT
+<div  class="pfy-table-buttons-select-widget">$label
+$dropdown
+</div>
+EOT;
+
+        }
+
+        return $dropdown;
     } // renderTableDownloadButton
 
 
@@ -1118,27 +892,283 @@ EOT;
      * @param mixed $key
      * @return array|void
      */
-    private function handleComputedCells(mixed $k, mixed $rec, mixed $v, array $data, mixed $key)
+    private function handleComputedCells(string  $recKey, int $r, int $c, string $cell): string
     {
-        if (in_array($k, array_keys($this->computedCells))) {
-            $instr = $this->computedCells[$k];
-            while (preg_match_all('/\$([\w.]+)/', $instr, $m)) {
-                foreach ($m[1] as $ii => $vv) {
-                    $x = $rec[$vv] ?? '';
-                    $instr = str_replace($m[0][$ii], $x, $instr);
-                }
-            }
-            if ($instr) {
-                try {
-                    $instr = "return $instr;";
-                    $v = eval($instr);
-                    $data[$key][$k] = $v;
-                } catch (\Exception $e) {
-                    exit("Error: $e");
-                }
+        $rec = $this->tableData[$recKey];
+        while (preg_match_all('/\$([\w.]+)/', $cell, $m)) {
+            foreach ($m[1] as $ii => $vv) {
+                $x = $rec[$vv] ?? '';
+                $cell = str_replace($m[0][$ii], $x, $cell);
             }
         }
-        return array($v, $data);
+        if (str_starts_with($cell, 'PHP:')) {
+            $cell = substr($cell, 4);
+            try {
+                $cell = "return $cell;";
+                $cell = eval($cell);
+            } catch (\Exception $e) {
+                exit("Error: $e");
+            }
+        }
+        return $cell;
     } // handleComputedCells
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function handleDataRequests(): void
+    {
+        if (!(isset($_GET['delete']) || isset($_GET['archive']))) {
+            return;
+        }
+        // skip, if no recKeys supplied or recKeys belong to some other table:
+        $keysSelected = $_POST['reckey'] ?? false;
+        $tableInx = $_POST['tableinx'] ?? false;
+        if (!$keysSelected || !$tableInx || (self::$tableInx != $tableInx)) {
+            return;
+        }
+        $mode = isset($_GET['delete']) ? 'delete' : 'archive';
+
+        $archiveMode = ($mode === 'archive');
+        if ($archiveMode) {
+            $archiveFile = $this->file;
+            $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
+            $this->archiveDb = new DataSet($archiveFile);
+        }
+        if ($keysSelected) {
+            if ($this->data2Dset) {
+                foreach ($keysSelected as $key) {
+                    if (strlen($key) > 4) { // skip _hdr and empty records
+                        if ($archiveMode) {
+                            $this->archive($key);
+                        } else {
+                            $this->data2Dset->remove($key);
+                        }
+                    }
+                }
+                $this->data2Dset->flush();
+                $msg = TransVars::getVariable('pfy-form-rec-deleted');
+                reloadAgent(message: $msg);
+            } else {
+                throw new \Exception("Error: DataTable operating in array-, not file-mode");
+            }
+        }
+        unset($_POST['reckey']);
+        mylog("Error: DataTable request to delete record(s) failed");
+    } // handleDataRequests
+
+
+    /**
+     * @return void
+     */
+    private function renderViewTemplate(): void
+    {
+        $viewTemplate = '';
+        foreach ($this->tableHeaders as $name => $label) {
+            $viewTemplate .= <<<EOT
+    <tr><td>$label:</td><td>\%$name\%</td></tr>
+
+EOT;
+        }
+        $viewTemplate = <<<EOT
+
+<div class="pfy-dispno">
+<div class="pfy-table-view-template pfy-table-view-template-$this->inx">
+<table>
+$viewTemplate
+</table>
+</div><!-- /pfy-table-view-template -->
+</div><!-- /pfy-dispno -->
+
+EOT;
+
+        $this->viewTemplate = $viewTemplate;
+    } // renderViewTemplate
+
+
+    // === Parse Options ===================================================================
+    /**
+     * @param array $options
+     * @param array|string $dataSrc
+     * @return void
+     * @throws \Kirby\Exception\Exception
+     */
+    private function parseOptions( array|string $dataSrc, array $options): void
+    {
+        $options = $options + PFY_TABLE_DEFAULT_OPTIONS;
+        if ($options['tableHeaders'] ?? false) {
+            throw new \Exception("Error: DataTable: arg 'tableHeaders' is deprecated");
+        }
+        $this->tableHeaders = $options['headers'] = $options['headers'] ?? true;
+
+        if (is_string($dataSrc)) {
+            $this->file = $dataSrc;
+        } elseif (is_array($dataSrc)) {
+            $this->tableData = $dataSrc;
+            $options['tableName'] = $options['tableName'] ?: "table-$this->inx";
+        }
+
+        $this->tableId = $options['tableId'] ?: "pfy-table-$this->inx";
+        $this->tableClass = $options['tableClass'] ?: "pfy-table pfy-table-$this->inx";
+        $this->colClasses = $options['colClasses'];
+        $this->rowClasses = $options['rowClasses'];
+        $this->rowIds = $options['rowIds'];
+        $this->tdClass = $options['tdClass'];
+        $this->tableWrapperClass = $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: 'pfy-table-wrapper');
+        $this->dataReference = $options['dataReference']; // whether to include data-elemkey and data-reckey
+        $this->footers = $options['footers'] ?: ($options['footer'] ?? false);
+        $this->caption = $options['caption'];
+        $this->captionAbove = ($options['captionPosition'][0] === 'a');
+        $this->interactive = $options['interactive'];
+        $this->scrollable = $options['scrollable'];
+        if ($options['scrollHints'] === null) {
+            $scrollHints = false;
+        } else {
+            $scrollHints = $options['scrollHints'];
+        }
+        $tableButtons = $options['tableButtons'];
+        if (is_string($tableButtons)) {
+            $tableButtons = parseArgumentStr($tableButtons);
+        }
+
+        $serviceColumns = $options['serviceColumns']; // num,select,edit,...
+        $this->showRowNumbers = $options['showRowNumbers']; //??? obsolete?
+        $this->showRowSelectors = $options['showRowSelectors'];
+        if ($computedCells = $options['computedCells']) {
+            if (!is_array($computedCells)) {
+                $computedCells = explodeTrim(',', $computedCells);
+                foreach ($computedCells as $col) {
+                    list($key, $value) = preg_split('/=/', $col, 2);
+                    $this->computedCells[$key] = $value;
+                }
+            } else {
+                $this->computedCells = $computedCells;
+            }
+        }
+
+        $this->translateHeaders = $options['translateHeaders'];
+        $this->announceEmptyTable = $options['announceEmptyTable'];
+        $this->editMode = $options['editMode'];
+        if ($this->editMode === 'popup') {
+            $this->announceEmptyTable = false;
+            $this->tableClass .= ' pfy-table-edit-popup';
+        }
+        $this->order = $options['order'];
+        $this->paging = $options['paging'];
+        $this->filter = $options['filter'];
+        $this->reversed = $options['reversed'];
+        $this->minRows = $options['minRows'];
+        $this->rowCallback = $options['rowCallback'];
+        if ($this->rowCallback === true) {
+            $this->rowCallback = 'true';
+        }
+        $this->export = $options['export'];
+        $this->includeSystemElements = $options['includeSystemElements'];
+        $this->includeTimestamp = $options['includeTimestamp'];
+        $this->markLocked = $options['markLocked'];
+        $this->placeholderForUndefined = $options['placeholderForUndefined'];
+
+        $this->shieldCellContent = $options['shieldCellContent'];
+
+        $this->mailFieldName = $options['mailFieldName'];
+        $this->mailFrom = $options['mailFrom'];
+
+        $permission = $options['permission'];
+        if ($permission === true) {
+            $permission = 'localhost|loggedin';
+        }
+        $this->isTableAdmin = Permission::evaluate($permission);
+        if (!$this->isTableAdmin) {
+            if (in_array('download', $tableButtons)) {
+                $tableButtons = ['download' => 'download'];
+            }
+            $serviceColumns = str_replace(['edit', 'select'], '', $serviceColumns);
+        } else {
+            $this->dataReference = true;
+        }
+
+        if (in_array('delete', $tableButtons) || in_array('archive', $tableButtons)) {
+            if (!str_contains($serviceColumns, 'select')) {
+                $serviceColumns = "select,$serviceColumns";
+            }
+            Assets::addAssets('POPUPS');
+            Assets::addAssets('TABLES');
+        } elseif ($this->interactive) {
+            Assets::addAssets('POPUPS');
+            Assets::addAssets('TABLES');
+        }
+        $this->serviceColumns = $serviceColumns;
+        $this->tableButtons = $tableButtons;
+
+        // table headers:
+        if ($this->tableHeaders) {
+            if ($this->tableHeaders === true) {
+                $tableHeaders = array_values($this->data2Dset->getColHeaders());
+                $this->tableHeaders = array_combine($tableHeaders, $tableHeaders);
+            } elseif (!is_array($this->tableHeaders)) {
+                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
+            }
+
+            if (is_numeric(array_keys($this->tableHeaders)[0])) {
+                $tableHeaders = [];
+                foreach ($this->tableHeaders as $str) {
+                    $tableHeaders[str_replace('-', '_', $str)] = $str;
+                }
+                $this->tableHeaders = $tableHeaders;
+            }
+
+            if ($this->includeSystemElements) {
+                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
+                $this->tableHeaders['_reckey'] = TransVars::getVariable('pfy-table-reckey-header');
+            }
+            if ($this->includeTimestamp && !isset($this->tableHeaders['_timestamp'])) {
+                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
+            }
+            $options['headers'] = $this->tableHeaders;
+        }
+        // table footers:
+        if ($this->footers && !is_array($this->footers)) {
+            $this->parseArrayArg('footers');
+        }
+
+        // interactive option (=> DataTables.js):
+        if ($this->interactive && !self::$interactiveInitializee) {
+            self::$interactiveInitializee = true;
+            Page::addJs('var pfyDataTable = [];');
+            Assets::addAssets('JQUERY');
+        }
+
+        // misc options:
+        if ($options['cellMinHeight']) {
+            $css = <<<EOT
+.pfy-table-$this->inx td > div {
+    min-height: {$options['cellMinHeight']};
+}
+EOT;
+            Page::addCss($css);
+            if ($options['scrollHints'] === null) {
+                $scrollHints = true;
+            }
+        }
+        if ($options['cellMaxHeight']) {
+            $css = <<<EOT
+.pfy-table-$this->inx td > div {
+    max-height: {$options['cellMaxHeight']};
+    overflow-y: auto;
+}
+EOT;
+            Page::addCss($css);
+            if ($options['scrollHints'] === null) {
+                $scrollHints = true;
+            }
+        }
+        if ($scrollHints) {
+            $this->tdClass .= ' pfy-scroll-hints';
+        }
+
+        $this->options = $options;
+    } // parseOptions
 
 } // DataTable
