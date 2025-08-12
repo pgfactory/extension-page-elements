@@ -174,7 +174,7 @@ EOT;
             'formBottom' => '',
             'editMode' => 'popup',
             'permission' => true,
-            'showDirectFeedback' => false,
+            'showFeedbackInpage' => false,
             'init' => false,
             'callback' => function ($dataRec) {
                 return $this->formCallback($dataRec);
@@ -192,30 +192,41 @@ EOT;
             ];
         }
 
-        // if category selector is missing, inject it automatically based on categories defined for the calendar:
-        if (!isset($formFields['category'])) {
-            $categoryField = $this->categories? ['type' => 'dropdown', 'label' => '{{ pfy-cal-category-label }}:', 'options' => $this->categories] : false;
-            if (isset($formFields['allday'])) {
-                $new = [];
-                foreach ($formFields as $key => $field) {
-                    $new[$key] = $formFields[$key];
-                    if ($key === 'allday') {
-                        $new['category'] = $categoryField;
-                    }
-                }
-                $formFields = $new;
-            } else {
-                $formFields = ['category' => $categoryField] + $formFields;
-            }
-        }
+// with PHP 8.4 available:
+//        $eventPresent = array_find($formFields, function ($e) {
+//            return $e['type'] === 'event';
+//        });
+        $eventPresent = in_array(true, array_values(array_map(function ($e) {
+            return ($e['type']??false) === 'event';
+        }, $formFields)));
 
-        // 'defaultDuration' is synonym for 'defaultEventDuration':
-        if (($formFields['Event']['defaultDuration']??false) !== false) {
-            $formFields['Event']['defaultEventDuration'] = $formFields['Event']['defaultDuration'];
-        }
-        // if event field has no defaultEventDuration defined, use the one from general options:
-        if (($formFields['Event']['defaultEventDuration']??false) === false) {
-            $formFields['Event']['defaultEventDuration'] = $this->defaultEventDuration;
+        if (!$eventPresent) {
+            $formFields['Event']['type'] = 'event';
+            // if category selector is missing, inject it automatically based on categories defined for the calendar:
+            if (!isset($formFields['category'])) {
+                $categoryField = $this->categories ? ['type' => 'dropdown', 'label' => '{{ pfy-cal-category-label }}:', 'options' => $this->categories] : false;
+                if (isset($formFields['allday'])) {
+                    $new = [];
+                    foreach ($formFields as $key => $field) {
+                        $new[$key] = $formFields[$key];
+                        if ($key === 'allday') {
+                            $new['category'] = $categoryField;
+                        }
+                    }
+                    $formFields = $new;
+                } else {
+                    $formFields = ['category' => $categoryField] + $formFields;
+                }
+            }
+
+            // 'defaultDuration' is synonym for 'defaultEventDuration':
+            if (($formFields['Event']['defaultDuration'] ?? false) !== false) {
+                $formFields['Event']['defaultEventDuration'] = $formFields['Event']['defaultDuration'];
+            }
+            // if event field has no defaultEventDuration defined, use the one from general options:
+            if (($formFields['Event']['defaultEventDuration'] ?? false) === false) {
+                $formFields['Event']['defaultEventDuration'] = $this->defaultEventDuration;
+            }
         }
 
         // add generic fields, if not defined yet:
@@ -266,7 +277,7 @@ EOT;
                     $res = [
                         'html' => '{{ pfy-cal-event-in-the-past }}',
                         'continueEval' => false,
-                        'showDirectFeedback' => false
+                        'showFeedbackInpage' => false
                     ];
 
                 } elseif ($start < time()) {
@@ -276,14 +287,14 @@ EOT;
                         $res = [
                             'html' => '{{ pfy-cal-event-start-in-the-past }}',
                             'continueEval' => true,
-                            'showDirectFeedback' => false,
+                            'showFeedbackInpage' => false,
                             'dataRec' => $dataRec,
                         ];
                     } else {
                         $res = [
                             'html' => '{{ pfy-cal-event-start-in-the-past }}',
                             'continueEval' => false,
-                            'showDirectFeedback' => false,
+                            'showFeedbackInpage' => false,
                         ];
                     }
                 }
@@ -292,7 +303,7 @@ EOT;
             $res = [
                 'html' => '{{ pfy-cal-insufficient-permission }}',
                 'continueEval' => false,
-                'showDirectFeedback' => false
+                'showFeedbackInpage' => false
             ];
         }
 
@@ -313,7 +324,7 @@ EOT;
             $res = [
                 'html' => '{{ pfy-cal-end-before-start }}',
                 'continueEval' => false,
-                'showDirectFeedback' => false
+                'showFeedbackInpage' => false
             ];
         }
 
@@ -323,7 +334,7 @@ EOT;
             $res = [
                 'html' => '',
                 'continueEval' => true,
-                'showDirectFeedback' => false,
+                'showFeedbackInpage' => false,
                 'dataRec' => $dataRec,
             ];
         }

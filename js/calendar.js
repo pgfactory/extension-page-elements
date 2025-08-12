@@ -555,7 +555,9 @@ PfyCalendar.prototype.presetForm = function(form1, recKey) {
       }
       pfyFormsHelper.presetForm(form, data, recKey);
       const categoryElem = form.querySelector('select[name=category]');
-      parent.updateCategoryClass(categoryElem);
+      if (categoryElem) {
+        parent.updateCategoryClass(categoryElem);
+      }
 
       const popup = document.querySelector('.pfy-popup-wrapper');
       popup.style.opacity = 1;
