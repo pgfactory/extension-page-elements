@@ -66,17 +66,30 @@ var pfyReveal = {
   }, // setupEventHandler
 
 
-  toggle: function(revealContainer, revealController) {
+  toggle: function(revealController) {
     var state = !revealController.checked;
     if (state) {
-      pfyReveal.unreveal(revealContainer, revealController);
+      pfyReveal.unreveal(revealController);
     } else {
-      pfyReveal.reveal(revealContainer, revealController);
+      pfyReveal.reveal(revealController);
     }
   }, // toggle
 
 
-  reveal: function(revealContainer, revealController) {
+  reveal: function(revealController) {
+    if (revealController.tagName !== 'INPUT') {
+      revealController.querySelector('input');
+      if (revealController.tagName !== 'INPUT') {
+        console.log('Error: revealController not an INPUT element ' + revealController);
+      }
+    }
+
+    const revealContainer = document.querySelector(revealController.getAttribute('data-reveal-target'));
+    if (!revealContainer) {
+      return;
+    }
+
+
     var target = revealContainer.querySelector('.pfy-reveal-container-inner');
 
     const container = revealContainer.closest('.pfy-reveal-container');
@@ -91,6 +104,7 @@ var pfyReveal = {
       revealContainer.classList.add('pfy-elem-revealed');
       pfyReveal.animate(target, 'marginTop', 0, pfyReveal.transitionTime);
       revealController.setAttribute('aria-expanded', 'true');
+      revealController.checked = true;
       if (revealController) {
         revealController.parentNode.classList.add('pfy-target-revealed');
       }
@@ -100,7 +114,19 @@ var pfyReveal = {
   }, // reveal
 
 
-  unreveal: function(revealContainer, revealController) {
+  unreveal: function(revealController) {
+    if (revealController.tagName !== 'INPUT') {
+      revealController.querySelector('input');
+      if (revealController.tagName !== 'INPUT') {
+        console.log('Error: unreveal revealController not an INPUT element ' + revealController);
+      }
+    }
+
+    const revealContainer = document.querySelector(revealController.getAttribute('data-reveal-target'));
+    if (!revealContainer) {
+      return;
+    }
+
     var target = revealContainer.querySelector('.pfy-reveal-container-inner');
 
     const container = revealContainer.closest('.pfy-reveal-container');
@@ -116,10 +142,12 @@ var pfyReveal = {
       revealController.setAttribute('aria-expanded', 'false');
       revealController.parentNode.classList.remove('pfy-target-revealed');
       target.style.display = 'none';
+      revealController.checked = false;
     }, pfyReveal.transitionTime);
 
     pfyReveal.disableFocus(revealContainer);
   }, // unreveal
+
 
 
   enableFocus: function(container) {
@@ -172,12 +200,7 @@ function pfyRevealPanel(arg)
   if (!wrapper) {
     return;
   }
-  const revealTargetStr = controller.getAttribute('data-reveal-target');
-  const revealTarget = document.querySelector(revealTargetStr);
-  if (!revealTarget) {
-    return;
-  }
-  pfyReveal.reveal(revealTarget, controller);
+  pfyReveal.reveal(controller);
 } // pfyRevealPanel
 
 
