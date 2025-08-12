@@ -31,7 +31,6 @@ class XY {
 } // class
 */
 
-//var currentlyOpenPopup = false;
 var globalTriggersInitialized = false;
 var popupInstance = 0;
 
@@ -62,7 +61,7 @@ function pfyPopup( options ) {
 
     this.contentFrom = (typeof options.contentFrom !== 'undefined' && options.contentFrom) ? options.contentFrom : ''; // contentFrom synonyme for contentRef
 
-    this.modal  = (typeof options.modal !== 'undefined' && options.modal)? options.modal : true;
+    this.modal  = (typeof options.modal !== 'undefined')? options.modal : true;
 
     this.header  = (typeof options.header !== 'undefined' && options.header)? options.header : false;
     if ((this.header === '') || (this.header === true)) {
@@ -77,11 +76,8 @@ function pfyPopup( options ) {
     this.trigger = (typeof options.triggerSource !== 'undefined' && options.triggerSource) ? options.triggerSource : this.trigger;
     this.triggerEvent = (typeof options.triggerEvent !== 'undefined' && options.triggerEvent) ? options.triggerEvent : 'click';
     this.anker = (typeof options.anker !== 'undefined' && options.anker) ? options.anker : 'body';
-    if (typeof options.closeOnBgClick === 'undefined') {
-      this.closeOnBgClick = true;
-    } else {
-      this.closeOnBgClick = options.closeOnBgClick;
-    }
+    this.closeOnBgClick = (typeof options.closeOnBgClick !== 'undefined') ? options.closeOnBgClick : true;
+
     if (typeof options.closeButton !== 'undefined') {
       this.closeButton = options.closeButton;
     } else {
@@ -167,15 +163,13 @@ function pfyPopup( options ) {
     document.addEventListener('click', function (ev) {
       const target = ev.target;
 
-//      if (target.closest('.pfy-popup-close-button') || target.closest('.pfy-popup-btn-cancel')) {
       if (target.closest('.pfy-popup-close-button')) {
         parent.close(target);
 
       } else if (target.closest('.pfy-popup-buttons')) {
-//      } else if (target.closest('.pfy-popup-buttons button')) {
         parent.handleButtonTriggers(target);
 
-      } else if (target.closest('.pfy-close-on-bg-click') && !target.closest('.pfy-popup-wrapper')) {
+      } else if (document.querySelector('.pfy-close-on-bg-click')) {
         parent.close(target);
       }
     });
@@ -194,7 +188,6 @@ function pfyPopup( options ) {
       // === ESC:
       if (key === 'Escape') {
         if (parent.onCancel) {
-//        if (parent.onCancel && document.querySelectorAll('.pfy-popup-btn-cancel').length) {
           parent.inihibitClosing = !executeCallback(parent.onCancel);
 
         } else if (parent.onClose && document.querySelectorAll('.pfy-popup-btn-close').length) {
@@ -507,7 +500,7 @@ function pfyPopup( options ) {
     this.renderButtons();
     const popup = this.renderContent();
     popup.parentElement.removeAttribute('style');
-    popup.style.display = 'initial';
+    popup.style.display = 'block';
     popup.style.opacity = this.initialOpacity;
     this.popup = popup;
 
@@ -552,10 +545,10 @@ function pfyPopup( options ) {
 
 
   this.close = function (el) {
-    if (typeof el === 'undefined') {
+    if (typeof el === 'undefined' || el === document.body) {
       const parent = this;
       domForEach('.pfy-popup-bg', function (popupBg) {
-        mylog('closing all popups');
+        //mylog('closing all popups');
         parent._close(popupBg);
       });
 
@@ -685,7 +678,6 @@ function pfyPopupPromise( options ) {
       };
 
       pfyPopup( options );
-//      currentlyOpenPopup = pfyPopup( options );
     });
 } // pfyPopupPromise
 
@@ -749,7 +741,6 @@ function pfyAlert( options ) {
         resolve( true );
       };
       pfyPopup( options );
-//    currentlyOpenPopup = pfyPopup( options );
     });
 } // pfyAlert
 
