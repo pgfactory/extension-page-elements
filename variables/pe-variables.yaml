@@ -48,6 +48,10 @@ pfy-table-edit-rec-title:
   de: 'Diesen Datensatz bearbeiten'
   _:  'Edit this data record'
 
+pfy-table-view-rec-title:
+  de: 'Diesen Datensatz anzeigen'
+  _:  'Show this data record'
+
 pfy-table-send-rec-title:
   de: 'Diesen Datensatz per E-Mail versenden'
   _:  'Send this data record by e-mail'
@@ -101,6 +105,8 @@ pfy-row-send-header: ':mail_send:'
 
 pfy-row-edit-header: ':edit:'
 
+pfy-row-view-header: ':eye:'
+
 pfy-table-edit-rec-popup-header:
   de: 'Datensatz bearbeiten'
   _:  'Edit Data Record'
@@ -117,6 +123,11 @@ pfy-table-timestamp-header:
   de: Zeitstempel
   _:  Timestamp
 
+pfy-tableform-data-modified-warning:
+  de: 'Daten wurden bereits eingegeben.<br>Wenn Sie forfahren, werden diese Eingaben überschrieben.'
+  _:  'Data has been entered into the for.<br>If you continue that data will be overwritten.'
+
+
 # Popups
 pfy-confirm-header:
   de: Bestätigen
@@ -126,7 +137,13 @@ pfy-alert-header:
   de: Achtung
   _:  Attention
 
+pfy-form-rec-deleted:
+  de: Datensatz bzw. Datenätze wurden gelöscht
+  _:  Datarecord(s) have been deleted.
 
+pfy-table-entries-per-page-label:
+  de: '_MENU_ Datensätze pro Seite'
+  _:  '_MENU_ Entries per page'
 
 
 #pfy-table-send-rec:
