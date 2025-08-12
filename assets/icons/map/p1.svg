@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone="no" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" width="21px" height="21px" viewBox="0,0,21,21">
+<style type="text/css">
+<![CDATA[
+.buttonFillP1 { fill:url(#buttonP1) }
+.buttonStrokeP1 { fill:none; stroke:#900; stroke-width:1 }
+.fg { fill:white }
+g { fill-rule:nonzero }
+path { fill-rule:nonzero }
+]]>
+</style>
+<defs>
+<g id="button"><circle class="buttonFillP1" cx="10.5" cy="10.5" r="10.5"/></g>
+<linearGradient id="buttonP1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#900" /><stop offset="35%" style="stop-color:#f00" /><stop offset="100%" style="stop-color:#ff7272" /></linearGradient>
+<use id="p1" xlink:href="#star" />
+<path transform="scale(1.2) translate(-1.5,-2)" id="star" d="M6.287,16 L16,8.596 h-12 L13.713,16 10,4 z" class="fg"/>
+</defs>
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg">
+<use xlink:href="#button"/>
+<use transform="scale(1.117647) translate(-1,-1)" xlink:href="#p1" />
+</svg>
+</svg>
