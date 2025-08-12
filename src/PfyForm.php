@@ -128,6 +128,7 @@ class PfyForm extends Form
     protected bool $showDirectFeedback = true;
     protected mixed $formResponse = '';
     protected  bool $isFormAdmin = false;
+    protected  bool $showTable = false;
     protected bool $showForm = true;
     private static bool $initialized = false;
     private static array $scheduleRecs = [];
@@ -153,7 +154,7 @@ class PfyForm extends Form
         if ($this->recLocking) {
             Page::addJs('const pfyFormRecLocking = true;');
         }
-        if ($this->tableOptions['tableButtons'] || $this->tableOptions['serviceColumns'] || $this->sideBySide) {
+        if ($this->showTable) {
             $this->addFormTableWrapper = true;
             $permissionQuery = $this->tableOptions['permission'];
             $this->isFormAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
@@ -1547,6 +1548,10 @@ EOT;
      */
     private function parseTableOptions(array $tableOptions): array
     {
+        // determine whether to show the data table at all:
+        $this->showTable = $tableOptions['showData'] || $tableOptions['editTable'];
+
+        // get standard options for elements that are not defined:
         $tableOptions += TABLE_OPTIONS;
 
         $showData = $tableOptions['showData'];
@@ -1998,7 +2003,7 @@ EOT;
      */
     protected function renderDataTable(): string
     {
-        if (!(($this->tableOptions['editMode'] || $this->tableOptions['showData']) && $this->file && $this->isFormAdmin)) {
+        if (!($this->showTable && $this->file && $this->isFormAdmin)) {
             return '';
         }
 
