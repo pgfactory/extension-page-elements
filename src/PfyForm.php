@@ -2786,6 +2786,8 @@ EOT;
      */
     private function parseTableOptions(array $tableOptions): array
     {
+        $this->showTable = true;
+
         $tableOptions += PFY_FORM_OPTIONS['tableOptions'];
         if (!isset($tableOptions['permission'])) {
             $tableOptions['permission'] = 'loggedin|localhost';
