@@ -19,7 +19,7 @@ class PfyFormSplitSyntax extends PfyForm
 
         $html = "\n\n<!-- === pfy form widget === -->\n";
 
-        $this->handleReceivedData();
+        $this->__processReceivedData();
 
         // check for form issues: deadlinePassed and maxCountExceeded:
         $formIssueResponse = '';
@@ -35,7 +35,7 @@ class PfyFormSplitSyntax extends PfyForm
             }
         }
 
-        if (!$this->showForm && $this->showDirectFeedback) {
+        if (!$this->showForm && $this->showFeedbackInpage) {
             // normal case after data received -> show response, hide form:
             $html .= $formIssueResponse.$this->formResponse;
             $this->injectNoShowCssRule();
@@ -43,8 +43,8 @@ class PfyFormSplitSyntax extends PfyForm
 
         } else {
             // check for data-received feedback:
-            if (!$this->showDirectFeedback && $this->formResponse) {
-                // no showDirectFeedback -> send feedback via banner:
+            if (!$this->showFeedbackInpage && $this->formResponse) {
+                // no showFeedbackInpage -> send feedback via banner:
                 reloadAgent(message: strip_tags($this->formResponse));
             }
             // normal case when no data-received and/or form-issue encountered:
@@ -82,6 +82,12 @@ class PfyFormSplitSyntax extends PfyForm
         //   = false: this is the very first run -> render form head
         //   = true:  all elements have been rendered -> render form tail
         //   = int:   index of next element to be rendered
+
+        $this->formDataRec = [];
+        if ($this->keepSubmittedDataInForm) {
+            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", []);
+        }
+
         if ($this->lastRendered === false) {
             $this->lastRendered = 0;
             if (!$this->showForm) {
@@ -94,7 +100,10 @@ class PfyFormSplitSyntax extends PfyForm
             $i = $this->lastRendered + 1;
         }
 
-        $names = array_keys($this->formElements);
+        $names = array_map(function($e) {
+            return $e['name'];
+        }, $this->formElements);
+        $names = array_values($names);
         $lastElemInx = sizeof($names) - 1;
 
         // determine which pieces to render next:
@@ -122,6 +131,9 @@ class PfyFormSplitSyntax extends PfyForm
         // render elements of specified piece:  from $i to $upTo
         if ($this->showForm) {
             for (; $i <= $upTo; $i++) {
+                if (!isset($names[$i])) {
+                    throw new \Exception("Split-Form element unknown: '$uptoWhich'");
+                }
                 $name = $names[$i];
                 $html .= $this->renderFormElement($name);
             }

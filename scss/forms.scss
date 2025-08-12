@@ -73,6 +73,25 @@ $formRevealContainerBorder: var(--pfy-form-reveal-container-border, var(--pfy-fo
 $formRevealPadding:         var(--pfy-form-reveal-padding);
 
 .pfy-default-styling {
+  .pfy-form-and-table-wrapper,
+  .pfy-form-wrapper {
+    .pfy-form-button {
+      opacity: 0.6;
+    }
+    &.pfy-form-is-preset {
+      .pfy-cancel,
+      .pfy-form-button:not(.pfy-submit) {
+        opacity: 1;
+      }
+    }
+    &.pfy-form-is-modified {
+      .pfy-form-button {
+        opacity: 1;
+      }
+    }
+  } // pfy-form-wrapper
+
+
   .pfy-form-colored {
     --pfy-form-input-color-default:             inherit;
     --pfy-form-error-color-base:                20deg, 100%; // red
@@ -122,6 +141,11 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       width: 100%;
     }
   }
+  .pfy-select {
+    .pfy-input-wrapper {
+      height: 2.8em;
+    }
+  }
 
   .pfy-password .pfy-input-wrapper {
     position: relative;
@@ -163,6 +187,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
   .pfy-input-wrapper {
+    position: relative;
     width: calc(100% - #{$labelWidth} - 0.4em);
     max-width: $formWidth;
 
@@ -289,6 +314,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   // === side-by-side ============================================
+  .pfy-side-by-side-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin: -2.5em 0 0.5em;
+  }
+
   .pfy-side-by-side {
     &.pfy-form-and-table-wrapper {
       display: flex;
@@ -299,12 +330,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       .pfy-table-data-output-wrapper {
         flex: 1 0 auto;
         overflow-x: auto;
-        width: calc(100% - 26em);
+        width: calc(100% - var(--pfy-side-by-side-form-width, 26em));
       }
     }
 
     .pfy-form-wrapper {
-      flex: 0 0 26em;
+      flex: 0 0 var(--pfy-side-by-side-form-width, 26em);
       outline: 1px dotted gray;
       outline-offset: 3px;
     }
@@ -319,12 +350,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       }
     }
 
-    .pfy-row-selected {
-      &, td {
-        background: #f8f8f8;
-      }
-    }
-    .pfy-form-readonly .pfy-form {
+    .pfy-form-readonly {
       input, textarea, select {
         pointer-events: none;
         background: white;
@@ -333,10 +359,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       .pfy-cancel, .pfy-submit {
         opacity: 0;
       }
-    }
-
-    .pfy-table-data-output-header {
-      display: none;
     }
 
     td:not(.pfy-service-col) {
@@ -357,6 +379,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
   .pfy-table-edit-popup .pfy-table-data-output-wrapper {
     margin-top: 0;
+  }
+
+  .pfy-row-selected {
+    &, td {
+      background: #f8f8f8;
+    }
   }
 
   .pfy-label-wrapper {
@@ -450,7 +478,8 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     background: #fee;
   }
 
-  .pfy-elem-wrapper.button {
+  .pfy-elem-wrapper.pfy-form-buttons {
+//  .pfy-elem-wrapper.button {
     text-align: right;
     .pfy-label-wrapper {
       display: none;
@@ -640,7 +669,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     padding: 0;
   }
 
-  .pfy-elem-wrapper.pfy-submit {
+  .pfy-elem-wrapper.pfy-form-buttons {
     .pfy-input-wrapper {
       width: 100%;
       max-width: 100%;

@@ -11,7 +11,7 @@ const pfyFormsHelper = {
 
   init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
-      pfyFormsHelper.initForm(forms, setFocus);
+      this.initForm(forms, setFocus);
 
     // form undefined:
     } else {
@@ -48,12 +48,12 @@ const pfyFormsHelper = {
   initForm(form, setFocus) {
     if (!this.formInitialized) {
       this.setupTriggers();
+      this.setupRevealHandlers();
       this.formInitialized = true;
-      this.revealHandlers();
       //mylog('forms initialized');
     }
-    pfyFormsHelper.handleErrorInForm(form);
-    pfyFormsHelper.presetForm(form);
+    this.handleErrorInForm(form);
+    this.presetForm(form);
 
     if (typeof setFocus !== 'undefined') {
       if (form.closest('.pfy-form-readonly')) {
@@ -72,34 +72,70 @@ const pfyFormsHelper = {
     const parent = this;
     document.body.addEventListener('click',  (ev) => {
       parent.cancelButtonHandler(ev);
+      parent.newrecButtonHandler(ev);
       parent.showPwHandler(ev);
       parent.handleFrozenWindow(ev);
+      parent.handleSideBySideButtons(ev);
     });
 
     document.body.addEventListener('submit',  (ev) => {
+      if (!ev.target.closest('.pfy-form-is-modified')) {
+        console.log('form unchanged - skipping submit');
+        ev.preventDefault();
+        return;
+      }
       parent.submitHandler(ev);
     });
 
     document.body.addEventListener('change',  (ev) => {
-      parent.setupModifiedMonitor(ev);
-      parent.categoryChangeMonitor(ev);
+      parent.modifyMonitorHandler(ev);
+      parent.categoryChangeMonitorHandler(ev);
       parent.revealHandler(ev.target);
       parent.repetitionChangeHandler(ev);
     });
 
     document.addEventListener('keydown', (ev) => {
+      parent.modifyMonitorHandler(ev);
       parent.checkFormTimeout(ev);
     });
 
     document.body.addEventListener('input',  (ev) => {
       parent.handleTextareaGrowers(ev);
     });
-
   }, // setupTriggers
 
 
+  handleSideBySideButtons(ev) {
+    const btnWrapper = ev.target.closest('.pfy-side-by-side-buttons');
+    if (!btnWrapper) {
+      return;
+    }
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    const btn = ev.target.closest('.pfy-button');
+    if (!btn) {
+      return;
+    }
+    if (btn.classList.contains('pfy-two-windows')) {
+      const otherBtn = btnWrapper.querySelector('.pfy-one-window');
+      btn.setAttribute('aria-pressed', true);
+      otherBtn.setAttribute('aria-pressed', false);
+      const wrapper = btnWrapper.closest('.pfy-form-and-table-wrapper');
+      wrapper.classList.add('pfy-side-by-side');
+
+    } else {
+      const otherBtn = btnWrapper.querySelector('.pfy-two-windows');
+      btn.setAttribute('aria-pressed', true);
+      otherBtn.setAttribute('aria-pressed', false);
+      const wrapper = btnWrapper.closest('.pfy-form-and-table-wrapper');
+      wrapper.classList.remove('pfy-side-by-side');
+    }
+  }, // handleSideBySideButtons
+
+
   cancelButtonHandler(ev) {
-    const btn = ev.target.closest('input.pfy-cancel.button');
+    const btn = ev.target.closest('input.pfy-cancel');
     if (!btn) {
       return;
     }
@@ -107,15 +143,36 @@ const pfyFormsHelper = {
     ev.stopImmediatePropagation();
     ev.preventDefault();
     const form = ev.target.closest('.pfy-form');
-    const changed = this.isFormChanged(form);
-    if (changed) {
-      // reset form:
-      pfyFormsHelper.presetForm(form);
-    } else {
+    const changed = this.isFormModified(form) || this.isFormPreset(form);
+
+    const cancelCallback = btn.dataset.callback;
+    if (typeof cancelCallback !== 'undefined' && cancelCallback !== 'true' && isNaN(cancelCallback)) {
+      mylog(`cancelCallback: ${cancelCallback}`);
+      let res = window[cancelCallback](ev);
+      if (!res) {
+        return;
+      }
+    }
+
+    // reset form:
+    const formInx = form.querySelector('[name=_form_]').value;
+    if (form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
+      reloadAgent(`clearform=${formInx}`);
+    }
+
+    this.clearModifiedFlag(form);
+    this.clearPresetFlag(form);
+    this.clearRowSelection(form);
+    this.presetForm(form);
+    this.setRecId(form, '');
+
+    if (!changed) {
       // check whether in popup, close it:
       const popup = form.closest('.pfy-popup-bg');
       if (popup) {
         pfyPopupClose(popup);
+      } else {
+        reloadAgent(`clearform=${formInx}`);
       }
     }
 
@@ -123,8 +180,42 @@ const pfyFormsHelper = {
     if (formWrapper && formWrapper.dataset.readonly) {
       formWrapper.classList.add('pfy-form-readonly');
     }
-
   }, // cancelButtonHandler
+
+
+  newrecButtonHandler(ev) {
+    const btn = ev.target.closest('input.pfy-newrec');
+    if (!btn) {
+      return;
+    }
+    const form = ev.target.closest('.pfy-form');
+    if (!pfyFormsHelper.isFormModified(form) && !pfyFormsHelper.isFormPreset(form)) {
+      return;
+    }
+
+    const check = pfyFormsHelper.checkHonigtopf(form);
+    if (!check) {
+      ev.stopPropagation();
+      return;
+    }
+
+    const rewnrecCallback = btn.dataset.callback;
+    if (typeof rewnrecCallback !== 'undefined' && rewnrecCallback !== 'true' && isNaN(rewnrecCallback)) {
+      mylog(`rewnrecCallback: ${rewnrecCallback}`);
+      let res = window[rewnrecCallback](ev);
+      if (!res) {
+        return;
+      }
+    }
+
+    // clear _reckey:
+    domForOne(form, '[name=_reckey]', el => {
+      el.value = '_create-new_';
+    });
+    pfyFormsHelper.setModifiedFlag(form);
+
+    this.submitHandler(ev);
+  }, // newrecButtonHandler
 
 
   showPwHandler(ev) {
@@ -149,12 +240,25 @@ const pfyFormsHelper = {
   }, // showPwHandler
 
 
-  setupModifiedMonitor(ev) {
-      const form = ev.target.closest('.pfy-form');
-      if (form && ev.target.tagName !== 'BUTTON') {
-        form.dataset.changed = true;
+  modifyMonitorHandler(ev) {
+    const el = ev.target;
+    if (el.closest('.pfy-form-is-modified') || el.closest('.pfy-reveal-controller') || el.closest('.pfy-table-data-output-wrapper')) {
+      return;
+    }
+
+    if (ev.type === 'keydown') {
+      if (!el.closest('.pfy-input-wrapper') || el.closest('.pfy-form-button')) {
+        return;
       }
-  }, // setupModifiedMonitor
+      const key = ev.key;
+      const keyCode = ev.keyCode;
+      if (keyCode < 65 && !(key === 'Delete' || key === 'Backspace' || keyCode === 32)) {
+        return;
+      }
+    }
+
+    this.setModifiedFlag(el);
+  }, // modifyMonitorHandler
 
 
   checkFormTimeout(ev) {
@@ -169,7 +273,7 @@ const pfyFormsHelper = {
   },
 
 
-  categoryChangeMonitor(ev) {
+  categoryChangeMonitorHandler(ev) {
     const form = ev.target.closest('.pfy-form');
     if (form && form.querySelector('select[name="category"]')) {
       domForOne(form, 'select[name="category"]', (el) => {
@@ -182,15 +286,15 @@ const pfyFormsHelper = {
         form.setAttribute('class', wrapperClasses);
       });
     }
-  }, // categoryChangeMonitor
+  }, // categoryChangeMonitorHandler
 
 
-  revealHandlers(el) {
+  setupRevealHandlers(el) {
     const parent = this;
     domForEach('.pfy-form [data-reveal-target]', (el) => {
       parent.revealHandler(el);
     })
-  }, // revealHandlers
+  }, // setupRevealHandlers
 
 
   revealHandler(el) {
@@ -215,10 +319,18 @@ const pfyFormsHelper = {
     if (inpEl.type === 'radio' && inpEl.value !== 'true') {
       open = false;
     }
+
+    if (!this.formInitialized) {
+      const textareaEl = revealContainer.querySelector('textarea');
+      if (textareaEl) {
+        open = !!textareaEl.innerHTML;
+      }
+    }
+
     if (open) {
-      pfyReveal.reveal(revealContainer, revealController);
+      pfyReveal.reveal(revealController);
     } else {
-      pfyReveal.unreveal(revealContainer, revealController);
+      pfyReveal.unreveal(revealController);
     }
   }, // revealHandler
 
@@ -237,16 +349,16 @@ const pfyFormsHelper = {
   }, // handleErrorInForm
 
 
-  setupCancelButtonHandler(form) {
-  }, // setupCancelButtonHandler
-
-
   submitHandler(ev) {
     const form = ev.target.closest('.pfy-form');
     if (!form) {
       return;
     }
 
+    if (!this.isFormModified(form)) {
+      console.log('Submit: nothing changed...');
+      return;
+    }
       if (typeof pfyFormsHelper.submitNow !== 'undefined') {
         return;
       }
@@ -285,22 +397,204 @@ const pfyFormsHelper = {
   }, // setupSubmitHandler
 
 
+  fetchDataAndFillForm(form, recKey, retainData = false) {
+    const parent = this;
+    const formInx = form.querySelector('[name=_formInx]').value
+    let args = 'getRec='+recKey+'&datasrcinx='+formInx;
+    if (tableHelper.formRecLocking) {
+      args += '&lock';
+      tableHelper.recLocked = true;
+    }
+    if (form.closest('.pfy-retain-data') && retainData) {
+      args += '&retainData='+formInx;
+    }
+    console.log('fetching data record '+recKey);
+    form.dataset.loading = true;
+    execAjaxPromise(args, {})
+      .then(function (data) {
+        if (data.status === 'error') {
+          // handle case where rec locked by somebody else:
+          console.log('Rec locked.');
+          const row = table.querySelector('[data-reckey='+recKey+']');
+          row.classList.add('pfy-rec-locked');
+          return;
+        }
+
+        // popup is open, now prepare the form, inject obtained data:
+        console.log(data);
+        parent.presetForm(form, data, recKey)
+        form.removeAttribute('data-loading');
+
+      })
+      .then(function (msg) {
+        if (typeof msg !== 'undefined') {
+          console.log(msg);
+        }
+        form.removeAttribute('data-loading');
+      });
+  }, // fetchDataAndFillForm
+
+
   presetForm(form, data, recId) {
     if (typeof form === 'string') {
       form = document.querySelector(form);
     }
-    if (typeof data === 'undefined') {
+    if (isEmpty(data)) {
       data = {};
     }
-    form.dataset.changed = '';
 
-    this.presetScalarFields(form, data);
-    this.presetChoiceFields(form, data);
-    this.setRecId(form, recId);
-    this.resetErrorStates(form);
-    this.prefillComputedFields(form);
-    this.setTriggerOnContinueLink();
+    if (data && this.isFormModified(form)) {
+      pfyConfirm({
+        text: `{{ pfy-form-data-modified-warning }}`,
+      }).then(
+        () => {
+          // after confirmation:
+          this.presetFields(form, data);
+          this.setRecId(form, recId);
+          this.resetErrorStates(form);
+          this.prefillComputedFields(form);
+          this.executeOnPresetCallback(form);
+          this.setTriggerOnContinueLink();
+        },
+        () => { mylog('denied');  }
+      );
+    } else {
+      this.presetFields(form, data);
+      this.setRecId(form, recId);
+      this.resetErrorStates(form);
+      this.prefillComputedFields(form);
+      this.executeOnPresetCallback(form);
+      this.setTriggerOnContinueLink();
+    }
   }, // presetForm
+
+
+  presetFields(form, data) {
+    let isPreset = false;
+    if (isEmpty(data)) {
+      data = {};
+      this.clearModifiedFlag(form);
+      this.clearPresetFlag(form);
+      domForOne(form, 'input[name=_reckey]', el => {
+        el.value = '';
+      });
+    } else {
+      isPreset = true;
+    }
+    domForEach(form, 'div.pfy-elem-wrapper', fieldWrapperElemEl => {
+      pfyFormsHelper.presetField(form, fieldWrapperElemEl, data, isPreset);
+    }); // loop over form fields
+
+    domForOne(form, '[name=_reckey]', reckeyEl => {
+      const val = reckeyEl.dataset.value;
+      if (typeof val !== 'undefined') {
+        reckeyEl.value = val;
+        reckeyEl.removeAttribute('data-value');
+      }
+    });
+  }, // presetFields
+
+
+  presetField(form, fieldWrapperElemEl, data, isPreset) {
+    const typesToSkip = 'submit,cancel,checkbox,radio,button';
+    const namesToSkip = '_csrf,_formInx,_form_';
+    const name = fieldWrapperElemEl.querySelector('[name]').getAttribute('name').replace(/\[]*/, '');
+
+    // get type:
+    let type = '';
+    let val = '';
+    if (fieldWrapperElemEl.querySelector('select')) {
+      type = 'select';
+    } else if (fieldWrapperElemEl.querySelector("textarea")) {
+      type = 'textarea';
+    } else if (!type) {
+      type = fieldWrapperElemEl.querySelector('[type]').getAttribute('type');
+    }
+
+    // handle special case hidden field:
+    if (type === 'hidden') {
+      const hiddenEl = fieldWrapperElemEl.querySelector('input');
+      val = hiddenEl.dataset.value;
+      if (typeof val !== 'undefined') {
+        hiddenEl.value = val;
+        hiddenEl.removeAttribute('data-value');
+      }
+      return;
+    }
+
+    // get value, first try data-value:
+    val = fieldWrapperElemEl.dataset.value;
+    if (val) {
+      fieldWrapperElemEl.removeAttribute('data-value');
+      isPreset = true;
+    }
+    // next try given data-rec (if present):
+    if (data[name]) {
+      val = data[name];
+    }
+    if (typeof val === 'undefined') {
+      val = '';
+    }
+
+    if ('radio,checkbox'.includes(type)) {
+      // --- radio, checkbox
+      if (typeof val === 'string') {
+        val = `,${val},`;
+        domForEach(fieldWrapperElemEl, 'input', option => {
+          const v = ',' + option.value + ',';
+          option.checked = val.includes(v);
+        });
+      } else {
+        domForEach(fieldWrapperElemEl, 'input', option => {
+          const v = option.value;
+          option.checked = val[v];
+        });
+      }
+
+    } else if (type === 'select') {
+      // --- select
+      if (typeof val === 'string') {
+        val = `,${val},`;
+        domForEach(fieldWrapperElemEl, 'option', option => {
+          const v = ',' + option.value + ',';
+          option.selected = val.includes(v);
+        });
+      } else {
+        domForEach(fieldWrapperElemEl, 'option', option => {
+          const v = option.value;
+          option.selected = val[v];
+        })
+      }
+
+    } else if (type === 'textarea') {
+      fieldWrapperElemEl.querySelector('textarea').value = val;
+      if (fieldWrapperElemEl.classList.contains('pfy-auto-grow')) {
+        domForOne(fieldWrapperElemEl, 'span.pfy-input-wrapper', autogrowWrapperEl => {
+          autogrowWrapperEl.dataset.replicatedValue = val;
+        });
+      }
+      // open/close accordion if content is present or not:
+      domForOne(fieldWrapperElemEl, 'details', el => {
+        if (val) {
+          el.setAttribute('open', true);
+        } else {
+          el.removeAttribute('open');
+        }
+      })
+
+    } else {
+      // --- text or hidden
+      if (namesToSkip.includes(name) || typesToSkip.includes(type)) {
+        return;
+      }
+      fieldWrapperElemEl.querySelector('input').value = val;
+    }
+
+    if (isPreset) {
+      this.setPresetFlag(form);
+    }
+  }, // presetField
+
 
 
   disableForm()  {
@@ -313,102 +607,51 @@ const pfyFormsHelper = {
   }, // enableForm
 
 
-  presetScalarFields(form, data) {
-    // reset 'textarea' and 'input' fields, except 'submit,cancel,checkbox,radio,button':
-    let fields = form.querySelectorAll('input, textarea');
-    if (fields.length) {
-      const typesToSkip = 'submit,cancel,checkbox,radio,button';
-      fields.forEach(function (field) {
-        let type = field.getAttribute('type');
-        if (!type) {
-          type = field.tagName.toLowerCase();
-        }
-        const readonly = (field.getAttribute('readonly') !== null);
-        if (readonly || typesToSkip.includes(type)) {
-          return;
-        }
-        const val = pfyFormsHelper.getFieldValue(field, data);
-        field.value = val;
-
-        // preset auto-grow textareas:
-        if (type === 'textarea') {
-          field.parentNode.dataset.replicatedValue = val;
-        }
-
-        // handle case of revealed textarea:
-        if (field.classList.contains('pfy-reveal-target')) {
-          const wrapper = field.closest('.pfy-elems-wrapper');
-          const controller = wrapper.querySelector('input.pfy-reveal-controller');
-          if (val) {
-            pfyRevealPanel(controller);
-          } else {
-            pfyUnrevealPanel(controller);
-          }
-        }
-      });
-    }
-  }, // presetScalarFields
+  isFormModified(el) {
+    return !!el.closest('.pfy-form-is-modified');
+  }, // isFormModified
 
 
-  presetChoiceFields(form, data) {
-    // reset choice elements 'radio':
-    let fields = form.querySelectorAll('.pfy-elem-wrapper input[type=radio]');
-    if (fields.length) {
-      fields.forEach(function (field) {
-        const name = field.getAttribute('name');
-        const val = field.getAttribute('value');
-        const preset = pfyFormsHelper.getFieldValue(field, data, name);
-        field.checked = (val && preset === val);
-      });
-    }
+  isFormPreset(el) {
+    return !!el.closest('.pfy-form-is-preset');
+  }, // isFormPreset
 
-    // reset choice elements 'checkbox':
-    fields = form.querySelectorAll('.pfy-elem-wrapper input[type=checkbox]');
-    if (fields.length) {
-      fields.forEach(function (field) {
-        const name = field.getAttribute('name');
-        const len = name.length;
-        if (name.charAt(len - 1) === ']') {
-          const val = field.value;
-          const preset = pfyFormsHelper.getChoiceFieldValue(field, null, name, data);
-          field.checked = (preset !== '#novalue#') && preset.includes(val);
-        } else {
-          let preset = pfyFormsHelper.getFieldValue(field, data, name);
-          field.checked = !!preset;
-        }
-      });
-    }
 
-    // reset select elements 'options':
-    const selects = form.querySelectorAll('select');
-    if (selects.length) {
-      selects.forEach(function (selectElem) {
-        // for each option: get 'data-preset' values, put them in 'value':
-        let name = selectElem.getAttribute('name');
-        const len = name.length;
-        if (name.charAt(len - 1) === ']') {
-          name = name.substring(0, len - 2);
-        }
-        let val = '';
-        if ((typeof data !== 'undefined') && (typeof data[name] !== 'undefined')) {
-          val = data[name];
-        } else {
-          val = selectElem.dataset.preset || '';
-        }
-        const options = selectElem.querySelectorAll('option');
-        if (options) {
-          options.forEach(function (option) {
-            const optName = option.value;
-            if (typeof val[optName] !== 'undefined') {
-              option.selected = val[optName];
-            } else {
-              option.selected = (val===optName);
-            }
-          });
-        }
-      });
-    }
-  }, // presetChoiceFields
+  setModifiedFlag(el) {
+    domForOne(el, '^.pfy-form-wrapper', formWrapper => {
+      formWrapper.classList.add('pfy-form-is-modified');
+      formWrapper.classList.remove('pfy-form-is-preset');
+    });
+  }, // setModifiedFlag
+
+
+  setPresetFlag(el) {
+    domForOne(el, '^.pfy-form-wrapper', formWrapper => {
+      formWrapper.classList.add('pfy-form-is-preset');
+      formWrapper.classList.remove('pfy-form-is-modified');
+    });
+  }, // setPresetFlag
+
+
+  clearModifiedFlag(el) {
+    domForOne(el, '^.pfy-form-wrapper', formWrapper => {
+      formWrapper.classList.remove('pfy-form-is-modified');
+    });
+  }, // clearModifiedFlag
+
+
+  clearPresetFlag(el) {
+    domForOne(el, '^.pfy-form-wrapper', formWrapper => {
+      formWrapper.classList.remove('pfy-form-is-preset');
+    });
+  }, // clearPresetFlag
+
+
+  clearRowSelection(form) {
+    domForEach(form, '^.pfy-form-and-table-wrapper .pfy-row-selected', el => {
+      el.classList.remove('pfy-row-selected');
+    });
+  }, // clearRowSelection
 
 
   resetFormInx(form){
@@ -459,6 +702,13 @@ const pfyFormsHelper = {
       if (typeof field.dataset.preset !== 'undefined') {
         val = field.dataset.preset;
       }
+      if (typeof field.dataset.value !== 'undefined') {
+        val = field.dataset.value;
+        field.removeAttribute('data-value');
+      }
+      if (field.innerText) {
+        val = field.innerText;
+      }
     }
     return val;
   }, // getFieldValue
@@ -467,13 +717,19 @@ const pfyFormsHelper = {
   getChoiceFieldValue(field, optionElem, name, data) {
     const dataAvailable = Object.keys(data).length;
     if (typeof data === 'undefined' || !dataAvailable) {
-      if (typeof field.dataset.preset !== 'undefined') {
-        return field.dataset.preset;
+      if (field.dataset.selected) {
+        field.removeAttribute('data-selected');
+        return 'selected';
+      } else if (field.dataset.checked) {
+        field.removeAttribute('data-checked');
+        return 'checked';
       } else {
         return '#novalue#';
       }
     }
-    name = name.substring(0, name.length - 2);
+    if (name.match(/\[]]$/)) {
+      name = name.substring(0, name.length - 2);
+    }
     let rec = false;
     if (typeof data[name] !== 'undefined') {
       rec = data[name];
@@ -514,7 +770,7 @@ const pfyFormsHelper = {
           val = val.substring(1);
           val = pfyFormsHelper.evalExpr(form, val);
           const name = field.getAttribute('name');
-          mylog(`computed name: ${name}  type: ${type}  val: ${val}`);
+          console.log(`computed name: ${name}  type: ${type}  val: ${val}`);
           field.value = val;
         }
 
@@ -527,6 +783,16 @@ const pfyFormsHelper = {
   }, // prefillComputedFields
 
 
+  executeOnPresetCallback(form) {
+    const presetCallbackJs = form.dataset.presetCallbackJs;
+    if (!presetCallbackJs) {
+      return '';
+    }
+    console.log(`presetCallbackJs: ${presetCallbackJs}`);
+    return new Function(presetCallbackJs)();
+  }, // executeOnPresetCallback
+
+
   handleEventFields(form, field) {
     const parent = this;
     const duration = (typeof (field.dataset.eventDuration) !== 'undefined') ? parseInt(field.dataset.eventDuration) : 0;
@@ -536,6 +802,9 @@ const pfyFormsHelper = {
       $startDate = form.querySelector('[name=' + relatedField + ']');
     } else {
       $startDate = form.querySelector('[name=start]');
+    }
+    if (!$startDate) {
+      return;
     }
     const preset = (typeof $startDate.dataset.preset !== 'undefined') ? $startDate.dataset.preset : false;
     const now = new Date();
@@ -694,11 +963,6 @@ const pfyFormsHelper = {
 
 
   doSubmitForm(form) {
-    const buttons = form.querySelectorAll('.button');
-    buttons.forEach(function(button) {
-      button.disabled = true;
-    });
-
     const clone = form.cloneNode(true);
     const passwordInputs = clone.querySelectorAll('input[type="password"]');
     passwordInputs.forEach(function(input) {
@@ -713,6 +977,7 @@ const pfyFormsHelper = {
     localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
 
     pfyFormsHelper.submitNow = true;
+    this.clearModifiedFlag(form);
     form.submit();
   }, // doSubmitForm
 
@@ -724,24 +989,21 @@ const pfyFormsHelper = {
   }, // unlockRecs
 
 
-  isFormChanged(form) {
-    return (form.dataset.changed === 'true');
-  }, // isFormChanged
-
-
   evalExpr(form, str) {
     let m;
-    while (m = str.match(/\$([\w-]+)/)) {
+    while (m = str.match(/\$([\w-_]+)/)) {
       const src = m[1];
       let v = str;
       const elem = form.querySelector('[name='+src+']');
       if (elem) {
         v = elem.value;
       }
-      str = str.replace(m[0], `'${v}'`);
+      str = str.replace(m[0], `"${v}"`);
     }
-    return new Function('return ' + str)();
-  }, // isFormChanged
+    str = str.replace(/\n/g, '\\n');
+    str = 'return ' + str;
+    return new Function(str)();
+  }, // evalExpr
 
 
   handleTextareaGrowers(ev) {
@@ -890,3 +1152,4 @@ const pfyFormsHelper = {
   }, // initRepetitionWidget
 
 }; // pfyFormsHelper
+

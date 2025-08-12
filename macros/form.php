@@ -100,8 +100,15 @@ return function ($args = '')
                 'Moreover, all values of found event are made available to form banners as "%key%". '.
                 '(For ref see macro *events()*).', false],
 
-            'showDirectFeedback' =>	['[bool] If true, a confiration text is presented upon successful completion of a '.
-                'form entry. Otherwise, only an information banner is shown.', true],
+            'feedback' =>	['["inpage","notification"] Defines, how the system responds to data submission. '.
+                '"inpage" means that the form is replaced with a confirmation (or error) text. '.
+                'In "notification" mode the form remain visible and confiration info is presented as a '.
+                'notification banner.', 'inpage'],
+
+            'showDirectFeedback' =>	['[bool] Depricated: synonym for "feedback: notification".', null],
+
+            'retainData' =>	['[bool] If true, entered data remains in the form after submitting it. '.
+                'This mimicks working with a local data entry system like a database.', false],
 
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
@@ -123,7 +130,7 @@ return function ($args = '')
             'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
                 'in output table.', false],
 
-            'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', null],
+            'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', []],
 
             'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
                 'empty rows up to given number. BR '.
@@ -134,8 +141,11 @@ return function ($args = '')
             'emailFieldName' =>	['[name-of-email-field] Replaces option "confirmationEmail", if that is not used. '.
                 'Identifies the field containing an e-mail address within the dataset. It is used by tableOptions "mail"', false],
 
-            'callback' =>	['Defines a callback function to be invoked upon receiving user input. '.
+            'callback' =>	['Defines a callback function to be invoked when the backend receives user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
+
+            'presetCallbackJs' =>	['Defines a callback JS function to be invoked when the form is preset. '.
+                'The JS function must be defined elsewhere.', false],
 
             'scriptInjectionFilter' =>	['Activates a filter against script injection attacks. '.
                 'Example: "`<script>alert(\'malicious code\')</script>`".<br>Caution: only disable in justified cases!', true],
@@ -154,8 +164,12 @@ return function ($args = '')
 
             'readonly' =>	['If true, adds class "pfy-form-readonly" to form wrapper class -> '.
                 '-> freezes entire form.', false],
+
             'sideBySide' =>	['If true, the data table will be rendered next to the form. '.
-                'Moreover, clicking a row will present the corresponding record in the from.', false],
+                'Moreover, clicking a row will present the corresponding record in the from.', null],
+
+            'beforeunloadWarning' => ['[bool] If true and user has modified form fields and then wants '.
+                'to leave the page, the browser shows a warning.', false],
         ],
         'summary' => <<<EOT
 
@@ -191,6 +205,7 @@ return function ($args = '')
         file:			'\~data/db.yaml',
         editData:       true
         tableOptions:    {interactive:true}
+        beforeunloadWarning: true
         ownerNotificationTo: true \// 'true' for webmaster-email or explicit e-mail address 
         ownerNotificationTemplate: notificationTemplate
         confirmationEmailTo: EMail \// -> name of e-mail field below 
@@ -221,8 +236,8 @@ Syntax: ``field-name: { field arguments, \... }``
 #### Supported Field Types:
 
 `text, password, email, textarea, hidden, url,
-date, datetime-local, time, datetime, month,
-number, integer, range, tel, file,
+date, datetime (resp. datetime-local), time, month,
+number, integer, range, tel, 
 radio, checkbox, dropdown, select, multiselect, upload, multiupload, bypassed, 
 button, reset, submit, cancel`
 
@@ -329,6 +344,13 @@ EOT,
     if ($options['edit']??false) {
         $options['editData'] = $options['edit'];
     }
+    if ($options['editData'] && is_array($options['editData'])) { // depricated
+        $options['tableOptions'] += $options['editData'];
+    }
+    if ($options['showData'] && is_array($options['showData'])) { // depricated
+        $options['showData'] += $options['showData'];
+        $options['showData'] = true;
+    }
 
     // ownerNotificationTo synonyme for mailTo:
     if ($options['ownerNotificationTo']??false) {
@@ -337,6 +359,13 @@ EOT,
     // ownerNotificationTo synonyme for mailTo:
     if ($options['confirmationEmail']??false) {
         $options['confirmationEmailTo'] = $options['confirmationEmail'];
+    }
+
+    // make type=datetime synonym for type=datetime-local:
+    foreach ($formFields as $name => $rec) {
+        if (($rec['type']??false) === 'datetime') {
+            $formFields[$name]['type'] = 'datetime-local';
+        }
     }
 
     if (($options['maxCount']??false) && !($options['minRows']??false)) {

@@ -9,6 +9,7 @@ namespace PgFactory\PageFactoryElements;
 
 use Kirby\Http\Url;
 use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\getFile;
 use PgFactory\PageFactory\DataSet;
@@ -172,6 +173,12 @@ class AjaxHandler
         $recData = $rec->data();
         if ($rec->isLocked()) {
             $recData['_state'] = 'locked';
+        }
+
+        if (isset($_GET['retainData'])) {
+            $formInx = $_GET['retainData'];
+            $recData['_reckey'] = $recKey;
+            Utils::setSessionVar("form-$formInx", $recData);
         }
 
         // avoid sending values for password fields (even though they are only a hash):

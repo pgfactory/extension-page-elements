@@ -60,6 +60,10 @@ pfy-form-warning-record-already-exists:
   de: Diese Daten haben wir bereits empfangen.
   _:  We already received your data.
 
+pfy-form-success-record-saved:
+  de: Gespeichert
+  _:  Saved
+
 pfy-no-data-available:
   de: '-- Noch keine Daten vorhanden --'
   _:  '-- No data yet --'
@@ -104,6 +108,10 @@ pfy-form-confirmation-email-missing:
 pfy-confirmation-response-element-empty:
   de: '&lt; leer &gt;'
   _:  '&lt; empty &gt;'
+
+pfy-form-data-modified-warning:
+  de: 'Daten wurden bereits eingegeben.<br>Wenn Sie forfahren, werden diese Eingaben überschrieben.'
+  _:  'Data has been entered into the for.<br>If you continue that data will be overwritten.'
 
 #pfy-confirmation-response-subject:
 #  de: 'Anmeldebestätigung von %host%'
@@ -242,6 +250,21 @@ problemWithFormBanner:
 
     → Please contact the {{ pfy-webmaster-link }}. Thank you.
     %%%
+
+
+# === Form Buttons ===================================
+pfy-form-cancel-button-title:
+  de: 'Formular zurücksetzen, Seite neu laden, falls Formular leer.'
+  _:  'Clear this form, reload page if form is empty.'
+
+pfy-form-newrec-button-title:
+  de: 'Formularinhalt als neuen Datensatz speichern.'
+  _:  'Save this form as new data record.'
+
+pfy-form-submit-button-title:
+  de: 'Formularinhalt absenden und speichern'
+  _:  'Submit and save this form.'
+
 
 
 # === Reveal =========================================
