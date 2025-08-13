@@ -24,6 +24,7 @@ return function($argStr = '')
             'replaceOnElem' => ['(pattern,replace) If defined, regular expression is applied to each element. '.
                 'Example: remove leading underscore:  "^_,&#39;&#39;"', null],
             'maxAge' => ['[integer] Maximum age of file (in number of days).', null],
+            'markdown' => ['[bool] If true, output will be markdown compiled.', false],
         ],
         'summary' => <<<EOT
 # dir()
