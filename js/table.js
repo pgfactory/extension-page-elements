@@ -235,7 +235,11 @@ const tableHelper = {
       editBtns.forEach(function (editBtn) {
         editBtn.addEventListener('click', function (ev) {
           ev.stopImmediatePropagation();
-          parent.fillForm(ev.target, table, tableForm, tableInx, editBtn);
+          const tr = ev.target.closest('tr');
+          const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
+          parent.prepareEditForm(table, tableForm, recKey, editBtn, tableInx);
+//          this.prepareEditForm(tableEl, tableForm, recKey, data, editBtn, tableInx);
+//          parent.fillForm(ev.target, table, tableForm, tableInx, editBtn);
         });
       });
     }
@@ -513,7 +517,10 @@ const tableHelper = {
       const tableInx = tableInxEL.dataset.tableinx;
       if (tr) {
         tr.classList.add('pfy-row-selected');
-        this.fillForm(el, tableEl, tableForm, tableInx, null);
+        const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
+        this.prepareEditForm(tableEl, tableForm, recKey, null, tableInx);
+//        this.prepareEditForm(tableEl, tableForm, recKey, data, null, tableInx);
+//        this.fillForm(el, tableEl, tableForm, tableInx, null);
       }
     }
   }, // defaultRowClickHandler
@@ -573,8 +580,10 @@ const tableHelper = {
   }, // showViewTemplate
 
 
-  prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
-    const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
+  prepareEditForm: function (table, parentForm, recKey, editBtn, tableInx) {
+//  prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
+    const editbyPopupMode = table.closest('.pfy-table-edit-popup');
+//    const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     if (editbyPopupMode) {
       const options = {
         header: `{{ pfy-table-edit-rec-popup-header }}`,
@@ -587,7 +596,8 @@ const tableHelper = {
           const form = document.querySelector('.pfy-popup-wrapper .pfy-form');
           if (form) {
             pfyFormsHelper.init(form);
-            pfyFormsHelper.presetForm(form, data, recKey);
+            pfyFormsHelper.fetchDataAndFillForm(form, recKey, true);
+//            pfyFormsHelper.presetForm(form, data, recKey);
             tableHelper.setupCancelButton(table, tableInx);
             form.removeAttribute('aria-hidden');
             form.removeAttribute('id');
@@ -602,7 +612,8 @@ const tableHelper = {
           }
         })
    } else {
-      pfyFormsHelper.presetForm(parentForm, data, recKey);
+      pfyFormsHelper.fetchDataAndFillForm(parentForm, recKey, true);
+//      pfyFormsHelper.presetForm(parentForm, data, recKey);
       tableHelper.enableEditButtons(table);
     }
   }, // prepareEditForm

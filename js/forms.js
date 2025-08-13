@@ -178,7 +178,8 @@ const pfyFormsHelper = {
 
     // reset form:
     const formInx = form.querySelector('[name=_form_]').value;
-    if (form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
+    if (form.closest('.pfy-form-wrapper') && form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
+//    if (form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
       reloadAgent(`clearform=${formInx}`);
     }
 

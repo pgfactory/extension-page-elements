@@ -150,6 +150,7 @@ class PfyForm extends Form
     protected  bool $isFormAdmin = false;
     protected  bool $showTable = false;
     protected bool $showForm = true;
+    protected bool $popupMode = false;
     private static bool $initialized = false;
     private static array $scheduleRecs = [];
     private bool $readonly = false;
@@ -1413,13 +1414,20 @@ EOT;
         }
 
         // apply form wrapper
+        $aria = '';
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
         $wrapperClass .= $this->formDataRec ? ' pfy-form-is-preset' : '';
         if ($this->readonly) {
             $wrapperClass .= ' pfy-form-readonly';
         }
         $wrapperClass .= $this->keepSubmittedDataInForm? ' pfy-retain-data' : '';
-        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
+        if ($this->popupMode) {
+            // in popup mode the form is not visible, only appears in popup on request
+            $wrapperClass .= " pfy-fully-hidden";
+            $aria = ' aria-hidden="true"';
+        }
+        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'$aria>\n";
+//        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
         return $html;
     } // renderFormWrapperHead
 
@@ -1482,14 +1490,15 @@ EOT;
 EOT;
         }
 
-        list($id, $formClass, $aria) = $this->getHeadAttributes();
+        list($id, $formClass) = $this->getHeadAttributes();
+//        list($id, $formClass, $aria) = $this->getHeadAttributes();
         if ($this->hasErrors()) {
             $formClass .= ' pfy-form-has-errors';
         }
         $dataFormInx = "data-form-inx='$this->formIndex'";
 
         $htmlForm = $this->getRenderer()->render($this, 'begin');
-        $htmlForm = "\n<form$id class='$formClass'$aria$presetCallback $dataFormInx" . substr($htmlForm, 5);
+        $htmlForm = "\n<form$id class='$formClass'$presetCallback $dataFormInx" . substr($htmlForm, 5);
         $html .= $htmlForm;
         $html .= $this->getRenderer()->render($this, 'errors');
         $html .= $this->renderFormTopBanner();
@@ -2751,6 +2760,9 @@ EOT;
     private function parseOptions(array $formOptions): array
     {
         $formOptions = $formOptions + PFY_FORM_OPTIONS;
+        $this->formOptions                  = $formOptions;
+        $formOptions                        = &$this->formOptions;
+
         $formOptions['dbOptions'] = $formOptions['dbOptions'] + PFY_FORM_OPTIONS['dbOptions'];
 
         // make sure essential options are instantiated:
@@ -2779,7 +2791,7 @@ EOT;
         }
 
 
-        $this->formOptions                  = $formOptions;
+//        $this->formOptions                  = $formOptions;
 
         if ($formOptions['tableOptions']) {
             $this->tableOptions = $this->parseTableOptions($formOptions['tableOptions']);
@@ -2805,8 +2817,12 @@ EOT;
         if (!isset($tableOptions['permission'])) {
             $tableOptions['permission'] = 'loggedin|localhost';
         }
-        if (isset($tableOptions['editMode']) && $tableOptions['editMode'] === 'popup') {
+        if (($tableOptions['mode']??false) === 'popup' || ($tableOptions['editMode']??false) === 'popup') {
+//        if (isset($tableOptions['editMode']) && $tableOptions['editMode'] === 'popup') {
             $this->showFeedbackInpage = false;
+            $this->popupMode = true;
+            $this->formOptions['outerWrapperClass'] .= ' pfy-table-edit-popup';
+//            $this->formWrapperClass .= ' pfy-table-edit-popup';
         }
         $this->keepSubmittedDataInForm |= ($tableOptions['editMode'] === 'save');
 
@@ -3331,13 +3347,17 @@ EOT;
         if ($this->isFormAdmin) {
             $class .= " pfy-screen-only";
         }
-        $aria = '';
-        if ($this->tableOptions && $this->tableOptions['editMode'] === 'popup') {
-            // in popup mode the form is not visible, only appears in popup on request
-            $class .= " pfy-fully-hidden";
-            $aria = ' aria-hidden="true"';
-        }
-        return array($id, $class, $aria);
+//        $aria = '';
+//        if ($this->popupMode) {
+////        if ($this->tableOptions && $this->tableOptions['editMode'] === 'popup') {
+//            // in popup mode the form is not visible, only appears in popup on request
+//            $this->formWrapperClass .= " pfy-fully-hidden";
+//            $this->formWrapperAttrs = ' aria-hidden="true"';
+////            $class .= " pfy-fully-hidden";
+////            $aria = ' aria-hidden="true"';
+//        }
+//        return array($id, $class, $aria);
+        return [$id, $class];
     } // getHeadAttributes
 
 
