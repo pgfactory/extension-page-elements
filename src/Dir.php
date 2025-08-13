@@ -20,7 +20,28 @@ use function PgFactory\PageFactory\shieldStr;
 const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
-const DEFAULT_FOLDER_DOWNLOAD_ICONE = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
+const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
+
+const PFY_DIR_OPTIONS = [
+    'inx'=> 0,
+    'template'=> [
+        'element'=> DEFAULT_ELEMENT_TEMPLATE,
+        'folderElement'=> DEFAULT_FOLDER_ELEMENT_TEMPLATE,
+        'markdown'=> true,
+    ],
+    'path'=> '',
+    'id'=> '',
+    'class'=> '',
+    'include'=> '',
+    'exclude'=> '',
+    'markdown'=> false,
+    'maxAge'=> false,
+    'replaceOnElem'=> '',
+    'modifiers'=> '',
+    'permission'=> '',
+    'asLinks'=> false,
+    'enableFolderDownload'=> false,
+];
 
 if (!defined('PFY_DOWNLOAD_PATH')) {
     define('PFY_DOWNLOAD_PATH', '~/download/');
@@ -378,18 +399,16 @@ EOT;
      */
     private function parseOptions($args, int $inx): array
     {
-        $options = $args;
-        if (!isset($options['template'])) {
-            $options['template'] = [];
-        } elseif (is_string($options['template'])) {
+        $options = $args + PFY_DIR_OPTIONS;
+        if (is_string($options['template'])) {
             $options['template'] = [];
             $options['template']['element'] = $options['template'];
         }
-        $this->enableFolderDownload = $args['enableFolderDownload']??true;
+        $this->enableFolderDownload = $args['enableFolderDownload'];
         $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
         $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
         if ($this->enableFolderDownload) {
-            $options['template']['folderElement'] .= DEFAULT_FOLDER_DOWNLOAD_ICONE;
+            $options['template']['folderElement'] .= DEFAULT_FOLDER_DOWNLOAD_ICON;
         }
         $options['template']['markdown'] ??= true;
 
@@ -398,19 +417,19 @@ EOT;
 
         $this->templateOptions = $templateOptions;
 
-        $this->path = $args['path'];
-        $this->absPath = Utils::resolvePath($args['path']);
+        $this->path = $options['path'];
+        $this->absPath = Utils::resolvePath($options['path']);
         $this->absPathLen = strlen($this->absPath);
         $this->url = Utils::resolveUrls(PFY_DOWNLOAD_PATH);
-        $this->id = $args['id'];
-        $this->wrapperClass = $args['class'];
-        $this->includeFiles = str_contains(strtolower($args['include']), 'files');
-        $this->includeFolders = str_contains(strtolower($args['include']), 'folders');
-        $this->exclude = $args['exclude'];
-        $this->markdown = $args['markdown']??false;
-        $this->maxAge = $args['maxAge'];
-        $this->replaceOnElem = $args['replaceOnElem'];
-        $this->modifiers = strtoupper($args['modifiers']);
+        $this->id = $options['id'];
+        $this->wrapperClass = $options['class'];
+        $this->includeFiles = str_contains(strtolower($options['include']), 'files');
+        $this->includeFolders = str_contains(strtolower($options['include']), 'folders');
+        $this->exclude = $options['exclude'];
+        $this->markdown = $options['markdown']??false;
+        $this->maxAge = $options['maxAge'];
+        $this->replaceOnElem = $options['replaceOnElem'];
+        $this->modifiers = strtoupper($options['modifiers']);
         $this->modifiers = preg_replace('/\W+/', ',', $this->modifiers);
         $this->modifiers = ','.str_replace(' ','', $this->modifiers).',';
 
@@ -458,7 +477,7 @@ EOT;
             $this->path = '~page/';
         }
 
-        $this->permission = Permission::evaluate($args['permission']);
+        $this->permission = Permission::evaluate($options['permission']);
 
         if ($this->id) {
             $this->id = " id='{$this->id}'";
