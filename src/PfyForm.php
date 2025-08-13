@@ -158,6 +158,7 @@ class PfyForm extends Form
     protected bool|null $keepSubmittedDataInForm = false;
     private array $presetDataRec = [];
     private string $lastCreatedRecKey = '';
+    private string $requestedRecKey = '';
     protected array $formDataRec = [];
 
     /**
@@ -217,6 +218,8 @@ class PfyForm extends Form
         if ($this->keepSubmittedDataInForm && (($_GET['clearform']??false) == $this->formIndex)) {
             Utils::pullSessionVar("form-$this->formIndex");
             reloadAgent();
+        } elseif ($_GET['presetForm']??false) {
+            $this->requestedRecKey = $_GET['presetForm'];
         }
     } // __construct
 
@@ -260,6 +263,12 @@ class PfyForm extends Form
         }
 
         $this->formDataRec = [];
+        if ($this->requestedRecKey) {
+            $rec = $this->db->find($this->requestedRecKey);
+            if ($rec) {
+                $this->formDataRec = $rec->data();
+            }
+        }
         if ($this->keepSubmittedDataInForm) {
             $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", []);
         }
@@ -1254,11 +1263,11 @@ class PfyForm extends Form
             $html = $this->renderFormElement_textarea($rec, $name, $class, $input, $dataVal);
 
         } elseif ($type === 'literal') {
-            $html .= $this->formElements[$_name]['html'] ?? '';
+            $html .= $rec['html'] ?? '';
 
         } elseif (str_contains(',cancel,submit,reset,button,newrec', ",$type,")) {
-            $cls = $this->formElements[$_name]['class'] ?? '';
-            $callback = ($this->formElements[$_name]['callback']??false);
+            $cls = $rec['class'] ?? '';
+            $callback = ($rec['callback']??false);
             if ($callback) {
                 $elem->setHtmlAttribute('data-callback', $callback);
             }
@@ -1269,8 +1278,12 @@ class PfyForm extends Form
             return '';
 
         } elseif ($type === 'button') {
-            $cls = $this->formElements[$_name]['class'] ?? '';
+            $cls = $rec['class'] ?? '';
             $elem->setHtmlAttribute('class', "pfy-form-button $cls");
+            $callback = ($rec['callback']??false);
+            if ($callback) {
+                $elem->setHtmlAttribute('data-callback', $callback);
+            }
             $this->formButtons .= (string)$elem->getControl() . "\n";
             return '';
 

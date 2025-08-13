@@ -73,6 +73,7 @@ const pfyFormsHelper = {
     document.body.addEventListener('click',  (ev) => {
       parent.cancelButtonHandler(ev);
       parent.newrecButtonHandler(ev);
+      parent.buttonCallbacksHandler(ev);
       parent.showPwHandler(ev);
       parent.handleFrozenWindow(ev);
       parent.handleSideBySideButtons(ev);
@@ -134,6 +135,27 @@ const pfyFormsHelper = {
   }, // handleSideBySideButtons
 
 
+  buttonCallbacksHandler(ev) {
+    const btn = ev.target.closest('input');
+    if (!btn) {
+      return;
+    }
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+
+    const callbackFun = btn.dataset.callback;
+    if (typeof callbackFun !== 'undefined' && callbackFun !== 'true' && isNaN(callbackFun)) {
+      // console.log(`callbackFun: ${callbackFun}`);
+      const res = window[callbackFun](ev);
+      if (!res) {
+        return;
+      }
+    }
+
+  }, // buttonCallbacksHandler
+
+
   cancelButtonHandler(ev) {
     const btn = ev.target.closest('input.pfy-cancel');
     if (!btn) {
@@ -147,7 +169,7 @@ const pfyFormsHelper = {
 
     const cancelCallback = btn.dataset.callback;
     if (typeof cancelCallback !== 'undefined' && cancelCallback !== 'true' && isNaN(cancelCallback)) {
-      mylog(`cancelCallback: ${cancelCallback}`);
+      // console.log(`callbackFun: ${callbackFun}`);
       let res = window[cancelCallback](ev);
       if (!res) {
         return;
