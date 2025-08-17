@@ -73,7 +73,7 @@ const PFY_FORM_OPTIONS = [
         'markLocked' => false,
         'obfuscateRecKeys' => true,
         'rowCallback' => true,
-        'obfuscateCols' => [],
+        'obfuscateCols' => ['passwor*'],
     ],
     'dbOptions' => [
         'keepDataDuration' => DEFAULT_KEEP_OLD_DATA_DURATION,
@@ -146,7 +146,8 @@ class PfyForm extends Form
 
     // Output controlling states:
     protected bool $showFeedbackInpage;
-    protected mixed $formResponse = '';
+    protected string $formResponse = '';
+    protected bool $formErrorState = false;
     protected  bool $isFormAdmin = false;
     protected  bool $showTable = false;
     protected bool $showForm = true;
@@ -189,7 +190,7 @@ class PfyForm extends Form
         }
 
         $this->handleScheduleOption();
-        $this->checkDeadline(); // -> sets $this->deadlinePassed and $this->formResponse
+        $this->checkDeadline(); // -> sets $this->deadlinePassed and $this->formInpageResponse
         $this->checkMaxCount();
 
         // open database:
@@ -237,9 +238,20 @@ class PfyForm extends Form
         $html = "\n\n<!-- === pfy form widget === -->\n";
 
         $this->__processReceivedData();
+
         $formResponse = $this->deadlinePassed . $this->maxCountExceeded . $this->formResponse;
-        if (!$this->showFeedbackInpage && $this->formResponse) {
-            reloadAgent(message: strip_tags($this->formResponse));
+        if (!$this->showFeedbackInpage && $formResponse) {
+            reloadAgent(message: strip_tags($formResponse));
+        }
+
+        // add 'continue...' if direct feedback is active:
+        if ($this->showFeedbackInpage && $formResponse) {
+            $next = $this->formOptions['next'];
+            $class = 'pfy-form-continue';
+            if ($next === '~page/') {
+                $class .= ' pfy-form-continue-same';
+            }
+            $formResponse .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
         }
 
         if ($formResponse) {
@@ -263,7 +275,6 @@ class PfyForm extends Form
             $html .= $this->injectNoShowCssRule();
         }
 
-        $this->formDataRec = [];
         if ($this->requestedRecKey) {
             $rec = $this->db->find($this->requestedRecKey);
             if ($rec) {
@@ -395,7 +406,7 @@ class PfyForm extends Form
                 $elem = $this->addHidden($name, $elemOptions['value']??'');
                 break;
             case 'bypassed':
-                $this->bypassedElements[$name] = $elemOptions['value']??'';
+                $this->bypassedElements[$name] = ($elemOptions['value']??'') ?: $elemOptions['preset']??'';
                 $elem = $this->addHidden($name, '');
                 break;
             case 'readonly':
@@ -517,36 +528,6 @@ class PfyForm extends Form
         // handle placeholders:
         if ($placeholder = ($elemOptions['placeholder']??false)) {
             $elem->setHtmlAttribute('placeholder', $placeholder);
-        }
-
-        // handle presets (resp. value / default):
-        $preset = ($elemOptions['preset']??false);
-        if ($preset) {
-            if (is_bool($preset)) {
-                $preset = $preset?'true':'false';
-            }
-            if (str_contains($preset, '%')) {
-                $preset = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $preset);
-            }
-            $elem->setHtmlAttribute('data-preset', $preset);
-        }
-        $value = ($elemOptions['value']??false);
-        if ($value) {
-            if (is_bool($value)) {
-                $value = $value?'true':'false';
-            }
-            if (str_contains($value, '%')) {
-                $value = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $value);
-            }
-            if (str_contains('_reckey,_formInx,_csrf', $name)) {
-                $elem->setHtmlAttribute('data-preset', $value);
-            } else {
-                $elem->setHtmlAttribute('data-value', $value);
-            }
-        }
-        if ($this->presetDataRec) {
-            $value = $this->presetDataRec[$name]??'';
-            $elem->setHtmlAttribute('data-value', $value);
         }
 
         // handle compute-saveAs:
@@ -1215,7 +1196,7 @@ class PfyForm extends Form
         $attr = '';
 
         // if nette forms applied a value, turn it into a data-value (same for checked and selected):
-        list($input, $dataVal) = $this->applyFormFieldValues($input, $type, $name);
+        $input = $this->applyFormFieldValues($input, $type, $name);
 
         // for password field prepare required icons:
         if ($type === 'password') {
@@ -1255,13 +1236,37 @@ class PfyForm extends Form
             $class .= " pfy-$nameCls";
         }
 
+        $dataAttrib = '';
+        if ($dataVal = $this->formDataRec[$name]??'') {
+            // if data has been received previously (in retainData mode), that has priority:
+            if (!is_array($dataVal)) {
+                $dataAttrib = " data-value='$dataVal'";
+            }
+
+        } else {
+            if ($rec['value'] ?? false) {
+                $val = $rec['value'];
+                if (str_contains($val, '%')) {
+                    $val = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                }
+               $dataAttrib = " data-value='$val'";
+            }
+            if ($rec['preset'] ?? false) {
+                $val = $rec['preset'];
+                if (str_contains($val, '%')) {
+                    $val = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                }
+              $dataAttrib .= " data-preset='$val'";
+            }
+        }
+
         // === render type-specific =====================================
         $html = '';
         if ($type === 'hidden') {
-            $html = $this->renderFormElement_Hidden($type, $class, $input, $dataVal);
+            $html = $this->renderFormElement_Hidden($type, $class, $input, $dataAttrib);
 
         } elseif (($type === 'textarea') && ($rec['reveal'] ?? false)) {
-            $html = $this->renderFormElement_textarea($rec, $name, $class, $input, $dataVal);
+            $html = $this->renderFormElement_textarea($rec, $name, $class, $input, $dataAttrib);
 
         } elseif ($type === 'literal') {
             $html .= $rec['html'] ?? '';
@@ -1288,9 +1293,12 @@ class PfyForm extends Form
             $this->formButtons .= (string)$elem->getControl() . "\n";
             return '';
 
-            // all other field types (except bypassed and import):
+        } elseif (is_array($dataVal)) {
+            $html = $this->renderFormElement_choiceTypes($elem, $type, $class, $input, $attr, $label, $dataVal);
+
+        // all other field types (except bypassed and import):
         } elseif (!str_contains(',bypassed,@import,', ",$type,")) {
-            $html = $this->renderFormElement_regularTypes($elem, $type, $class, $input, $attr, $label, $dataVal);
+            $html = $this->renderFormElement_regularTypes($elem, $type, $class, $input, $attr, $label, $dataAttrib);
         }
         return $html;
     } // renderFormElement
@@ -1304,17 +1312,16 @@ class PfyForm extends Form
      * @param string $input
      * @return string
      */
-    private function renderFormElement_textarea(array $rec, string $name, string $class, string $input, string $dataVal): string
+    private function renderFormElement_textarea(array $rec, string $name, string $class, string $input, string $dataAttrib): string
     {
         $controllerLabel = $rec['reveal'];
         if ($controllerLabel === true) {
             $controllerLabel = TransVars::getVariable('pfy-form-default-reveal-label');
             $controllerLabel = str_replace('%name%', $name, $controllerLabel);
         }
-        $dataVal = $dataVal ? " data-value='$dataVal'" : '';
         $html = <<<EOT
 
-<div class='pfy-elem-wrapper pfy-textarea $class'$dataVal'><!-- pfy-elem-wrapper -->
+<div class='pfy-elem-wrapper pfy-textarea $class'$dataAttrib><!-- pfy-elem-wrapper -->
 	<details class='mdp-accordion'>
 		<summary><span>$controllerLabel</span></summary>
 		<div class='mdp-accordion-body'>
@@ -1336,14 +1343,14 @@ EOT;
      * @param string $type
      * @param string $class
      * @param string $input
-     * @param string $dataVal
+     * @param string $dataAttrib
      * @return string
      */
-    private function renderFormElement_Hidden(string $type, string $class, string $input, string $dataVal): string
+    private function renderFormElement_Hidden(string $type, string $class, string $input, string $dataAttrib): string
     {
         $html = <<<EOT
 
-<div class="pfy-elem-wrapper pfy-$type $class"$dataVal><!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib><!-- pfy-elem-wrapper -->
 $input
 </div>
 <!-- ----------------- pfy-elem-wrapper -->
@@ -1363,7 +1370,7 @@ EOT;
      * @param string $label
      * @return string
      */
-    private function renderFormElement_regularTypes(object $elem, string $type, string $class, string $input, string $attr, string $label, string $dataVal): string
+    private function renderFormElement_regularTypes(object $elem, string $type, string $class, string $input, string $attr, string $label, string $dataAttrib): string
     {
         // get errors and render them:
         $errors = '';
@@ -1380,10 +1387,9 @@ EOT;
 
         $input = "<span class='pfy-input-wrapper'>$input</span>";
 
-        $dataVal = $dataVal ? " data-value='$dataVal'" : '';
         $html = <<<EOT
 
-<div class="pfy-elem-wrapper pfy-$type $class"$dataVal><!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib><!-- pfy-elem-wrapper -->
 
 $label
 $input
@@ -1395,6 +1401,39 @@ $errors
 EOT;
         return $html;
     } // renderFormElement_regularTypes
+
+
+    private function renderFormElement_choiceTypes(object $elem, string $type, string $class, string $input, string $attr, string $label, array $dataVals): string
+    {
+        // get errors and render them:
+        $errors = '';
+        if ($elem->hasErrors()) {
+            $class .= ' pfy-form-elem-has-error';
+            foreach ($elem->getErrors() as $error) {
+                $errors .= "<div class='pfy-form-elem-error-msg'>$error</div>\n";
+            }
+        }
+
+        if ($attr) {
+            $label = str_replace('<label', "<label $attr", $label);
+        }
+        $dataAttr = " data-value='{$dataVals['_']}'";
+        $input = "<span class='pfy-input-wrapper'>$input</span>";
+
+        $html = <<<EOT
+
+<div class="pfy-elem-wrapper pfy-$type $class"$dataAttr><!-- pfy-elem-wrapper -->
+
+$label
+$input
+$errors
+</div>
+<!-- ----------------- /pfy-elem-wrapper -->
+
+
+EOT;
+        return $html;
+    } // renderFormElement_choiceTypes
 
 
     /**
@@ -1427,7 +1466,6 @@ EOT;
             $aria = ' aria-hidden="true"';
         }
         $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'$aria>\n";
-//        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
         return $html;
     } // renderFormWrapperHead
 
@@ -1491,7 +1529,6 @@ EOT;
         }
 
         list($id, $formClass) = $this->getHeadAttributes();
-//        list($id, $formClass, $aria) = $this->getHeadAttributes();
         if ($this->hasErrors()) {
             $formClass .= ' pfy-form-has-errors';
         }
@@ -1948,6 +1985,7 @@ EOT;
 
         $origDataRec = $dataRec;
         $dataRec = $this->normalizeData($dataRec);
+        $this->formDataRec = $dataRec;
 
         if (is_string($dataRec)) {
             // string means spam detected:
@@ -1958,6 +1996,7 @@ EOT;
 
         // handle required groups:
         if ($this->applyRequiredGroupCheck($dataRec)) {
+            $this->formErrorState = true;
             return;
         }
 
@@ -1972,13 +2011,13 @@ EOT;
         $dataRec = $this->handleUploads($dataRec);
 
         // if 'file' defined, save received data:
+        $formErrorResponse = '';
         if ($this->file) {
-            $err = $this->storeSubmittedData($dataRec, $recKey);
-            if ($err) {
-                // $err becomes error message to user
-                $err = TransVars::getVariable($err, true);
-                $html = "<div class='pfy-form-error'>$err</div>\n";
-                mylog($err, 'form-log.txt');
+            $formErrorResponse = $this->storeSubmittedData($dataRec, $recKey);
+            if ($formErrorResponse) {
+                mylog($formErrorResponse, 'form-log.txt');
+                $this->formErrorState = true;
+
             } else {
                 $logMsg = 'Stored: '.PFY_PAGE_URI."[$formInxReceived] ";
                 $logMsg .= var_r($dataRec);
@@ -1996,56 +2035,44 @@ EOT;
             }
         }
 
-        // if no error (i.e. error-message in $html) -> notify owner & create feedback:
-        if (!$html) {
-            if ($this->formOptions['mailTo']) {
-                $this->sendOwnerNotification($dataRec);
-            }
-
-            if ($this->formOptions['confirmationText']) {
-                $response = $this->formOptions['confirmationText'];
-            } else {
-                $response = "{{ pfy-form-submit-success }}";
-            }
-            $html = "<div class='pfy-form-success'>$response</div>\n";
-
-            // handle optional confirmation mail:
-            $html .= $this->sendConfirmationMail($dataRec);
+        if ($this->formErrorState) {
+            // error:
+            $this->formResponse = "<div class='pfy-form-error'>$formErrorResponse</div>\n";
+            return;
         }
 
-
-        // add 'continue...' if direct feedback is active:
-        if ($this->showFeedbackInpage) {
-            $next = $this->formOptions['next'];
-            $class = 'pfy-form-success-continue';
-            if ($next === '~page/') {
-                $class .= ' pfy-form-continue-same';
-            }
-            $html .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
+        // success:
+        if ($this->formOptions['mailTo']) {
+            $this->sendOwnerNotification($dataRec);
         }
+
+        if ($this->formOptions['confirmationText']) {
+            $formSuccessResponse = $this->formOptions['confirmationText'];
+        } else {
+            $formSuccessResponse = "{{ pfy-form-submit-success }}";
+        }
+        $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
+
+        // handle optional confirmation mail:
+        $formSuccessResponse .= $this->sendConfirmationMail($dataRec);
 
         // write log:
-        $logText = strip_tags($html);
-        mylog($logText, 'form-log.txt');
+        mylog(strip_tags($formSuccessResponse), 'form-log.txt');
 
         if (isset($_POST)) {
             unset($_POST);
         }
 
         if ($this->showFeedbackInpage) {
-            if ($html) {
-                $html = "<div class='pfy-form-response'>\n$html\n</div><!-- /pfy-form-response -->\n";
-
-                // in case there are multiple forms in the page, hide all others:
-                // (nette forms would preset received data in other forms)
-                Page::addCss('.pfy-form-and-table-wrapper {display: none;}');
+            if ($formSuccessResponse) {
+                $formSuccessResponse = "<div class='pfy-form-response'>\n$formSuccessResponse\n</div><!-- /pfy-form-response -->\n";
             }
-            $this->formResponse =  $html;
-            $this->showForm = false;
-        } else {
-            $this->formResponse =  '';
-            $this->showForm = true;
+
+            // in case there are multiple forms in the page, hide all others:
+            // (nette forms would preset received data in other forms)
+            Page::addCss('.pfy-form-and-table-wrapper {display: none;}');
         }
+        $this->formResponse = $formSuccessResponse;
     } // __processReceivedData
 
 
@@ -2215,10 +2242,10 @@ EOT;
                 foreach ($template as $key => $name1) {
                     $value1[$key] = in_array($key, $value);
                     if ($value1[$key]) {
-                        $value1[ARRAY_SUMMARY_NAME] .= $key.', ';
+                        $value1[ARRAY_SUMMARY_NAME] .= $key.',';
                     }
                 }
-                $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ', ');
+                $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ',');
                 $dataRec[$name] = $value1;
 
             // handle comment's reveal-controller: if unchecked, we erase the textarea entry:
@@ -2359,10 +2386,10 @@ EOT;
     /**
      * @param array $newRec
      * @param string $file
-     * @return false|string
+     * @return false|string // no error | error msg
      * @throws \Exception
      */
-    private function storeSubmittedData(array $newRec, string|false $recId = false): false|string
+    private function storeSubmittedData(array $newRec, string|false $recId = false): bool|string
     {
         foreach ($newRec as $key => $rec) {
             if (is_array($rec)) {
@@ -2380,7 +2407,7 @@ EOT;
         if (!$newRec) {
             return false;
         }
-        return $this->saveRec($newRec, $recId);
+        return  $this->saveRec($newRec, $recId); // false or err-msg
     } // storeSubmittedData
 
 
@@ -2390,7 +2417,7 @@ EOT;
      * @return false|string
      * @throws \Exception
      */
-    private function saveRec(array $newRec, string $recId)
+    private function saveRec(array $newRec, string $recId): string|false // error if err-msg
     {
         $this->openDB();
 
@@ -2405,7 +2432,6 @@ EOT;
         $recId = $this->db->addRec($newRec, recKeyToUse: $recId)->recId();
         if (is_string($recId)) {
             $this->lastCreatedRecKey = $recId;
-            return 'pfy-form-success-record-saved';
         }
         return false;
     } // saveRec
@@ -2631,7 +2657,9 @@ EOT;
             $to = $mailOverride;
         }
 
-        if (str_contains($to, ',')) {
+        if (!is_string($to)) {
+            mylog("Error sending OwnerNotification to '{$to}'.");
+        } elseif (str_contains($to, ',')) {
             $to = explodeTrim(',', $to);
         }
         $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
@@ -2790,9 +2818,6 @@ EOT;
             $formOptions['outerWrapperClass'] .= ' pfy-side-by-side';
         }
 
-
-//        $this->formOptions                  = $formOptions;
-
         if ($formOptions['tableOptions']) {
             $this->tableOptions = $this->parseTableOptions($formOptions['tableOptions']);
         } else {
@@ -2818,11 +2843,9 @@ EOT;
             $tableOptions['permission'] = 'loggedin|localhost';
         }
         if (($tableOptions['mode']??false) === 'popup' || ($tableOptions['editMode']??false) === 'popup') {
-//        if (isset($tableOptions['editMode']) && $tableOptions['editMode'] === 'popup') {
             $this->showFeedbackInpage = false;
             $this->popupMode = true;
             $this->formOptions['outerWrapperClass'] .= ' pfy-table-edit-popup';
-//            $this->formWrapperClass .= ' pfy-table-edit-popup';
         }
         $this->keepSubmittedDataInForm |= ($tableOptions['editMode'] === 'save');
 
@@ -3061,17 +3084,19 @@ EOT;
      * @param string $name
      * @return array
      */
-    private function applyFormFieldValues(string $input, string $type, string $name): array
+    private function applyFormFieldValues(string $input, string $type, string $name): string
     {
-        $valueToInject = $this->formDataRec[$name]??false;
-
         if (!str_contains('button,hidden,cancel,submit,reset,select,multiselect,radio,checkbox,upload', $type)) {
             if (preg_match('/(?<! data-)value="(.*?)"/', $input, $m)) {
-                $val = $m[1];
-                $input = preg_replace('/(?<! data-)value="(.*?)"/', "data-value=\"$val\"", $input);
+                if (!$this->formErrorState) {
+                    $input = preg_replace('/(?<! data-)value="(.*?)"/', '', $input);
+                } else {
+                    $val = $m[1];
+                    $input = preg_replace('/(?<! data-)value="(.*?)"/', "data-value=\"$val\"", $input);
+                }
             }
         }
-        return [$input, $valueToInject];
+        return $input;
     } // applyFormFieldValues
 
 
@@ -3347,16 +3372,6 @@ EOT;
         if ($this->isFormAdmin) {
             $class .= " pfy-screen-only";
         }
-//        $aria = '';
-//        if ($this->popupMode) {
-////        if ($this->tableOptions && $this->tableOptions['editMode'] === 'popup') {
-//            // in popup mode the form is not visible, only appears in popup on request
-//            $this->formWrapperClass .= " pfy-fully-hidden";
-//            $this->formWrapperAttrs = ' aria-hidden="true"';
-////            $class .= " pfy-fully-hidden";
-////            $aria = ' aria-hidden="true"';
-//        }
-//        return array($id, $class, $aria);
         return [$id, $class];
     } // getHeadAttributes
 

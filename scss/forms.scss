@@ -126,6 +126,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
   .pfy-elem-wrapper {
     line-height: 1em;
+    &.pfy-hidden {
+      display: none;
+    }
   }
   .pfy-elem-wrapper:not(.pfy-choice) {
     .pfy-label-wrapper label {
@@ -479,7 +482,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   .pfy-elem-wrapper.pfy-form-buttons {
-//  .pfy-elem-wrapper.button {
     text-align: right;
     .pfy-label-wrapper {
       display: none;
@@ -669,13 +671,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     padding: 0;
   }
 
-  .pfy-elem-wrapper.pfy-form-buttons {
-    .pfy-input-wrapper {
-      width: 100%;
-      max-width: 100%;
-    }
-  }
-
   .pfy-form .pfy-reveal-container {
     background: $formRevealContainerBg;
     border: $formRevealContainerBorder;
@@ -698,6 +693,13 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-elem-wrapper input.pfy-reveal-controller::before {
     left: calc(-0.2em + #{$formRevealPadding}) !important;
     top: 0.4em;
+  }
+
+  .pfy-elem-wrapper.pfy-form-buttons {
+    .pfy-input-wrapper {
+      width: 100%;
+      max-width: 100%;
+    }
   }
 
   .pfy-form-wrapper {
@@ -746,14 +748,15 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   }
 
   input[readonly],
-  input.pfy-readonly {
+  textarea[readonly] {
     background: $readonlyBg;
     border: $inputBorder;
     cursor: initial;
   }
 
   input[disabled] {
-    filter: brightness(85%);
+    background: $readonlyBg;
+    opacity: 0.6;
   }
 
   .pfy-overlay-background {
