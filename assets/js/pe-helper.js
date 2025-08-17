@@ -61,6 +61,36 @@ function initiatePhoneCall(options) {
 } // initiateMail
 
 
+/*
+* Tries to execute callback function.
+* callbackFun can be: js-code, name of function or closure.
+* Returns null when no callback has been executed, or callback did not return a value.
+* In most cases, returning true means stop further processing (i.e. default action, propagation).
+*/
+function executeCallbackCode(callbackFun, arg = null) {
+  if (typeof callbackFun === 'undefined' || callbackFun === 'true' || !isNaN(callbackFun)) {
+    return null;
+  }
+  let res = null;
+  if (typeof callbackFun === 'function') {
+    res = callbackFun( parent, parent.callbackArg );
+  } else if (typeof window[callbackFun] === 'function') {
+    res = window[callbackFun](arg);
+  } else {
+    try {
+      res = new Function(callbackFun)(arg);
+    } catch (e) {
+      console.error(e);
+      res = null;
+    }
+  }
+  if (typeof res === 'undefined') {
+    res = null;
+  }
+  return res;
+} // executeCallbackCode
+
+
 
 function serverLog(text, logFileName) {
   let url = appendToUrl(window.location.href, '?ajax&log=' +  encodeURI(text));
