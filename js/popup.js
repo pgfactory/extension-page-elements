@@ -188,10 +188,10 @@ function pfyPopup( options ) {
       // === ESC:
       if (key === 'Escape') {
         if (parent.onCancel) {
-          parent.inihibitClosing = !executeCallback(parent.onCancel);
+          parent.inihibitClosing = !parent.executeCallback(parent.onCancel);
 
         } else if (parent.onClose && document.querySelectorAll('.pfy-popup-btn-close').length) {
-          parent.inihibitClosing = !executeCallback(parent.onClose);
+          parent.inihibitClosing = !parent.executeCallback(parent.onClose);
         }
         parent.close();
         ev.preventDefault();
@@ -200,11 +200,11 @@ function pfyPopup( options ) {
       // === Enter:
       if (key === 'Enter' && target.tagName !== 'TEXTAREA') {
         if (target.closest('.pfy-popup-btn-confirm')) {
-          parent.inihibitClosing = !executeCallback(parent.onConfirm);
+          parent.inihibitClosing = !parent.executeCallback(parent.onConfirm);
         } else if (target.closest('.pfy-popup-btn-ok')) {
-          parent.inihibitClosing = !executeCallback(parent.onOk);
+          parent.inihibitClosing = !parent.executeCallback(parent.onOk);
         } else if (target.closest('.pfy-popup-btn-continue')) {
-          parent.inihibitClosing = !executeCallback(parent.onContinue);
+          parent.inihibitClosing = !parent.executeCallback(parent.onContinue);
         }
         parent.close();
         ev.preventDefault();
@@ -418,20 +418,20 @@ function pfyPopup( options ) {
     const parent = this; //???
     const btnClasses = button.classList;
     if (btnClasses.contains('pfy-popup-btn-cancel') && parent.onCancel) {
-      parent.inihibitClosing = !executeCallback(parent.onCancel);
+      parent.inihibitClosing = !this.executeCallback(parent.onCancel);
 
     } else if (btnClasses.contains('pfy-popup-btn-ok') && parent.onOk) {
-      parent.inihibitClosing = !executeCallback(parent.onOk);
+      parent.inihibitClosing = !this.executeCallback(parent.onOk);
 
     } else if (btnClasses.contains('pfy-popup-btn-continue') && parent.onContinue) {
-      parent.inihibitClosing = !executeCallback(parent.onContinue);
+      parent.inihibitClosing = !this.executeCallback(parent.onContinue);
 
     } else if (btnClasses.contains('pfy-popup-btn-confirm') && parent.onConfirm) {
-      parent.inihibitClosing = !executeCallback(parent.onConfirm);
+      parent.inihibitClosing = !this.executeCallback(parent.onConfirm);
 
     // if none of the above triggered, try the second button:
     } else if (btnClasses.contains('pfy-popup-btn-2') && parent.onOk) {
-      parent.inihibitClosing = !executeCallback(parent.onOk);
+      parent.inihibitClosing = !this.executeCallback(parent.onOk);
 
     } else {
       parent.inihibitClosing = false;
@@ -534,7 +534,7 @@ function pfyPopup( options ) {
     }
 
     if (this.onOpen) {
-      executeCallback(this.onOpen);
+      this.executeCallback(this.onOpen);
     }
 
     // for accessibility: make sure focus can't go outside popup. (workaround while 'inert' is not reliable)
@@ -562,14 +562,16 @@ function pfyPopup( options ) {
   this._close = function (popupBg) {
     // exec onClose callback, if defined:
     if (this.onClose) {
-      this.inihibitClosing = !executeCallback(parent.onClose);
+      this.inihibitClosing = !this.executeCallback(parent.onClose);
     }
     if (this.inihibitClosing) {
       return;
     }
 
     // close popup now:
-    popupBg.remove();
+    if (popupBg) {
+      popupBg.remove();
+    }
 
     if (!document.querySelector('.pfy-popup-bg')) {
       document.body.classList.remove('pfy-no-scroll', 'pfy-modal');
@@ -623,6 +625,13 @@ function pfyPopup( options ) {
 
     } else if (typeof window[callback] === 'function') {
       res = window[callback]( parent, parent.callbackArg );
+    } else if (typeof callback === 'string') {
+      // if it's a string, try to execute it as js code:
+      try {
+        res = new Function(callback)( parent, parent.callbackArg );
+      } catch (e) {
+        console.error(e);
+      }
     }
     return (typeof res !== 'undefined') ? res: true;
   } // executeCallback
@@ -651,29 +660,29 @@ function pfyPopupPromise( options ) {
       // affirmative reactions:
       let onOk = options.onOk;
       options.onOk = function() {
-        executeCallback(onOk);
+        this.executeCallback(onOk);
         resolve( true );
       };
       let onContinue = options.onContinue;
       options.onContinue = function() {
-        executeCallback(onContinue);
+        this.executeCallback(onContinue);
         resolve( true );
       };
       let onConfirm = options.onConfirm;
       options.onConfirm = function() {
-        executeCallback(onConfirm);
+        this.executeCallback(onConfirm);
         resolve( true );
       };
 
       // rejecting reactions:
       let onCancel = options.onCancel;
       options.onCancel = function() {
-        executeCallback(onCancel);
+        this.executeCallback(onCancel);
         resolve( false );
       };
       let onClose = options.onClose;
       options.onClose = function () {
-        executeCallback(onClose);
+        this.executeCallback(onClose);
         resolve( false );
       };
 
