@@ -40,22 +40,22 @@ EOT,
         $str = $sourceCode;
     }
 
-    $title = $options['title'] ? " title='{$options['title']}'" : ' title="{{ pfy-say-open-title }}"';
+    $title = $options['title'] ? " title='{$options['title']}'" : ' title="{{ pfy-tts-open-title }}"';
     $textSelector = $options['textSelector'];
     $wrapperId = $options['wrapperId'].$options['id'];
     $wrapperId = $wrapperId? " id='{$wrapperId}'" : '';
 
     $wrapperClass = $options['wrapperClass'].$options['class'];
     $wrapperClass = $wrapperClass? " $wrapperClass": '';
-    $wrapperClass .= $options['autoplay']? ' pfy-say-autoplay' : '';
+    $wrapperClass .= $options['autoplay']? ' pfy-tts-autoplay' : '';
 
     $speedset = $options['speedset'] ?: '';
     if ($speedset) {
         $speedset = <<<EOT
 
-<div class="pfy-say-speed-wrapper">
-<label class='pfy-invisible'>{{ pfy-say-speed-label }}</label>
-<span class="pfy-say-speed-wrapper" title="{{ pfy-say-speed-title }}">
+<div class="pfy-tts-speed-wrapper">
+<label class='pfy-invisible'>{{ pfy-tts-speed-label }}</label>
+<span class="pfy-tts-speed-wrapper" title="{{ pfy-tts-speed-title }}">
 <label><input type="radio" name="speed" value="0.8x"><span>0.8x</span></label>
 <label><input type="radio" name="speed" value="1x"><span>1x</span></label>
 <label><input type="radio" name="speed" value="1.15x"><span>1.15x</span></label>
@@ -75,15 +75,15 @@ EOT;
 
     $str .= <<<EOT
 
-<div$wrapperId class="pfy-say-widget$wrapperClass" data-say-target="$textSelector"$callback>
-    <button id="pfy-button-open-$inx" class="pfy-button pfy-say-open" aria-pressed="false"$title>{{ pfy-say-open }}</button>
-    <div class="pfy-say-buttons">
-        <button id="pfy-button-play-$inx" class="pfy-button pfy-say-play" aria-pressed="false" title="{{ pfy-say-play-title }}">{{ pfy-say-play }}</button>
-        <button id="pfy-button-pause-$inx" class="pfy-button pfy-say-pause" aria-pressed="false" title="{{ pfy-say-pause-title }}">{{ pfy-say-pause }}</button>
-        <button id="pfy-button-stop-$inx" class="pfy-button pfy-say-stop" aria-pressed="false" title="{{ pfy-say-stop-title }}">{{ pfy-say-stop }}</button>
-    </div><!--/.pfy-say-buttons-->
+<div$wrapperId class="pfy-tts-widget$wrapperClass" data-say-target="$textSelector"$callback>
+    <button id="pfy-button-open-$inx" class="pfy-button pfy-tts-open" aria-pressed="false"$title>{{ pfy-tts-open }}</button>
+    <div class="pfy-tts-buttons">
+        <button id="pfy-button-play-$inx" class="pfy-button pfy-tts-play" aria-pressed="false" title="{{ pfy-tts-play-title }}">{{ pfy-tts-play }}</button>
+        <button id="pfy-button-pause-$inx" class="pfy-button pfy-tts-pause" aria-pressed="false" title="{{ pfy-tts-pause-title }}">{{ pfy-tts-pause }}</button>
+        <button id="pfy-button-stop-$inx" class="pfy-button pfy-tts-stop" aria-pressed="false" title="{{ pfy-tts-stop-title }}">{{ pfy-tts-stop }}</button>
+    </div><!--/.pfy-tts-buttons-->
 $speedset
-</div><!--/.pfy-say-widget-->
+</div><!--/.pfy-tts-widget-->
 
 EOT;
 

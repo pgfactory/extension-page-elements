@@ -15,7 +15,7 @@ const TextToSpeech = {
       });
 
       this.initSpeech();
-      domForEach('.pfy-say-widget', (widgetEl) => {
+      domForEach('.pfy-tts-widget', (widgetEl) => {
         this.initWidget(widgetEl);
       });
     }, // init
@@ -32,7 +32,7 @@ const TextToSpeech = {
 
     initWidget: function(widgetEl) {
       // init open button
-      domForOne(widgetEl, '.pfy-say-open', (el) => {
+      domForOne(widgetEl, '.pfy-tts-open', (el) => {
         el.addEventListener('click', (ev) => {
           this.open(ev);
         });
@@ -43,11 +43,11 @@ const TextToSpeech = {
     open: function (ev) {
         this.reset();
         const btn = ev.target;
-        domForOne(btn, '^.pfy-say-widget', (widgetEl) => {
+        domForOne(btn, '^.pfy-tts-widget', (widgetEl) => {
           this.widget = widgetEl;
 
           // setup play button:
-          domForOne(widgetEl, '.pfy-say-play', (el) => {
+          domForOne(widgetEl, '.pfy-tts-play', (el) => {
             this.playBtn = el;
             el.addEventListener('click', (ev) => {
               this.play(ev);
@@ -55,7 +55,7 @@ const TextToSpeech = {
           });
 
           // setup pause button:
-          domForOne(widgetEl, '.pfy-say-pause', (el) => {
+          domForOne(widgetEl, '.pfy-tts-pause', (el) => {
             this.pauseBtn = el;
             el.addEventListener('click', (ev) => {
               this.pause(ev);
@@ -63,7 +63,7 @@ const TextToSpeech = {
           });
 
           // setup stop button:
-          domForOne(widgetEl, '.pfy-say-stop', (el) => {
+          domForOne(widgetEl, '.pfy-tts-stop', (el) => {
             this.stopBtn = el;
             el.addEventListener('click', (ev) => {
               this.reset(ev);
@@ -75,25 +75,16 @@ const TextToSpeech = {
 
           // get text to read:
           let text = false;
-
-          if (widgetEl.dataset.callback) {
-            // case callback:
-            const callback = widgetEl.dataset.callback;
-            if (typeof window[callback] === 'function') {
-              text = window[callback](widgetEl);
-              if (text) {
-                this.text = text;
-              }
-            }
-          }
-          if(!text) {
+          text = executeCallbackCode(widgetEl.dataset.callback);
+          if (text) {
+            this.text = text;
+          } else {
             this.getTextToSay(widgetEl.dataset.sayTarget, widgetEl);
           }
-          mylog(`Text to read: ${this.text}`);
 
           // now open the widget:
-          widgetEl.classList.add('pfy-say-open');
-          if (widgetEl.classList.contains('pfy-say-autoplay')) {
+          widgetEl.classList.add('pfy-tts-open');
+          if (widgetEl.classList.contains('pfy-tts-autoplay')) {
             this.play();
           }
 
@@ -117,12 +108,12 @@ const TextToSpeech = {
         el = document.querySelector(textSel);
       }
       if (!el) {
-        mylog(`Unable to find '${textSel}'`);
+        console.log(`Unable to find '${textSel}'`);
         return;
       }
       // remove the say widget in case it was embedded in the text element:
       let clone = el.cloneNode(true);
-      const widgetElem = clone.querySelector('.pfy-say-widget');
+      const widgetElem = clone.querySelector('.pfy-tts-widget');
       if (widgetElem) {
         widgetElem.remove();
         this.text = clone.innerText;
@@ -131,22 +122,35 @@ const TextToSpeech = {
       }
       if (!this.text) {
         this.text = '';
-        mylog('No text found to read aloud.');
+        console.log('No text found to read aloud.');
       }
     }, // getTextToSay
 
 
-    play: function() {
-      mylog('Play');
+    say: function(text) {
       if (typeof this.widget === 'undefined') {
-        mylog('Play: this.widget is null');
+        console.log('Play: this.widget is null');
         return;
       }
       this.synth.cancel();
-      const utterThis = new SpeechSynthesisUtterance(this.text);
+      if (typeof text === 'undefined') {
+        text = this.text;
+      }
+      console.log(`Say: ${text}`);
+      const utterThis = new SpeechSynthesisUtterance(text);
       utterThis.rate = this.speed * this.speedFactor;
       this.synth.speak(utterThis);
-      this.widget.classList.add('pfy-say-playing');
+    }, // say
+
+
+    play: function() {
+      //console.log('Play');
+      if (typeof this.widget === 'undefined') {
+        console.log('Play: this.widget is null');
+        return;
+      }
+      this.say();
+      this.widget.classList.add('pfy-tts-playing');
       this.setButtonPressed(this.playBtn);
       this.unsetButtonPressed(this.pauseBtn);
     }, // play
@@ -155,17 +159,17 @@ const TextToSpeech = {
     pause: function() {
       if (window.speechSynthesis.speaking) {
         if (window.speechSynthesis.paused) {
-          mylog('Resume');
+          console.log('Resume');
           this.synth.resume();
-          this.widget.classList.remove('pfy-say-paused');
-          this.widget.classList.add('pfy-say-playing');
+          this.widget.classList.remove('pfy-tts-paused');
+          this.widget.classList.add('pfy-tts-playing');
           this.unsetButtonPressed(this.pauseBtn);
           this.setButtonPressed(this.playBtn);
         } else {
-          mylog('Pause');
+          console.log('Pause');
           this.synth.pause();
-          this.widget.classList.add('pfy-say-paused');
-          this.widget.classList.remove('pfy-say-playing');
+          this.widget.classList.add('pfy-tts-paused');
+          this.widget.classList.remove('pfy-tts-playing');
           this.setButtonPressed(this.pauseBtn);
           this.unsetButtonPressed(this.playBtn);
         }
@@ -174,19 +178,19 @@ const TextToSpeech = {
 
 
     stop: function() {
-      mylog('Stop');
+      console.log('Stop');
       this.reset();
     }, // stop
 
 
     reset: function() {
       this.synth.cancel();
-      domForEach('.pfy-say-widget', (el) => {
-        el.classList.remove('pfy-say-open');
+      domForEach('.pfy-tts-widget', (el) => {
+        el.classList.remove('pfy-tts-open');
       })
-      domForEach('.pfy-say-widget .pfy-button', (el) => {
+      domForEach('.pfy-tts-widget .pfy-button', (el) => {
         el.setAttribute('aria-pressed', false);
-        el.classList.remove('pfy-say-playing', 'pfy-say-playing', 'pfy-say-paused', 'pfy-button-pressed');
+        el.classList.remove('pfy-tts-playing', 'pfy-tts-playing', 'pfy-tts-paused', 'pfy-button-pressed');
       });
     }, // reset
 
@@ -200,7 +204,7 @@ const TextToSpeech = {
       }
       this.updateSpeedSelector();
 
-      domForEach(widgetEl, '.pfy-say-speed-wrapper input', (el) => {
+      domForEach(widgetEl, '.pfy-tts-speed-wrapper input', (el) => {
         el.addEventListener('change', (ev) => {
           const inputEl = ev.target;
           const value = parseFloat(inputEl.value);
@@ -215,7 +219,7 @@ const TextToSpeech = {
     updateSpeedSelector : function() {
       setTimeout(function() {
         const currSpeed = String(TextToSpeech.speed) + 'x';
-        domForOne(TextToSpeech.widget, `.pfy-say-speed-wrapper input[value="${currSpeed}"]`, (el) => {
+        domForOne(TextToSpeech.widget, `.pfy-tts-speed-wrapper input[value="${currSpeed}"]`, (el) => {
           el.checked = true;
         });
       }, 100);

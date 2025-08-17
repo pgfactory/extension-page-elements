@@ -1,40 +1,40 @@
 
 
-pfy-say-open:
+pfy-tts-open:
     de: Vorlesen
     _: Read
 
-pfy-say-open-title:
+pfy-tts-open-title:
     de: Diesen Text vorlesen
     _: Read
 
-pfy-say-play-title:
+pfy-tts-play-title:
     de: Von vorne abspielen
     _: Play
 
-pfy-say-pause-title:
+pfy-tts-pause-title:
     de: Anhalten
     _:  Pause
 
-pfy-say-stop-title:
+pfy-tts-stop-title:
     de: Beenden
     _:  Stop
 
-pfy-say-play:
+pfy-tts-play:
     _: |
-        <div class='pfy-player-icon' title='{{ pfy-say-play-title }}'>
+        <div class='pfy-player-icon' title='{{ pfy-tts-play-title }}'>
         <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-play"></use></svg>
         </div>
 
-pfy-say-pause:
+pfy-tts-pause:
     _: |
-        <div class='pfy-player-icon' title='{{ pfy-say-pause-title }}'>
+        <div class='pfy-player-icon' title='{{ pfy-tts-pause-title }}'>
         <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-pause"></use></svg>
         </div>
 
-pfy-say-stop:
+pfy-tts-stop:
     _: |
-        <div class='pfy-player-icon' title='{{ pfy-say-stop-title }}'>
+        <div class='pfy-player-icon' title='{{ pfy-tts-stop-title }}'>
         <svg height="1em" viewBox="0 0 100 100" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#pfy-iconset-stop"></use></svg>
         </div>
 
