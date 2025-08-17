@@ -1,3 +1,13 @@
+/*
+**  Use text-to-speech capability of browser to read aloud some text.
+*
+*   Usage:
+*     TextToSpeech.say('Say something...');
+*
+*     or via Macro say()
+*/
+
+
 
 const TextToSpeech = {
     speed: 1,

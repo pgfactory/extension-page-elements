@@ -28,7 +28,21 @@ return function ($args = '')
 
 # $funcName()
 
-ToDo: describe purpose of function
+Usage as Macro:
+    \{{ say('#say-this') }}
+    \@@@ #say-this
+    Text to say...
+    \@@@
+
+Usage via js:
+    \{{ button(
+        Say something
+        callback: "TextToSpeech.say('Say something...')"
+    ) }}
+
+**Note:**  
+TTS only works after user interaction with the browser, e.g. clicking somewhere. 
+
 EOT,
     ];
 
