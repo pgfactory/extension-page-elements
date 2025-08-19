@@ -48,13 +48,14 @@ return function ($argStr = '')
             'paging' => ['If true, data is presented using paging.', false],
             'minRows' => ['If set, table will be filled with empty lines up to the given number of rows.', false],
             'computedCells' => ['(key=value) If set, data is .', false],
-            'sort' => ['(element name) If set, data is sorted on given data element.', false],
-            'order' => ['synonum for "sort"', false],
-            'filter' => ['{name:xy, value:xy} Filters out data records not complying with given criteria.', false],
+            'order' => ['(element name) If set, data is sorted on given data element.'.
+                'Syntax: order= &lt;col-index> | &lt;col-index>:desc | &lt;col-name> | &lt;col-name>:desc.', null],
+            'sort' => ['synonum for "order"', null],
+            'filter' => ['{name:xy, value:xy} Filters out data records not complying with given criteria.', null],
             'reversed' => ['If true, the table is presented in reversed order.', false],
-            'placeholderForUndefined' => ['Defines the string which will be placed in cells for which a value is missing.', '?'],
-            'export' => ['(true|filename) If set, the table data is exported to files in Xslx and Ods format.', false],
-            'rowCallback' => ['(false|function-name) If set, .', false],
+            'placeholderForUndefined' => ['Defines the string which will be placed in cells for which a value is missing.', ' '],
+            'export' => ['(true|filename) If set, the table data is exported to files in .xlsx format.', false],
+            'rowCallback' => ['(false|function-name|js-code) If set, given function is executed when user clicks on a table row.', false],
             ],
         'summary' => <<<EOT
 # table()
