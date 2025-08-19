@@ -430,7 +430,7 @@ const tableHelper = {
 
     // invoke row callback function:
     if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
-      let res = await window[rowCallback](ev);
+      let res = executeCallbackCode(rowCallback, ev);
       if (!res) {
         return;
       }
@@ -714,10 +714,18 @@ const tableHelper = {
 
 
   activateDataTablesFilter: function(table, value) {
-    domForOne(table, '.dt-search input', filterEl => {
-      filterEl.value = value;
-      filterEl.dispatchEvent(new Event("input", { bubbles: true }));
-    });
+    let i = 10;
+    let t = setInterval(() => {
+      if (table.querySelector('.dt-search input')) {
+        clearInterval(t);
+        domForOne(table, '.dt-search input', filterEl => {
+          filterEl.value = value;
+          filterEl.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+      } else if (i-- < 1) {
+        clearInterval(t);
+      }
+    }, 10);
   } ,// activateDataTablesFilter
 
 
