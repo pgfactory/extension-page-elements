@@ -150,10 +150,14 @@ const pfyFormsHelper = {
 
 
   setupModifiedMonitor(ev) {
-      const form = ev.target.closest('.pfy-form');
-      if (form && ev.target.tagName !== 'BUTTON') {
-        form.dataset.changed = true;
-      }
+    let el = ev;
+    if (ev instanceof Event) {
+      el = ev.target;
+    }
+    const form = el.closest('.pfy-form');
+    if (form && el.tagName !== 'BUTTON') {
+      form.dataset.changed = true;
+    }
   }, // setupModifiedMonitor
 
 

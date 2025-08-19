@@ -1529,8 +1529,8 @@ EOT;
         $this->formIndex = $formOptions['formInx'] ?? self::$formInx;
 
         $tableOptions['file']               = $formOptions['file'];
-        $tableOptions['showData']           = $formOptions['showData'];
-        $tableOptions['editTable']          = $formOptions['editData'];
+        $tableOptions['showData']           = $formOptions['showData']??false;
+        $tableOptions['editTable']          = $formOptions['editData']??false;
         $this->tableOptions                 = $this->parseTableOptions($tableOptions);
         unset($tableOptions);
 
