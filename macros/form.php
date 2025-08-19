@@ -110,6 +110,9 @@ return function ($args = '')
             'retainData' =>	['[bool] If true, entered data remains in the form after submitting it. '.
                 'This mimicks working with a local data entry system like a database.', false],
 
+            'formDataId' =>	['[string] If defined, data is retained under this name. This way, multiple forms '.
+                'can be synchronized.', null],
+
             'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
                 'exists in DB. If so, skips storing data.', true],
 
@@ -141,8 +144,10 @@ return function ($args = '')
             'emailFieldName' =>	['[name-of-email-field] Replaces option "confirmationEmail", if that is not used. '.
                 'Identifies the field containing an e-mail address within the dataset. It is used by tableOptions "mail"', false],
 
-            'callback' =>	['Defines a callback function to be invoked when the backend receives user input. '.
+            'dataReceivedCallback' =>	['Defines a callback function to be invoked when the backend receives user input. '.
                 'Can be a PHP function or a PHP file, e.g. "~custom/sanitize.php".', false],
+
+            'callback' =>	['Legacy synonyme for "dataReceivedCallback"', false],
 
             'presetCallbackJs' =>	['Defines a callback JS function to be invoked when the form is preset. '.
                 'The JS function must be defined elsewhere.', false],
@@ -371,6 +376,8 @@ EOT,
     if (($options['maxCount']??false) && !($options['minRows']??false)) {
         $options['minRows'] = $options['maxCount'];
     }
+
+    $options['dataReceivedCallback'] = $options['dataReceivedCallback'] ?: $options['callback'];
     $output = ($options['output']??false);
 
     if ($output === true) {

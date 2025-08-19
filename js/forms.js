@@ -823,7 +823,9 @@ showPwHandler(ev) {
 
 
   executeOnPresetCallback(form) {
-    executeCallbackCode(form.dataset.presetCallbackJs, form);
+    if (typeof form.dataset.presetCallback !== 'undefined') {
+      executeCallbackCode(form.dataset.presetCallback, form);
+    }
   }, // executeOnPresetCallback
 
 

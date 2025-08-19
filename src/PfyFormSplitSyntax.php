@@ -57,6 +57,20 @@ class PfyFormSplitSyntax extends PfyForm
                 $html .= $this->injectNoShowCssRule();
             }
         }
+
+        $this->formDataRec = [];
+        if ($this->requestedRecKey) {
+            $rec = $this->db->find($this->requestedRecKey);
+            if ($rec) {
+                $this->formDataRec = $rec->data();
+            }
+            if ($this->keepSubmittedDataInForm) {
+                Utils::setSessionVar("form-$this->formIndex", $this->formDataRec, overridePageId:$this->formDataId);
+            }
+        } elseif ($this->keepSubmittedDataInForm) {
+            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overridePageId:$this->formDataId);
+        }
+
         return $html;
     } // init
 
@@ -83,10 +97,6 @@ class PfyFormSplitSyntax extends PfyForm
         //   = true:  all elements have been rendered -> render form tail
         //   = int:   index of next element to be rendered
 
-        $this->formDataRec = [];
-        if ($this->keepSubmittedDataInForm) {
-            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", []);
-        }
 
         if ($this->lastRendered === false) {
             $this->lastRendered = 0;

@@ -55,7 +55,7 @@ const PFY_FORM_OPTIONS = [
     'outerWrapperClass' => '',
     'action' => '~page/',
     'next' => '~page/',
-    'callback' => false,
+    'dataReceivedCallback' => false,
     'presetCallbackJs' => false,
     'scriptInjectionFilter' => true,
     'tableOptions' => [
@@ -84,6 +84,7 @@ const PFY_FORM_OPTIONS = [
     'feedback' => 'inpage',
     'showFeedbackInpage' => true,
     'retainData' => false,
+    'formDataId' => false,
     'recLocking' => false,
     'sideBySide' => null,
     'readonly' => false,
@@ -124,7 +125,7 @@ class PfyForm extends Form
     protected array $formElements = [];
     private array $choiceOptions = [];
     private array $bypassedElements = [];
-    private $db = false;
+    protected $db = false;
     private $dataTable = false;
     protected static $formCounter = 0; // internal form count
     protected int $formIndex = 0; // form-index used for rendering (can be overridden by arg)
@@ -160,8 +161,9 @@ class PfyForm extends Form
     protected bool|null $keepSubmittedDataInForm = false;
     private array $presetDataRec = [];
     private string $lastCreatedRecKey = '';
-    private string $requestedRecKey = '';
+    protected string $requestedRecKey = '';
     protected array $formDataRec = [];
+    protected string|false $formDataId = false;
 
     /**
      * @param $formOptions
@@ -218,7 +220,7 @@ class PfyForm extends Form
             $this->activatebeforeunloadWarning();
         }
         if ($this->keepSubmittedDataInForm && (($_GET['clearform']??false) == $this->formIndex)) {
-            Utils::pullSessionVar("form-$this->formIndex");
+            Utils::pullSessionVar("form-$this->formIndex", overridePageId:$this->formDataId);
             reloadAgent();
         } elseif ($_GET['presetForm']??false) {
             $this->requestedRecKey = $_GET['presetForm'];
@@ -282,7 +284,7 @@ class PfyForm extends Form
             }
         }
         if ($this->keepSubmittedDataInForm) {
-            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", []);
+            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overridePageId:$this->formDataId);
         }
 
         // assemble form:
@@ -1966,8 +1968,8 @@ EOT;
 
         $this->securityChecks($dataRec);
 
-        // handle 'callback' on data received:
-        if ($this->formOptions['callback']) {
+        // handle 'dataReceivedCallback' on data received:
+        if ($this->formOptions['dataReceivedCallback']) {
             list($html, $continueEval) = $this->handleCallback($dataRec);
             if (!$continueEval) {
                 $this->formResponse =  $html;
@@ -2030,7 +2032,7 @@ EOT;
                         $origDataRec[$key] = implode(',', $value);
                     }
                 }
-                Utils::setSessionVar("form-$formInxReceived", $origDataRec);
+                Utils::setSessionVar("form-$formInxReceived", $origDataRec, overridePageId:$this->formDataId);
                 $this->showForm = true;
             }
         }
@@ -2809,6 +2811,7 @@ EOT;
         $this->formWrapperClass             = $formOptions['wrapperClass']? ' '.$formOptions['wrapperClass'] :'';
         $this->readonly                     = $formOptions['readonly'];
         $this->keepSubmittedDataInForm      = $formOptions['retainData'];
+        $this->formDataId                   = ($formOptions['formDataId'] !== null) ? $formOptions['formDataId'] : false;
 
         $this->sideBySide                   = $formOptions['sideBySide'];
         if ($this->sideBySide !== null) {
@@ -3211,8 +3214,8 @@ EOT;
      */
     private function handleCallback(array &$dataRec): array
     {
-        if ($this->formOptions['callback'] instanceof \Closure) {
-            $res = $this->formOptions['callback']($dataRec);
+        if ($this->formOptions['dataReceivedCallback'] instanceof \Closure) {
+            $res = $this->formOptions['dataReceivedCallback']($dataRec);
             if (is_array($res)) {
                 $html = ($res['html'] ?? ($res[0] ?? ''));
                 $continueEval = $res['continueEval'] ?? ($res[1] ?? true);
@@ -3229,7 +3232,7 @@ EOT;
             return [$html, $continueEval];
         }
 
-        $callbacks = explodeTrim(',', $this->formOptions['callback']);
+        $callbacks = explodeTrim(',', $this->formOptions['dataReceivedCallback']);
 
         foreach ($callbacks as $callback) {
             if ($callback[0] === '~') {
