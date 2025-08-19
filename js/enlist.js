@@ -153,7 +153,7 @@ const Enlist = {
 
     const form = document.querySelector('.pfy-popup-container .pfy-form');
     if (form) {
-      pfyFormsHelper.setupModifiedMonitor(form);
+//      pfyFormsHelper.setupModifiedMonitor(form);
       this.setupCancelHandler(form);
     }
   }, // openPopup
