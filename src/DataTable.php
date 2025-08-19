@@ -655,8 +655,23 @@ EOT;
         $orderable = '';
         $scrollable = '';
         $order = '';
+        // order = <col-index> | <col-index>:desc | <col-name> | <col-name>:desc
         if ($this->order) {
-            $order = "order: { name: '$this->order', dir: 'asc' },\n";
+            if (is_string($this->order)) {
+                list($elem, $dir) = explodeTrim(':', $this->order);
+            } elseif (is_array($this->order)) {
+                list($elem, $dir) = $this->order;
+            }
+            $dir = $dir ?: 'asc';
+            if (!is_numeric($elem)) {
+                foreach ($this->columns as $i => $column) {
+                    if ($column['hdrContent'] === $elem) {
+                        $elem = $i;
+                        break;
+                    }
+                }
+            }
+            $order = "order: { idx: '$elem', dir: '$dir' },\n";
         }
         /* $scrollable not working, header widths unequal to body col widths
                 if ($this->scrollable) {
