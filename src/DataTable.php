@@ -247,8 +247,8 @@ class DataTable
         $out = "  <tbody>\n";
         $r = 0;
         foreach ($data as $recKey => $dataRec) {
+            $rowClass = $this->rowClasses[$r] ?? '';
             $r++;
-            $rowClass = '';
             $out .= "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
 
             foreach ($this->columns as $c => $def) {
@@ -389,6 +389,7 @@ class DataTable
         $tdClass = $this->tdClass? " $this->tdClass": '';
         $colHeaders = $this->tableHeaders ?: $this->data2Dset->getColHeaders();
         $i = sizeof($this->columns) + 1;
+        $c = 0;
         foreach ($colHeaders as $key => $value) {
             if ($this->translateHeaders) {
                 if ($v = TransVars::getVariable($value)) {
@@ -397,6 +398,12 @@ class DataTable
             }
             $dataElemName = "data-elemname='$key'";
             $class = 'pfy-col-'.translateToClassName($value);
+            if ($value !== $key) {
+                $class = 'pfy-col-'.translateToClassName($key);
+            }
+            if ($this->colClasses[$c]??'') {
+                $class .= ' ' . $this->colClasses[$c];
+            }
             $class = "pfy-col-$i $class";
 
             $cell = "\$$key";
@@ -412,6 +419,7 @@ class DataTable
                 'key' => $key,
             ];
             $i++;
+            $c++;
         }
     } // prepareColumnDefs
 
@@ -539,9 +547,12 @@ class DataTable
         $out .= "  <form method='post'>\n"; // form around table for selectors
         $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
 
-        $buttons = '';
+        $buttons = $type = $label = '';
         $i = -1;
         foreach ($this->tableButtons as $key => $tableButton) {
+            if (!$tableButton) {
+                continue;
+            }
             $i++;
             if (is_string($tableButton)) {
                 $type = $tableButton;
@@ -1046,6 +1057,8 @@ EOT;
         $tableButtons = $options['tableButtons'];
         if (is_string($tableButtons)) {
             $tableButtons = parseArgumentStr($tableButtons);
+        } else {
+            $tableButtons = (array) $tableButtons;
         }
 
         $serviceColumns = $options['serviceColumns']; // num,select,edit,...
