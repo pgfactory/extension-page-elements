@@ -169,7 +169,11 @@ function pfyPopup( options ) {
       } else if (target.closest('.pfy-popup-buttons')) {
         parent.handleButtonTriggers(target);
 
-      } else if (document.querySelector('.pfy-close-on-bg-click')) {
+      } else if (!target.closest('.pfy-popup-wrapper') && document.querySelector('.pfy-close-on-bg-click')) {
+        const popupEl = document.querySelector('.pfy-popup-wrapper');
+        if (popupEl && popupEl.querySelector('.pfy-form-is-modified')) {
+          return;
+        }
         parent.close(target);
       }
     });
