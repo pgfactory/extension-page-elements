@@ -118,7 +118,7 @@ mb_internal_encoding("utf-8");
 class PfyForm extends Form
 {
     private array $formOptions;
-    private string $file;
+    private string|bool $file;
     private array $origReceivedData;
     private array|false $tableOptions = [];
     private array $fieldNames = [];
@@ -1931,7 +1931,6 @@ EOT;
             return;
         }
 
-        $html = false;
         $dataRec = $this->getValues('array');
 
         // handle 'cancel' button:
@@ -2370,7 +2369,7 @@ EOT;
         if ($this->db) {
             return $this->db;
         }
-        if (!$this->file) {
+        if (is_bool($this->file)) {
             return false;
         }
         $this->db = new DataSet($this->file, $this->formOptions['dbOptions']);
@@ -2463,7 +2462,7 @@ EOT;
                 continue;
             }
             if (str_contains($fieldLabel, '{{')) {
-                $fieldLabel = TransVars::getVariable(trim($fieldLabel, '{ }'));
+                $fieldLabel = TransVars::getVariable(trim($fieldLabel, '{ }'), varNameIfNotFound:true);
             }
             $fieldLabel = rtrim($fieldLabel, ':');
             if (!$showAllFields && ($key[0] === '_')) {
