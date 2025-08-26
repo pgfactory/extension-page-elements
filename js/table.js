@@ -238,8 +238,6 @@ const tableHelper = {
           const tr = ev.target.closest('tr');
           const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
           parent.prepareEditForm(table, tableForm, recKey, editBtn, tableInx);
-//          this.prepareEditForm(tableEl, tableForm, recKey, data, editBtn, tableInx);
-//          parent.fillForm(ev.target, table, tableForm, tableInx, editBtn);
         });
       });
     }
@@ -427,7 +425,6 @@ const tableHelper = {
     if (!rowCallback) {
       return;
     }
-
     // invoke row callback function:
     if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
       let res = executeCallbackCode(rowCallback, ev);
@@ -457,43 +454,6 @@ const tableHelper = {
     }
   }, // handleRowTrigger
 
-//  handleRowTrigger: function(ev) {
-//    const el = ev.target;
-//    const tableWrapperEl = el.closest('.pfy-table-wrapper');
-//    const rowCallback = tableWrapperEl.dataset.rowCallback;
-//    if (!rowCallback) {
-//      return;
-//    }
-//
-//    // invoke row callback function:
-//    if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
-//      let res = window[rowCallback](ev);
-//      if (!res) {
-//        return;
-//      }
-//    }
-//
-//    // default callback handler for tables linked with a form:
-//    const tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
-//    if (!tableFormWrapper) {
-//      return;
-//    }
-//
-//    if (pfyFormsHelper.isFormModified(tableFormWrapper)) {
-//      pfyConfirm({
-//        text: `{{ pfy-tableform-data-modified-warning }}`,
-//      }).then(
-//        () => {
-//          // after confirmation:
-//          this.defaultRowClickHandler(el, tableFormWrapper);
-//        },
-//        () => { mylog('denied');  }
-//      );
-//    } else {
-//      this.defaultRowClickHandler(el, tableFormWrapper);
-//    }
-//  }, // handleRowTrigger
-
 
   defaultRowClickHandler: function(el, tableFormWrapper) {
     if (typeof tableFormWrapper === 'undefined') {
@@ -519,8 +479,6 @@ const tableHelper = {
         tr.classList.add('pfy-row-selected');
         const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
         this.prepareEditForm(tableEl, tableForm, recKey, null, tableInx);
-//        this.prepareEditForm(tableEl, tableForm, recKey, data, null, tableInx);
-//        this.fillForm(el, tableEl, tableForm, tableInx, null);
       }
     }
   }, // defaultRowClickHandler
@@ -581,9 +539,7 @@ const tableHelper = {
 
 
   prepareEditForm: function (table, parentForm, recKey, editBtn, tableInx) {
-//  prepareEditForm: function (table, parentForm, recKey, data, editBtn, tableInx) {
     const editbyPopupMode = table.closest('.pfy-table-edit-popup');
-//    const editbyPopupMode = table.classList.contains('pfy-table-edit-popup');
     if (editbyPopupMode) {
       const options = {
         header: `{{ pfy-table-edit-rec-popup-header }}`,
@@ -597,7 +553,6 @@ const tableHelper = {
           if (form) {
             pfyFormsHelper.init(form);
             pfyFormsHelper.fetchDataAndFillForm(form, recKey, true);
-//            pfyFormsHelper.presetForm(form, data, recKey);
             tableHelper.setupCancelButton(table, tableInx);
             form.removeAttribute('aria-hidden');
             form.removeAttribute('id');
@@ -613,7 +568,6 @@ const tableHelper = {
         })
    } else {
       pfyFormsHelper.fetchDataAndFillForm(parentForm, recKey, true);
-//      pfyFormsHelper.presetForm(parentForm, data, recKey);
       tableHelper.enableEditButtons(table);
     }
   }, // prepareEditForm
