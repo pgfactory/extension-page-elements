@@ -58,19 +58,19 @@
 
   .pfy-enlist-empty,
   .pfy-enlist-expired,
-  .pfy-enlist-obfuscated,
   .pfy-enlist-add,
   .pfy-enlist-delete,
-  .pfy-enlist-elem-frozen,
-  .pfy-enlist-elem-pseudo-frozen,
   .pfy-enlist-field {
     background: var(--pfy-enlist-field-bg, #fffff6);
   }
-
-  .pfy-enlist-table:not(.pfy-enlist-custom-fields) {
-    .pfy-enlist-add .pfy-enlist-name {
-      text-align: right;
-    }
+  .pfy-enlist-frozen-while-admin {
+    background: repeating-linear-gradient(
+        -45deg,
+        hsl(60deg 100% 98%),
+        hsl(60deg 100% 98%) 10px,
+        hsl(60deg 100% 93%) 10px,
+        hsl(60deg 100% 93%) 20px
+    );
   }
 
   .pfy-enlist-name > div {
@@ -79,6 +79,9 @@
 
   .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-enlist-icon-1,
   .pfy-enlist-custom-fields .pfy-enlist-icon-2 {
+    display: none;
+  }
+  .pfy-enlist-obfuscated .pfy-enlist-custom-fields {
     display: none;
   }
 
@@ -184,11 +187,16 @@
 
   #pfy-enlist-form {
     display: none;
-    background: yellow;
+    background: yellow; // should never be visible
   }
 
   .pfy-popup-wrapper {
     .add, .del, .modify { display: none; }
+    .pfy-form-wrapper:not(.pfy-enlist-delete-checkbox) {
+      .pfy-enlist-delete-checkbox {
+        display: none;
+      }
+    }
   }
   .pfy-popup-wrapper.pfy-enlist-add-mode {
     .add { display: block; }
@@ -221,16 +229,8 @@
     filter: brightness(95%);
   }
 
-  .pfy-enlist-wrapper {
-    .pfy-enlist-add {
-      cursor: pointer;
-    }
-  }
-  .pfy-enlist-wrapper:not(.pfy-enlist-admin) {
-    .pfy-enlist-modify,
-    .pfy-enlist-delete {
-      cursor: pointer;
-    }
+  .pfy-enlist-icon {
+    cursor: pointer;
   }
 
   .pfy-enlist-admin {

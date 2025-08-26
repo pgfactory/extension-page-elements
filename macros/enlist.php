@@ -19,8 +19,8 @@ return function ($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'nSlots' =>	['[integer] Number of slots to show in the enlistment table. (default: 1)', null],
-            'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table. (default: 0)', null],
+            'nSlots' =>	['[integer] Number of slots to show in the enlistment table. (default: 1)', 1],
+            'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table. (default: 0)', 0],
             'title' =>	['[string] Title of enlistment table. (default: false)', null],
 
             'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry. (default: false)', null],
@@ -30,25 +30,9 @@ return function ($args = '')
 
             'class' =>	['Class applied to the list wrapper. (default: false)', null],
 
-            'listName' =>	['[string] Defines how the dataset will be named within the data-file. '.
-                'If not set, listName will be derived from title. If that\'s not set, a default name is used.', false],
-
             'info' =>	['[string] Content of info-tooltip next to title. (default: false)', null],
 
             'placeholder' => ['Placeholder shown as long as the field is empty.', null],
-
-            'ical' =>	['[string|bool] If set, a calendar icon is added to the list. Clicking on it will '.
-                'download a calendar entry (.ics). The arg\'s value is used as the event SUMMARY (aka event-title). '.
-                'Use placeholders to compose meaningful titles, e.g. `ical:"[XY] %title%"`, where `%title%` is the '.
-                'field-name in the event record.', null],
-
-            'icalElements' =>	['[assoc array] A comma-separated list of tuples like "`ical-arg`:`enlist-field-name`,". '.
-                'Supported ical-arguments: `uniqueIdentifier`, `createdAt`, `addressName`, `coordinates`, '.
-                '`attendee`, `transparent`, `fullDay`. '.
-                'Example: `{description:%Comment%, address:%Location%}`.', null],
-
-            'icalOrganiser' =>	['[string] Adds an \"organiser\" field to the iCal. The value should be an e-mail address. '.
-                ' (Default: = adminMail)', null],
 
             'description' =>	['[string] synonyme for "info".', false],
 
@@ -73,7 +57,7 @@ return function ($args = '')
                 'instead of the names. If "initials", the names initials are shown. (default: false)', null],
             'file' =>	['[filename] Name of the data file in which to store entries. (default: false)', null],
             'admin' =>	['[bool|permissionQuery] Defines who may administrate the enlistment. Default is "true", which '.
-                'means "loggedin|localhost". (default: true)', null],
+                'means "loggedin|localhost". (default: true)', true],
             'adminEmail' => ['[string] The enlist admin\'s email address. Used when creating an email to '.
                 'enlisted people. (default: false)', null],
             'adminMail' =>	['[string] Synonyme for adminEmail.', null],
@@ -84,8 +68,25 @@ return function ($args = '')
                 'Moreover, all values of found event are made available to form banners as `%key%`. '.
                 '(For ref see macro *events()*).', false],
 
-            'output' =>	['[bool] If true, no output is rendered -> used to set persisent options: '.
-                '[freezeTime,sendConfirmation,notifyOwner,obfuscate,admin,adminEmail,class,deadline].', true],
+            'ical' =>	['[bool|string|array] If set (and using "schedule"), a calendar icon is added to the list. Clicking on it will '.
+                'download a calendar entry (.ics). The arg\'s value is used as the event SUMMARY (aka event-title). '.
+                'Use placeholders to compose meaningful titles, e.g. `ical:"[XY] %title%"`, where `%title%` is the '.
+                'field-name in the event record.', null],
+
+//            'icalElements' =>	['[assoc array] A comma-separated list of tuples like "`ical-arg`:`enlist-field-name`,". '.
+//                'Supported ical-arguments: `uniqueIdentifier`, `createdAt`, `addressName`, `coordinates`, '.
+//                '`attendee`, `transparent`, `fullDay`. '.
+//                'Example: `{description:%Comment%, address:%Location%}`.', null],
+//
+//            'icalOrganiser' =>	['[string] Adds an \"organiser\" field to the iCal. The value should be an e-mail address. '.
+//                ' (Default: = adminMail)', null],
+
+            'output' =>	['[bool] If false, no output is rendered (can be useful to set defaults.', true],
+
+            'setDefaults' => ['[bool] If true, sets persistent options: '.
+                '[freezeTime,sendConfirmation,notifyOwner,obfuscate,admin,adminEmail,class,deadline].'.
+                'Thus, subsequent instances of enlist() may omit these options.', true],
+
             'rejectRobots' => ['If true, instructions are added to the head tag to reject search-engine robots.', true],
         ],
         'summary' => <<<EOT
@@ -117,17 +118,42 @@ Example:
     ) }}
 
 
-### Presetting Persistent Options
+### Defining Persistent Options
 
-If you need multiple enlistment fields with common options, you can preset them via a special call of the macro.
+If you need multiple enlistment fields with common options, you can define them:
 
--> use option ``output: false``.
+-> use option ``setDefaults: true``.
 
 Persistent options:  
 freezeTime, sendConfirmation, notifyOwner, obfuscate, admin, adminEmail, class, deadline
 
 Example:
-    \{{ enlist(freezeTime:2, output:false) }}
+    \{{ enlist(freezeTime:2, setDefaults: true) }}
+
+### Using Schedule and iCal Options
+
+Example:
+    ical: {
+        shortName:      '[XY]'
+        title:          'XY Event Support'
+        location:       'LOCATION'
+        description:    'DESCRIPTION ... %topic%'
+        organizer:      'ORGANIZER'
+    }
+
+    schedule:  { 
+        src: '\~config/events.yaml', 
+        category: 'EVENT-CATEGORY', 
+        template:{
+            file:'\~page/template.txt', 
+        }
+        count:2
+    },
+
+Template File "template.txt":
+
+    \*\{{ start|intlDate("D, d.F Y") }} {{ start|date("H.i") }}\*
+
 
 EOT,
     ];
@@ -147,24 +173,13 @@ EOT,
     if ($options['adminEmail'] === null) {
         $options['adminEmail'] = PageFactory::$webmasterEmail;
     }
-    // file -> remove extension if contained:
-    if ($options['file'] && (fileExt($options['file']))) {
-        $options['file'] = fileExt($options['file'], true);
-    }
     unset($options['adminMail']);
     unset($options['inx']);
 
     $enlist = new Enlist($options, $auxOptions);
+
     if ($options['output']) {
         $html .= $enlist->render();
-    }
-
-    if ($inx === 1) {
-        $html .= $enlist->renderForm();
-        Assets::addAssets('ENLIST');
-        Assets::addAssets('POPUPS');
-
-        Page::applyRobotsAttrib();
     }
 
     return $html;

@@ -1,0 +1,275 @@
+<?php
+
+namespace PgFactory\PageFactoryElements;
+
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\Utils;
+use PgFactory\PageFactory\TransVars;
+use function PgFactory\PageFactory\reloadAgent;
+use function PgFactory\PageFactory\mylog;
+
+class EnlistCallbackHandler
+{
+    private $options;
+    private $db;
+    private $isEnlistAdmin = false;
+    private $pagePath;
+
+    // === Callback: handle user response ==========================
+    public function callback(object $enlist, array $newDataRec): string
+    {
+        $this->db = $enlist->db;
+        $this->options = $enlist->getOptions();
+        $widgetInx = $newDataRec['widgetInx'];
+        $arr = explode('/', $widgetInx);
+        $widgetInx = $arr[0];
+        $slotInx = $arr[1]??0;
+        $this->pagePath = page()->id();
+        $context = "[$widgetInx: ".PFY_HOST_URL.$this->pagePath.']';
+        if ($this->isEnlistAdmin) {
+            $context = rtrim($context, ']').' (as admin)]';
+        }
+        $widgetDescr = $enlist->db->getWidgetDescr($widgetInx);
+
+        $message = '';
+        $mode = $newDataRec['mode'];
+        $newDataRec['_time'] = date('Y-m-d\TH:i');
+
+        unset($newDataRec['mode']);
+        unset($newDataRec['_formInx']);
+        unset($newDataRec['_cancel']);
+        unset($newDataRec['_reckey']);
+        unset($newDataRec['_csrf']);
+        unset($newDataRec['enlistElemInx']);
+        unset($newDataRec['setname']);
+
+        $this->checkWidgetDeadline($newDataRec, $context);
+
+        if ($mode === 'add') {
+            // new entry:
+            Utils::setSessionVar('pfy.enlist.name', $newDataRec['Name']);
+            Utils::setSessionVar('pfy.enlist.email', $newDataRec['Email']);
+            $this->handleNewEntry($newDataRec, $widgetDescr, $slotInx, $context, $widgetInx, $message);
+
+        } else {
+            $this->handleExistingEntry($mode, $widgetDescr, $slotInx, $message, $newDataRec, $context, $widgetInx);
+        }
+        return ''; // don't continue with default processing
+    } // callback
+
+
+    private function handleNewEntry(array $newDataRec, array $widgetDescr, string $slotInx, string $context, mixed $widgetInx, string $message): void
+    {
+        $name = $newDataRec['Name'] ?? '#####';
+        $exists = array_filter($widgetDescr['slots'], function ($e) use ($name) {
+            return ($e['Name'] ?? '') === $name;
+        });
+        if ($exists) {
+            $prevRec = reset($exists);
+            $email = $newDataRec['Email'] ?? '#####';
+            $email0 = $prevRec['Email']??false;
+            if ($email0 === $email) {
+                mylog("EnList error Rec exists: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-error-rec-exists }}');
+            }
+        } else {
+            $newDataRec['_time'] = date('Y-m-d\TH:i');
+        }
+
+        $this->db->fillSlot($widgetInx, $slotInx, $newDataRec, $context);
+
+        $this->handleNotifyOwner($newDataRec, 'add', $widgetDescr['title']??'');
+
+        if ($this->handleSendConfirmation($newDataRec, $widgetDescr['title']??'')) {
+            mylog("EnList new entry & confirmation sent: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+            reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
+        }
+        mylog("EnList new entry: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+        reloadAgent(message: $message);
+    } // handleNewEntry
+
+
+    private function handleExistingEntry(string $mode, array $widgetDescr, string $slotInx, string $alertMsg, array $newDataRec, string $context, mixed $widgetInx): void
+    {
+        if ($mode === 'del') {
+            $this->checkSlotFreezTime($widgetDescr, $widgetInx, $slotInx);
+
+            $becameActive = $this->db->emptySlot($widgetInx, $slotInx);
+            $mode = $becameActive ? 'activated' : 'del';
+            $becameActiveName = $becameActive['Name'] ?? 'somebody';
+            $this->handleNotifyOwner($newDataRec, $mode, $widgetDescr['title'], $becameActiveName);
+
+            if ($becameActive) {
+                $this->notifyActivatedReserve($becameActive, $widgetDescr['title']);
+            }
+            reloadAgent(message: '{{ pfy-enlist-confirmation-banner-deleted }}');
+
+        } else { // modify
+            $this->modifyExistingEntry($newDataRec, $slotInx, $widgetInx);
+        }
+    } // handleExistingEntry
+
+
+    private function modifyExistingEntry(array $newDataRec, string $slotInx, mixed $widgetInx): void
+    {
+        $slots = $this->db->getEnlistSlots($widgetInx);
+        $thisSlot = &$slots[$slotInx];
+        if (($thisSlot['Email']??false) !== $newDataRec['Email']) {
+            reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
+        }
+        foreach ($newDataRec as $key => $value) {
+            if (str_contains('Email,directlyToReserve,delete_entry,widgetInx,_time', $key)) {
+                continue;
+            }
+            $thisSlot[$key] = $value;
+        }
+        $thisSlot['_time'] = date('Y-m-d\TH:i');
+        $this->db->updateWidgetSlots($widgetInx, $slots);
+        reloadAgent(message: '{{ pfy-enlist-modified }}');
+    } // modifyExistingEntry
+
+
+    private function checkWidgetDeadline(array $newDataRec, string $context): void
+    {
+        if ($widgetDescr['deadlineExpired']??false) {
+            if ($this->isEnlistAdmin) {
+                $message = '{{ pfy-enlist-error-deadline-was-expired }}';
+            } else {
+                mylog("EnList error deadline exeeded: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+                reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
+            }
+        }
+    } // checkWidgetDeadline
+
+
+    private function checkSlotFreezTime(array $widgetDescr, int|string $widgetInx, int $slotInx): void
+    {
+        if ($this->options['isEnlistAdmin']) {
+            return;
+        }
+        if ($freezeTime = $widgetDescr['freezeTime']) {
+            $slots = $this->db->getWidgetSlots($widgetInx);
+            $storeTime = $slots[$slotInx]['_time'];
+            $freezeTime = time() - ($freezeTime * PFY_FREEZETIMIE_UNIT);
+            $storeTime = strtotime($storeTime);
+            if ($storeTime < $freezeTime) {
+                reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
+            }
+        }
+    } // checkSlotFreezTime
+
+
+    /**
+     * @param array $rec
+     * @param string $widgetInx
+     * @return void
+     */
+    private function notifyActivatedReserve(array $rec, string $title): void
+    {
+        if (!$this->options['notifyActivatedReserve']) {
+            return;
+        }
+        $subject = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-subject }}');
+        $body = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-body }}');
+        $replace = [
+            '%name%' => $rec['Name'],
+            '%email%' => $rec['Email'],
+            '%title%' => $title,
+            '%host%' => PFY_HOST_URL,
+            '%page%' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $subject);
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $body);
+
+        Utils::sendMail($rec['Email'], $subject, $body );
+        mylog("Newly activated reserve slot notified: {$rec['Name']} {$rec['Email']}", 'enlist-log.txt');
+    } // notifyActivatedReserve
+
+
+    /**
+     * @param array $newDataRec
+     * @param string $mode
+     * @param string $widgetInx
+     * @return void
+     */
+    private function handleNotifyOwner(array $newDataRec, string $mode, string $title, string $nameActivated = ''): void
+    {
+        if (!($to = $this->options['notifyOwner']??false)) {
+            return;
+        }
+        if ($to === true) {
+            $to = PageFactory::$webmasterEmail;
+        }
+
+        if ($mode === 'add') {
+            $subject = '{{ pfy-enlist-add-notification-subject }}';
+            $body = '{{ pfy-enlist-add-notification-body }}';
+        } elseif ($mode === 'activated') {
+            $subject = '{{ pfy-enlist-activated-notification-subject }}';
+            $body = TransVars::getVariable('pfy-enlist-activated-notification-body');
+            $body = str_replace('%activated%', $nameActivated, $body);
+        } else {
+            $subject = '{{ pfy-enlist-del-notification-subject }}';
+            $body = '{{ pfy-enlist-del-notification-body }}';
+        }
+        $replace = [
+            '%name%' => $newDataRec['Name'],
+            '%email%' => $newDataRec['Email'],
+            '%title%' => $title,
+            '%host%' => PFY_HOST_URL,
+            '%page%' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            TransVars::resolveVariables($subject));
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            TransVars::resolveVariables($body));
+
+        Utils::sendMail($to, $subject, $body );
+    } // handleNotifyOwner
+
+
+    /**
+     * @param array $newDataRec
+     * @param string $title
+     * @return bool
+     */
+    private function handleSendConfirmation(array $newDataRec, string $title): bool
+    {
+        if (!$this->options['sendConfirmation']??false) {
+            return false;
+        }
+
+        $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
+        $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
+        $replace = [
+            '%name%' => $newDataRec['Name'],
+            '%email%' => $newDataRec['Email'],
+            '%title%' => $title,
+            '%host%' => PFY_HOST_URL,
+            '%hostUrl%' => PFY_HOST_URL,
+            '%page%' => $this->pagePath,
+        ];
+        $subject = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $subject);
+        $body = str_replace(
+            array_keys($replace),
+            array_values($replace),
+            $body);
+ //ToDo: email with ics attachment
+        Utils::sendMail($newDataRec['Email'], $subject, $body );
+        return true;
+    } // handleSendConfirmation
+
+} // Enlist

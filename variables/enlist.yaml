@@ -1,0 +1,273 @@
+
+# === Enlist =======================================
+
+pfy-enlist-name:
+  de: Name
+  _:  Name
+
+pfy-enlist-email:
+  de: E-Mail
+  _:  E-mail
+
+pfy-enlist-directly-to-reserve:
+  de: Direkt als Reserve eintragen
+  _:  Register as reserve directly
+
+
+pfy-enlist-add-title:
+  de: Neuer Eintrag
+  _:  New entry
+
+pfy-enlist-delete-title:
+  de: Diesen Eintrag löschen
+  _:  Delete this entry
+
+pfy-enlist-modify-title:
+  de: Diesen Eintrag ändern
+  _:  Modify this entry
+
+pfy-enlist-add-text:
+  de: 'Hier eintragen'
+  _:  'enlist here'
+
+pfy-enlist-empty-text: &nbsp;
+
+pfy-enlist-add-popup-header:
+  de: 'Eintragen'
+  _:  'New entry'
+
+pfy-enlist-modify-popup-header:
+  de: 'Ändern'
+  _:  'Modify entry'
+
+pfy-enlist-del-popup-header:
+  de: 'Löschen'
+  _:  'Delete entry'
+
+pfy-enlist-add-btn:
+  de: Jetzt eintragen
+  _:  Enlist now
+
+pfy-enlist-delete-btn:
+  de: Jetzt löschen
+  _:  Delete now
+
+pfy-enlist-modify-btn:
+  de: Jetzt ändern
+  _:  Modify now
+
+pfy-enlist-delete-label:
+  de: Diesen Eintrag löschen
+  _:  Delete this entry
+
+
+pfy-enlist-deadline-expired-alert:
+  de: Die Anmeldefrist ist abgelaufen
+  _:  Deadline expired
+
+pfy-enlist-error-deadline-was-expired:
+  de: Die Anmeldefrist wäre abgelaufen für Nicht-Admins
+  _:  Deadline would have been expired for non-admins
+
+
+pfy-enlist-popup-add-nofreeze-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag später wieder löschen. </p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag später wieder löschen. </p>'
+  en: '<p><strong>Comment</strong>:</p><p>You can delete later if needed.</p>'
+
+pfy-enlist-popup-add-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Sie können Ihren Eintrag noch bis %freezetime% selbstständig löschen. </p><p>Dazu benötigen Sie die hier eingegebene E-Mail Adresse.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Du kannst deinen Eintrag noch bis %freezetime% selbstständig löschen. </p><p>Dazu benötigst du die hier eingegebene E-Mail Adresse.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>You can delete this entry until %freezetime%.</p><p>To do so, you need to enter your e-mail address again which you just provided.</p>'
+
+pfy-enlist-popup-modify-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag ändern oder löschen?<br>Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag ändern oder löschen?<br>Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to modify or delete this entry?<br>To do so you need to enter your e-mail address which you provided before. </p>'
+
+pfy-enlist-popup-del-help:
+  de: '<p><strong>Bemerkung</strong>:</p><p>Wollen Sie diesen Eintrag löschen?<br>Dazu müssen Sie die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  de2: '<p><strong>Bemerkung</strong>:</p><p>Willst du diesen Eintrag löschen?<br>Dazu musst du die E-Mail Adresse eingeben, mit der der Eintrag ursprünglich eingegeben wurde.</p>'
+  en: '<p><strong>Comment</strong>:</p><p>Do you want to delete this entry?<br>To do so you need to enter your e-mail address which you provided before. </p>'
+
+
+pfy-enlist-error-rec-exists:
+  de: 'Ein Eintrag mit diesem Namen existiert bereits, Sie können sich nur einmal in eine Liste eintragen.'
+  de2: 'Ein Eintrag mit diesem Namen existiert bereits, Du kannst dich nur einmal in eine Liste eintragen.'
+  _:  'An entry with this name already exists. Your input was ignored.'
+
+
+pfy-enlist-error-deadline-expired:
+  de: 'Die Anmeldefrist ist abgelaufen.'
+  _:  'Registration is closed.'
+
+pfy-enlist-del-error-wrong-email:
+  de: 'Die eingegebene E-Mail Adresse entspricht nicht der hinterlegten.'
+  _:  'The e-mail address you supplied did not match.'
+
+pfy-enlist-deleted:
+  de: 'Ihr Eintrag wurde gelöscht.'
+  de2: 'Dein Eintrag wurde gelöscht.'
+  _:  'Your entry has been deleted.'
+
+pfy-enlist-modified:
+  de: 'Ihr Eintrag wurde geändert.'
+  de2: 'Dein Eintrag wurde geändert.'
+  _:  'Your entry has been modified.'
+
+pfy-enlist-add-notification-subject:
+  de: 'Neuer Eintrag für %title% auf %host%'
+  _:  'Newly enlisted for %title% on %host%'
+
+pfy-enlist-del-notification-subject:
+  de: 'Neue Löschung aus %title% auf %host%'
+  _:  'Deleted entry from %title% on %host%'
+
+pfy-enlist-activated-notification-subject:
+  de: 'Neue Löschung aus %title% auf %host%'
+  _:  'Deleted entry from %title% on %host%'
+
+
+pfy-enlist-add-notification-body:
+  de: |
+    Hallo
+    %name% hat sich eingetragen für %title%.
+
+    -> %host%/%page%
+
+    Der Webmaster
+  _:  |
+    Hello
+    %name% enlisted for %title%.
+
+    -> %host%/%page%
+
+    The webmaster
+
+pfy-enlist-del-notification-body:
+  de: |
+    Hallo
+    %name% hat sich abgemeldet von %title%.
+
+    -> %host%/%page%
+
+    Der Webmaster
+
+  _:  |
+    Hello
+    %name% withdrew from %title%.
+
+    -> %host%/%page%
+
+    The webmaster
+
+pfy-enlist-activated-notification-body:
+  de: |
+    Hallo
+    %name% hat sich abgemeldet von %title%.
+
+    -> %host%/%page%
+    
+    Dabei wurde %activated% aus der Reserve aktiviert.
+
+    Der Webmaster
+
+  _:  |
+    Hello
+    %name% withdrew from %title%.
+
+    -> %host%/%page%
+    
+    Thus, %activated% from reserve slots has been activated.
+
+    The webmaster
+
+pfy-enlist-notify-activated-reserve-subject:
+  de: 'Einschreibeliste %title% auf %host%'
+  _:  'Entry list %title% on %host%'
+
+pfy-enlist-notify-activated-reserve-body:
+  de: |
+    Hallo %name%
+    Sie waren als Reserve in der Einschreibeliste %title% eingetragen.
+
+    Sie sind nun in den aktiven Bereich vorgerückt, nachdem eine Position vor Ihnen gelöscht wurde.
+
+    Der Webmaster
+
+  de2: |
+    Hallo %name%
+    Du warst als Reserve in der Einschreibeliste %title% eingetragen.
+
+    Du bist nun in den aktiven Bereich vorgerückt, nachdem eine Position vor dir gelöscht wurde.
+
+    Der Webmaster
+
+  _:  |
+    Hello %name%
+   
+    You were registered in the entry list %title% on a reserve position.
+
+    Now you have been advanced to an active position, since a position ahead of you has been cleared.
+
+    The webmaster
+
+pfy-enlist-visitor-confirmation-subject:
+  de: |
+    Anmeldebestätigung
+
+  _:  |
+    Registration confirmation
+
+pfy-enlist-visitor-confirmation-body:
+  de: |
+    Guten Tag %name%
+
+    Wir haben Ihre Anmeldung auf %host% erhalten. 
+
+    Besten Dank.
+    
+  de2: |
+    Hallo %name%
+
+    Wir haben deine Anmeldung auf %host% erhalten.
+
+    Besten Dank.
+
+  _:  |
+    Hello %name%
+
+    We have received your registration on %host%.
+
+    Thank you.
+
+pfy-enlist-confirmation-banner-deleted:
+  de: Eintrag gelöscht
+  _:  Entry has been deleted
+
+pfy-enlist-confirmation-sent:
+  de: Sie erhalten eine Anmeldebestätigung per E-Mail.
+  de2: Du erhältst eine Anmeldebestätigung per E-Mail.
+  _:  You will receive a registration confirmation by e-mail.
+
+pfy-enlist-sendmail-button-title:
+  de: E-Mail an alle in dieser Liste verfassen.
+  _:  Create e-mail to all in list.
+
+pfy-enlist-del-freeze-time-expired:
+  de: 'Die Zeit ist abgelaufen, in der Sie den Eintrag noch löschen konnten.'
+  de2: 'Die Zeit ist abgelaufen, in der du den Eintrag noch löschen konntest.'
+  _:  'Time expired during which you could delete your entry.'
+
+pfy-enlist-data-outdated:
+  de: Die Seite musste erst neu geladen werden. Bitte noch einmal versuchen.
+  _:  Page was outdated and had to be reloaded first. Please try again.
+
+pfy-enlist-timed-out:
+  de: Die Seite wurde vor zu langer Zeit geladen.<br>Bitte auf Ok klicken und dann erneut versuchen.
+  _:  The page timed out.<br>Click Ok to reload and try again.
+
+pfy-enlist-ical-tooltip:
+  de: Kalendereintrag herunterladen/installieren.
+  _:  Download/install calendar entry.
+
