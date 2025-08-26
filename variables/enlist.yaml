@@ -131,14 +131,14 @@ pfy-enlist-activated-notification-subject:
 pfy-enlist-add-notification-body:
   de: |
     Hallo
-    %name% hat sich eingetragen für %title%.
+    %name% hat sich eingetragen auf der Seite %page%.
 
     -> %host%/%page%
 
     Der Webmaster
   _:  |
     Hello
-    %name% enlisted for %title%.
+    %name% enlisted on page %page%.
 
     -> %host%/%page%
 
@@ -147,7 +147,7 @@ pfy-enlist-add-notification-body:
 pfy-enlist-del-notification-body:
   de: |
     Hallo
-    %name% hat sich abgemeldet von %title%.
+    %name% hat sich abgemeldet von Seite %page%.
 
     -> %host%/%page%
 
@@ -164,9 +164,7 @@ pfy-enlist-del-notification-body:
 pfy-enlist-activated-notification-body:
   de: |
     Hallo
-    %name% hat sich abgemeldet von %title%.
-
-    -> %host%/%page%
+    %name% hat sich abgemeldet von Seite %page%.
     
     Dabei wurde %activated% aus der Reserve aktiviert.
 
@@ -175,21 +173,19 @@ pfy-enlist-activated-notification-body:
   _:  |
     Hello
     %name% withdrew from %title%.
-
-    -> %host%/%page%
     
     Thus, %activated% from reserve slots has been activated.
 
     The webmaster
 
 pfy-enlist-notify-activated-reserve-subject:
-  de: 'Einschreibeliste %title% auf %host%'
-  _:  'Entry list %title% on %host%'
+  de: 'Einschreibeliste %title% auf Seite %page%'
+  _:  'Entry list %title% on page %page%'
 
 pfy-enlist-notify-activated-reserve-body:
   de: |
     Hallo %name%
-    Sie waren als Reserve in der Einschreibeliste %title% eingetragen.
+    Sie waren als Reserve in der Einschreibeliste %title% eingetragen (auf Seite %page%).
 
     Sie sind nun in den aktiven Bereich vorgerückt, nachdem eine Position vor Ihnen gelöscht wurde.
 
@@ -197,7 +193,7 @@ pfy-enlist-notify-activated-reserve-body:
 
   de2: |
     Hallo %name%
-    Du warst als Reserve in der Einschreibeliste %title% eingetragen.
+    Du warst als Reserve in der Einschreibeliste %title% eingetragen (auf Seite %page%).
 
     Du bist nun in den aktiven Bereich vorgerückt, nachdem eine Position vor dir gelöscht wurde.
 
@@ -206,7 +202,7 @@ pfy-enlist-notify-activated-reserve-body:
   _:  |
     Hello %name%
    
-    You were registered in the entry list %title% on a reserve position.
+    You were registered in the entry list %title% on a reserve position (on page %page%).
 
     Now you have been advanced to an active position, since a position ahead of you has been cleared.
 
@@ -223,14 +219,14 @@ pfy-enlist-visitor-confirmation-body:
   de: |
     Guten Tag %name%
 
-    Wir haben Ihre Anmeldung auf %host% erhalten. 
+    Wir haben Ihre Anmeldung auf %page% erhalten. 
 
     Besten Dank.
     
   de2: |
     Hallo %name%
 
-    Wir haben deine Anmeldung auf %host% erhalten.
+    Wir haben deine Anmeldung auf %page% erhalten.
 
     Besten Dank.
 
@@ -270,4 +266,8 @@ pfy-enlist-timed-out:
 pfy-enlist-ical-tooltip:
   de: Kalendereintrag herunterladen/installieren.
   _:  Download/install calendar entry.
+
+pfy-enlist-collapse-executed:
+  de: 'Leere Listenplätze gelöscht, Reserve-Personen informiert: %names%'
+  _:  'Empty slots removed, reserve-slots informed: %names%'
 

@@ -11,7 +11,6 @@ const Enlist = {
     this.addEventListeners();
     this.initTooltips();
     this.initPlaceholders();
-    this.setupDownloadButtonHandler();
   }, // init
 
   initPlaceholders: function () {
@@ -29,15 +28,24 @@ const Enlist = {
   addEventListeners: function() {
     document.addEventListener('click', function(ev) {
       const el = ev.target;
-      if (!el.closest('.pfy-enlist-icon, .pfy-enlist-sendmail-button, .pfy-enlist-delete-checkbox')) {
+      if (!el.closest('.pfy-enlist-icon, .pfy-enlist-sendmail-button, .pfy-enlist-delete-checkbox, .pfy-enlist-ical-button, .pfy-enlist-collapse-button')) {
         return;
       }
       ev.stopPropagation();
       if (el.closest('.pfy-enlist-sendmail-button')) {
         return Enlist.handleSendToAll(el);
       }
+
       if (el.closest('[name=delete_entry]')) {
         return Enlist.handleToggleModifyDelete(el);
+      }
+
+      if (Enlist.icalButtonHandler(ev)) {
+        return;
+      }
+
+      if (Enlist.collapseListButtonHandler(ev)) {
+        return;
       }
 
       Enlist.openPopup(el);
@@ -353,18 +361,31 @@ const Enlist = {
   }, // fillFormValues
 
 
-  setupDownloadButtonHandler() {
-      document.body.addEventListener('click', function (ev) {
-        const btnEl = ev.target.closest('.pfy-enlist-ical-button');
-        if (btnEl) {
-          ev.stopPropagation();
-          ev.preventDefault();
-          domForOne(btnEl.parentElement, 'a', aEl => {
-            aEl.click();
-          });
-        }
+  icalButtonHandler: function(ev) {
+    const btnEl = ev.target.closest('.pfy-enlist-ical-button');
+    if (btnEl) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      domForOne(btnEl.parentElement, 'a', aEl => {
+        aEl.click();
       });
-  },
+      return true;
+    }
+    return false;
+  }, // icalButtonHandler
+
+
+  collapseListButtonHandler: function(ev) {
+    const btnEl = ev.target.closest('.pfy-enlist-collapse-button');
+    if (btnEl) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      const widgetInx = btnEl.closest('[data-widget-inx]').dataset.widgetInx;
+      reloadAgent('?collapse-enlist=' + widgetInx);
+      return true;
+    }
+    return false;
+  }, // collapseListButtonHandler
 
 }; // Enlist
 

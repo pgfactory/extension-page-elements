@@ -3,6 +3,7 @@
 namespace PgFactory\PageFactoryElements;
 
 use Kirby\Exception\Exception;
+use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
@@ -11,11 +12,13 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\fileTime;
+use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 
 const ENLIST_INFO_ICON      = 'ⓘ';
+const ENLIST_COLLAPSE_ICON  = '⏯'; //'⇡'; //'⇪'; // <span class='mdp-icon'><svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><use href='#pfy-iconsrc-align_vertical' /></svg></span>
 const ENLIST_MAIL_ICON      = '✉';
 const ENLIST_ADD_ICON       = '+';
 const ENLIST_MODIFY_ICON    = '✎';
@@ -72,6 +75,11 @@ class Enlist
     private string $enlistFormHtml = '';
     private mixed $event;
 
+    /**
+     * @param $options
+     * @param $customFields
+     * @throws Exception
+     */
     public function __construct($options, $customFields)
     {
         $this->widgetInx = self::$enlistWidgetIndex;
@@ -91,11 +99,16 @@ class Enlist
             $adminEmail = $this->options['adminEmail'] ?: PageFactory::$webmasterEmail;
             Page::addJs("const adminEmail = '$adminEmail';");
             Page::applyRobotsAttrib();
+
+            $this->checkCollapseRequest();
         } // initialize
 
     } // __construct
 
 
+    /**
+     * @return string
+     */
     public function render(): string
     {
         $html = $this->enlistFormHtml;
@@ -117,6 +130,9 @@ class Enlist
     } // render
 
 
+    /**
+     * @return mixed
+     */
     private function renderByEvents(): mixed
     {
         $html = '';
@@ -151,6 +167,9 @@ class Enlist
     } // renderByEvents
 
 
+    /**
+     * @return string
+     */
     private function renderEnlistWidget(): string
     {
         $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$this->widgetInx";
@@ -168,11 +187,7 @@ class Enlist
             $this->titleClass = ' pfy-empty-title';
         }
 
-        $info = $this->renderInfoButton();
-
-        $iCal = $this->renderICal();
-
-        $headButtons = $this->renderSendMailToAllButton();
+        $headButtons = $this->renderEnlistButtons();
 
         $html = $this->renderEnlistWidgetContent();
         
@@ -187,7 +202,7 @@ class Enlist
 
         $html = <<<EOT
 <div id='$id' class='$class' data-widget-inx="$this->widgetInx"$attrib>
-<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$iCal$info$headButtons</div>
+<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$headButtons</div>
 $html
 </div>
 EOT;
@@ -195,6 +210,10 @@ EOT;
     } // renderEnlistWidget
 
 
+    /**
+     * @return string
+     * @throws \Exception
+     */
     private function renderEnlistWidgetContent()
     {
         $data = $this->prepareTableData();
@@ -220,6 +239,9 @@ EOT;
     } // renderEnlistWidgetContent
 
 
+    /**
+     * @return array
+     */
     private function prepareTableData(): array
     {
         $this->tableHeaders = $this->prepareTableHeaders();
@@ -232,6 +254,9 @@ EOT;
     } // prepareTableData
 
 
+    /**
+     * @return array
+     */
     private function doPrepareTableData(): array
     {
         $emptyRow = $this->prepareEmptyRow();
@@ -293,6 +318,10 @@ EOT;
     } // doPrepareTableData
 
 
+    /**
+     * @param string $value
+     * @return string
+     */
     private function obfuscateSlot(string $value): string
     {
         if ($this->isEnlistAdmin) {
@@ -313,6 +342,29 @@ EOT;
     } // obfuscateSlot
 
 
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function renderEnlistButtons(): string
+    {
+        $headButtons = '';
+        $headButtons .= $this->renderInfoButton();
+        $headButtons .= $this->renderICal();
+        $headButtons .= $this->renderCollapseEmptySlotsButton();
+        $headButtons .= $this->renderSendMailToAllButton();
+        $headButtons = <<<EOT
+    <div class='pfy-enlist-head-buttons-wrapper'>
+$headButtons
+    </div>
+EOT;
+        return $headButtons;
+    } // renderEnlistButtons
+
+
+    /**
+     * @return string
+     */
     private function renderSendMailToAllButton(): string
     {
         $headButtons = '';
@@ -320,15 +372,16 @@ EOT;
             $mailIcon = ENLIST_MAIL_ICON;
 
             $headButtons = <<<EOT
-    <span class='pfy-enlist-head-buttons'>
         <button class="pfy-enlist-sendmail-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-sendmail-button-title }}">$mailIcon</button>
-    </span>
 EOT;
         }
         return $headButtons;
     } // renderSendMailToAllButton
 
 
+    /**
+     * @return string
+     */
     private function renderInfoButton(): string
     {
         $info = $this->info??'';
@@ -345,6 +398,23 @@ EOT;
     } // renderInfoButton
 
 
+    /**
+     * @return string
+     */
+    private function renderCollapseEmptySlotsButton(): string
+    {
+        $icon = ENLIST_COLLAPSE_ICON;
+        $html = <<<EOT
+        <button class="pfy-enlist-collapse-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-collapse-button-title }}"><span>$icon</span></button>
+EOT;
+        return $html;
+    } // renderCollapseEmptySlotsButton
+
+
+    /**
+     * @return string
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     public function renderEnlistForm(): string
     {
         if ($this->freezeTime) {
@@ -428,6 +498,9 @@ EOT;
     } // renderEnlistForm
 
 
+    /**
+     * @return void
+     */
     private function propagateUsernameToBrowser(): void
     {
         if (self::$userPreset) {
@@ -457,6 +530,10 @@ EOT;
     } // propagateUsernameToBrowser
 
 
+    /**
+     * @return string
+     * @throws \Exception
+     */
     private function renderICal(): string
     {
         if (!($this->event??false)) {
@@ -498,6 +575,9 @@ EOT;
     } // renderICal
 
 
+    /**
+     * @return string[]
+     */
     private function prepareTableHeaders(): array
     {
         $tableHeaders = [
@@ -531,6 +611,9 @@ EOT;
     } // prepareTableHeaders
 
 
+    /**
+     * @return string[]
+     */
     private function determineColClasses(): array
     {
         $colClasses = ['pfy-enlist-row-num', 'pfy-enlist-icon pfy-enlist-icon-1', 'pfy-enlist-name'];
@@ -558,6 +641,9 @@ EOT;
     } // determineColClasses
 
 
+    /**
+     * @return array
+     */
     private function determineRowClasses(): array
     {
         $slots = $this->widgetSlots;
@@ -610,6 +696,9 @@ EOT;
     } // determineRowClasses
 
 
+    /**
+     * @return array
+     */
     private function prepareEmptyRow(): array
     {
         $emptyRow = [];
@@ -620,6 +709,9 @@ EOT;
     } // prepareEmptyRow
 
 
+    /**
+     * @return string[]
+     */
     private function prepareIcons(): array
     {
         if ($this->obfuscate && !$this->isEnlistAdmin) {
@@ -636,6 +728,11 @@ EOT;
     } // prepareIcons
 
 
+    /**
+     * @param int $currFreezeTime
+     * @param array $slot
+     * @return bool
+     */
     private function checkSlotFreezeTime(int $currFreezeTime, array $slot): bool
     {
         if (!$currFreezeTime) {
@@ -646,6 +743,9 @@ EOT;
     } // checkSlotFreezeTime
 
 
+    /**
+     * @return void
+     */
     private function openDb(): void
     {
         if (!$this->db) {
@@ -654,6 +754,9 @@ EOT;
     } // openDb
 
 
+    /**
+     * @return void
+     */
     private function initData(): void
     {
         $this->widgetDescr = $this->db->getWidgetDescr($this->widgetInx);
@@ -664,12 +767,21 @@ EOT;
     } // initData
 
 
+    /**
+     * @return array
+     */
     public function getOptions(): array
     {
         return $this->options;
     } // getOptions
 
 
+    /**
+     * @param array $options
+     * @param array $customFields
+     * @return void
+     * @throws Exception
+     */
     private function parseOptions(array $options, array $customFields): void
     {
         $options['widgetInx'] = $this->widgetInx;
@@ -771,6 +883,10 @@ EOT;
     } // parseOptions
 
 
+    /**
+     * @return string
+     * @throws Exception
+     */
     private function determineDataFile(): string
     {
         if ($this->options['file']??false) {
@@ -796,6 +912,11 @@ EOT;
     } // determineDataFile
 
 
+    /**
+     * @param array $options
+     * @param array $customFields
+     * @return void
+     */
     private function handlePersistentOptions(array &$options, array &$customFields)
     {
         if ($options['setDefaults']) {
@@ -833,6 +954,10 @@ EOT;
     } // handlePersistentOptions()
 
 
+    /**
+     * @return array|false
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private function handleScheduleOption(): array|false
     {
         if (!($eventOptions = $this->options['schedule']??false)) {
@@ -850,5 +975,18 @@ EOT;
         $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;
     } // handleScheduleOption
+
+
+    /**
+     * @return void
+     */
+    private function checkCollapseRequest(): void
+    {
+        if (isset($_GET['collapse-enlist'])) {
+            $widgetInx = $_GET['collapse-enlist'];
+            $this->db->collapseEmptySlots($widgetInx);
+            reloadAgent();
+        }
+    } // checkCollapseRequest
 
 } // Enlist

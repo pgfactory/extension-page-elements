@@ -16,6 +16,12 @@ class EnlistCallbackHandler
     private $pagePath;
 
     // === Callback: handle user response ==========================
+
+    /**
+     * @param object $enlist
+     * @param array $newDataRec
+     * @return string
+     */
     public function callback(object $enlist, array $newDataRec): string
     {
         $this->db = $enlist->db;
@@ -58,6 +64,16 @@ class EnlistCallbackHandler
     } // callback
 
 
+    /**
+     * @param array $newDataRec
+     * @param array $widgetDescr
+     * @param string $slotInx
+     * @param string $context
+     * @param mixed $widgetInx
+     * @param string $message
+     * @return void
+     * @throws \Exception
+     */
     private function handleNewEntry(array $newDataRec, array $widgetDescr, string $slotInx, string $context, mixed $widgetInx, string $message): void
     {
         $name = $newDataRec['Name'] ?? '#####';
@@ -89,6 +105,16 @@ class EnlistCallbackHandler
     } // handleNewEntry
 
 
+    /**
+     * @param string $mode
+     * @param array $widgetDescr
+     * @param string $slotInx
+     * @param string $alertMsg
+     * @param array $newDataRec
+     * @param string $context
+     * @param mixed $widgetInx
+     * @return void
+     */
     private function handleExistingEntry(string $mode, array $widgetDescr, string $slotInx, string $alertMsg, array $newDataRec, string $context, mixed $widgetInx): void
     {
         if ($mode === 'del') {
@@ -110,6 +136,12 @@ class EnlistCallbackHandler
     } // handleExistingEntry
 
 
+    /**
+     * @param array $newDataRec
+     * @param string $slotInx
+     * @param mixed $widgetInx
+     * @return void
+     */
     private function modifyExistingEntry(array $newDataRec, string $slotInx, mixed $widgetInx): void
     {
         $slots = $this->db->getEnlistSlots($widgetInx);
@@ -129,6 +161,12 @@ class EnlistCallbackHandler
     } // modifyExistingEntry
 
 
+    /**
+     * @param array $newDataRec
+     * @param string $context
+     * @return void
+     * @throws \Exception
+     */
     private function checkWidgetDeadline(array $newDataRec, string $context): void
     {
         if ($widgetDescr['deadlineExpired']??false) {
@@ -142,6 +180,12 @@ class EnlistCallbackHandler
     } // checkWidgetDeadline
 
 
+    /**
+     * @param array $widgetDescr
+     * @param int|string $widgetInx
+     * @param int $slotInx
+     * @return void
+     */
     private function checkSlotFreezTime(array $widgetDescr, int|string $widgetInx, int $slotInx): void
     {
         if ($this->options['isEnlistAdmin']) {
@@ -161,41 +205,23 @@ class EnlistCallbackHandler
 
     /**
      * @param array $rec
-     * @param string $widgetInx
+     * @param string $title
      * @return void
      */
-    private function notifyActivatedReserve(array $rec, string $title): void
+    public function notifyActivatedReserve(array $rec, string $title): void
     {
         if (!$this->options['notifyActivatedReserve']) {
             return;
         }
-        $subject = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-subject }}');
-        $body = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-body }}');
-        $replace = [
-            '%name%' => $rec['Name'],
-            '%email%' => $rec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
-            '%page%' => $this->pagePath,
-        ];
-        $subject = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $subject);
-        $body = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $body);
-
-        Utils::sendMail($rec['Email'], $subject, $body );
-        mylog("Newly activated reserve slot notified: {$rec['Name']} {$rec['Email']}", 'enlist-log.txt');
+        EnlistComm::notifyActivatedReserve($rec, $title);
     } // notifyActivatedReserve
 
 
     /**
      * @param array $newDataRec
      * @param string $mode
-     * @param string $widgetInx
+     * @param string $title
+     * @param string $nameActivated
      * @return void
      */
     private function handleNotifyOwner(array $newDataRec, string $mode, string $title, string $nameActivated = ''): void
@@ -203,38 +229,7 @@ class EnlistCallbackHandler
         if (!($to = $this->options['notifyOwner']??false)) {
             return;
         }
-        if ($to === true) {
-            $to = PageFactory::$webmasterEmail;
-        }
-
-        if ($mode === 'add') {
-            $subject = '{{ pfy-enlist-add-notification-subject }}';
-            $body = '{{ pfy-enlist-add-notification-body }}';
-        } elseif ($mode === 'activated') {
-            $subject = '{{ pfy-enlist-activated-notification-subject }}';
-            $body = TransVars::getVariable('pfy-enlist-activated-notification-body');
-            $body = str_replace('%activated%', $nameActivated, $body);
-        } else {
-            $subject = '{{ pfy-enlist-del-notification-subject }}';
-            $body = '{{ pfy-enlist-del-notification-body }}';
-        }
-        $replace = [
-            '%name%' => $newDataRec['Name'],
-            '%email%' => $newDataRec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
-            '%page%' => $this->pagePath,
-        ];
-        $subject = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($subject));
-        $body = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            TransVars::resolveVariables($body));
-
-        Utils::sendMail($to, $subject, $body );
+        EnlistComm::notifyOwner($to, $newDataRec, $mode, $title, $nameActivated);
     } // handleNotifyOwner
 
 
@@ -248,27 +243,7 @@ class EnlistCallbackHandler
         if (!$this->options['sendConfirmation']??false) {
             return false;
         }
-
-        $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
-        $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
-        $replace = [
-            '%name%' => $newDataRec['Name'],
-            '%email%' => $newDataRec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
-            '%hostUrl%' => PFY_HOST_URL,
-            '%page%' => $this->pagePath,
-        ];
-        $subject = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $subject);
-        $body = str_replace(
-            array_keys($replace),
-            array_values($replace),
-            $body);
- //ToDo: email with ics attachment
-        Utils::sendMail($newDataRec['Email'], $subject, $body );
+        EnlistComm::sendConfirmation($newDataRec, $title);
         return true;
     } // handleSendConfirmation
 
