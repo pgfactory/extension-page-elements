@@ -150,8 +150,8 @@ class Ical
     private function popupateICalElements(array $rec): array
     {
         $icalElements = [
-            'start'         => $rec['start'],
-            'end'           => $rec['end'],
+            'start'         => $rec['start']??'',
+            'end'           => $rec['end']??'',
             'title'         => $this->compileICalElement('title', $rec),
             'location'      => $this->compileICalElement('location', $rec),
             'description'   => $this->compileICalElement('description', $rec),

@@ -1213,7 +1213,9 @@ class PfyForm extends Form
             $icon = MdPlusHelper::renderIcon($m[1]);
             $description = str_replace($m[0], $icon, $description);
         }
-        $input .= "<span class='pfy-form-field-description'>$description</span>";
+        if ($type !== 'hidden') {
+            $input .= "<span class='pfy-form-field-description'>$description</span>";
+        }
 
         $class = $rec['class'];
         if ($rec['required'] ?? false) {

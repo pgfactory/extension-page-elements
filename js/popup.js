@@ -271,20 +271,20 @@ function pfyPopup( options ) {
 
   this.getContentFrom = function() {
     let contentFrom = this.contentFrom;
-    let $cFrom = null;
+    let cFromEl = null;
     if (typeof contentFrom === 'string') {
       if ((contentFrom.charAt(0) !== '#') && (contentFrom.charAt(0) !== '.')) {
         contentFrom = '#' + contentFrom;
       }
-      $cFrom = document.querySelector( contentFrom );
+      cFromEl = document.querySelector( contentFrom );
 
     } else if ( (typeof contentFrom !== false)  && contentFrom.length) { // case jQ-object
-      $cFrom = contentFrom;
+      cFromEl = contentFrom;
     } else {
       alert('Error in popup.js:prepareContent() -> unable to handle contentFrom');
       return ''; // error
     }
-    let html = $cFrom.outerHTML;
+    let html = cFromEl.outerHTML;
 
     // as we are cloning code, we need to fix ids and related attributes
     let m;
@@ -520,9 +520,9 @@ function pfyPopup( options ) {
     // set focus to either first input, ok-button or close-button:
     if (this.autofocus) {
       setTimeout(function () {
-        let $input = parent.popup.querySelectorAll('input')
-        if ($input.length) {
-          $input[0].focus();
+        let inputEl = parent.popup.querySelectorAll('input')
+        if (inputEl.length) {
+          inputEl[0].focus();
         } else {
           let buttons = parent.popup.querySelectorAll('.pfy-popup-btn-ok, .pfy-popup-btn-confirm, .pfy-popup-btn-continue');
           if (buttons.length) {
