@@ -88,7 +88,7 @@ class DataTable
 {
     private array $options;
     private $file = false;
-    private $tableData;
+    private array|null$tableData = null;
     private $tableHeaders;
     private bool $translateHeaders;
     private $tableClass;
@@ -368,7 +368,7 @@ class DataTable
             $this->data2Dset = new Data2DSet($this->file, $this->options);
             $this->tableData = $this->data2Dset->data();
 
-        } elseif ($this->tableData) {
+        } elseif ($this->tableData !== null) {
             $this->options['tableName'] = ($this->options['tableName'] ?? false) ?: "table-$this->inx";
             $this->data2Dset = new Data2DSet($this->tableData, $this->options);
             $this->tableData = $this->data2Dset->normalizeData();
