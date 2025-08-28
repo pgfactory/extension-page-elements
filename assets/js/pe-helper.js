@@ -26,11 +26,15 @@ window.onload = function() {
  *  }
  */
 function initiateMail(options) {
-  let to = '';
-  if (options.to??false) {
-    to = options.to;
-  }
+  const to = (options.to??false) ? options.to : '';
   let url = `mailto:${to}`;
+
+  if (options.cc??false) {
+    url = appendToUrl(url, `cc=${options.cc}`);
+  }
+  if (options.bcc??false) {
+    url = appendToUrl(url, `bcc=${options.bcc}`);
+  }
 
   if (options.subject??false) {
     options.subject = encodeURI(options.subject);
