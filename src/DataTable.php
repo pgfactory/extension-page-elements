@@ -171,7 +171,14 @@ class DataTable
         }
 
         if (sizeof($this->tableData) === 0) {
-            if ($this->announceEmptyTable) {
+            if ($this->options['mode']??false) {
+                return <<<EOT
+<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>
+
+<button class='pfy-button pfy-table-fill-first-row'>{{ pfy-table-fill-first-row }}</button>
+EOT;
+
+            } elseif ($this->announceEmptyTable) {
                 return '<div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>'; // done if no data available
             }
         }
@@ -358,6 +365,15 @@ class DataTable
 
 
     // === Aux Methods ================================================================================
+    /**
+     * @return string
+     */
+    public function getTableInx(): string
+    {
+        return (string)$this->inx;
+    } // getTableInx
+
+
     /**
      * @return void
      * @throws \Exception
@@ -666,10 +682,15 @@ EOT;
         $orderable = '';
         $scrollable = '';
         $order = '';
+        $dir = 'asc';
         // order = <col-index> | <col-index>:desc | <col-name> | <col-name>:desc
         if ($this->order) {
             if (is_string($this->order)) {
-                list($elem, $dir) = explodeTrim(':', $this->order);
+                if (str_contains($this->order, ':')) {
+                    list($elem, $dir) = explodeTrim(':', $this->order);
+                } else {
+                    $elem = $this->order;
+                }
             } elseif (is_array($this->order)) {
                 list($elem, $dir) = $this->order;
             }
@@ -738,6 +759,11 @@ EOT;
     } // renderTableDownloadButton
 
 
+    /**
+     * @param array $tableButton
+     * @param string $label
+     * @return string
+     */
     private function renderTableDropdownButton(array $tableButton, string $label): string
     {
         $dropdown = '';
@@ -1023,7 +1049,11 @@ EOT;
      */
     private function parseOptions( array|string $dataSrc, array $options): void
     {
-        $options = $options + PFY_TABLE_DEFAULT_OPTIONS;
+        foreach (PFY_TABLE_DEFAULT_OPTIONS as $key => $value) {
+            if (!isset($options[$key])) {
+                $options[$key] = $value;
+            }
+        }
         if ($options['tableHeaders'] ?? false) {
             throw new \Exception("Error: DataTable: arg 'tableHeaders' is deprecated");
         }

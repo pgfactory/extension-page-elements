@@ -193,6 +193,10 @@ pfy-table-send-rec-confirmation:
   de: Datensatz wurde gesendet an %email%
   _:  Data record has been sent to %email%
 
+pfy-table-fill-first-row:
+  de: Neuen Datensatz eingeben
+  _:  Enter new data record
+
 
 
 
