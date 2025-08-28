@@ -15,7 +15,7 @@ const pfyFormsHelper = {
 
     // form undefined:
     } else {
-      if ((typeof forms === 'undefined')) {
+      if ((typeof forms === 'undefined' || forms === null)) {
         // forms not defined -> apply to all forms in page:
         forms = document.querySelectorAll('.pfy-form');
 
@@ -55,14 +55,14 @@ const pfyFormsHelper = {
     this.handleErrorInForm(form);
     this.presetForm(form);
 
-    if (typeof setFocus !== 'undefined') {
+    if (typeof setFocus !== 'undefined' && setFocus) {
       if (form.closest('.pfy-form-readonly')) {
         console.log('readonly - skipping setCursor');
         return;
       }
       const input1 = form.querySelector('.pfy-input-wrapper input');
       if (input1) {
-        input1.focus();
+        this.setFocus(input1);
       }
     }
 
@@ -350,9 +350,7 @@ showPwHandler(ev) {
       if (errorElement) {
         const input = errorElement.parentNode.querySelector('input');
         input.scrollIntoView({ block: 'end' });
-        setTimeout(function() {
-          input.focus();
-        }, 500);
+        pfyFormsHelper.setFocus(input);
       }
     });
   }, // handleErrorInForm
@@ -463,9 +461,10 @@ showPwHandler(ev) {
           this.resetErrorStates(form);
           this.prefillComputedFields(form);
           this.executeOnPresetCallback(form);
+          this.handleMarkAsModifiedRequest(form);
           this.setTriggerOnContinueLink();
         },
-        () => { mylog('denied');  }
+        () => { mylog('User cancelled overwriting of form content'); },
       );
     } else {
       this.presetFields(form, data);
@@ -473,6 +472,7 @@ showPwHandler(ev) {
       this.resetErrorStates(form);
       this.prefillComputedFields(form);
       this.executeOnPresetCallback(form);
+      this.handleMarkAsModifiedRequest(form);
       this.setTriggerOnContinueLink();
     }
   }, // presetForm
@@ -634,6 +634,12 @@ showPwHandler(ev) {
     }
   }, // presetField
 
+
+  setFocus(el) {
+    setTimeout(() => {
+      el.focus();
+    }, 100);
+  }, // setFocus
 
 
   disableForm()  {
@@ -1144,6 +1150,17 @@ showPwHandler(ev) {
       });
     }
   }, // setTriggerOnContinueLink
+
+
+  // handle case where form wrapper is marked with class 'pfy-form-mark-as-modified':
+  // -> this is the case when url-arg "?presetForm=ABCDEF&asmodified" is used
+  handleMarkAsModifiedRequest(form) {
+    const formWrapper = form.closest('.pfy-form-wrapper');
+    if (formWrapper.classList.contains('pfy-form-mark-as-modified')) {
+      formWrapper.classList.remove('pfy-form-mark-as-modified');
+      formWrapper.classList.add('pfy-form-is-modified');
+    }
+  },
 
 
   repetitionChangeHandler(ev) {
