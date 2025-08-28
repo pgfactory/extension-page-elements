@@ -272,17 +272,18 @@ function pfyPopup( options ) {
   this.getContentFrom = function() {
     let contentFrom = this.contentFrom;
     let cFromEl = null;
+
     if (typeof contentFrom === 'string') {
       if ((contentFrom.charAt(0) !== '#') && (contentFrom.charAt(0) !== '.')) {
         contentFrom = '#' + contentFrom;
       }
       cFromEl = document.querySelector( contentFrom );
 
-    } else if ( (typeof contentFrom !== false)  && contentFrom.length) { // case jQ-object
+    } else if ( contentFrom instanceof Element) { // case Element
       cFromEl = contentFrom;
+
     } else {
-      alert('Error in popup.js:prepareContent() -> unable to handle contentFrom');
-      return ''; // error
+      throw new Error('Error in popup.js:prepareContent() -> unable to handle contentFrom');
     }
     let html = cFromEl.outerHTML;
 
