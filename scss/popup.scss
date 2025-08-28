@@ -37,7 +37,7 @@
   .pfy-popup-wrapper { // dialog
     position: relative;
     max-width: 98%;
-    min-width: 10rem;
+    min-width: 10em;
     vertical-align: middle;
     border: none;
     outline: 1px solid #444;
@@ -49,6 +49,7 @@
     background-color: #fff;
     box-shadow: 10px 10px 60px #0008;
     overflow: hidden;
+    font-size: 12pt !important;
   }
 
   .pfy-popup-header {
@@ -56,12 +57,12 @@
     overflow: hidden;
     background: #666;
     user-select: none;
-    //min-height: 2.4rem;
+    //min-height: 2.4em;
     margin-top: -1px;
     font-family: Helvetica, sans-serif;
     > div {
-      min-height: 2.4rem;
-      padding: 0.5rem 4rem 0.5rem 1rem;
+      min-height: 2.4em;
+      padding: 0.5em 4em 0.5em 1em;
       color: #eee;
       font-size: 125%;
       cursor: grab;
@@ -73,8 +74,8 @@
 
   .pfy-popup-close-button {
     position: absolute;
-    top: 0.3rem;
-    right: 0.2rem;
+    top: 0.3em;
+    right: 0.2em;
     background: transparent;
     color: #666;
     border: none;
@@ -83,9 +84,9 @@
 
   .pfy-popup-container {
     overflow-y: scroll;
-    max-height: calc(100dvh - 8rem);
-    padding: 1.6rem 1.6rem 0 1.6rem;
-    margin-bottom: 1.4rem;
+    max-height: calc(100dvh - 8em);
+    padding: 1.6em 1.6em 0 1.6em;
+    margin-bottom: 1.4em;
     font-family: Verdana, sans-serif;
   }
 
@@ -97,7 +98,7 @@
   .pfy-popup-buttons {
     display: flex;
     justify-content: end;
-    margin: 0 0.8rem 0.8rem 0.8rem;
+    margin: 0 0.8em 0.8em 0.8em;
     button {
       margin-left: 5px;
       font-size: inherit;
