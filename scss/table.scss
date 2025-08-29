@@ -17,12 +17,13 @@ $focus-color: orange;
         font-size: 0.8em;
       }
       select.pfy-table-buttons-select-widget {
-        height: 1.6em;
+        height: calc(1.15em + 8px);
         border: 1px solid #aaa;
         border-radius: 3px;
       }
       div.pfy-table-buttons-select-widget {
         height: 1.6em;
+        margin-top: calc(0.15em - 3px);
         display: inline-block;
       }
     }
@@ -51,7 +52,8 @@ $focus-color: orange;
     }
   .pfy-row-selector input {
     font-size: inherit;
-    margin-top: 0.3em;
+    width: max(12px, 0.8em);
+    height: max(12px, 0.8em);
   }
   .pfy-table-new-rec {
     width: 2em;
@@ -121,7 +123,7 @@ $focus-color: orange;
       }
       &.pfy-row-selector,
       &.pfy-row-number {
-        padding: 3px 0.2em 0 0.2em;
+        padding: 0.5em 0.2em 0 0.2em;
         max-width: 2em;
       }
       &.pfy-row-edit {
@@ -139,7 +141,10 @@ $focus-color: orange;
     td.pfy-row-number {
       text-align: right;
     }
-  }
+    div.pfy-table-buttons {
+      top: 6px; // only dt!
+    }
+  } // interactive (= using data-tables
 
   #pfy-table-send-rec-input {
     line-height: 2em;
@@ -160,7 +165,7 @@ $focus-color: orange;
       position: absolute;
     }
     .pfy-table-buttons {
-      top: 0.3em;
+      top: 1.5em; // not dt
     }
     div.dt-container div.dt-layout-row {
       margin: 0;
@@ -169,9 +174,12 @@ $focus-color: orange;
       position: unset;
     }
     .dt-search {
-      top: 0;
+      top: calc(0.125em + 4px);
       right: 0;
       margin: 0;
+      input {
+        padding: 3px 5px;
+      }
     }
   }
   .dt-layout-full {
@@ -184,7 +192,7 @@ $focus-color: orange;
 
 } // pfy-default-styling
 
-// === DataTables Filter widget ==============================
+ // === DataTables Filter widget ==============================
 .pfy-default-styling {
   .dt-search input::placeholder {
       opacity: 0;
@@ -198,10 +206,7 @@ $focus-color: orange;
       font-style: italic;
     }
   }
-}
-
-@media screen and (max-width: 340px) {
-  .pfy-default-styling .dt-search {
+  .pfy-table-narrow .dt-search {
     label {
       display: none;
     }
@@ -209,15 +214,9 @@ $focus-color: orange;
       opacity: 1;
     }
   }
-}
-
-@container (width < 18em) {
-  .pfy-default-styling .dt-search {
-    label {
-      display: none;
-    }
-    input::placeholder {
-      opacity: 1;
-    }
+  .pfy-table-very-narrow .dt-search {
+    position: relative;
+    text-align: right;
+    top: -2px;
   }
 }
