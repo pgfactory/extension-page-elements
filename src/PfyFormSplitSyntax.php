@@ -58,19 +58,6 @@ class PfyFormSplitSyntax extends PfyForm
             }
         }
 
-        $this->formDataRec = [];
-        if ($this->requestedRecKey) {
-            $rec = $this->db->find($this->requestedRecKey);
-            if ($rec) {
-                $this->formDataRec = $rec->data();
-            }
-            if ($this->keepSubmittedDataInForm) {
-                Utils::setSessionVar("form-$this->formIndex", $this->formDataRec, overridePageId:$this->formDataId);
-            }
-        } elseif ($this->keepSubmittedDataInForm) {
-            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overridePageId:$this->formDataId);
-        }
-
         return $html;
     } // init
 

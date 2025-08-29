@@ -214,15 +214,17 @@ class PfyForm extends Form
             Assets::addAssets('FORMS');
 
             if ($formOptions['init']) {
-                Page::addJsReady('pfyFormsHelper.init();');
+                $setFocus = ($formOptions['tableOptions']['mode']??false) ? 'null, false' : '';
+                Page::addJsReady("pfyFormsHelper.init($setFocus);");
             }
             $this->activateWindowFreeze();
             $this->activatebeforeunloadWarning();
         }
         if ($this->keepSubmittedDataInForm && (($_GET['clearform']??false) == $this->formIndex)) {
-            Utils::pullSessionVar("form-$this->formIndex", overridePageId:$this->formDataId);
+            Utils::pullSessionVar("form-$this->formIndex", overrideKey:$this->formDataId);
             reloadAgent();
-        } elseif ($_GET['presetForm']??false) {
+
+        } elseif ($_GET['presetForm']??false) { // ?presetForm
             $this->requestedRecKey = $_GET['presetForm'];
         }
     } // __construct
@@ -275,16 +277,6 @@ class PfyForm extends Form
         if (!$this->showForm && $this->showFeedbackInpage) {
             // normal case after data received -> show response, hide form:
             $html .= $this->injectNoShowCssRule();
-        }
-
-        if ($this->requestedRecKey) {
-            $rec = $this->db->find($this->requestedRecKey);
-            if ($rec) {
-                $this->formDataRec = $rec->data();
-            }
-        }
-        if ($this->keepSubmittedDataInForm) {
-            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overridePageId:$this->formDataId);
         }
 
         // assemble form:
@@ -1449,27 +1441,60 @@ EOT;
         $formInx = $this->formIndex;
         $id = $this->formOptions['id'];
 
+        $tableInx = '';
+        if ($this->formOptions['tableOptions']) {
+            $dt = $this->openDataTable();
+            $tableInx = $dt->getTableInx();
+            $tableInx = " data-tableinx='$tableInx'";
+        }
+
         // apply outer table-and-form wrapper:
         if ($this->addFormTableWrapper) {
             $id = $id ? " id='{$id}-wrapper'" : '';
             $class = $this->formOptions['outerWrapperClass'];
-            $html .= "<div$id class='pfy-form-and-table-wrapper pfy-form-and-table-wrapper-$formInx $class'>\n";
+            $html .= "<div$id class='pfy-form-and-table-wrapper pfy-form-and-table-wrapper-$formInx $class'$tableInx>\n";
+        }
+
+        // in popupMode apply a wrapper that makes the form (incl form-wrapper) invisible:
+        if ($this->popupMode) {
+            // in popup mode the form is not visible, only appears in popup on request
+            $html .= "<div class='pfy-fully-hidden' aria-hidden='true'>\n";
         }
 
         // apply form wrapper
-        $aria = '';
         $wrapperClass = "pfy-form-wrapper pfy-form-wrapper-$formInx" . $this->formWrapperClass;
-        $wrapperClass .= $this->formDataRec ? ' pfy-form-is-preset' : '';
+
+        // handle case where url-arg requested presetting given record:
+        if ($this->requestedRecKey) {
+            $rec = $this->db->find($this->requestedRecKey);
+            if ($rec) {
+                $this->formDataRec = $rec->data();
+                if (isset($_GET['asmodified'])) {
+                    $this->formDataRec['_isModified'] = true;
+                }
+            }
+            if ($this->keepSubmittedDataInForm) {
+                Utils::setSessionVar("form-$this->formIndex", $this->formDataRec, overrideKey:$this->formDataId);
+            }
+        } elseif ($this->keepSubmittedDataInForm) {
+            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overrideKey:$this->formDataId);
+        }
+
+        // handle case where data rec is to be preset:
+        if ($this->formDataRec) {
+            // case url-arg "?presetForm=ABCDEF&asmodified":
+            if ($this->formDataRec['_isModified']??false) {
+                $wrapperClass .= ' pfy-form-mark-as-modified';
+            } else {
+                $wrapperClass .= ' pfy-form-is-preset';
+            }
+        }
         if ($this->readonly) {
             $wrapperClass .= ' pfy-form-readonly';
         }
         $wrapperClass .= $this->keepSubmittedDataInForm? ' pfy-retain-data' : '';
-        if ($this->popupMode) {
-            // in popup mode the form is not visible, only appears in popup on request
-            $wrapperClass .= " pfy-fully-hidden";
-            $aria = ' aria-hidden="true"';
-        }
-        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'$aria>\n";
+        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
+
         return $html;
     } // renderFormWrapperHead
 
@@ -1603,6 +1628,9 @@ EOT;
             $this->showForm = $this->isFormAdmin;
         }
 
+        if ($this->popupMode) {
+            $html .= "</div><!-- /pfy-fully-hidden -->\n";
+        }
         return $html;
     } // renderFormTail
 
@@ -2033,7 +2061,7 @@ EOT;
                         $origDataRec[$key] = implode(',', $value);
                     }
                 }
-                Utils::setSessionVar("form-$formInxReceived", $origDataRec, overridePageId:$this->formDataId);
+                Utils::setSessionVar("form-$formInxReceived", $origDataRec, overrideKey:$this->formDataId);
                 $this->showForm = true;
             }
         }
