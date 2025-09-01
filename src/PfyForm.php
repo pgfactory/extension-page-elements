@@ -174,7 +174,7 @@ class PfyForm extends Form
         self::$formCounter++;
         if (self::$formCounter > 1) {
             // if page contains multiple forms, we need to apply check when receiving data:
-            $sessKey = "form:" . PFY_PAGE_URI . ":formCount";
+            $sessKey = "form:" . PFY_PAGE_ID . ":formCount";
             kirby()->session()->set($sessKey, self::$formCounter);
         }
 
@@ -360,7 +360,7 @@ class PfyForm extends Form
                 'value' => $this->formOptions['recId']
             ]);
 
-            $this->addElement('', ['type' => 'hidden', 'name' => '_formInx', 'value' => $this->formIndex, 'readonly' => '']);
+            $this->addElement('', ['type' => 'hidden', 'name' => '_dataSrcInx', 'value' => $this->formIndex, 'readonly' => '']);
             $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf(), 'readonly' => '']);
         }
         $this->fireRenderEvents();
@@ -1440,19 +1440,13 @@ EOT;
         $html = '';
         $formInx = $this->formIndex;
         $id = $this->formOptions['id'];
-
-        $tableInx = '';
-        if ($this->formOptions['tableOptions']) {
-            $dt = $this->openDataTable();
-            $tableInx = $dt->getTableInx();
-            $tableInx = " data-tableinx='$tableInx'";
-        }
+        $dataSrcInx = " data-src-inx='$formInx'";
 
         // apply outer table-and-form wrapper:
         if ($this->addFormTableWrapper) {
             $id = $id ? " id='{$id}-wrapper'" : '';
             $class = $this->formOptions['outerWrapperClass'];
-            $html .= "<div$id class='pfy-form-and-table-wrapper pfy-form-and-table-wrapper-$formInx $class'$tableInx>\n";
+            $html .= "<div$id class='pfy-form-and-table-wrapper pfy-form-and-table-wrapper-$formInx $class'$dataSrcInx>\n";
         }
 
         // in popupMode apply a wrapper that makes the form (incl form-wrapper) invisible:
@@ -1469,6 +1463,7 @@ EOT;
             $rec = $this->db->find($this->requestedRecKey);
             if ($rec) {
                 $this->formDataRec = $rec->data();
+                $this->formDataRec['_reckey'] = $this->requestedRecKey;
                 if (isset($_GET['asmodified'])) {
                     $this->formDataRec['_isModified'] = true;
                 }
@@ -1561,7 +1556,7 @@ EOT;
         if ($this->hasErrors()) {
             $formClass .= ' pfy-form-has-errors';
         }
-        $dataFormInx = "data-form-inx='$this->formIndex'";
+        $dataFormInx = "data-src-inx='$this->formIndex'";
 
         $htmlForm = $this->getRenderer()->render($this, 'begin');
         $htmlForm = "\n<form$id class='$formClass'$presetCallback $dataFormInx" . substr($htmlForm, 5);
@@ -1664,7 +1659,7 @@ EOT;
             }
             $html .= $elem->getControl() . "\n";
 
-            $elem = $this['_formInx'];
+            $elem = $this['_dataSrcInx'];
             $html .= $elem->getControl() . "\n";
 
 
@@ -1977,10 +1972,10 @@ EOT;
         }
 
         // check presence of $formInxReceived:
-        $formInxReceived = $dataRec['_formInx'] ?? false;
+        $formInxReceived = $dataRec['_dataSrcInx'] ?? false;
 
         // check if page contains multiple forms, if so, check and skip the other ones:
-        $sessKey = "form:" . PFY_PAGE_URI . ":formCount";
+        $sessKey = "form:" . PFY_PAGE_ID . ":formCount";
         if (kirby()->session()->get($sessKey, false)) {
             // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
             if (intval($formInxReceived) !== $this->formIndex) {
@@ -2406,7 +2401,7 @@ EOT;
 
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
-            $pgUri = str_replace('/', '_', rtrim(PFY_PAGE_URI, '/'));
+            $pgUri = PFY_PAGE_ID;
             $sessKey = "db:$pgUri:$this->formIndex:file";
             kirby()->session()->set($sessKey, resolvePath($this->file));
         }
@@ -2482,7 +2477,7 @@ EOT;
 
         $showAllFields = $tableOptions['showAllFields'];
         $fieldNames = $this->fieldNames;
-        foreach (['_reckey', '_formInx', '_csrf'] as $k) {
+        foreach (['_reckey', '_dataSrcInx', '_csrf'] as $k) {
             if (isset($fieldNames[$k])) {
                 unset($fieldNames[$k]);
             }
@@ -2513,7 +2508,13 @@ EOT;
         }
         $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames;
 
-        $this->dataTable = new DataTable($this->file, $tableOptions);
+        $file = $this->file;
+        if ($tableOptions['file']??false) {
+            // special case: formOptions[file] != tableOption[file] ==> used where using client cache for large tables
+            $file = $tableOptions['file'];
+        }
+        $this->dataTable = new DataTable($file, $tableOptions);
+//        $this->dataTable = new DataTable($this->file, $tableOptions);
         return $this->dataTable;
     } // openDataTable
 

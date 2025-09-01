@@ -8,6 +8,7 @@ const pfyFormsHelper = {
 
   windowTimeout: false,
   formInitialized: false,
+  formRecLocking: (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking,
 
   init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
@@ -299,9 +300,8 @@ showPwHandler(ev) {
 
 
   setupRevealHandlers(el) {
-    const parent = this;
     domForEach('.pfy-form [data-reveal-target]', (el) => {
-      parent.revealHandler(el);
+      pfyFormsHelper.revealHandler(el);
     })
   }, // setupRevealHandlers
 
@@ -404,16 +404,22 @@ showPwHandler(ev) {
   }, // setupSubmitHandler
 
 
-  fetchDataAndFillForm(form, recKey, retainData = false) {
-    const parent = this;
-    const formInx = form.querySelector('[name=_formInx]').value
-    let args = 'getRec='+recKey+'&datasrcinx='+formInx;
+  fetchDataAndFillForm(el, recKey, retainData = false) {
+    let formWrapper;
+    if (el.closest('.pfy-form-wrapper')) {
+      formWrapper = el.closest('.pfy-form-wrapper');
+    } else if (el.closest('.pfy-form-and-table-wrapper')) {
+      formWrapper = el.closest('.pfy-form-and-table-wrapper').querySelector(('.pfy-form-wrapper'));
+    }
+    let form = formWrapper.querySelector('.pfy-form');
+    const dataSrcinx = formWrapper.querySelector('[name=_dataSrcInx]').value
+    let args = 'getRec='+recKey+'&datasrcinx='+dataSrcinx;
     if (tableHelper.formRecLocking) {
       args += '&lock';
       tableHelper.recLocked = true;
     }
     if (form.closest('.pfy-retain-data') && retainData) {
-      args += '&retainData='+formInx;
+      args += '&retainData='+dataSrcinx;
     }
     console.log('fetching data record '+recKey);
     form.dataset.loading = true;
@@ -429,7 +435,7 @@ showPwHandler(ev) {
 
         // popup is open, now prepare the form, inject obtained data:
         console.log(data);
-        parent.presetForm(form, data, recKey)
+        pfyFormsHelper.presetForm(form, data, recKey)
         form.removeAttribute('data-loading');
 
       })
@@ -506,7 +512,7 @@ showPwHandler(ev) {
 
   presetField(form, fieldWrapperElemEl, data, isPreset) {
     const typesToSkip = 'submit,cancel,checkbox,radio,button';
-    const namesToSkip = '_csrf,_formInx,_form_';
+    const namesToSkip = '_csrf,_dataSrcInx,_form_';
     const name = fieldWrapperElemEl.querySelector('[name]').getAttribute('name').replace(/\[]*/, '');
 
     // get type:
@@ -700,8 +706,8 @@ showPwHandler(ev) {
 
 
   resetFormInx(form){
-    // reset _formInx hidden field:
-    const formInxField = form.querySelector('input[name=_formInx]');
+    // reset _dataSrcInx hidden field:
+    const formInxField = form.querySelector('input[name=_dataSrcInx]');
     if (formInxField) {
       if (typeof formInxField.dataset.preset !== 'undefined') {
         formInxField.value = formInxField.dataset.preset;
@@ -1024,9 +1030,45 @@ showPwHandler(ev) {
   }, // doSubmitForm
 
 
-  unlockRecs: function () {
-    if (typeof tableHelper !== 'undefined') {
-      tableHelper.unlockRecs();
+  unlockRecs: function (tableInx) {
+    if (!pfyFormsHelper.formRecLocking) {
+      return;
+    }
+
+    if (typeof tableInx === 'undefined') {
+      const tables = document.querySelectorAll('.pfy-table');
+      if (tables) {
+        tables.forEach(function (table) {
+          if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
+            return;
+          }
+          const tableInx = table.dataset.tableinx;
+          table.dataset.unlockExecuted = true;
+          mylog('unlocking locked records (' + tableInx + ')');
+
+          const args = 'unlockAll' + '&datasrcinx=' + tableInx;
+          execAjaxPromise(args, {})
+            .then(function (data) {
+              mylog(data);
+            })
+            .then(function (msg) {});
+        });
+      }
+    } else {
+      const patt = 'table[data-tableinx="'+tableInx+'"]';
+      const table = document.querySelector(patt);
+      if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
+        return;
+      }
+      table.dataset.unlockExecuted = true;
+      mylog('unlocking locked records (' + tableInx + ')');
+
+      const args = 'unlockAll' + '&datasrcinx=' + tableInx;
+      execAjaxPromise(args, {})
+        .then(function (data) {
+          mylog(data);
+        })
+        .then(function (msg) {});
     }
   }, // unlockRecs
 
@@ -1209,10 +1251,10 @@ showPwHandler(ev) {
     if (!form.closest('.pfy-form-readonly')) {
       return;
     }
-    console.log('making entire form readonly');
+    //console.log('making entire form readonly');
 
     const typesToSkip = 'submit,cancel,button';
-    const namesToSkip = '_csrf,_formInx,_form_';
+    const namesToSkip = '_csrf,_dataSrcInx,_form_';
     domForEach(form, 'div.pfy-elem-wrapper', function (fieldWrapperElemEl) {
       // get name and type:
       const name = fieldWrapperElemEl.querySelector('[name]').getAttribute('name').replace(/\[]*/, '');

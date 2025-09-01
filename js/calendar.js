@@ -42,7 +42,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   let   dataRef = '';
   this.calendarEl = calendarEl;
 
-  domForOne(this.formWrapperEl, '[name=_formInx]', (dataRefElem) => {
+  domForOne(this.formWrapperEl, '[name=_dataSrcInx]', (dataRefElem) => {
     dataRef = dataRefElem.value;
   });
 

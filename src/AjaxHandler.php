@@ -40,7 +40,7 @@ class AjaxHandler
      */
     public static function exec(object $result): void
     {
-        $pageId = self::$pageId = str_replace('/', '_', $result->id());
+        $pageId = self::$pageId = $result->id();
         $dataSrcInx = self::$dataSrcInx = get('datasrcinx', null);
         if (!$dataSrcInx || ($dataSrcInx === 'undefined')) {
             exit('"not ok: ajaxHandler didn\'t receive datasrcinx"');

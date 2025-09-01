@@ -191,7 +191,7 @@ EOT;
 
 
         // === Assemble Table ================================================================
-        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass'$rowCallback>\n";
+        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass' data-tableinx='$this->inx'$rowCallback>\n";
         $out .= $this->renderTableButtons();
 
 
@@ -224,7 +224,7 @@ EOT;
      */
     private function renderTableHead(): string
     {
-        $out = "<table id='$this->tableId' class='$this->tableClass' data-tableinx='$this->inx'>\n";
+        $out = "<table id='$this->tableId' class='$this->tableClass'>\n";
         // caption:
         if ($this->caption) {
             $style = $this->captionAbove? '': ' style="caption-side: bottom;"'; // use style to push caption below table
@@ -365,14 +365,6 @@ EOT;
 
 
     // === Aux Methods ================================================================================
-    /**
-     * @return string
-     */
-    public function getTableInx(): string
-    {
-        return (string)$this->inx;
-    } // getTableInx
-
 
     /**
      * @return void
@@ -561,7 +553,7 @@ EOT;
         }
 
         $out .= "  <form method='post'>\n"; // form around table for selectors
-        $out .= "    <input type='hidden' name='tableinx' value='$this->inx'>\n"; // form around table for selectors
+        $out .= "    <input type='hidden' name='dataSrcInx' value='$this->inx'>\n"; // form around table for selectors
 
         $buttons = $type = $label = '';
         $i = -1;
@@ -977,8 +969,8 @@ EOT;
         }
         // skip, if no recKeys supplied or recKeys belong to some other table:
         $keysSelected = $_POST['reckey'] ?? false;
-        $tableInx = $_POST['tableinx'] ?? false;
-        if (!$keysSelected || !$tableInx || (self::$tableInx != $tableInx)) {
+        $dataSrcInx = $_POST['dataSrcInx'] ?? false;
+        if (!$keysSelected || !$dataSrcInx || (self::$tableInx != $dataSrcInx)) {
             return;
         }
         $mode = isset($_GET['delete']) ? 'delete' : 'archive';

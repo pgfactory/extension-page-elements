@@ -42,7 +42,7 @@ class EnlistCallbackHandler
         $newDataRec['_time'] = date('Y-m-d\TH:i');
 
         unset($newDataRec['mode']);
-        unset($newDataRec['_formInx']);
+        unset($newDataRec['_dataSrcInx']);
         unset($newDataRec['_cancel']);
         unset($newDataRec['_reckey']);
         unset($newDataRec['_csrf']);
