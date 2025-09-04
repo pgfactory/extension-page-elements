@@ -117,13 +117,18 @@ class EnlistCallbackHandler
      */
     private function handleExistingEntry(string $mode, array $widgetDescr, string $slotInx, string $alertMsg, array $newDataRec, string $context, mixed $widgetInx): void
     {
+        $slots = $this->db->getEnlistSlots($widgetInx);
+        $thisSlot = &$slots[$slotInx];
+        if (!$this->isEnlistAdmin && (($thisSlot['Email']??false) !== $newDataRec['Email'])) {
+            reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
+        }
         if ($mode === 'del') {
             $this->checkSlotFreezTime($widgetDescr, $widgetInx, $slotInx);
 
             $becameActive = $this->db->emptySlot($widgetInx, $slotInx);
             $mode = $becameActive ? 'activated' : 'del';
             $becameActiveName = $becameActive['Name'] ?? 'somebody';
-            $this->handleNotifyOwner($newDataRec, $mode, $widgetDescr['title'], $becameActiveName);
+            $this->handleNotifyOwner($newDataRec, $mode, ($widgetDescr['title']??''), $becameActiveName);
 
             if ($becameActive) {
                 $this->notifyActivatedReserve($becameActive, $widgetDescr['title']);
@@ -131,7 +136,7 @@ class EnlistCallbackHandler
             reloadAgent(message: '{{ pfy-enlist-confirmation-banner-deleted }}');
 
         } else { // modify
-            $this->modifyExistingEntry($newDataRec, $slotInx, $widgetInx);
+            $this->modifyExistingEntry($newDataRec, $slotInx, $widgetInx, $slots, $thisSlot);
         }
     } // handleExistingEntry
 
@@ -142,13 +147,8 @@ class EnlistCallbackHandler
      * @param mixed $widgetInx
      * @return void
      */
-    private function modifyExistingEntry(array $newDataRec, string $slotInx, mixed $widgetInx): void
+    private function modifyExistingEntry(array $newDataRec, string $slotInx, mixed $widgetInx, array $slots, array $thisSlot): void
     {
-        $slots = $this->db->getEnlistSlots($widgetInx);
-        $thisSlot = &$slots[$slotInx];
-        if (($thisSlot['Email']??false) !== $newDataRec['Email']) {
-            reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
-        }
         foreach ($newDataRec as $key => $value) {
             if (str_contains('Email,directlyToReserve,delete_entry,widgetInx,_time', $key)) {
                 continue;
@@ -191,7 +191,7 @@ class EnlistCallbackHandler
         if ($this->options['isEnlistAdmin']) {
             return;
         }
-        if ($freezeTime = $widgetDescr['freezeTime']) {
+        if ($freezeTime = $widgetDescr['freezeTime']??false) {
             $slots = $this->db->getWidgetSlots($widgetInx);
             $storeTime = $slots[$slotInx]['_time'];
             $freezeTime = time() - ($freezeTime * PFY_FREEZETIMIE_UNIT);

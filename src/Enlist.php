@@ -403,6 +403,9 @@ EOT;
      */
     private function renderCollapseEmptySlotsButton(): string
     {
+        if ($this->nReserveSlots === 0) {
+            return '';
+        }
         $icon = ENLIST_COLLAPSE_ICON;
         $html = <<<EOT
         <button class="pfy-enlist-collapse-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-collapse-button-title }}"><span>$icon</span></button>
