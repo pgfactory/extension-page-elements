@@ -654,14 +654,14 @@ EOT;
         $addFieldDone = false;
         $currFreezeTime = $this->freezeTime ? time() - ($this->freezeTime * PFY_FREEZETIMIE_UNIT) : false;
         for ($i = 0; $i < $this->nTotalSlots; $i++) {
-            $rec = ($slots[$i] ?? false) ? $slots[$i] : [];
+            $slot = ($slots[$i] ?? false) ? $slots[$i] : [];
             $rowClasses[$i] = '';
 
             // mark reserve slots:
             $rowClasses[$i] .= ($i >= $this->nSlots) ? ' pfy-enlist-reserve' : '';
 
             // check whether freezeTime defined and expired:
-            if ($this->checkSlotFreezeTime($currFreezeTime, $slots[$i])) {
+            if ($this->checkSlotFreezeTime($currFreezeTime, $slot)) {
                 if ($this->isEnlistAdmin) {
                     $rowClasses[$i] .= ' pfy-enlist-frozen-while-admin';
                 } else {
@@ -678,7 +678,7 @@ EOT;
                     continue;
                 }
             }
-            if ($rec['Name'] ?? false) {
+            if ($slot['Name'] ?? false) {
                 if ($this->editable && $this->hasCustomFields) {
                     $rowClasses[$i] .= ' pfy-enlist-modify';
                 } else {
@@ -767,6 +767,11 @@ EOT;
         $this->nSlots = $this->db->nSlots();
         $this->nReserveSlots = $this->db->nReserveSlots();
         $this->nTotalSlots = $this->db->nTotalSlots();
+        for($i=0; $i<$this->nTotalSlots; $i++) {
+            if (!isset($this->widgetSlots[$i])) {
+                $this->widgetSlots[$i] = [];
+            }
+        }
     } // initData
 
 
