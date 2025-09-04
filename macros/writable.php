@@ -44,7 +44,7 @@ EOT,
     $writableGroupName = $options['name'].'_'.$inx;
     $writableGroupName = preg_replace('/\W/', '_', $writableGroupName);
     $pageId = page()->id(); //??? PageFactory::$pageId;
-    $file = $options['file'] ?: "~data/writable/$pageId.yaml";
+    $file = $options['file'] ?: "~data/writable/$pageId.json";
     $sessDbFileKey = "db:$pageId:$writableGroupName:file";
     kirby()->session()->set($sessDbFileKey, resolvePath($file));
     $db = new DataSet($file, [
