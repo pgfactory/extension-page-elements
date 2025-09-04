@@ -18,7 +18,8 @@ const Enlist = {
       const placeholder = el.dataset.placeholder;
       if (placeholder) {
         domForEach(el, '.pfy-enlist-add .pfy-enlist-name div', function (e) {
-          e.innerHTML = placeholder;
+          const i = parseInt(e.closest('tr').dataset.reckey??0) + 1;
+          e.innerHTML = placeholder.replace(/%%/, i);
           e.classList.add('pfy-placeholder');
         })
       }
