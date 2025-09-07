@@ -21,6 +21,8 @@ class CountVisits
      */
     public function render($args): string
     {
+        list($since, $visits) = $this->countVisits($args);
+
         $prefix = $args['prefix'].' ';
         $suffix = ' '.$args['suffix'];
         $show = $args['show'];
@@ -28,16 +30,11 @@ class CountVisits
             $show = Permission::evaluate($show);
         }
         if (str_contains($prefix, '%since%')) {
-            $t = strtotime(@file_get_contents(VISITS_SINCE_FILE));
-            $since = date('d-m-Y', $t);
             $prefix = str_replace('%since%', $since, $prefix);
         }
         if (str_contains($suffix, '%since%')) {
-            $t = strtotime(@file_get_contents(VISITS_SINCE_FILE));
-            $since = date('d-m-Y', $t);
             $suffix = str_replace('%since%', $since, $suffix);
         }
-        $visits = $this->countVisits($args);
         if ($show) {
             return "$prefix$visits$suffix";
         }
@@ -46,10 +43,11 @@ class CountVisits
 
 
     /**
-     * @return int|mixed|string
-     * @throws \Kirby\Exception\InvalidArgumentException
+     * @param array $args
+     * @return array
+     * @throws \Exception
      */
-    private function countVisits(array $args): int
+    private function countVisits(array $args): array
     {
         $ipsToIgnore = PageFactory::$config['visitCounterIgnoreIPs']??'';
         $file = VISITS_FILE;
@@ -67,24 +65,25 @@ class CountVisits
             $doCount = !$dontCount;
             $pgId = page()->id();
         }
+        list($since, $counters) = $this->getSinceTime($file, $pgId);
+
         $clientIp = $this->getClientIP(true);
-        if (!file_exists($file)) {
-            preparePath($file);
-            file_put_contents($file, "$pgId: 0");
-            file_put_contents(VISITS_SINCE_FILE, date('Y-m-d H:i:s'));
-            $count = 0;
+
+        $count = 1;
+        if ($p = strpos($counters, "\n$pgId: ")) {
+            $p = $p + strlen($pgId) + 3;
+            $p2 = strpos($counters, "\n", $p);
+            $s1 = substr($counters, 0, $p);
+            $count = intval(substr($counters, $p, $p2 - $p)) + 1;
+            $s2 = substr($counters, $p2);
+            $counters = "$s1$count$s2";
         } else {
-            $counters = loadFile($file);
-            if (isset($counters[$pgId])) {
-                $count = $counters[$pgId]++;
-            } else {
-                $count = $counters[$pgId] = 1;
-            }
-            if (!str_contains($ipsToIgnore, $clientIp) && $doCount) { // home
-                writeFileLocking($file, $counters);
-            }
+            $counters .= "$pgId: 1\n";
         }
-        return $count;
+        if (!str_contains($ipsToIgnore, $clientIp) && $doCount) {
+            writeFileLocking($file, $counters);
+        }
+        return [$since, $count];
     } // countVisits
 
 
@@ -110,5 +109,31 @@ class CountVisits
         }
         return $ip;
     } // getClientIP
+
+
+    /**
+     * @param string $file
+     * @param string $pgId
+     * @return array
+     * @throws \Exception
+     */
+    private function getSinceTime(string $file, string $pgId): array
+    {
+        if (!file_exists($file)) {
+            preparePath($file);
+            $content = 'since: '.date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
+            file_put_contents($file, $content);
+        }
+        $content = file_get_contents($file);
+        if (preg_match("|^since: (.*)|", $content, $m)) {
+            $t = strtotime($m[1]);;
+        } else {
+            $content = 'since: '.date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
+            file_put_contents($file, $content);
+            $t = filemtime(VISITS_FILE);
+        }
+        $since = date('d-m-Y', $t);
+        return [$since, $content];
+    } // getSinceTime
 
 } // CountVisits

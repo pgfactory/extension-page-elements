@@ -5,13 +5,10 @@ use PgFactory\PageFactoryElements\CountVisits;
 
 
 if (!defined('VISITS_FILE')) {
-    define('VISITS_FILE', PFY_KIRBY_BASE_PATH . 'site/logs/visits/visits.yaml');
-}
-if (!defined('VISITS_SINCE_FILE')) {
-    define('VISITS_SINCE_FILE', PFY_KIRBY_BASE_PATH . 'site/logs/visits/visits-since.yaml');
+    define('VISITS_FILE', PFY_KIRBY_BASE_PATH . 'site/logs/visits/visits.txt');
 }
 if (!defined('VISITS_BOTS_FILE')) {
-    define('VISITS_BOTS_FILE', PFY_KIRBY_BASE_PATH . 'site/logs/visits/visits_bots.yaml');
+    define('VISITS_BOTS_FILE', PFY_KIRBY_BASE_PATH . 'site/logs/visits/visits_bots.txt');
 }
 require_once dirname(__DIR__).'/src/CountVisits.php';
 
