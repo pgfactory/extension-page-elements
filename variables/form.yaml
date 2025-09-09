@@ -197,6 +197,10 @@ pfy-form-no-event-found:
   de: Derzeit sind keine Veranstaltungsdaten bekannt.
   _:  Currently no event dates available.
 
+pfy-form-rec-locked:
+  de: Der gewünschte Datensatz wird momentan von jemandem bearbeitet und ist deshalb gesperrt.<br>Bitte in ein paar Minuten nochmals versuchen.
+  _:  This data record is currently locked by someone else. Please try again in a couple of minutes.
+
 
 pfy-form-timeout-alert:
   de: |

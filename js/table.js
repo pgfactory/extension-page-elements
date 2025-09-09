@@ -4,14 +4,13 @@
  */
 
 "use strict";
-
+console.log('tableHelper');
 const tableHelper = {
-  recLocked: false,
   downloadButtonInitialized: false,
   tableWidgetWidths: {},
 
   init: function () {
-    const tables = document.querySelectorAll('.pfy-table');
+    const tables = document.querySelectorAll('.pfy-table-wrapper');
     if ((typeof tables !== 'undefined') && tables.length) {
       tableHelper.setupEventHandlers();
 
@@ -164,21 +163,23 @@ const tableHelper = {
 
   setupPropagateCheckbox: function (table) {
     const thead = table.querySelector('thead');
-    thead.addEventListener('click', (ev) => {
-      if (!ev.target.closest('.pfy-row-selector')) {
-        return;
-      }
-      ev.stopImmediatePropagation();
-      let checkboxEl = ev.target;
-      if (checkboxEl.nodeName !== 'INPUT') {
-        checkboxEl = checkboxEl.querySelector('input');
-        checkboxEl.checked = !checkboxEl.checked;
-      }
-      var isChecked = checkboxEl.checked;
-      domForEach(table, 'tbody .pfy-row-selector input[type=checkbox]', rowCheckbox => {
-        rowCheckbox.checked = isChecked;
+    if (thead) {
+      thead.addEventListener('click', (ev) => {
+        if (!ev.target.closest('.pfy-row-selector')) {
+          return;
+        }
+        ev.stopImmediatePropagation();
+        let checkboxEl = ev.target;
+        if (checkboxEl.nodeName !== 'INPUT') {
+          checkboxEl = checkboxEl.querySelector('input');
+          checkboxEl.checked = !checkboxEl.checked;
+        }
+        var isChecked = checkboxEl.checked;
+        domForEach(table, 'tbody .pfy-row-selector input[type=checkbox]', rowCheckbox => {
+          rowCheckbox.checked = isChecked;
+        });
       });
-    });
+    }
   }, // setupPropagateCheckbox
 
 
@@ -307,6 +308,10 @@ const tableHelper = {
       return;
     }
 
+    if (el.closest('.pfy-rec-locked')) {
+      el.closest('.pfy-rec-locked').classList.remove('pfy-rec-locked');
+    }
+
     ev.stopImmediatePropagation();
     tableHelper.prepareForm(el);
   }, // setupEditButtons
@@ -378,7 +383,6 @@ const tableHelper = {
 
   sendTableButtonHandler(ev) {
     const table = ev.target.closest('.pfy-table');
-    tableHelper.disableEditButtons(table);
     const headers = [];
     let i = 0;
     domForAll(table, 'th:not(.pfy-service-col)', th => {
@@ -386,7 +390,7 @@ const tableHelper = {
       str = str.padEnd(6, ' ') + '\t\t';
       headers[i++] = str;
     });
-    const tr = this.closest('tr');
+    const tr = ev.target.closest('tr');
     let body = '\n\n';
     i = 0;
     domForAll(tr, 'td:not(.pfy-service-col) div', el => {

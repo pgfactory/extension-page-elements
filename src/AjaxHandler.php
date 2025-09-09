@@ -32,6 +32,7 @@ class AjaxHandler
     private static array $sessRec;
     private static $templates = null;
     private static array $categories;
+    private static object|null $db = null;
 
 
     /**
@@ -66,6 +67,12 @@ class AjaxHandler
         if (isset($_GET['unlockRec'])) {
             self::unlockRec($_GET['unlockRec']);
             unset($_GET['unlockRec']);
+        }
+
+        // handle unlockRec:
+        if (isset($_GET['unlockAll'])) {
+            self::unlockAllRecs();
+            unset($_GET['unlockAll']);
         }
 
         // handle getRec:
@@ -142,7 +149,7 @@ class AjaxHandler
      * @param string $recKey
      * @return void
      */
-    private static function unlockRec(string $recKey): void
+    private static function unlockRec(string|bool $recKey): void
     {
         $rec = self::findRec($recKey);
         if ($rec) {
@@ -152,6 +159,17 @@ class AjaxHandler
             exit('"recKey unknown"');
         }
     } // unlockRec
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private static function unlockAllRecs(): void
+    {
+        (self::openDb())->unlockAllRecs();
+        exit('"ok"');
+    } // unlockAllRecs
 
 
     /**
@@ -165,8 +183,12 @@ class AjaxHandler
             exit('"rec not found"');
         }
         // lock record, if requested:
-        if (isset($_GET['lock']) && !$rec->lock(blocking: true)) {
-            exit('"locked"');
+        if (isset($_GET['lock'])) {
+            if ($rec->lock(blocking: true)) {
+            } else {
+                // rec is locked -> report back:
+                exit('"locked"');
+            }
         }
 
         // get data rec:
@@ -212,6 +234,9 @@ class AjaxHandler
      */
     private static function openDb(string $masterFileRecKeyType = 'index'): object
     {
+        if (self::$db !== null) {
+            return self::$db;
+        }
         $file = kirby()->session()->get(self::$sessDbFileKey, false);
         if (!$file) {
             exit('"Error: file unknown"');
@@ -220,6 +245,7 @@ class AjaxHandler
             'masterFileRecKeyType' => $masterFileRecKeyType,
             'obfuscateRecKeys' => true,
         ]);
+        self::$db = $db;
         return $db;
     } // openDb
 

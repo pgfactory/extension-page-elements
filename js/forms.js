@@ -9,6 +9,7 @@ const pfyFormsHelper = {
   windowTimeout: false,
   formInitialized: false,
   formRecLocking: (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking,
+  recLocked: false,
 
   init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
@@ -51,7 +52,7 @@ const pfyFormsHelper = {
       this.setupTriggers();
       this.setupRevealHandlers();
       this.formInitialized = true;
-      //mylog('forms initialized');
+      //console.log('forms initialized');
     }
     this.handleErrorInForm(form);
     this.presetForm(form);
@@ -169,12 +170,12 @@ const pfyFormsHelper = {
     ev.preventDefault();
 
     const form = btn.closest('.pfy-form');
-    const changed = this.isFormModified(form) || this.isFormPreset(form);
+    const changed = this.isFormModified(form);
 
     // reset form:
     const formInx = form.querySelector('[name=_form_]').value;
     if (form.closest('.pfy-form-wrapper') && form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
-      reloadAgent(`clearform=${formInx}`);
+      pfyFormsHelper.reloadAgent(`clearform=${formInx}`);
     }
 
     this.clearModifiedFlag(form);
@@ -183,15 +184,20 @@ const pfyFormsHelper = {
     this.presetForm(form);
     this.setRecId(form, '');
 
-    if (!changed) {
+    const cleared = form.classList.contains('pfy-form-cleared');
+    if (!changed && cleared) {
       // check whether in popup, close it:
       const popup = form.closest('.pfy-popup-bg');
       if (popup) {
         pfyPopupClose(popup);
+      } else if (btn.closest('.pfy-retain-data')) {
+        pfyFormsHelper.reloadAgent(`clearform=${formInx}`);
       } else {
-        reloadAgent(`clearform=${formInx}`);
+        form.classList.remove('pfy-form-cleared');
+        return;
       }
     }
+    form.classList.add('pfy-form-cleared');
 
     const formWrapper = form.closest('.pfy-form-wrapper');
   }, // cancelButtonHandler
@@ -228,7 +234,7 @@ const pfyFormsHelper = {
   }, // newrecButtonHandler
 
 
-showPwHandler(ev) {
+  showPwHandler(ev) {
     // show/hide password:
     const btn = ev.target.closest('.pfy-form-show-pw');
     if (btn) {
@@ -277,7 +283,7 @@ showPwHandler(ev) {
         text: `{{ pfy-form-timed-out }}`
       })
       .then(() => {
-        reloadAgent();
+        pfyFormsHelper.reloadAgent();
       });
     }
   },
@@ -414,10 +420,16 @@ showPwHandler(ev) {
     let form = formWrapper.querySelector('.pfy-form');
     const dataSrcinx = formWrapper.querySelector('[name=_dataSrcInx]').value
     let args = 'getRec='+recKey+'&datasrcinx='+dataSrcinx;
-    if (tableHelper.formRecLocking) {
+    if (pfyFormsHelper.formRecLocking) {
       args += '&lock';
-      tableHelper.recLocked = true;
+      pfyFormsHelper.recLocked = true;
     }
+    let table = null;
+    const tableRef = formWrapper.dataset.relatedTable;
+    if (tableRef) {
+      table = document.getElementById(tableRef)
+    }
+
     if (form.closest('.pfy-retain-data') && retainData) {
       args += '&retainData='+dataSrcinx;
     }
@@ -426,10 +438,15 @@ showPwHandler(ev) {
     execAjaxPromise(args, {})
       .then(function (data) {
         if (data.status === 'error') {
+
           // handle case where rec locked by somebody else:
           console.log('Rec locked.');
-          const row = table.querySelector('[data-reckey='+recKey+']');
+          const row = table.querySelector('[data-reckey="'+recKey+'"]');
           row.classList.add('pfy-rec-locked');
+          if (formWrapper.closest('.pfy-popup-wrapper')) {
+            pfyPopupClose();
+            pfyAlert(`{{ pfy-form-rec-locked }}`);
+          }
           return;
         }
 
@@ -470,7 +487,7 @@ showPwHandler(ev) {
           this.handleMarkAsModifiedRequest(form);
           this.setTriggerOnContinueLink();
         },
-        () => { mylog('User cancelled overwriting of form content'); },
+        () => { console.log('User cancelled overwriting of form content'); },
       );
     } else {
       this.presetFields(form, data);
@@ -574,9 +591,6 @@ showPwHandler(ev) {
       }
     } else if ('radio,checkbox'.includes(type)) {
       // --- radio, checkbox
-      if (!val) {
-        return;
-      }
       if (typeof val === 'string') {
         val = `,${val},`;
         domForEach(fieldWrapperElemEl, 'input', option => {
@@ -1036,37 +1050,26 @@ showPwHandler(ev) {
     }
 
     if (typeof tableInx === 'undefined') {
-      const tables = document.querySelectorAll('.pfy-table');
+      const tables = document.querySelectorAll('.pfy-table-wrapper');
       if (tables) {
         tables.forEach(function (table) {
-          if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
-            return;
-          }
           const tableInx = table.dataset.tableinx;
-          table.dataset.unlockExecuted = true;
-          mylog('unlocking locked records (' + tableInx + ')');
+          //console.log('unlocking locked records (' + tableInx + ')');
 
           const args = 'unlockAll' + '&datasrcinx=' + tableInx;
           execAjaxPromise(args, {})
             .then(function (data) {
-              mylog(data);
+              console.log(data);
             })
             .then(function (msg) {});
         });
       }
     } else {
-      const patt = 'table[data-tableinx="'+tableInx+'"]';
-      const table = document.querySelector(patt);
-      if ((table.dataset.unlockExecuted !== 'undefined') && table.dataset.unlockExecuted) {
-        return;
-      }
-      table.dataset.unlockExecuted = true;
-      mylog('unlocking locked records (' + tableInx + ')');
 
       const args = 'unlockAll' + '&datasrcinx=' + tableInx;
       execAjaxPromise(args, {})
         .then(function (data) {
-          mylog(data);
+          console.log(data);
         })
         .then(function (msg) {});
     }
@@ -1164,7 +1167,7 @@ showPwHandler(ev) {
         })
         .then(
             function () { // Ok, reload
-              reloadAgent();
+              pfyFormsHelper.reloadAgent();
             },
             function () { // Cancel
               overlayElement.remove();
@@ -1282,7 +1285,23 @@ showPwHandler(ev) {
         el.classList.add('pfy-no-pointer-events');
       })
     })
-  } // initReadonlyForm
+  }, // initReadonlyForm
+
+
+  reloadAgent(arg) {
+    if (pfyFormRecLocking) {
+      pfyFormsHelper.unlockRecs();
+    }
+    reloadAgent(arg);
+  }, // reloadAgent
 
 }; // pfyFormsHelper
 
+
+if (pfyFormRecLocking) {
+  console.log('setting up beforeunload handler');
+  window.addEventListener("beforeunload", (ev) => {
+    console.log('on unload-> unlockRecs()');
+    pfyFormsHelper.unlockRecs();
+  });
+}

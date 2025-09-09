@@ -164,6 +164,7 @@ class PfyForm extends Form
     protected string $requestedRecKey = '';
     protected array $formDataRec = [];
     protected string|false $formDataId = false;
+    protected string|false $tableId = false;
 
     /**
      * @param $formOptions
@@ -278,6 +279,9 @@ class PfyForm extends Form
             // normal case after data received -> show response, hide form:
             $html .= $this->injectNoShowCssRule();
         }
+
+        $table = $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+
 
         // assemble form:
         $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
@@ -1487,8 +1491,12 @@ EOT;
         if ($this->readonly) {
             $wrapperClass .= ' pfy-form-readonly';
         }
+        $tableRef = '';
+        if ($this->tableId) {
+            $tableRef = " data-related-table='{$this->tableId}'";
+        }
         $wrapperClass .= $this->keepSubmittedDataInForm? ' pfy-retain-data' : '';
-        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'>\n";
+        $html .= "<div id='pfy-form-wrapper-$formInx' class='$wrapperClass'$tableRef>\n";
 
         return $html;
     } // renderFormWrapperHead
@@ -1769,8 +1777,9 @@ EOT;
         // to be on the save side: always invoke robots header when displaying form data.
         Page::applyRobotsAttrib();
 
-        $ds = $this->openDataTable();
-        $html = $ds ? $ds->render() : '';
+        $dt = $this->openDataTable();
+        $html = $dt ? $dt->render() : '';
+        $this->tableId = $dt->getTableId();
         if (!$this->tableTitle) {
             $header = '<div class="pfy-table-data-output-header">{{ pfy-table-data-output-header }}</div>';
         } elseif (preg_match('/\W/', $this->tableTitle)) {
@@ -2514,7 +2523,6 @@ EOT;
             $file = $tableOptions['file'];
         }
         $this->dataTable = new DataTable($file, $tableOptions);
-//        $this->dataTable = new DataTable($this->file, $tableOptions);
         return $this->dataTable;
     } // openDataTable
 

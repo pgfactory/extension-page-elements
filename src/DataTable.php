@@ -252,9 +252,12 @@ EOT;
         $placeholderForUndefined = $this->placeholderForUndefined;
 
         $out = "  <tbody>\n";
+        $rowClass = '';
         $r = 0;
         foreach ($data as $recKey => $dataRec) {
             $rowClass = $this->rowClasses[$r] ?? '';
+            $locked = $this->data2Dset->isLocked($recKey);
+            $rowClass .= $locked ? ' pfy-rec-locked' : '';
             $r++;
             $out .= "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
 
@@ -266,6 +269,7 @@ EOT;
                 } elseif (($cell[0]??'') === '$') {
                     $elemKey = substr($cell, 1);
                     $cell = $dataRec[$elemKey] ?? $placeholderForUndefined;
+                    $cell = htmlspecialchars($cell, ENT_QUOTES);
                     $cell = "<div>$cell</div>";
 
                 } elseif ($cell === '%num') {
@@ -289,7 +293,7 @@ EOT;
                     if ($cell === '%num') {
                         $cell = $r;
                     } else {
-                        $cell = '<div></div>';
+                        $cell = '<div>&nbsp;</div>';
                     }
                     $out .= "      <td {$def['cellAttrib']}>$cell</td>\n";
                 }
@@ -309,9 +313,14 @@ EOT;
         $data = &$this->tableData;
         $out = '';
         if ($this->footers) {
+            $dataKeys = array_keys($this->tableHeaders);
+            $dataKeys = [];
+            foreach ($this->columns as $rec) {
+                $dataKeys[] = $rec['key']??'';
+            }
             $footer = $this->footers;
-            $nCols = sizeof($this->elementLabels);
-            $counts = $sums = array_combine($this->elementLabels, array_fill(0, $nCols, 0));
+            $nCols = sizeof($dataKeys);
+            $counts = $sums = array_combine($dataKeys, array_fill(0, $nCols, 0));
             foreach ($data as $rec) {
                 $i = 0;
                 foreach ($rec as $key => $value) {
@@ -331,7 +340,8 @@ EOT;
             $out .= "  <tfoot>\n";
             $out .= "    <tr class='pfy-table-footer-row'>\n";
             $c = 0;
-            foreach ($this->elementLabels as $key) {
+            foreach ($dataKeys as $key) {
+
                 if ($key === '_locked') {
                     continue;
                 }
@@ -1030,6 +1040,12 @@ EOT;
 
         $this->viewTemplate = $viewTemplate;
     } // renderViewTemplate
+
+
+    public function getTableId(): string
+    {
+        return "pfy-table-wrapper-$this->inx";
+    } // getTableId
 
 
     // === Parse Options ===================================================================
