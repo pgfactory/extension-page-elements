@@ -26,7 +26,7 @@ return function ($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.yaml"', false],
+            'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.json"', false],
 
             'id' =>	['Id applied to the form element.', false],
 
@@ -207,7 +207,7 @@ return function ($args = '')
     \-\-\-\-
 
     \{{ form(
-        file:			'\~data/db.yaml',
+        file:			'\~data/db.json',
         editData:       true
         tableOptions:    {interactive:true}
         beforeunloadWarning: true

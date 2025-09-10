@@ -13,7 +13,7 @@ return function ($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'file' => ['File path where data shall be fetched from (and stored if in editing mode).', 'calendar.yaml'],
+            'file' => ['File path where data shall be fetched from (and stored if in editing mode).', 'calendar.json'],
             'template' => ['[file] Points to file containing one (.txt) or multiple (.yaml) templates.<br>'.
                 'The template is Twig-compiled and the output used as content of each event. '.
                 'Inject event values via pattern `%value-name%`.<br>'.
@@ -54,7 +54,7 @@ Renders a calendar which gets events from a DB designated by 'file'.
 ## Example
 
     \{{ calendar(
-        file: ~config/events.yaml
+        file: ~config/events.json
         edit: 'localhost|loggedin'
         categories: ',Keynote,Presentation,Panel,internal'
         // freezePast: false

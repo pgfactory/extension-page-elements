@@ -91,9 +91,9 @@ For this use the special format `Yn`, where n is the number of days to switch ea
 
     \{{ events(
         category: Concert
-        file: '~config/events.yaml'
+        file: '~config/events.json'
         count: 3
-        template: { file: '~page/templates.yaml' }
+        template: { file: '~page/templates.json' }
         iCal: {
             title: '[XY] %Title%'  \// renders value of field "Title" in data source
             location: '%Location%'

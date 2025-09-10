@@ -105,7 +105,7 @@ Example:
         nSlots: 3
         nReserveSlots: 2
         title: TITLE
-        schedule:{src:'\~config/events.yaml', templatesFile: \~page/template.txt},
+        schedule:{src:'\~config/events.json', templatesFile: \~page/template.txt},
     ) }}
 
 ### Custom Fields
@@ -142,7 +142,7 @@ Example:
     }
 
     schedule:  { 
-        src: '\~config/events.yaml', 
+        src: '\~config/events.json', 
         category: 'EVENT-CATEGORY', 
         template:{
             file:'\~page/template.txt', 
