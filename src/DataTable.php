@@ -269,7 +269,9 @@ EOT;
                 } elseif (($cell[0]??'') === '$') {
                     $elemKey = substr($cell, 1);
                     $cell = $dataRec[$elemKey] ?? $placeholderForUndefined;
-                    $cell = htmlspecialchars($cell, ENT_QUOTES);
+                    if ($this->shieldCellContent) {
+                        $cell = htmlspecialchars($cell, ENT_QUOTES);
+                    }
                     $cell = "<div>$cell</div>";
 
                 } elseif ($cell === '%num') {
@@ -983,6 +985,7 @@ EOT;
         if (!$keysSelected || !$dataSrcInx || (self::$tableInx != $dataSrcInx)) {
             return;
         }
+        $msg = '{{ pfy-form-rec-deleted }}';
         $mode = isset($_GET['delete']) ? 'delete' : 'archive';
 
         $archiveMode = ($mode === 'archive');
@@ -990,6 +993,7 @@ EOT;
             $archiveFile = $this->file;
             $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
             $this->archiveDb = new DataSet($archiveFile);
+            $msg = '{{ pfy-form-rec-archived }}';
         }
         if ($keysSelected) {
             if ($this->data2Dset) {
@@ -1003,7 +1007,6 @@ EOT;
                     }
                 }
                 $this->data2Dset->flush();
-                $msg = TransVars::getVariable('pfy-form-rec-deleted');
                 reloadAgent(message: $msg);
             } else {
                 throw new \Exception("Error: DataTable operating in array-, not file-mode");
