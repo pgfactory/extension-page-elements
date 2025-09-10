@@ -1298,7 +1298,7 @@ const pfyFormsHelper = {
 }; // pfyFormsHelper
 
 
-if (pfyFormRecLocking) {
+if ((typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking) {
   console.log('setting up beforeunload handler');
   window.addEventListener("beforeunload", (ev) => {
     console.log('on unload-> unlockRecs()');

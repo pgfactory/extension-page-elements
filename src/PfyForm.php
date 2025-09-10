@@ -2457,10 +2457,10 @@ EOT;
         $this->openDB();
 
         if (!$recId && $this->db->recExists($newRec)) {
-            return 'pfy-form-warning-record-already-exists';
+            return '{{ pfy-form-warning-record-already-exists }}';
         }
 
-        if ($recId === '_create-new_') {
+        if (!$recId || $recId === '_create-new_') {
             $recId = createHash();
         }
 
