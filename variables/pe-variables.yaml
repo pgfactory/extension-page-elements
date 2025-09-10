@@ -138,8 +138,12 @@ pfy-alert-header:
   _:  Attention
 
 pfy-form-rec-deleted:
-  de: Datensatz bzw. Datenätze wurden gelöscht
+  de: Die ausgewählten Datenätze wurden gelöscht
   _:  Datarecord(s) have been deleted.
+
+pfy-form-rec-archived:
+  de: Die ausgewählten Datenätze wurden archiviert.
+  _:  Datarecord(s) have been archived.
 
 pfy-table-entries-per-page-label:
   de: '_MENU_ Datensätze pro Seite'
@@ -196,6 +200,10 @@ pfy-table-send-rec-confirmation:
 pfy-table-fill-first-row:
   de: Neuen Datensatz eingeben
   _:  Enter new data record
+
+pfy-enlist-collapse-button-title:
+  de: Die Lücke in der Liste schliessen, Reserveplätze nachrücken.
+  _:  Eliminate gaps in list by moving up reserve slots.
 
 
 

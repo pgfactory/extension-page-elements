@@ -20,6 +20,7 @@ class EnlistComm
      */
     public static function notifyOwner(string|bool $to, array $newDataRec, string $mode, string $title, string $nameActivated = ''): void
     {
+        $title = str_replace("\n", ' ', $title);
         if ($to === true) {
             $to = PageFactory::$webmasterEmail;
         }
@@ -62,6 +63,7 @@ class EnlistComm
      */
     public static function sendConfirmation(array $newDataRec, string $title): void
     {
+        $title = str_replace("\n", ' ', $title);
         $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
         $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
         $replace = [
@@ -93,6 +95,7 @@ class EnlistComm
      */
     public static function notifyActivatedReserve(array $rec, string $title): void
     {
+        $title = str_replace("\n", ' ', $title);
         $subject = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-subject }}');
         $body = TransVars::resolveVariables('{{ pfy-enlist-notify-activated-reserve-body }}');
         $replace = [

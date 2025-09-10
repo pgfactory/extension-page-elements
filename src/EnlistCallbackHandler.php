@@ -58,7 +58,7 @@ class EnlistCallbackHandler
             $this->handleNewEntry($newDataRec, $widgetDescr, $slotInx, $context, $widgetInx, $message);
 
         } else {
-            $this->handleExistingEntry($mode, $widgetDescr, $slotInx, $message, $newDataRec, $context, $widgetInx);
+            $this->handleExistingEntry($mode, $widgetDescr, $slotInx, $newDataRec, $context, $widgetInx);
         }
         return ''; // don't continue with default processing
     } // callback
@@ -94,13 +94,14 @@ class EnlistCallbackHandler
 
         $this->db->fillSlot($widgetInx, $slotInx, $newDataRec, $context);
 
-        $this->handleNotifyOwner($newDataRec, 'add', $widgetDescr['title']??'');
+        $directlyToReserve = $newDataRec['directlyToReserve']? ' (to reserve)': '';
+        $this->handleNotifyOwner($newDataRec, 'add', $newDataRec['widgetTitle']??'');
 
-        if ($this->handleSendConfirmation($newDataRec, $widgetDescr['title']??'')) {
-            mylog("EnList new entry & confirmation sent: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+        if ($this->handleSendConfirmation($newDataRec, $newDataRec['widgetTitle']??'')) {
+            mylog("EnList new entry$directlyToReserve & confirmation sent: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
         }
-        mylog("EnList new entry: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
+        mylog("EnList new entry$directlyToReserve: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
         reloadAgent(message: $message);
     } // handleNewEntry
 
@@ -115,11 +116,17 @@ class EnlistCallbackHandler
      * @param mixed $widgetInx
      * @return void
      */
-    private function handleExistingEntry(string $mode, array $widgetDescr, string $slotInx, string $alertMsg, array $newDataRec, string $context, mixed $widgetInx): void
+    private function handleExistingEntry(string $mode, array $widgetDescr, string $slotInx, array $newDataRec, string $context, mixed $widgetInx): void
     {
-        $slots = $this->db->getEnlistSlots($widgetInx);
+        if ($newDataRec['directlyToReserve']) {
+            list($slots, $slotInx) = $this->moveSlot($widgetInx, $slotInx, $newDataRec, $context);
+        } else {
+            $slots = $this->db->getEnlistSlots($widgetInx);
+        }
         $thisSlot = &$slots[$slotInx];
-        if (!$this->isEnlistAdmin && (($thisSlot['Email']??false) !== $newDataRec['Email'])) {
+        $thisSlot['Email'] = $thisSlot['Email']??'';
+        if (!$this->isEnlistAdmin && ($thisSlot['Email'] !== $newDataRec['Email'])) {
+            mylog("EnList delete attempt with wrong email: {$newDataRec['Name']} {$newDataRec['Email']} (!= {$thisSlot['Email']})", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-del-error-wrong-email }}');
         }
         if ($mode === 'del') {
@@ -128,17 +135,31 @@ class EnlistCallbackHandler
             $becameActive = $this->db->emptySlot($widgetInx, $slotInx);
             $mode = $becameActive ? 'activated' : 'del';
             $becameActiveName = $becameActive['Name'] ?? 'somebody';
-            $this->handleNotifyOwner($newDataRec, $mode, ($widgetDescr['title']??''), $becameActiveName);
+            $this->handleNotifyOwner($newDataRec, $mode, ($newDataRec['widgetTitle']??''), $becameActiveName);
 
             if ($becameActive) {
-                $this->notifyActivatedReserve($becameActive, $widgetDescr['title']);
+                $this->notifyActivatedReserve($becameActive, $newDataRec['widgetTitle']??'');
             }
+            mylog("EnList entry deleted: {$newDataRec['Name']} {$newDataRec['Email']}", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-confirmation-banner-deleted }}');
 
         } else { // modify
-            $this->modifyExistingEntry($newDataRec, $slotInx, $widgetInx, $slots, $thisSlot);
+            $this->modifyExistingEntry($newDataRec, $widgetInx, $slots, $slotInx, $thisSlot);
         }
     } // handleExistingEntry
+
+
+    private function moveSlot(mixed $widgetInx, string $slotInx, array $newDataRec, string $context): array
+    {
+        $slots = $this->db->getEnlistSlots($widgetInx);
+        $slotInx1 = $this->db->selectSlot($widgetInx, $slotInx, $newDataRec, $context);
+        if (intval($slotInx) !== $slotInx1) {
+            $slots[$slotInx1] = $slots[$slotInx];
+            $slots[$slotInx] = [];
+        }
+
+        return [$slots, $slotInx1];
+    } // moveSlot
 
 
     /**
@@ -147,16 +168,20 @@ class EnlistCallbackHandler
      * @param mixed $widgetInx
      * @return void
      */
-    private function modifyExistingEntry(array $newDataRec, string $slotInx, mixed $widgetInx, array $slots, array $thisSlot): void
+    private function modifyExistingEntry(array $newDataRec, mixed $widgetInx, array $slots, string $slotInx, array $thisSlot): void
     {
+        $log = '';
         foreach ($newDataRec as $key => $value) {
             if (str_contains('Email,directlyToReserve,delete_entry,widgetInx,_time', $key)) {
                 continue;
             }
             $thisSlot[$key] = $value;
+            $log .= "$key: $value;";
         }
         $thisSlot['_time'] = date('Y-m-d\TH:i');
+        $slots[$slotInx] = $thisSlot;
         $this->db->updateWidgetSlots($widgetInx, $slots);
+        mylog("EnList entry modified: {$newDataRec['Email']} $log", 'enlist-log.txt');
         reloadAgent(message: '{{ pfy-enlist-modified }}');
     } // modifyExistingEntry
 
@@ -171,7 +196,7 @@ class EnlistCallbackHandler
     {
         if ($widgetDescr['deadlineExpired']??false) {
             if ($this->isEnlistAdmin) {
-                $message = '{{ pfy-enlist-error-deadline-was-expired }}';
+                mylog("EnList error deadline exeeded (but executed as admin): {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
             } else {
                 mylog("EnList error deadline exeeded: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
                 reloadAgent(message: '{{ pfy-enlist-error-deadline-expired }}');
@@ -197,6 +222,7 @@ class EnlistCallbackHandler
             $freezeTime = time() - ($freezeTime * PFY_FREEZETIMIE_UNIT);
             $storeTime = strtotime($storeTime);
             if ($storeTime < $freezeTime) {
+                mylog("EnList error freezeTime exeeded (widgetInx:$widgetInx, slotInx:$slotInx)");
                 reloadAgent(message: '{{ pfy-enlist-del-freeze-time-expired }}');
             }
         }

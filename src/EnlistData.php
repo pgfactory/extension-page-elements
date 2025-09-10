@@ -70,7 +70,7 @@ class EnlistData
      * @param mixed $widgetInx
      * @return void
      */
-    public function collapseEmptySlots(mixed $widgetInx): void
+    public function collapseEmptySlots(mixed $widgetInx, string $widgetTitle): void
     {
         $widgetDescr = $this->enlistWidgets[$widgetInx];
         $widgetSlots = &$widgetDescr['slots'];
@@ -97,10 +97,10 @@ class EnlistData
         }
         if ($toNotify) {
             $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetInx);
-            $title = '';
+            $widgetTitle = str_replace("\n", '', $widgetTitle);
             $names = '';
             foreach ($toNotify as $rec) {
-                EnlistComm::notifyActivatedReserve($rec, $title);
+                EnlistComm::notifyActivatedReserve($rec, $widgetTitle);
                 $names .= '<br>- '.$rec['Name']??'';
             }
             $msg = TransVars::getVariable('pfy-enlist-collapse-executed');
@@ -225,6 +225,7 @@ class EnlistData
         $slotInx = $this->selectSlot($widgetInx, $slotInx, $newDataRec, $context);
         unset($newDataRec['directlyToReserve']);
         unset($newDataRec['widgetInx']);
+        unset($newDataRec['widgetTitle']);
         $this->enlistWidgets[$widgetInx]['slots'][$slotInx] = $newDataRec;
         $this->updateWidgetDescr($this->enlistWidgets[$widgetInx], recKeyToUse: $widgetInx);
         return $slotInx;

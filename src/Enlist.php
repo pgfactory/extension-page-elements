@@ -202,7 +202,7 @@ class Enlist
 
         $html = <<<EOT
 <div id='$id' class='$class' data-widget-inx="$this->widgetInx"$attrib>
-<div class='pfy-enlist-title$this->titleClass'><div>$this->title</div>$headButtons</div>
+<div class='pfy-enlist-title$this->titleClass'><div class="pfy-enlist-title-inner">$this->title</div>$headButtons</div>
 $html
 </div>
 EOT;
@@ -403,7 +403,7 @@ EOT;
      */
     private function renderCollapseEmptySlotsButton(): string
     {
-        if ($this->nReserveSlots === 0) {
+        if (!$this->hasCollapsableSlots()) {
             return '';
         }
         $icon = ENLIST_COLLAPSE_ICON;
@@ -412,6 +412,24 @@ EOT;
 EOT;
         return $html;
     } // renderCollapseEmptySlotsButton
+
+
+    /**
+     * @return bool
+     */
+    private function hasCollapsableSlots(): bool
+    {
+        if ($this->nReserveSlots === 0) {
+            return false;
+        }
+
+        // 1) first reserve slot must be filled:
+        $isCollapsable = !!($this->widgetSlots[$this->nSlots]['Name'] ?? false);
+        // 2) last regular slot must be empty:
+        $isCollapsable = $isCollapsable && !($this->widgetSlots[$this->nSlots - 1]['Name'] ?? false);
+
+        return $isCollapsable;
+    } // hasCollapsableSlots
 
 
     /**
@@ -488,7 +506,8 @@ EOT;
         $formFields['cancel']           = [];
         $formFields['submit']           = [];
         $formFields['mode']             = ['type' => 'hidden'];
-        $formFields['widgetInx']       = ['type' => 'hidden'];
+        $formFields['widgetInx']        = ['type' => 'hidden'];
+        $formFields['widgetTitle']      = ['type' => 'hidden'];
 
         $form = new PfyForm($formOptions);
         $html = $form->renderForm($formFields);
@@ -831,7 +850,6 @@ EOT;
         }
 
         $this->title = $title;
-        $options['title'] = $title; //???
 
         if ($permissionQuery = $this->admin) {
             if ($permissionQuery === true) {
@@ -990,9 +1008,11 @@ EOT;
      */
     private function checkCollapseRequest(): void
     {
+        // handle ?collapse-enlist
         if (isset($_GET['collapse-enlist'])) {
             $widgetInx = $_GET['collapse-enlist'];
-            $this->db->collapseEmptySlots($widgetInx);
+            $widgetTitle = urldecode($_GET['widgetTitle']??'');
+            $this->db->collapseEmptySlots($widgetInx, $widgetTitle);
             reloadAgent();
         }
     } // checkCollapseRequest

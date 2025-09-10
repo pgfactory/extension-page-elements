@@ -142,7 +142,20 @@ const Enlist = {
     if (typeof elem !== 'undefined') {
       const rowEl = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
       const enlistElemInx = rowEl.dataset.reckey;
-      options.onOpen = function() { Enlist.preparePopupForm(mode, rowEl, enlistElemInx); };
+      const widgetTitle = elem.closest('.pfy-enlist-wrapper').querySelector('.pfy-enlist-title-inner').innerText;
+      options.onOpen = function() {
+        Enlist.preparePopupForm(mode, rowEl, enlistElemInx);
+        domForOne('.pfy-popup-wrapper .pfy-form-wrapper', popupFormWrapper => {
+          if (mode === 'add' && rowEl.classList.contains('pfy-enlist-reserve')) {
+            popupFormWrapper.classList.add('pfy-hide-direct-reserve');
+          } else {
+            popupFormWrapper.classList.remove('pfy-hide-direct-reserve');
+          }
+          domForOne(popupFormWrapper, 'input[name="widgetTitle"]', el => {
+            el.value = widgetTitle;
+          })
+        });
+      };
     }
     Enlist.currentlyOpenPopup = pfyPopup(options);
   }, // openPopup
@@ -381,8 +394,18 @@ const Enlist = {
     if (btnEl) {
       ev.stopPropagation();
       ev.preventDefault();
-      const widgetInx = btnEl.closest('[data-widget-inx]').dataset.widgetInx;
-      reloadAgent('?collapse-enlist=' + widgetInx);
+      let widgetTitle = '';
+      domForOne(btnEl, '^.pfy-enlist-wrapper .pfy-enlist-title-inner', widgetTitleEl => {
+        widgetTitle = encodeURI(widgetTitleEl.innerText);
+      });
+      pfyConfirm(`{{ pfy-enlist-collapse-confirm-text }}`).then(
+        () => {
+          const widgetInx = btnEl.closest('[data-widget-inx]').dataset.widgetInx;
+          const arg = `?collapse-enlist=${widgetInx}&widgetTitle=${widgetTitle}`;
+          reloadAgent(arg);
+        },
+        () => { console.log('Enlist collapse not executed.');}
+      );
       return true;
     }
     return false;

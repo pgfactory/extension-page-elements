@@ -62,11 +62,11 @@ pfy-enlist-delete-label:
 
 
 pfy-enlist-deadline-expired-alert:
-  de: Die Anmeldefrist ist abgelaufen
+  de: Die Eintragungsfrist ist abgelaufen
   _:  Deadline expired
 
 pfy-enlist-error-deadline-was-expired:
-  de: Die Anmeldefrist wäre abgelaufen für Nicht-Admins
+  de: Die Eintragungsfrist wäre abgelaufen für Nicht-Admins
   _:  Deadline would have been expired for non-admins
 
 
@@ -98,7 +98,7 @@ pfy-enlist-error-rec-exists:
 
 
 pfy-enlist-error-deadline-expired:
-  de: 'Die Anmeldefrist ist abgelaufen.'
+  de: 'Die Eintragungsfrist ist abgelaufen.'
   _:  'Registration is closed.'
 
 pfy-enlist-del-error-wrong-email:
@@ -116,16 +116,16 @@ pfy-enlist-modified:
   _:  'Your entry has been modified.'
 
 pfy-enlist-add-notification-subject:
-  de: 'Neuer Eintrag für %title% auf %host%'
-  _:  'Newly enlisted for %title% on %host%'
+  de: 'Neuer Eintrag für "%title%" (%host%)'
+  _:  'Newly enlisted for "%title%" (%host%)'
 
 pfy-enlist-del-notification-subject:
-  de: 'Neue Löschung aus %title% auf %host%'
-  _:  'Deleted entry from %title% on %host%'
+  de: 'Neue Löschung aus "%title%" (%host%)'
+  _:  'Deleted entry from "%title%" (%host%)'
 
 pfy-enlist-activated-notification-subject:
-  de: 'Neue Löschung aus %title% auf %host%'
-  _:  'Deleted entry from %title% on %host%'
+  de: 'Neue Löschung aus "%title%" (%host%)'
+  _:  'Deleted entry from "%title%" (%host%)'
 
 
 pfy-enlist-add-notification-body:
@@ -133,38 +133,30 @@ pfy-enlist-add-notification-body:
     Hallo
     %name% hat sich eingetragen auf der Seite %page%.
 
-    -> %host%/%page%
-
     Der Webmaster
   _:  |
     Hello
     %name% enlisted on page %page%.
-
-    -> %host%/%page%
 
     The webmaster
 
 pfy-enlist-del-notification-body:
   de: |
     Hallo
-    %name% hat sich abgemeldet von Seite %page%.
-
-    -> %host%/%page%
+    %name% hat sich abgemeldet von "%title%" auf Seite %page%.
 
     Der Webmaster
 
   _:  |
     Hello
-    %name% withdrew from %title%.
-
-    -> %host%/%page%
+    %name% withdrew from "%title%" on %page%.
 
     The webmaster
 
 pfy-enlist-activated-notification-body:
   de: |
     Hallo
-    %name% hat sich abgemeldet von Seite %page%.
+    %name% hat sich abgemeldet von "%title%" auf Seite %page%.
     
     Dabei wurde %activated% aus der Reserve aktiviert.
 
@@ -172,20 +164,20 @@ pfy-enlist-activated-notification-body:
 
   _:  |
     Hello
-    %name% withdrew from %title%.
+    %name% withdrew from "%title%" on %page%.
     
     Thus, %activated% from reserve slots has been activated.
 
     The webmaster
 
 pfy-enlist-notify-activated-reserve-subject:
-  de: 'Einschreibeliste %title% auf Seite %page%'
-  _:  'Entry list %title% on page %page%'
+  de: 'Einschreibeliste "%title%" (%host%)'
+  _:  'Entry list "%title%" (%host%)'
 
 pfy-enlist-notify-activated-reserve-body:
   de: |
     Hallo %name%
-    Sie waren als Reserve in der Einschreibeliste %title% eingetragen (auf Seite %page%).
+    Sie waren als Reserve in der Einschreibeliste "%title%" eingetragen (auf Seite %page%).
 
     Sie sind nun in den aktiven Bereich vorgerückt, nachdem eine Position vor Ihnen gelöscht wurde.
 
@@ -193,7 +185,7 @@ pfy-enlist-notify-activated-reserve-body:
 
   de2: |
     Hallo %name%
-    Du warst als Reserve in der Einschreibeliste %title% eingetragen (auf Seite %page%).
+    Du warst als Reserve in der Einschreibeliste "%title%" eingetragen (auf Seite %page%).
 
     Du bist nun in den aktiven Bereich vorgerückt, nachdem eine Position vor dir gelöscht wurde.
 
@@ -202,7 +194,7 @@ pfy-enlist-notify-activated-reserve-body:
   _:  |
     Hello %name%
    
-    You were registered in the entry list %title% on a reserve position (on page %page%).
+    You were registered in the entry list "%title%" on a reserve position (on page %page%).
 
     Now you have been advanced to an active position, since a position ahead of you has been cleared.
 
@@ -210,7 +202,7 @@ pfy-enlist-notify-activated-reserve-body:
 
 pfy-enlist-visitor-confirmation-subject:
   de: |
-    Anmeldebestätigung
+    Eintragungsbestätigung
 
   _:  |
     Registration confirmation
@@ -219,21 +211,21 @@ pfy-enlist-visitor-confirmation-body:
   de: |
     Guten Tag %name%
 
-    Wir haben Ihre Anmeldung auf %page% erhalten. 
+    Wir haben Ihre Eintragung für "%title%" auf Seite %page% erhalten. 
 
     Besten Dank.
     
   de2: |
     Hallo %name%
 
-    Wir haben deine Anmeldung auf %page% erhalten.
+    Wir haben deine Eintragung für "%title%" auf Seite %page% erhalten.
 
     Besten Dank.
 
   _:  |
     Hello %name%
 
-    We have received your registration on %host%.
+    We have received your list entry for "%title%" on page %page%.
 
     Thank you.
 
@@ -242,9 +234,9 @@ pfy-enlist-confirmation-banner-deleted:
   _:  Entry has been deleted
 
 pfy-enlist-confirmation-sent:
-  de: Sie erhalten eine Anmeldebestätigung per E-Mail.
-  de2: Du erhältst eine Anmeldebestätigung per E-Mail.
-  _:  You will receive a registration confirmation by e-mail.
+  de: Sie erhalten eine Eintragungsbestätigung per E-Mail.
+  de2: Du erhältst eine Eintragungsbestätigung per E-Mail.
+  _:  You will receive a list entry confirmation by e-mail.
 
 pfy-enlist-sendmail-button-title:
   de: E-Mail an alle in dieser Liste verfassen.
@@ -266,6 +258,10 @@ pfy-enlist-timed-out:
 pfy-enlist-ical-tooltip:
   de: Kalendereintrag herunterladen/installieren.
   _:  Download/install calendar entry.
+
+pfy-enlist-collapse-confirm-text:
+  de: 'Sollen leere Listenplätze jetzt gelöscht werden?'
+  _:  'Do you want to removed empty slots now?'
 
 pfy-enlist-collapse-executed:
   de: 'Leere Listenplätze gelöscht, Reserve-Personen informiert: %names%'
