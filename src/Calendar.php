@@ -172,10 +172,9 @@ EOT;
             'class' => 'pfy-form-colored',
             'confirmationText' => '{{ pfy-cal-stored-confirmation }}',
             'formBottom' => '',
-            'editMode' => 'popup',
+            'tableOptions' => false,
             'permission' => true,
-            'showFeedbackInpage' => false,
-            'init' => false,
+            'feedback' => 'popup',
             'callback' => function ($dataRec) {
                 return $this->formCallback($dataRec);
             },
@@ -192,10 +191,11 @@ EOT;
             ];
         }
 
-// with PHP 8.4 available:
-//        $eventPresent = array_find($formFields, function ($e) {
-//            return $e['type'] === 'event';
-//        });
+        // with PHP 8.4 available:
+        //        $eventPresent = array_find($formFields, function ($e) {
+        //            return $e['type'] === 'event';
+        //        });
+        // -> in place of:
         $eventPresent = in_array(true, array_values(array_map(function ($e) {
             return ($e['type']??false) === 'event';
         }, $formFields)));
