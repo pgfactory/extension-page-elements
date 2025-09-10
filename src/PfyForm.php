@@ -205,7 +205,7 @@ class PfyForm extends Form
         if ($this->tableOptions && $this->tableOptions['minRows']) {
             $this->tableOptions['announceEmptyTable'] = false;
         }
-        parent::__construct($this->formIndex);
+        parent::__construct($this->formIndex); // -> adds hidden field _form_
 
         if (!self::$initialized) {
             self::$initialized = true;
@@ -1047,7 +1047,7 @@ class PfyForm extends Form
 
         $eventElements['_repeatEventBody'] = [
             'type'      => 'literal',
-            'html'      => "</summary>\n<div class='pfy-form-rrule-body-wrapper'",
+            'html'      => "</summary>\n<div class='pfy-form-rrule-body-wrapper'>",
         ];
 
         $eventElements['_until'] = [

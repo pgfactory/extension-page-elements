@@ -3,6 +3,7 @@
  */
 
 "use strict";
+console.log('forms.js');
 
 const pfyFormsHelper = {
 
@@ -564,6 +565,7 @@ const pfyFormsHelper = {
       if (val) {
         fieldWrapperElemEl.removeAttribute('data-value');
         isPreset = true;
+        val = (val === 'false') ? false: val;
       }
     } else {
       domForOne(fieldWrapperElemEl, '[data-value]', el => {
@@ -592,15 +594,19 @@ const pfyFormsHelper = {
     } else if ('radio,checkbox'.includes(type)) {
       // --- radio, checkbox
       if (typeof val === 'string') {
-        val = `,${val},`;
+        const valPatt = `,${val},`;
         domForEach(fieldWrapperElemEl, 'input', option => {
           const hasNoValue = (option.getAttribute('value') === null);
           if (hasNoValue) { // == single checkbox without value set
             option.checked = !!val;
           } else {
             const v = ',' + option.value + ',';
-            option.checked = val.includes(v);
+            option.checked = valPatt.includes(v);
           }
+        });
+      } else if (typeof val === 'boolean') {
+        domForEach(fieldWrapperElemEl, 'input', option => {
+          option.checked = val;
         });
       } else {
         domForEach(fieldWrapperElemEl, 'input', option => {
