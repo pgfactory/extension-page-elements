@@ -427,13 +427,14 @@ const tableHelper = {
       el = ev.target;
     }
     const tableWrapperEl = el.closest('.pfy-table-wrapper');
-    if (!tableWrapperEl) {
+    if (!tableWrapperEl || !el.closest('tbody')) {
       return;
     }
     const rowCallback = tableWrapperEl.dataset.rowCallback;
     if (!rowCallback) {
       return;
     }
+
     // invoke row callback function:
     if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
       let res = executeCallbackCode(rowCallback, ev);

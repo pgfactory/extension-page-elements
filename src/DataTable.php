@@ -407,7 +407,11 @@ EOT;
         $this->prepareServiceColumns();
 
         $tdClass = $this->tdClass? " $this->tdClass": '';
-        $colHeaders = $this->tableHeaders ?: $this->data2Dset->getColHeaders();
+        if (!$this->tableHeaders || $this->tableHeaders === true) {
+            $colHeaders = $this->data2Dset->getColHeaders();
+        } else {
+            $colHeaders = $this->tableHeaders;
+        }
         $i = sizeof($this->columns) + 1;
         $c = 0;
         foreach ($colHeaders as $key => $value) {
@@ -1051,6 +1055,7 @@ EOT;
     } // getTableId
 
 
+
     // === Parse Options ===================================================================
     /**
      * @param array $options
@@ -1172,11 +1177,8 @@ EOT;
         $this->tableButtons = $tableButtons;
 
         // table headers:
-        if ($this->tableHeaders) {
-            if ($this->tableHeaders === true) {
-                $tableHeaders = array_values($this->data2Dset->getColHeaders());
-                $this->tableHeaders = array_combine($tableHeaders, $tableHeaders);
-            } elseif (!is_array($this->tableHeaders)) {
+        if ($this->tableHeaders && ($this->tableHeaders !== true)) {
+            if (!is_array($this->tableHeaders)) {
                 $this->tableHeaders = $this->parseArrayArg('tableHeaders');
             }
 
