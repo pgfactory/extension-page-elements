@@ -379,7 +379,7 @@ class PfyForm extends Form
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    protected function addElement(string $elemName, array $elemOptions = null): void
+    protected function addElement(string $elemName, array|null $elemOptions = null): void
     {
         $this->elemInx++;
         // if $elemOptions not supplied, use $this->formElements

@@ -64,7 +64,7 @@ class Events extends DataSet
      * @param array|null $options
      * @return string
      */
-    public function render(array $options = null): string
+    public function render(array|null $options = null): string
     {
         if ($options) {
             $options = array_merge_recursive($this->options, $options);
