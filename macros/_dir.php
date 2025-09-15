@@ -20,7 +20,7 @@ return function($argStr = '')
             'enableFolderDownload' => ['If true, folders can be downloaded as a zip file.', true],
             'template' => ['[text,file] The template based on which output is rendered.', null],
             'modifiers' => ['[REVERSE, REVERSE_FOLDERS, INCLUDE_PATH, DEEP, HIERARCHICAL, DOWNLOAD] '.
-                'Activates miscellaneous modes.', 'DEEP,HIERARCHICAL'],
+                'Activates miscellaneous modes.', null],
             'replaceOnElem' => ['(pattern,replace) If defined, regular expression is applied to each element. '.
                 'Example: remove leading underscore:  "^_,&#39;&#39;"', null],
             'maxAge' => ['[integer] Maximum age of file (in number of days).', null],

@@ -24,14 +24,18 @@
       }
 
       summary:before {
-        content: '+'; //'▹';
+        content: '+';
         transform-origin: 0.3em 50%;
         transition: 0.2s transform ease;
+        line-height: inherit;
+        font-size: 1.5em;
+        margin: 0;
+        transform: translateY(-0.25em);
       }
 
-      details[open] > summary:before {
-        content: '–';
-        transform: rotate(180deg);
+      &[open] > summary:before {
+        content: '−';
+        transform: rotate(180deg) translateY(0.05em);
         transition: 0.2s transform ease;
       }
     }

@@ -310,6 +310,11 @@ EOT;
                 return preg_replace($this->replacePattern, $this->replace, $e);
             }, $filenames);
         }
+        if (preg_match('/^\d+_/', reset($filenames))) {
+            $filenames = array_map(function($e) {
+                return preg_replace('/^(\d)_/', "0$1_", $e);
+            }, $filenames);
+        }
         $dir = array_combine($filenames, $dir);
 
         ksort($dir);
@@ -339,42 +344,68 @@ EOT;
      */
     private function extractFileDescriptorVars(string $file): array
     {
-        $date = '';
-        if (preg_match('/\d{4}-\d\d-\d\d/', basename($file), $m)) {
-            $date = $m[0];
-        }
-        if (!($url = $this->parseUrlFile($file))) {
+        $url = $path = $type = $date = $subPath = $label = $slug = $pageId = $pageIndex = $pageIndex2 = $title = $decription = $filename = $basename = '';
+
+        // folder:
+        if (is_dir($file)) {
+            $type = 'folder';
             if (str_starts_with($file, PFY_KIRBY_BASE_PATH . 'content/')) {
-                $url = PFY_APP_BASE_URL . substr(preg_replace('|/\d+_|', '/', $file), 8);
+                // it's a page folder:
+                $basename = basename($file);
+                $path = substr($file, strlen(PFY_KIRBY_BASE_PATH . 'content/'));
+                $path = preg_replace('|^\d+_|', '', $path);
+                $path = preg_replace('|/\d+_|', '/', $path);
+                $subPath = rtrim($path, '/');
+                $page = page($subPath);
+                $url = $page->url();
+                $slug = $page->slug();
+                $pageId = $page->id();
+                $pageIndex = (string)$page->num();
+                $pageIndex2  = str_pad($pageIndex,2, '0', STR_PAD_LEFT);
+                $label = $page->title()->value();
             } else {
+                // folder outside of /content:
+                $filename = base_name($file);
+                $basename = base_name($file, true);
+                $label = $basename;
+                $name = $basename;
+                $subPath = substr($file, $this->absPathLen);
+                $url = $this->url . $subPath;
+                $this->realLocations[$subPath] = $file;
+            }
+            $subPath = str_replace('/', '%2F', substr($file, $this->origPathLen));
+
+        // file:
+        } elseif (is_file($file)) {
+            $type       = 'file';
+            $url        = $this->parseUrlFile($file);
+               if (!$url) {
                 $url = PFY_APP_BASE_URL . str_replace(PFY_KIRBY_BASE_PATH, '', $file);
             }
+
+            $filename   = basename($file);
+            $basename   = base_name($filename, false);
+            $label      = str_replace('_', ' ', $basename);
+            $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
+            $path       = dirname($file) . '/';
+            if (preg_match('/\d{4}-\d\d-\d\d/', $filename, $m)) {
+                $date = $m[0];
+            }
+
+            if (file_exists("$file.txt")) {
+                $decription = file_get_contents("$file.txt");
+            }
         }
-        $subPath = substr($file, $this->absPathLen);
-        $url = $this->url . $subPath;
-        $this->realLocations[$subPath] = $file;
-        $filename = basename($file);
-        if ($this->replaceOnElem) {
-            $filename = preg_replace($this->replacePattern, $this->replace, $filename);
-        }
-        $basename   = base_name($filename, false);
-        $label      = str_replace('_', ' ', $basename);
-        $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
-        $type       = is_file($file)? 'file' : 'folder';
-        $path       = dirname($file) . '/';
-        $subPath    = '';
-        if ($type !== 'file') {
-            $subPath = str_replace('/', '%2F', substr($file, $this->origPathLen));
-        }
-        $decription = '';
-        if (file_exists("$file.txt")) {
-            $decription = file_get_contents("$file.txt");
-        }
+
+
         require_once __DIR__ . '/pe_helper.php';
         $out = [
             'file'          => $file,
             'filename'      => $filename,
             'basename'      => $basename,
+            'slug'          => $slug,
+            'pageIndex'     => $pageIndex,
+            'pageIndex2'    => $pageIndex2, // 2-digit pageIndex
             'label'         => $label,
             'name'          => $basename,
             'ext'           => fileExt($filename),
@@ -429,7 +460,7 @@ EOT;
         $this->markdown = $options['markdown']??false;
         $this->maxAge = $options['maxAge'];
         $this->replaceOnElem = $options['replaceOnElem'];
-        $this->modifiers = strtoupper($options['modifiers']);
+        $this->modifiers = strtoupper($options['modifiers']??'');
         $this->modifiers = preg_replace('/\W+/', ',', $this->modifiers);
         $this->modifiers = ','.str_replace(' ','', $this->modifiers).',';
 
