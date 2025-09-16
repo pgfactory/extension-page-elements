@@ -73,13 +73,9 @@ return function ($args = '')
                 'Use placeholders to compose meaningful titles, e.g. `ical:"[XY] %title%"`, where `%title%` is the '.
                 'field-name in the event record.', null],
 
-//            'icalElements' =>	['[assoc array] A comma-separated list of tuples like "`ical-arg`:`enlist-field-name`,". '.
-//                'Supported ical-arguments: `uniqueIdentifier`, `createdAt`, `addressName`, `coordinates`, '.
-//                '`attendee`, `transparent`, `fullDay`. '.
-//                'Example: `{description:%Comment%, address:%Location%}`.', null],
-//
-//            'icalOrganiser' =>	['[string] Adds an \"organiser\" field to the iCal. The value should be an e-mail address. '.
-//                ' (Default: = adminMail)', null],
+            'tableOptions' =>	['[assoc array] Options for table rendering.', null],
+
+            'listName' =>	['[string] For legacy compatibility.', null],
 
             'output' =>	['[bool] If false, no output is rendered (can be useful to set defaults.', true],
 

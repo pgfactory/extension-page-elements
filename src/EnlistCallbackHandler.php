@@ -154,8 +154,14 @@ class EnlistCallbackHandler
         $slots = $this->db->getEnlistSlots($widgetInx);
         $slotInx1 = $this->db->selectSlot($widgetInx, $slotInx, $newDataRec, $context);
         if (intval($slotInx) !== $slotInx1) {
-            $slots[$slotInx1] = $slots[$slotInx];
-            $slots[$slotInx] = [];
+            $tmp = $slots[$slotInx];
+            foreach ($tmp as $key => $value) {
+                if ($newDataRec[$key] && $newDataRec[$key] !== $value) {
+                    $tmp[$key] = $newDataRec[$key];
+                }
+            }
+            $this->db->emptySlot($widgetInx, $slotInx);
+            $this->db->fillSlot($widgetInx, $slotInx1, $tmp, $context);
         }
 
         return [$slots, $slotInx1];
@@ -176,7 +182,7 @@ class EnlistCallbackHandler
                 continue;
             }
             $thisSlot[$key] = $value;
-            $log .= "$key: $value;";
+            $log .= is_string($value) ? "$key: $value;" : "$key: ".implode(',', $value).';';
         }
         $thisSlot['_time'] = date('Y-m-d\TH:i');
         $slots[$slotInx] = $thisSlot;

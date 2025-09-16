@@ -57,13 +57,19 @@
   }
 
   .pfy-enlist-empty,
-  .pfy-enlist-expired,
   .pfy-enlist-add,
   .pfy-enlist-delete,
   .pfy-enlist-field {
     background: var(--pfy-enlist-field-bg, #fffff6);
   }
-  .pfy-enlist-frozen-while-admin {
+  .pfy-enlist-wrapper tr.pfy-enlist-expired {
+    background: var(--pfy-enlist-expired-field-bg, #fafafab0);
+  }
+  .pfy-enlist-wrapper tr.pfy-enlist-reserve.pfy-enlist-expired {
+    background: var(--pfy-enlist-reserve-field-bg, #f6f6ffb0);
+  }
+  .pfy-enlist-frozen-while-admin,
+  div.pfy-enlist-admin.pfy-enlist-expired  {
     background: repeating-linear-gradient(
         -45deg,
         hsl(60deg 100% 98%),
@@ -201,23 +207,35 @@
   }
 
   .pfy-popup-wrapper {
-    .add, .del, .modify {
+    .pfy-add, .pfy-del, .pfy-modify {
+      display: none;
+    }
+    .pfy-enlist-is-reserve div.pfy-enlist-directly {
       display: none;
     }
   }
   .pfy-popup-wrapper.pfy-enlist-add-mode {
-    .add { display: block; }
+    .pfy-add { display: block; }
     .pfy-enlist-delete-checkbox {
+      display: none;
+    }
+    .pfy-form-tooltip .pfy-info-modify {
       display: none;
     }
   }
 
   .pfy-popup-wrapper.pfy-enlist-modify-mode {
-    .modify { display: block; }
+    .pfy-modify { display: block; }
+    .pfy-form-tooltip .pfy-info-add {
+      display: none;
+    }
   }
 
   .pfy-popup-wrapper.pfy-enlist-del-mode {
-    .del { display: block; }
+    .pfy-del { display: block; }
+    .pfy-form-tooltip .pfy-info-add {
+      display: none;
+    }
   }
 
   .pfy-enlist-expired {
@@ -252,6 +270,11 @@
     .pfy-enlist-email::after {
       content: ">";
     }
+  }
+
+  .pfy-enlist-admin-view {
+    color: #a35dd1;
+    font-style: italic;
   }
 
   button.pfy-enlist-delete,

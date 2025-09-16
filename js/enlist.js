@@ -135,7 +135,7 @@ const Enlist = {
 
     let options = {
       contentFrom: '#pfy-enlist-form .pfy-form-wrapper',
-      header: `<span class="add">{{ pfy-enlist-add-popup-header }}</span><span class="modify">{{ pfy-enlist-modify-popup-header }}</span><span class="del">{{ pfy-enlist-del-popup-header }}</span>`,
+      header: `<span class="pfy-add">{{ pfy-enlist-add-popup-header }}</span><span class="pfy-modify">{{ pfy-enlist-modify-popup-header }}</span><span class="pfy-del">{{ pfy-enlist-del-popup-header }}</span>`,
       autofocus: false,
       closeOnBgClick: true,
     };
@@ -270,6 +270,9 @@ const Enlist = {
       // === modify mode ================================
       if (mode === 'modify') {
         formEl.classList.add('pfy-enlist-modify-mode');
+        if (rowEl.classList.contains('pfy-enlist-reserve')) {
+          formEl.classList.add('pfy-enlist-is-reserve');
+        }
 
         const modeEl = formEl.querySelector('[name=mode]');
         if (deleteCheckboxEl && !deleteCheckboxEl.checked) {
@@ -358,14 +361,16 @@ const Enlist = {
                 srcIdy = '.pfy-elem_' + idy + '-' + inputEl.value;
                 tableEl = rowEl.querySelector(srcIdy.toLowerCase());
                 if (tableEl) {
-                  inputEl.checked = (tableEl.innerText !== '0');
+                  inputEl.checked = tableEl.innerText.match(/\S/);
                 }
               }
 
             } else {
               const srcIdy = '.pfy-elem_' + idy;
               const tableEl = rowEl.querySelector(srcIdy);
-              inputEl.value = tableEl.innerText;
+              if (tableEl) {
+                inputEl.value = tableEl.innerText;
+              }
             }
           });
         }

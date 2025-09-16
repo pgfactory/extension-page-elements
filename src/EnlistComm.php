@@ -37,11 +37,13 @@ class EnlistComm
             $body = '{{ pfy-enlist-del-notification-body }}';
         }
         $replace = [
-            '%name%' => $newDataRec['Name'],
-            '%email%' => $newDataRec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
-            '%page%' => self::pageLink(),
+            '%name%'    => $newDataRec['Name'],
+            '%email%'   => $newDataRec['Email'],
+            '%title%'   => $title,
+            '%host%'    => PFY_HOST_URL,
+            '%hostUrl%' => PFY_HOST_URL,
+            '%page%'    => self::pageLink(),
+            '%pageUrl%' => self::pageLink(),
         ];
         $subject = str_replace(
             array_keys($replace),
@@ -67,12 +69,13 @@ class EnlistComm
         $subject = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-subject }}');
         $body = TransVars::resolveVariables('{{ pfy-enlist-visitor-confirmation-body }}');
         $replace = [
-            '%name%' => $newDataRec['Name'],
-            '%email%' => $newDataRec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
+            '%name%'    => $newDataRec['Name'],
+            '%email%'   => $newDataRec['Email'],
+            '%title%'   => $title,
+            '%host%'    => PFY_HOST_URL,
             '%hostUrl%' => PFY_HOST_URL,
-            '%page%' => self::pageLink(),
+            '%page%'    => self::pageLink(),
+            '%pageUrl%' => self::pageLink(),
         ];
         $subject = str_replace(
             array_keys($replace),

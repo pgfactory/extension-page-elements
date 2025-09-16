@@ -54,13 +54,14 @@ class Enlist
     private bool $deadlineExpired = false;
     private bool $isEnlistAdmin = false;
     private string $titleClass = '';
-    private bool $hasCustomFields = false;
+    private bool $hasVisibleCustomFields = false;
     private array $customFields = [];
+    private array $customFormFields = [];
     private static $_file = null;
     private string|null $info0;
     private string|null $info;
     private string|null $placeholder;
-    private int|bool|null $freezeTime = false;
+    private float|bool|null $freezeTime = false;
     private string|bool|null $obfuscate;
     private mixed $admin = false;
     private bool $directlyToReserve;
@@ -72,7 +73,7 @@ class Enlist
     private array $colClasses = [];
     private array $rowClasses = [];
     private array $rowIds = [];
-    private string $enlistFormHtml = '';
+    private static string $enlistFormHtml = '';
     private mixed $event;
 
     /**
@@ -94,7 +95,7 @@ class Enlist
             Assets::addAssets('ENLIST');
             Assets::addAssets('POPUPS');
 
-            $this->enlistFormHtml = $this->renderEnlistForm();
+            self::$enlistFormHtml = $this->renderEnlistForm();
 
             $adminEmail = $this->options['adminEmail'] ?: PageFactory::$webmasterEmail;
             Page::addJs("const adminEmail = '$adminEmail';");
@@ -111,7 +112,8 @@ class Enlist
      */
     public function render(): string
     {
-        $html = $this->enlistFormHtml;
+        $html = self::$enlistFormHtml;
+        self::$enlistFormHtml = '';
         if ($this->events) {
             $html .= $this->renderByEvents();
             if (is_array($html)) {
@@ -199,6 +201,9 @@ class Enlist
         if ($this->nTotalSlots === 1) {
             $class .= ' pfy-enlist-hide-num';
         }
+        if ($this->deadlineExpired) {
+            $this->title .= ' {{ pfy-enlist-dealine-past }}';
+        }
 
         $html = <<<EOT
 <div id='$id' class='$class' data-widget-inx="$this->widgetInx"$attrib>
@@ -219,6 +224,7 @@ EOT;
         $data = $this->prepareTableData();
 
         $tableClass = $this->customFields ? ' pfy-enlist-custom-fields' : '';
+
         $tableOptions = [
             'tableClass' => "pfy-enlist-table$tableClass",
             'headers' => $this->tableHeaders,
@@ -231,6 +237,11 @@ EOT;
             'unknownValue' => '&nbsp;',
             'placeholderForUndefined' => '',
         ];
+        if (($this->options['tableOptions']??false) && is_array($this->options['tableOptions'])) {
+            foreach ($this->options['tableOptions'] as $key => $value) {
+                $tableOptions[$key] = $value;
+            }
+        }
         $dt = new DataTable($data, $tableOptions);
 
         $html = $dt->render();
@@ -283,7 +294,7 @@ EOT;
             $rowClass = $this->rowClasses[$i];
             if (($row['Name'] ?? false)) {
                 if ($this->obfuscate) {
-                    $rec['Name'] = $this->obfuscateSlot($row['Name']);
+                    $rec['Name'] = $this->obfuscateSlot($row);
                 } else {
                     $rec['Name'] = "<span class='pfy-enlist-name'>{$row['Name']}</span>";
                     if ($this->isEnlistAdmin) {
@@ -292,10 +303,8 @@ EOT;
                 }
             }
             $rec['num'] = $i + 1;
-            if (str_contains($rowClass, 'delete')) {
-                $rec['icon-1'] = $deleteIcon;
-                $rec['icon-2'] = $deleteIcon;
-            } elseif (str_contains($rowClass, 'modify')) {
+            if (str_contains($rowClass, 'delete') ||
+                str_contains($rowClass, 'modify')) {
                 $rec['icon-1'] = $deleteIcon;
                 $rec['icon-2'] = $deleteIcon;
             } elseif (str_contains($rowClass, 'add')) {
@@ -304,12 +313,23 @@ EOT;
             }
 
             // fill custom fields:
-            if ($this->hasCustomFields) {
+            if ($this->hasVisibleCustomFields) {
                 foreach ($row as $k => $v) {
                     if (str_contains('Name,Email,_time', $k)) {
                         continue;
                     }
-                    $rec[$k] = $v;
+                    if (($this->customFields[$k] ?? false) && ($this->customFields[$k]['hidden'] ?? false)) {
+                        continue;
+                    }
+                    if (is_array($v)) {
+                        foreach ($v as $v2) {
+                            $k2 = "$k.$v2";
+                            $rec[$k2] = "X";
+                        }
+
+                    } else {
+                        $rec[$k] = $v;
+                    }
                 }
             }
             $out[$i] = $rec;
@@ -322,24 +342,28 @@ EOT;
      * @param string $value
      * @return string
      */
-    private function obfuscateSlot(string $value): string
+    private function obfuscateSlot(array $row): string
     {
-        if ($this->isEnlistAdmin) {
-            $value = "<span class='pfy-enlist-name pfy-enlist-obfuscated'>$value</span>";
-
-        } elseif ($this->obfuscate === true) {
+        $value = $row['Name'];
+        if ($this->obfuscate === true) {
             $value = ENLIST_OBFUSCATED_VALUE;
 
         } elseif ($this->obfuscate === 'initials') {
-            if (preg_match_all('/\b\w/', $value, $matches)) {
-                $value = implode(' ', $matches[0]);;
-            }
+            $ar = array_map(function ($e) {
+                return $e[0]??'';
+                }, explode(' ', $value));
+            $value = implode(' ', $ar);
 
         } else {
             $value = $this->obfuscate;
         }
+        if ($this->isEnlistAdmin) {
+            $mail = "<span class='pfy-enlist-email'><a href='mailto:{$row['Email']}'>{$row['Email']}</a></span>";
+            $value .= " <span class='pfy-enlist-admin-view'>[<span class='pfy-enlist-name'>{$row['Name']}</span> $mail]</span>";
+        }
         return $value;
     } // obfuscateSlot
+
 
 
     /**
@@ -448,9 +472,9 @@ EOT;
         }
         $delHelp = TransVars::getVariable('pfy-enlist-popup-del-help');
         $modifyHelp = TransVars::getVariable('pfy-enlist-popup-modify-help');
-        $popupHelp = "<div class='add'>$addHelp</div><div class='del'>$delHelp</div><div class='modify'>$modifyHelp</div>";
+        $popupHelp = "<div class='pfy-add'>$addHelp</div><div class='pfy-del'>$delHelp</div><div class='pfy-modify'>$modifyHelp</div>";
         $wrapperClass = 'pfy-enlist-form-wrapper';
-        if ($this->hasCustomFields) {
+        if ($this->hasVisibleCustomFields) {
             $wrapperClass .= ' pfy-enlist-has-custom-fields';
         }
         if ($this->obfuscate) {
@@ -470,12 +494,12 @@ EOT;
         // minimum required fields:
         $formFields = [
             'Name' => ['label' => '{{ pfy-enlist-name }}:', 'required' => true],
-            'Email' => ['label' => '{{ pfy-enlist-email }}:', 'required' => true],
+            'Email' => ['label' => '{{ pfy-enlist-email }}:', 'required' => true, 'info' => '{{ pfy-enlist-email-info }}'],
         ];
 
         // optional custom fields:
         $i = 1;
-        foreach ($this->customFields as $fieldName => $rec) {
+        foreach ($this->customFormFields as $fieldName => $rec) {
             // if type missing but options present -> set to checkbox as default:
             if (!($rec['type']??false) && ($rec['options']??false)) {
                 $rec['type'] = 'checkbox';
@@ -610,7 +634,9 @@ EOT;
 
         // custom fields:
         foreach ($this->customFields as $key => $value) {
-            if ($value['options'] ?? false) {
+            if ($value['hidden'] ?? false) {
+                continue;
+            } elseif ($value['options'] ?? false) {
                 if ($value['splitOutput'] ?? false) {
                     foreach ($value['options'] as $val => $label) {
                         if ($val || $label) {
@@ -698,10 +724,10 @@ EOT;
                 }
             }
             if ($slot['Name'] ?? false) {
-                if ($this->editable && $this->hasCustomFields) {
+                if ($this->editable && $this->hasVisibleCustomFields) {
                     $rowClasses[$i] .= ' pfy-enlist-modify';
                 } else {
-                    $rowClasses[$i] .= ($this->obfuscate !== true) ? ' pfy-enlist-delete' : 'pfy-enlist-obfuscated';
+                    $rowClasses[$i] .= ($this->obfuscate !== true) ? ' pfy-enlist-delete' : ' pfy-enlist-delete pfy-enlist-obfuscated';
                 }
 
             } else {
@@ -739,7 +765,7 @@ EOT;
         if ($this->obfuscate && !$this->isEnlistAdmin) {
             $deleteIcon = '';
 
-        } elseif ($this->editable && $this->hasCustomFields && !$this->obfuscate) {
+        } elseif ($this->editable && $this->hasVisibleCustomFields && !$this->obfuscate) {
             $deleteIcon = '<button type="button" title="{{ pfy-enlist-modify-title }}">' . ENLIST_MODIFY_ICON . '</button>';
 
         } else {
@@ -867,24 +893,22 @@ EOT;
         $this->events = $this->handleScheduleOption();
 
         // --- process custom fields:
+        $hasVisibleCustomFields = false;
         if ($customFields) {
-            $this->hasCustomFields = true;
             // Replace - with _ in all keys;
             $customFields1 = $customFields;
             $customFields = [];
             foreach ($customFields1 as $key => $rec) {
                 $key = str_replace('-', '_', $key);
                 $key = preg_replace('/\W/', '', $key);
-                $customFields[$key] = $rec;
+                if (!($rec['hidden']??false)) {
+                    $customFields[$key] = $rec;
+                    $hasVisibleCustomFields = true;
+                }
             }
 
             $nCustFields = sizeof($customFields);
-            foreach ($customFields as $key => $customField) {
-                if (($customField['hidden'] ?? false) && !$this->isEnlistAdmin) {
-                    unset($customFields[$key]);
-                    $nCustFields--;
-                    continue;
-                }
+            foreach ($customFields1 as $key => $customField) {
                 // special case 'checkbox options':
                 if ((($customField['type'] ?? 'text') === 'checkbox') ||
                     ($customField['options'] ?? false)) {
@@ -896,8 +920,11 @@ EOT;
                     }
                 }
             }
+            $this->hasVisibleCustomFields = $hasVisibleCustomFields;
             $this->customFields = $customFields;
+            $this->customFormFields = $customFields1;
         }
+
 
         $options = [
             'nSlots' => $this->nSlots,

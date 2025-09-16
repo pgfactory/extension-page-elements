@@ -253,25 +253,12 @@ class EnlistData
     public function emptySlot(int|string $widgetInx, int $slotInx): array|false  // -> used by Enlist and EnlistCallbackHandler
     {
         $becameActive = false;
-        $hasEmptySlots = $hasFilledReserveSlots = false;
         $slots = $this->enlistWidgets[$widgetInx]['slots'];
-        for ($i=0; $i<$this->nSlots; $i++) {
-            if (!($slots[$i]['Name']??false)) {
-                $hasEmptySlots = true;
-                break;
-            }
-        }
-        if ($slotInx < $this->nSlots) {
-            for ($i = $this->nSlots; $i < $this->nTotalSlots; $i++) {
-                if (($slots[$i]['Name'] ?? false)) {
-                    $hasFilledReserveSlots = true;
-                    break;
-                }
-            }
-        }
+        $hasEmptySlots = !($slots[$this->nSlots - 1]['Name']??false);
+        $hasFilledReserveSlots = $this->nReserveSlots && ($slots[$this->nSlots]['Name']??false);
 
         // normal case: either no reserve slots are filled or slot is in reserve, but normal slots are not filled up:
-        if (!$hasFilledReserveSlots) {
+        if ($slotInx >= $this->nSlots || !$hasFilledReserveSlots) {
             unset($slots[$slotInx]);
             $slots[] = [];
 
@@ -359,7 +346,7 @@ class EnlistData
         $widgetDescr = $this->getWidgetDescr($widgetInx);
         $slots = $this->getEnlistSlots($widgetInx);
         $nTotalSlots = $this->nTotalSlots;
-        $directlyToReserve = $newDataRec['directlyToReserve'] && $this->options['directlyToReserve'];
+        $directlyToReserve = ($newDataRec['directlyToReserve']??false) && $this->options['directlyToReserve'];
         if (!$directlyToReserve) {
             if ($slotInx > $nTotalSlots) {
                 mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');

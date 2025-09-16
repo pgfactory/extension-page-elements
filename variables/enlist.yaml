@@ -9,6 +9,11 @@ pfy-enlist-email:
   de: E-Mail
   _:  E-mail
 
+pfy-enlist-email-info:
+  de: '<div class"pfy-add">Geben Sie Ihre E-Mail Adresse ein</div><div class"pfy-del pfy-modify">Geben Sie Ihre E-Mail Adresse genau wie beim ersten Mal ein.</div>'
+  de2: '<div class"pfy-add">Gib deine E-Mail Adresse ein</div><div class"pfy-del pfy-modify">Gib deine E-Mail Adresse genau wie beim ersten Mal ein.</div>'
+  _:  '<div class="pfy-info-add">Enter your e-mail address.</div><div class="pfy-info-modify">Provide your e-mail address exactly as previously entered.</div>'
+
 pfy-enlist-directly-to-reserve:
   de: Direkt als Reserve eintragen
   _:  Register as reserve directly
@@ -68,6 +73,10 @@ pfy-enlist-deadline-expired-alert:
 pfy-enlist-error-deadline-was-expired:
   de: Die Eintragungsfrist wäre abgelaufen für Nicht-Admins
   _:  Deadline would have been expired for non-admins
+
+pfy-enlist-dealine-past:
+  de: ' (Frist abgelaufen)'
+  _:  ' (Deadline expired)
 
 
 pfy-enlist-popup-add-nofreeze-help:
