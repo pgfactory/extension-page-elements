@@ -293,7 +293,8 @@ class PfyForm extends Form
         $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
                                                         //      /form
                                                         //    /pfy-form-wrapper
-        $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+        $html .= $table;                                //
+
         $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
         $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
 
@@ -323,7 +324,7 @@ class PfyForm extends Form
                 if (is_bool($rec)) {
                     $rec = $rec ? 'true' : 'false';
                 }
-                throw new \Exception("Error in form declaration: unkown argumennt '$name: $rec'.");
+                throw new \Exception("Error in form declaration: unkown argument '$name: $rec'.");
             }
 
             $rec['origName'] = trim($name);
