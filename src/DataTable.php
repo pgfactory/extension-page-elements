@@ -249,42 +249,12 @@ EOT;
     private function renderTableBody(): string
     {
         $data = $this->tableData;
-        $placeholderForUndefined = $this->placeholderForUndefined;
 
         $out = "  <tbody>\n";
         $rowClass = '';
         $r = 0;
         foreach ($data as $recKey => $dataRec) {
-            $rowClass = $this->rowClasses[$r] ?? '';
-            $locked = $this->data2Dset->isLocked($recKey);
-            $rowClass .= $locked ? ' pfy-rec-locked' : '';
-            $r++;
-            $out .= "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
-
-            foreach ($this->columns as $c => $def) {
-                $cell = $def['cellContent'];
-                if (($cell[0]??'') === '=') {
-                    $cell = $this->handleComputedCells($recKey, $r, $c, substr($cell,1));
-
-                } elseif (($cell[0]??'') === '$') {
-                    $elemKey = substr($cell, 1);
-                    $cell = $dataRec[$elemKey] ?? $placeholderForUndefined;
-                    if ($this->shieldCellContent) {
-                        $cell = htmlspecialchars($cell, ENT_QUOTES);
-                    }
-                    $cell = "<div>$cell</div>";
-
-                } elseif ($cell === '%num') {
-                    $cell = $r;
-                }
-
-                if (str_contains($cell, '%reckey')) {
-                    $cell = str_replace('%reckey',$recKey, $cell);
-                }
-                $out .= "      <td {$def['cellAttrib']}>$cell</td>\n";
-            }
-
-            $out .= "    </tr>\n";
+            $out .= $this->renderTableRow($r++, $recKey);
         }
 
         if ($this->minRows && $r < $this->minRows) {
@@ -304,6 +274,91 @@ EOT;
         $out .= "  </tbody>\n";
         return $out;
     } // renderTableBody
+
+
+    /**
+     * @param int $r
+     * @param int|string $recKey
+     * @return string
+     */
+    private function renderTableRow(int $r, int|string $recKey): string
+    {
+        $rowClass = $this->rowClasses[$r] ?? '';
+        $locked = $this->data2Dset->isLocked($recKey);
+        $rowClass .= $locked ? ' pfy-rec-locked' : '';
+        $out = "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
+
+        foreach ($this->columns as $c => $def) {
+            $out .= $this->renderTableCell($r, $recKey, $c, $def);
+        }
+
+        $out .= "    </tr>\n";
+        return $out;
+    } // renderTableRow
+
+
+    /**
+     * @param int $r
+     * @param int|string $recKey
+     * @param int $c
+     * @param array $def
+     * @return string
+     */
+    private function renderTableCell(int $r, int|string $recKey, int $c, array $def): string
+    {
+        $cell = $def['cellContent'];
+        if (($cell[0] ?? '') === '=') {
+            $cell = $this->renderComputedCells($recKey, $r, $c, substr($cell, 1));
+
+        } elseif (($cell[0] ?? '') === '$') {
+            $elemKey = substr($cell, 1);
+            $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
+            if ($this->shieldCellContent) {
+                $cell = htmlspecialchars($cell, ENT_QUOTES);
+            }
+            $cell = "<div>$cell</div>";
+
+        } elseif ($cell === '%num') {
+            $cell = $r;
+        }
+
+        if (str_contains($cell, '%reckey')) {
+            $cell = str_replace('%reckey', $recKey, $cell);
+        }
+        $out = "      <td {$def['cellAttrib']}>$cell</td>\n";
+        return $out;
+    } // renderTableCell
+
+
+
+    /**
+     * @param mixed $k
+     * @param mixed $rec
+     * @param mixed $v
+     * @param array $data
+     * @param mixed $key
+     * @return array|void
+     */
+    private function renderComputedCells(string  $recKey, int $r, int $c, string $cell): string
+    {
+        $rec = $this->tableData[$recKey];
+        while (preg_match_all('/\$([\w.]+)/', $cell, $m)) {
+            foreach ($m[1] as $ii => $vv) {
+                $x = $rec[$vv] ?? '';
+                $cell = str_replace($m[0][$ii], $x, $cell);
+            }
+        }
+        if (str_starts_with($cell, 'PHP:')) {
+            $cell = substr($cell, 4);
+            try {
+                $cell = "return $cell;";
+                $cell = eval($cell);
+            } catch (\Exception $e) {
+                exit("Error: $e");
+            }
+        }
+        return $cell;
+    } // renderComputedCells
 
 
     /**
@@ -364,7 +419,7 @@ EOT;
                     $val = '&nbsp;';
                 }
                 $colClass = $this->colClasses[$c]??'';
-                $out .= "      <td class='$colClass'>$val</td>\n";
+                $out .= "      <td class='$colClass'><div>$val</div></td>\n";
                 $c++;
             }
             $out .= "    </tr>\n";
@@ -401,7 +456,7 @@ EOT;
     /**
      * @return void
      */
-    private function prepareColumnDefs()
+    private function prepareColumnDefs(): void
     {
         // inject service rows: select(delete), row-numbers, edit-buttons
         $this->prepareServiceColumns();
@@ -442,6 +497,7 @@ EOT;
                 'cellAttrib' => "class='$class'",
                 'key' => $key,
             ];
+            $this->colClasses[$c] = $class;
             $i++;
             $c++;
         }
@@ -945,36 +1001,6 @@ EOT;
 
 
     /**
-     * @param mixed $k
-     * @param mixed $rec
-     * @param mixed $v
-     * @param array $data
-     * @param mixed $key
-     * @return array|void
-     */
-    private function handleComputedCells(string  $recKey, int $r, int $c, string $cell): string
-    {
-        $rec = $this->tableData[$recKey];
-        while (preg_match_all('/\$([\w.]+)/', $cell, $m)) {
-            foreach ($m[1] as $ii => $vv) {
-                $x = $rec[$vv] ?? '';
-                $cell = str_replace($m[0][$ii], $x, $cell);
-            }
-        }
-        if (str_starts_with($cell, 'PHP:')) {
-            $cell = substr($cell, 4);
-            try {
-                $cell = "return $cell;";
-                $cell = eval($cell);
-            } catch (\Exception $e) {
-                exit("Error: $e");
-            }
-        }
-        return $cell;
-    } // handleComputedCells
-
-
-    /**
      * @return void
      * @throws \Exception
      */
@@ -1049,6 +1075,9 @@ EOT;
     } // renderViewTemplate
 
 
+    /**
+     * @return string
+     */
     public function getTableId(): string
     {
         return "pfy-table-wrapper-$this->inx";
@@ -1090,7 +1119,7 @@ EOT;
         $this->tdClass = $options['tdClass'];
         $this->tableWrapperClass = $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: 'pfy-table-wrapper');
         $this->dataReference = $options['dataReference']; // whether to include data-elemkey and data-reckey
-        $this->footers = $options['footers'] ?: ($options['footer'] ?? false);
+        $this->footers = $options['footers'] ?: ($options['footer'] ?? (($options['tableFooters']??false) ?: ($options['tableFooters'] ?? false)));
         $this->caption = $options['caption'];
         $this->captionAbove = ($options['captionPosition'][0] === 'a');
         $this->interactive = $options['interactive'];
@@ -1241,5 +1270,6 @@ EOT;
 
         $this->options = $options;
     } // parseOptions
+
 
 } // DataTable
