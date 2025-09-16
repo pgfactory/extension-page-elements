@@ -26,7 +26,10 @@ window.onload = function() {
  *  }
  */
 function initiateMail(options) {
-  const to = (options.to??false) ? options.to : '';
+  let to = '';
+  if (options.to ?? false) {
+    to = options.to;
+  }
   let url = `mailto:${to}`;
 
   if (options.cc??false) {
