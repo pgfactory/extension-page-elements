@@ -52,8 +52,9 @@ $focus-color: orange;
     }
   .pfy-row-selector input {
     font-size: inherit;
-    width: max(12px, 0.8em);
-    height: max(12px, 0.8em);
+    width: 1.2em;
+    height: 1.2em;
+    transform: translateY(0.14em);
   }
   .pfy-table-new-rec {
     width: 2em;

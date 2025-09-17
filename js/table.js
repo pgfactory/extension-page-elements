@@ -542,6 +542,7 @@ const tableHelper = {
             if (recKey) {
               pfyFormsHelper.fetchDataAndFillForm(formEl, recKey, true);
             }
+            pfyFormsHelper.presetForm(formEl);
             formEl.removeAttribute('id');
 
             domForAll(formEl, 'input.pfy-cancel', input => {

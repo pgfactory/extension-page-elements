@@ -316,7 +316,6 @@ EOT;
             if ($this->shieldCellContent) {
                 $cell = htmlspecialchars($cell, ENT_QUOTES);
             }
-            $cell = "<div>$cell</div>";
 
         } elseif ($cell === '%num') {
             $cell = $r;
@@ -325,6 +324,7 @@ EOT;
         if (str_contains($cell, '%reckey')) {
             $cell = str_replace('%reckey', $recKey, $cell);
         }
+        $cell = "<div>$cell</div>";
         $out = "      <td {$def['cellAttrib']}>$cell</td>\n";
         return $out;
     } // renderTableCell
