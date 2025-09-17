@@ -219,22 +219,26 @@
     .pfy-enlist-delete-checkbox {
       display: none;
     }
-    .pfy-form-tooltip .pfy-info-modify {
-      display: none;
+    .pfy-form-tooltip .pfy-info-add {
+      display: inline-block;
     }
   }
 
   .pfy-popup-wrapper.pfy-enlist-modify-mode {
-    .pfy-modify { display: block; }
-    .pfy-form-tooltip .pfy-info-add {
-      display: none;
+    .pfy-modify {
+      display: block;
+    }
+    .pfy-form-tooltip .pfy-info-modify {
+      display: inline-block;
     }
   }
 
   .pfy-popup-wrapper.pfy-enlist-del-mode {
-    .pfy-del { display: block; }
-    .pfy-form-tooltip .pfy-info-add {
-      display: none;
+    .pfy-del {
+      display: block;
+    }
+    .pfy-form-tooltip .pfy-info-modify {
+      display: inline-block;
     }
   }
 

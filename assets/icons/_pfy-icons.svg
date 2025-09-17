@@ -99,7 +99,7 @@ l-55 -92 42 -73 c177 -312 479 -615 815 -817 l106 -65 -255 -255 -256 -256 73
 
 
 <symbol id='pfy-iconset-ff' fill="currentColor">
-<g transform="scale(-1,1)" transform-origin="center">
+<g transform="scale(-1,1)"> <!-- transform-origin="center"-->
 	<path d="M21,1l3,3l-8,8l8,8l-3,3L10,12L21,1z M11,1l3,3l-8,8l8,8l-3,3L0,12L11,1z"/>
 </g>
 

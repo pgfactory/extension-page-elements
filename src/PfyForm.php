@@ -365,8 +365,8 @@ class PfyForm extends Form
                 'value' => $this->formOptions['recId']
             ]);
 
-            $this->addElement('', ['type' => 'hidden', 'name' => '_dataSrcInx', 'value' => $this->formIndex, 'readonly' => '']);
-            $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf(), 'readonly' => '']);
+            $this->addElement('', ['type' => 'hidden', 'name' => '_dataSrcInx', 'value' => $this->formIndex]);
+            $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf()]);
         }
         $this->fireRenderEvents();
 
@@ -1332,7 +1332,7 @@ class PfyForm extends Form
 		</div>
 	</details>
 </div>
-<!-- ----------------- pfy-elem-wrapper -->
+<!-- _________________ pfy-elem-wrapper -->
 
 
 EOT;
@@ -1354,7 +1354,7 @@ EOT;
 <div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib><!-- pfy-elem-wrapper -->
 $input
 </div>
-<!-- ----------------- pfy-elem-wrapper -->
+<!-- _________________ pfy-elem-wrapper -->
 
 
 EOT;
@@ -1396,7 +1396,7 @@ $label
 $input
 $errors
 </div>
-<!-- ----------------- /pfy-elem-wrapper -->
+<!-- _________________ /pfy-elem-wrapper -->
 
 
 EOT;
@@ -1429,7 +1429,7 @@ $label
 $input
 $errors
 </div>
-<!-- ----------------- /pfy-elem-wrapper -->
+<!-- _________________ /pfy-elem-wrapper -->
 
 
 EOT;
@@ -1568,6 +1568,7 @@ EOT;
         $dataFormInx = "data-src-inx='$this->formIndex'";
 
         $htmlForm = $this->getRenderer()->render($this, 'begin');
+        $htmlForm = preg_replace('/\s*id=".*?"/', '', $htmlForm);
         $htmlForm = "\n<form$id class='$formClass'$presetCallback $dataFormInx" . substr($htmlForm, 5);
         $html .= $htmlForm;
         $html .= $this->getRenderer()->render($this, 'errors');
@@ -2956,8 +2957,8 @@ EOT;
 
         // handle 'info' option:
         if ($info = $elemOptions['info']) {
-            $label .= "<button type='button' class='pfy-form-tooltip-anker'>".INFO_ICON.
-                "</button><span class='pfy-form-tooltip'>$info</span>";
+            $label .= "<span tabindex='0' class='pfy-form-tooltip-anker'>".INFO_ICON.
+                "</span><span class='pfy-form-tooltip'>$info</span>";
         }
 
         // if label contains HTML, we need to transform it:

@@ -1284,7 +1284,9 @@ const pfyFormsHelper = {
       }
       // set readonly attribute:
       domForOne(fieldWrapperElemEl, 'input,textarea', el => {
-        el.setAttribute('readonly', true);
+        if (el.getAttribute('type') !== 'hidden') {
+          el.setAttribute('readonly', true);
+        }
       })
 
       domForAll(fieldWrapperElemEl, '[type=checkbox],[type=radio]', el => {
