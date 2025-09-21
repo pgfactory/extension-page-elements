@@ -40,7 +40,8 @@ $focus-color: orange;
             border: 1px solid #ddd;
             font-size: 90%;
         }
-        th, td > div {
+        th:not(.pfy-service-col),
+        td:not(.pfy-service-col) > div {
           padding: 0.5em 0.6em 0.2em 0.6em;
         }
         thead th {
