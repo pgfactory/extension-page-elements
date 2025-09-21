@@ -252,7 +252,7 @@ EOT;
 
         $out = "  <tbody>\n";
         $rowClass = '';
-        $r = 0;
+        $r = 1;
         foreach ($data as $recKey => $dataRec) {
             $out .= $this->renderTableRow($r++, $recKey);
         }
@@ -283,7 +283,7 @@ EOT;
      */
     private function renderTableRow(int $r, int|string $recKey): string
     {
-        $rowClass = $this->rowClasses[$r] ?? '';
+        $rowClass = $this->rowClasses[$r-1] ?? '';
         $locked = $this->data2Dset->isLocked($recKey);
         $rowClass .= $locked ? ' pfy-rec-locked' : '';
         $out = "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
