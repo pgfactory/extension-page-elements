@@ -58,9 +58,7 @@ var pfyReveal = {
       var revealController = event.target.closest('.pfy-reveal-controller');
       if (revealController) {
         var target = document.querySelector(revealController.getAttribute('data-reveal-target'));
-        if (target) {
-          pfyReveal.toggle(target, revealController);
-        }
+        pfyReveal.toggle(revealController);
       }
     });
   }, // setupEventHandler
