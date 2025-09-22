@@ -137,7 +137,6 @@ class DataTable
     private mixed $mailFrom;
     private mixed $mailFieldName;
     private array $computedCells = [];
-    private mixed $cellMaxHeight = false;
     private string $nameAttr = '';
     private string $viewTemplate = '';
 
@@ -483,7 +482,7 @@ EOT;
             if ($this->colClasses[$c]??'') {
                 $class .= ' ' . $this->colClasses[$c];
             }
-            $class = "pfy-col-$i $class";
+            $class = "pfy-col-$i $class$tdClass";
 
             $cell = "\$$key";
             if ($this->computedCells[$key]?? false) {
@@ -1192,16 +1191,19 @@ EOT;
             $this->dataReference = true;
         }
 
+        if (self::$tableInx === 1) {
+            Assets::addAssets('TABLES');
+        }
+
         if (in_array('delete', $tableButtons) || in_array('archive', $tableButtons)) {
             if (!str_contains($serviceColumns, 'select')) {
                 $serviceColumns = "select,$serviceColumns";
             }
             Assets::addAssets('POPUPS');
-            Assets::addAssets('TABLES');
         } elseif ($this->interactive) {
             Assets::addAssets('POPUPS');
-            Assets::addAssets('TABLES');
         }
+
         $this->serviceColumns = $serviceColumns;
         $this->tableButtons = $tableButtons;
 

@@ -125,7 +125,7 @@ $focus-color: orange;
       }
       &.pfy-row-selector,
       &.pfy-row-number {
-        padding: 0.5em 0.2em 0 0.2em;
+        padding: 0.25em 0.2em 0 0.2em;
         max-width: 2em;
       }
       &.pfy-row-edit {
@@ -160,14 +160,16 @@ $focus-color: orange;
 
   // interactive -> dataTables:
   .pfy-table-wrapper {
+    position: relative;
     padding-top: 2.3em;
+outline: 1px dotted red;
 
     .pfy-table-buttons,
     .dt-search {
       position: absolute;
     }
     .pfy-table-buttons {
-      top: 1.5em; // not dt
+      top: 0; // not dt
     }
     div.dt-container div.dt-layout-row {
       margin: 0;
