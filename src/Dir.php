@@ -333,7 +333,10 @@ EOT;
      */
     private function extractFilesDescriptorVars(array $dir): array
     {
-        $data = array_map(array($this, 'extractFileDescriptorVars'), $dir);
+        $data = [];
+        foreach ($dir as $filename => $path) {
+            $data[$filename] = $this->extractFileDescriptorVars($filename, $path);
+        }
         return $data;
     } // extractFilesDescriptorVars
 
@@ -342,16 +345,16 @@ EOT;
      * @param string $file
      * @return array
      */
-    private function extractFileDescriptorVars(string $file): array
+    private function extractFileDescriptorVars(string $filename, string $file): array
     {
-        $url = $path = $type = $date = $subPath = $label = $slug = $pageId = $pageIndex = $pageIndex2 = $title = $decription = $filename = $basename = '';
+        $url = $path = $type = $date = $subPath = $label = $slug = $pageId = $pageIndex = $pageIndex2 = $title = $decription = $basename = '';
 
         // folder:
         if (is_dir($file)) {
             $type = 'folder';
             if (str_starts_with($file, PFY_KIRBY_BASE_PATH . 'content/')) {
                 // it's a page folder:
-                $basename = basename($file);
+                $basename = $filename;
                 $path = substr($file, strlen(PFY_KIRBY_BASE_PATH . 'content/'));
                 $path = preg_replace('|^\d+_|', '', $path);
                 $path = preg_replace('|/\d+_|', '/', $path);
@@ -365,8 +368,7 @@ EOT;
                 $label = $page->title()->value();
             } else {
                 // folder outside of /content:
-                $filename = base_name($file);
-                $basename = base_name($file, true);
+                $basename = $filename;
                 $label = $basename;
                 $name = $basename;
                 $subPath = substr($file, $this->absPathLen);
@@ -383,7 +385,6 @@ EOT;
                 $url = PFY_APP_BASE_URL . str_replace(PFY_KIRBY_BASE_PATH, '', $file);
             }
 
-            $filename   = basename($file);
             $basename   = base_name($filename, false);
             $label      = str_replace('_', ' ', $basename);
             $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
