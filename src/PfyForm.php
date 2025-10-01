@@ -920,6 +920,8 @@ class PfyForm extends Form
      */
     private function composeAddressElement(int|string $name, array $rec): void
     {
+        $required = ($rec['required']??false);
+
         if ($labels = ($this->formElements[$name]['label']??'')) {
             $labels = parseArgumentStr($labels);
         }
@@ -947,6 +949,7 @@ class PfyForm extends Form
             'label' => '{{ pfy-form-address-street-label }}',
             'class' => 'pfy-address-elem pfy-address-street',
             'autocomplete' => 'street-address',
+            'required' => $required,
         ];
         if ($labels['street']??false) {
             $addressElements[$elName]['label'] = $labels['street'];
@@ -966,13 +969,19 @@ class PfyForm extends Form
             $addressElements[$elName]['preset'] = $presets['street'];
         }
 
+        $combinedLabel = TransVars::getVariable('pfy-form-address-combined-label');
+        if ($required) {
+            $combinedLabel .= '<span class="pfy-form-required-marker">*</span>';
+        }
+
         $elName = ($names['zip']??false) ?: 'zip';
         $addressElements[$elName] = [
             'type' => 'text',
             'label' => '{{ pfy-form-address-zip-label }}',
             'class' => 'pfy-address-elem pfy-address-zip',
             'autocomplete' => 'postal-code',
-            'description' => '{{ pfy-form-address-combined-label }}',
+            'description' => $combinedLabel,
+            'required' => $required,
         ];
         if ($labels['zip']??false) {
             $addressElements[$elName]['label'] = $labels['zip'];
@@ -993,6 +1002,7 @@ class PfyForm extends Form
             'label' => '{{ pfy-form-address-city-label }}',
             'class' => 'pfy-address-elem pfy-address-city',
             'autocomplete' => 'address-level2',
+            'required' => $required,
         ];
         if ($labels['city']??false) {
             $addressElements[$elName]['lebel'] = $labels['city'];
@@ -2671,7 +2681,8 @@ EOT;
         $labelLen += 5;
         $dataRec = $this->origReceivedData + $dataRec;
         foreach ($dataRec as $key => $value) {
-            if ($key[0] === '_') {
+            // skip meta and antiSpam fields:
+            if ($key[0] === '_' || $this->formElements[$key]['antiSpam']??false) {
                 continue;
             }
             $type = $this->formElements[$key]['type']??false;
