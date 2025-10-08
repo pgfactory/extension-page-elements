@@ -130,7 +130,6 @@ class Dir
             $md = new MarkdownPlus();
             $str = $md->compile(ltrim($str, "\n"));
         }
-
         if ($str !== '{{ pfy-dir-empty }}') {
             $str = <<<EOT
 
@@ -216,8 +215,10 @@ EOT;
 
         foreach ($folders as $folder) {
             $subdir = $this->renderDirHierarchical($folder, $pattern, $level+1);
+            $subdir = shieldStr($subdir);
 
-            $fileVars = $this->extractFileDescriptorVars(rtrim($folder, '/'));
+            $basename = basename(rtrim($folder, '/'));
+            $fileVars = $this->extractFileDescriptorVars($basename, $folder);
             $templateOptions = $this->templateOptions;
             $templateOptions['markdown'] = false;
             $label = TemplateCompiler::compile($fileVars, $templateOptions, elementSelector:'folderElement');
@@ -236,7 +237,7 @@ $p
 
 EOT;
             $subdir = $this->markdown($subdir);
-            $out .= shieldStr($subdir);
+            $out .= $subdir;
         }
         $out .= $this->renderDir($path, $pattern, "pfy-dir-lvl-$level");
         return $out;
@@ -381,8 +382,8 @@ EOT;
         } elseif (is_file($file)) {
             $type       = 'file';
             $url        = $this->parseUrlFile($file);
-               if (!$url) {
-                $url = PFY_APP_BASE_URL . str_replace(PFY_KIRBY_BASE_PATH, '', $file);
+            if (!$url) {
+                $url = str_replace(PFY_DOCROOT, PFY_HOST_URL, $file);
             }
 
             $basename   = base_name($filename, false);
@@ -398,7 +399,7 @@ EOT;
             }
         }
 
-
+        $url = str_replace(' ', '%20', $url); // convert blanks in file names
         require_once __DIR__ . '/pe_helper.php';
         $out = [
             'file'          => $file,

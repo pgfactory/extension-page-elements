@@ -12,9 +12,13 @@
       padding-left: var(--mdp-accordion-left-indent, 0rem);
     }
 
+    details.mdp-accordion {
+      margin-bottom: 0.8em;
+    }
     .mdp-accordion {
       .mdp-accordion-body {
-        padding-left: calc(1.6em + var(--mdp-accordion-summary-indent, 0rem));
+        padding-top: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
+        padding-left: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
       }
 
       summary {

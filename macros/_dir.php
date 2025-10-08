@@ -17,7 +17,7 @@ return function($argStr = '')
             'exclude' => ['Regex pattern by which to exclude specific elements.', null],
             'permission' => ['If set, defines whether visitor has permission to download.', 'loggedin|localhost'],
             'asLinks' => ['Render elements as links.', false],
-            'enableFolderDownload' => ['If true, folders can be downloaded as a zip file.', true],
+            'enableFolderDownload' => ['If true, folders can be downloaded as a zip file.', false],
             'template' => ['[text,file] The template based on which output is rendered.', null],
             'modifiers' => ['[REVERSE, REVERSE_FOLDERS, INCLUDE_PATH, DEEP, HIERARCHICAL, DOWNLOAD] '.
                 'Activates miscellaneous modes.', null],
