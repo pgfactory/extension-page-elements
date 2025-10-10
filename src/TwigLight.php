@@ -111,7 +111,7 @@ class TwigLight
         $expr = '';
         $tok = strtok($varname, ' ');
         $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
-        if (!preg_match('/\W/', $tok)) {
+        if (preg_match('/[a-zA-Z_]/', $tok)) {
             $tok = "'$tok'";
         }
         $expr .= "$tok ";
@@ -119,8 +119,8 @@ class TwigLight
             $tok = strtok(' ');
             if ($tok !== false) {
                 $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
-                if (!preg_match('/\W/', $tok)) {
-                    $tok = "'$tok'";
+                if (preg_match('/[a-zA-Z_]/', $tok)) {
+                    $tok = ".'$tok'";
                 }
                 $expr .= "$tok ";
             }
