@@ -162,7 +162,9 @@ $focus-color: orange;
   .pfy-table-wrapper {
     position: relative;
     padding-top: 2.3em;
-outline: 1px dotted red;
+    overflow: auto;
+    border: 1px solid #ddd;
+//outline: 1px dotted red;
 
     .pfy-table-buttons,
     .dt-search {

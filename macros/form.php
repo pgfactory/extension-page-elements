@@ -251,6 +251,8 @@ Types automatically derived from field *field-names*: `email`, `passwor*`, `subm
 
 #### Field Arguments
 
+@@@ --tt1-width: 8.5em
+
 All:
 : - id   >> [string] 
 : - class   >> [string] (-> e.g. class:short )
@@ -258,7 +260,7 @@ All:
 : - placeholder   >> [string] 
 : - preset   >> [any] initial value (also: 'default' or 'value')
 : - required    >> [bool,identifier]
-: - autocomplete    [string|bool]
+: - autocomplete   >> [string|bool]
 : - disabled    >> [bool]
 : - readonly    >> [bool]
 : - info        >> [string] info icon showing info text as tooltip
@@ -281,7 +283,9 @@ radio/checkbox/dropdown/select/multiselect:
 : - layout          >> [horizontal,vertical]
 
 upload/multiupload: (currently only image files supported)
-: - maxMegaByte     10em>> [integer] allowed file size in MB
+: - maxMegaByte     >> [integer] allowed file size in MB
+
+@@@
 
 <div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
@@ -388,7 +392,10 @@ EOT,
     } else {
         if ($output === false) {
             $form = $GLOBALS['pfy.form'] = new PfyFormSplitSyntax($options);
-            $html = $form->init($formFields);
+            list($continue, $html) = $form->initRenderForm($formFields);
+            if ($continue) {
+                $html .= $form->renderFormWrapperHead();
+            }
 
         } else {
             $html .= $GLOBALS['pfy.form']->renderFormPieces(uptoWhich: $output);

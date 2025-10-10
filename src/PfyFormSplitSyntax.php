@@ -9,60 +9,6 @@ class PfyFormSplitSyntax extends PfyForm
     private mixed $lastRendered = false;
 
     /**
-     * @param array $formElements
-     * @return string
-     * @throws \Kirby\Exception\InvalidArgumentException
-     */
-    public function init(array $formElements): string
-    {
-        $this->createForm($formElements);
-
-        $html = "\n\n<!-- === pfy form widget === -->\n";
-
-        $this->__processReceivedData();
-
-        // check for form issues: deadlinePassed and maxCountExceeded:
-        $formIssueResponse = '';
-        if ($this->deadlinePassed) {
-            $formIssueResponse = $this->deadlinePassed;
-            if (!$this->isFormAdmin) {
-                $this->showForm = false;
-            }
-        } elseif ($this->maxCountExceeded) {
-            $formIssueResponse = $this->maxCountExceeded;
-            if (!$this->isFormAdmin) {
-                $this->showForm = false;
-            }
-        }
-
-        if (!$this->showForm && $this->showFeedbackInpage) {
-            // normal case after data received -> show response, hide form:
-            $html .= $formIssueResponse.$this->formResponse;
-            $this->injectNoShowCssRule();
-            $html .= "<div class='pfy-show-unless-form-data-received-$this->formIndex'>\n";
-
-        } else {
-            // check for data-received feedback:
-            if (!$this->showFeedbackInpage && $this->formResponse) {
-                // no showFeedbackInpage -> send feedback via banner:
-                reloadAgent(message: strip_tags($this->formResponse));
-            }
-            // normal case when no data-received and/or form-issue encountered:
-            $html .= $formIssueResponse;
-            if ($this->showForm) {
-                // show form, either because no data-received or admin-mode:
-                $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
-            } else {
-                // don't show form:
-                $html .= $this->injectNoShowCssRule();
-            }
-        }
-
-        return $html;
-    } // init
-
-
-    /**
      * Prerequisite: createForm() executed -> form structure ($this->formElements) is set up at this point.
      * Now render elements in chunks (defined by the name of the last element to render)
      * Keeps track via $this->lastRendered what elements have been rendered before.
@@ -140,8 +86,8 @@ class PfyFormSplitSyntax extends PfyForm
         if ($uptoWhich === 'tail') {
             if ($this->showForm) {
                 $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
-                //      /form
-                //    /pfy-form-wrapper
+                                                                //      /form
+                                                                //    /pfy-form-wrapper
                 $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
                 $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/

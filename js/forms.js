@@ -1207,7 +1207,7 @@ const pfyFormsHelper = {
   // -> this is the case when url-arg "?presetForm=ABCDEF&asmodified" is used
   handleMarkAsModifiedRequest(form) {
     const formWrapper = form.closest('.pfy-form-wrapper');
-    if (formWrapper.classList.contains('pfy-form-mark-as-modified')) {
+    if (formWrapper && formWrapper.classList.contains('pfy-form-mark-as-modified')) {
       formWrapper.classList.remove('pfy-form-mark-as-modified');
       formWrapper.classList.add('pfy-form-is-modified');
     }

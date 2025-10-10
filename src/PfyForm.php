@@ -239,6 +239,42 @@ class PfyForm extends Form
      */
     public function renderForm(array $formElements): string
     {
+        list($continue, $html) = $this->initRenderForm($formElements);
+        if (!$continue) {
+            return $html;
+        }
+
+        $tableHtml = $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+
+        // assemble form:
+        $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
+                                                        //    pfy-form-wrapper
+        $html .= $this->renderFormHead();               //      form
+                                                        //        pfy-elems-wrapper
+        $html .= $this->renderFormFields();             //          pfy-elem-wrapper ...
+
+        $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
+                                                        //      /form
+                                                        //    /pfy-form-wrapper
+        $html .= $tableHtml;                                //
+
+        $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
+        $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
+
+        $html .= $this->injectNoShowEnd();
+        $html .= "<!-- === /pfy form widget === -->\n\n";
+        return $html;
+    } // renderForm
+
+
+    /**
+     * @param array $formElements
+     * @param bool $splitSyntax
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    public function initRenderForm(array $formElements, bool $splitSyntax = false): array
+    {
         $this->createForm($formElements);
         $html = "\n\n<!-- === pfy form widget === -->\n";
 
@@ -265,12 +301,14 @@ class PfyForm extends Form
             $formTopBanner .= $this->renderFormTopBanner();
 
             if (!$this->isFormAdmin) {
-                return "$formTopBanner\n$formResponse";
+                return [false, "$formTopBanner\n$formResponse"];
             }
             if ($this->formResponse) {
                 $formResponse .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $formResponse .= "<!-- === /pfy form widget === -->\n";
-                return "$formTopBanner\n$formResponse";
+                // in case of split syntax: need to signal renderFormPieces(tail) to skip table output again:
+                $this->tableOptions = false;
+                return [false, "$formTopBanner\n$formResponse"];
             }
             $html .= "$formTopBanner\n$formResponse";;
         }
@@ -279,30 +317,8 @@ class PfyForm extends Form
             // normal case after data received -> show response, hide form:
             $html .= $this->injectNoShowCssRule();
         }
-
-        $table = $this->renderDataTable();              //    pfy-table-data-output-wrapper/
-
-
-        // assemble form:
-        $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
-                                                        //    pfy-form-wrapper
-        $html .= $this->renderFormHead();               //      form
-                                                        //        pfy-elems-wrapper
-        $html .= $this->renderFormFields();             //          pfy-elem-wrapper ...
-
-        $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
-                                                        //      /form
-                                                        //    /pfy-form-wrapper
-        $html .= $table;                                //
-
-        $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
-        $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
-
-        $html .= $this->injectNoShowEnd();
-        $html .= "<!-- === /pfy form widget === -->\n\n";
-        return $html;
-    } // renderForm
-
+        return [true, $html];
+    } // initRenderForm
 
 
     // === Create Form ===================================================================
@@ -1414,6 +1430,16 @@ EOT;
     } // renderFormElement_regularTypes
 
 
+    /**
+     * @param object $elem
+     * @param string $type
+     * @param string $class
+     * @param string $input
+     * @param string $attr
+     * @param string $label
+     * @param array $dataVals
+     * @return string
+     */
     private function renderFormElement_choiceTypes(object $elem, string $type, string $class, string $input, string $attr, string $label, array $dataVals): string
     {
         // get errors and render them:
@@ -1450,7 +1476,7 @@ EOT;
     /**
      * @return string
      */
-    protected function renderFormWrapperHead(): string
+    public function renderFormWrapperHead(): string
     {
         $html = '';
         $formInx = $this->formIndex;
@@ -1782,7 +1808,7 @@ EOT;
      */
     protected function renderDataTable(): string
     {
-        if (!($this->formOptions['tableOptions'] && $this->file && $this->isFormAdmin)) {
+        if (!($this->tableOptions && $this->file && $this->isFormAdmin)) {
             return '';
         }
 
@@ -2872,7 +2898,7 @@ EOT;
             $formOptions['outerWrapperClass'] .= ' pfy-side-by-side';
         }
 
-        if ($formOptions['tableOptions']) {
+        if ($formOptions['tableOptions'] || $formOptions['editData']) {
             $this->tableOptions = $this->parseTableOptions($formOptions['tableOptions']);
         } else {
             $this->tableOptions = false;
@@ -2893,6 +2919,11 @@ EOT;
         $this->showTable = true;
 
         $tableOptions += PFY_FORM_OPTIONS['tableOptions'];
+
+        // short hand 'editData: true':
+        if ($this->formOptions['editData'] === true) {
+            $tableOptions['tableButtons'] = 'delete,download';
+        }
         if (!isset($tableOptions['permission'])) {
             $tableOptions['permission'] = 'loggedin|localhost';
         }
