@@ -35,8 +35,8 @@ class ListRenderer
             if ($tableOptions === true) {
                 $tableOptions = [];
             }
-            if (!($tableOptions['tableHeaders']??false)) {
-                $tableOptions['tableHeaders'] = $labels;
+            if (!($tableOptions['headers']??false)) {
+                $tableOptions['headers'] = $labels;
             }
             $str = self::renderUserTable($users, $tableOptions);
 
