@@ -311,7 +311,11 @@ EOT;
 
         } elseif (($cell[0] ?? '') === '$') {
             $elemKey = substr($cell, 1);
-            $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
+            if ($cell === '$_timestamp') {
+                $cell = date('d-m-Y, H:i', strtotime($this->tableData[$recKey][$elemKey]));
+            } else {
+                $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
+            }
             if ($this->shieldCellContent) {
                 $cell = htmlspecialchars($cell, ENT_QUOTES);
             }
@@ -369,7 +373,6 @@ EOT;
         $data = &$this->tableData;
         $out = '';
         if ($this->footers) {
-            $dataKeys = array_keys($this->tableHeaders);
             $dataKeys = [];
             foreach ($this->columns as $rec) {
                 $dataKeys[] = $rec['key']??'';
@@ -990,7 +993,7 @@ EOT;
         }
         $subject = TransVars::getVariable('pfy-table-send-rec-subject');
         $template = TransVars::getVariable('pfy-table-send-rec-mail-template');
-        $body = str_replace('%data%', $str, $template);
+        $body = str_replace('%_data_%', $str, $template);
 
         Utils::sendMail($email, $subject, $body);
         $message = TransVars::getVariable('pfy-table-send-rec-confirmation');
@@ -1116,7 +1119,7 @@ EOT;
         $this->rowClasses = $options['rowClasses'];
         $this->rowIds = $options['rowIds'];
         $this->tdClass = $options['tdClass'];
-        $this->tableWrapperClass = $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: 'pfy-table-wrapper');
+        $this->tableWrapperClass = 'pfy-table-wrapper ' . $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: '');
         $this->dataReference = $options['dataReference']; // whether to include data-elemkey and data-reckey
         $this->footers = $options['footers'] ?: ($options['footer'] ?? (($options['tableFooters']??false) ?: ($options['tableFooters'] ?? false)));
         $this->caption = $options['caption'];
@@ -1212,13 +1215,14 @@ EOT;
             if (!is_array($this->tableHeaders)) {
                 $this->tableHeaders = $this->parseArrayArg('tableHeaders');
             }
-
             if (is_numeric(array_keys($this->tableHeaders)[0])) {
-                $tableHeaders = [];
-                foreach ($this->tableHeaders as $str) {
-                    $tableHeaders[str_replace('-', '_', $str)] = $str;
-                }
-                $this->tableHeaders = $tableHeaders;
+//??? => check with Forms
+//                $tableHeaders = [];
+//                foreach ($this->tableHeaders as $str) {
+//                    $tableHeaders[str_replace('-', '_', $str)] = $str;
+//                }
+//                $this->tableHeaders = $tableHeaders;
+                $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
             }
 
             if ($this->includeSystemElements) {
