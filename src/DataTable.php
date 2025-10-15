@@ -461,7 +461,7 @@ EOT;
     private function prepareColumnDefs(): void
     {
         // inject service rows: select(delete), row-numbers, edit-buttons
-        $this->prepareServiceColumns();
+        $c = $this->prepareServiceColumns();
 
         $tdClass = $this->tdClass? " $this->tdClass": '';
         if (!$this->tableHeaders || $this->tableHeaders === true) {
@@ -470,7 +470,6 @@ EOT;
             $colHeaders = $this->tableHeaders;
         }
         $i = sizeof($this->columns) + 1;
-        $c = 0;
         foreach ($colHeaders as $key => $value) {
             if ($this->translateHeaders) {
                 if ($v = TransVars::getVariable($value)) {
@@ -510,10 +509,10 @@ EOT;
      * Injects rows into data and header for delete,edit,row-numbers.
      * @return void
      */
-    private function prepareServiceColumns(): void
+    private function prepareServiceColumns(): int
     {
         if (!$this->serviceColumns) {
-            return;
+            return 0;
         }
         $tdClass = $this->tdClass? " $this->tdClass": '';
         $servCols = explodeTrim(',', $this->serviceColumns, true);
@@ -584,16 +583,19 @@ EOT;
                 }
                 $hdr = $hdrCell;
             }
+            $cellClass = "pfy-col-$i pfy-service-col $class$tdClass";
             $serviceColumns[] = [
                 'hdrContent' => $hdr, // -> attributes for header elements
                 'hdrAttrib' => "class='pfy-col-$i pfy-service-col $class'",
                 'cellContent' => $cell, // -> means to be replaced by data value
-                'cellAttrib' => "class='pfy-col-$i pfy-service-col $class$tdClass'",
+                'cellAttrib' => "class='$cellClass'",
             ];
+            $this->colClasses[] = $cellClass;
             $i++;
         }
 
         $this->columns = $serviceColumns;
+        return sizeof($this->colClasses);
     } // prepareServiceColumns
 
 
