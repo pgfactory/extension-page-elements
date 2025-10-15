@@ -44,8 +44,8 @@ return function ($argStr = '')
             'cellMinHeight' => ['(css length) If set, adds styling instructions for cell\'s min height.', false],
             'cellMaxHeight' => ['(css length) If set, adds styling instructions for cell\'s max height.', false],
             'scrollHints' => ['(bool) If true, scroll hint shadows become visible in cells heigher than their viewport.', null],
-            'includeTimestamp' => ['(bool) If true, .', null],
-            'paging' => ['If true, data is presented using paging.', false],
+            'includeTimestamp' => ['(bool) If true, timestamp of data record is included.', null],
+            'paging' => ['If true, data is presented using paging.', true],
             'minRows' => ['If set, table will be filled with empty lines up to the given number of rows.', false],
             'computedCells' => ['(key=value) If set, data is .', false],
             'order' => ['(element name) If set, data is sorted on given data element.'.
