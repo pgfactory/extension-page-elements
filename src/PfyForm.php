@@ -16,6 +16,7 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
 use PgFactory\PageFactoryElements\PageElements;
 use PgFactory\PageFactoryElements\TemplateCompiler;
+use PgFactory\PageFactoryElements\TwigLight;
 use RRule\RRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 use function PgFactory\PageFactory\var_r as var_r;
@@ -76,7 +77,7 @@ const PFY_FORM_OPTIONS = [
         'obfuscateCols' => ['passwor*'],
     ],
     'dbOptions' => [
-        'keepDataDuration' => DEFAULT_KEEP_OLD_DATA_DURATION,
+        'keepDataDuration' => false, // -> use DataSet default
         'keepDataOnField' => false,
         'masterFileRecKeyType' => 'index',
         'includeMeta' => true,
@@ -732,6 +733,9 @@ class PfyForm extends Form
             $type = $elemOptions['type'] = 'select';
         }
         $selectionElems = $elemOptions['options'];
+        if (!is_array($selectionElems)) {
+            throw new \Exception("Error: options missing for select element '$label'.");
+        }
 
         // handle special case of one select option -> render as readonly:
         if (sizeof($selectionElems) === 1) {
@@ -950,7 +954,7 @@ class PfyForm extends Form
         if ($presets = ($this->formElements[$name]['preset']??'')) {
             $presets = parseArgumentStr($presets);
         }
-        if ($names = ($this->formElements[$name]['name']??'')) {
+        if ($names = ($this->formElements[$name]['names'] ?? ($this->formElements[$name]['name']??''))) {
             $names = parseArgumentStr($names);
             if (array_keys($names)[0] === '_anonInx0') {
                 $names = array_combine(['street', 'zip', 'city'], $names);
@@ -2115,6 +2119,8 @@ EOT;
         }
 
         // success:
+        $this->propagateDataToVariables($dataRec); // make dataRec and scheduleData available as transvars
+
         if ($this->formOptions['mailTo']) {
             $this->sendOwnerNotification($dataRec);
         }
@@ -2717,7 +2723,7 @@ EOT;
             }
             $key1 = str_pad("$key: ", $labelLen, '. ');
             if (is_array($value)) {
-                $value = $value[ARRAY_SUMMARY_NAME]??'';
+                $value = implode(', ', $value);
             }
             $out .= "$key1 $value\n";
             $dataRec[$key] = $value;
@@ -3234,11 +3240,19 @@ EOT;
     {
         $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
 
+        $str = TwigLight::compile($str);
+
         if (preg_match_all('/%([\w-]{1,16})%/', $str, $m)) {
-            $dataRec = $this->origReceivedData;
+            $dataRec += $this->origReceivedData; // add internal data elements, i.e. those like '_xy'
             foreach ($m[1] as $i => $v) {
                 if (isset($dataRec[$v])) {
                     $str = str_replace($m[0][$i], $dataRec[$v], $str);
+                } else {
+                    if ($val = TransVars::getVariable($v)) {
+                        $str = str_replace($m[0][$i], $val, $str);
+                    } elseif ($val = TransVars::getVariable("_{$v}_")) {
+                        $str = str_replace($m[0][$i], $val, $str);
+                    }
                 }
             }
         }
@@ -3246,7 +3260,6 @@ EOT;
         $str = str_replace([' BR ', '\\n', '<br>'], "\n", $str);
         if (str_contains($str, "'{=={'")) {
             $str = str_replace("'{=={'", '{{', $str);
-            $str = TransVars::translate($str);
         }
         if (str_contains($str, '{{')) {
             $str = TransVars::translate($str);
@@ -3259,34 +3272,25 @@ EOT;
      * @param array $dataRec
      * @return string
      */
-    private function propagateDataToVariables(array $dataRec): string
+    private function propagateDataToVariables(array $dataRec): void
     {
         if ($schedRec = (self::$scheduleRecs[self::$formCounter]??false)) {
-            $schedRec['start'] = intlDateFormat('RELATIVE_MEDIUM', $schedRec['start']);
-            $schedRec['end'] = intlDateFormat('RELATIVE_MEDIUM', $schedRec['end']);
             $dataRec += $schedRec;
         }
 
         $dataRec['host'] = PFY_HOST_URL;
 
-        $to = false;
-        $emailFieldName = $this->formOptions['confirmationEmail'];
         // add variables for all form values, so they can be used in mail-template:
         foreach ($dataRec as $key => $value) {
             if (is_array($value)) {
                 $value = $value[0]?? json_encode($value);
             }
-            if ($key === $emailFieldName) {
-                $to = $value;
-            }
-            $value = $value?: TransVars::getVariable('pfy-confirmation-response-element-empty');
-            TransVars::setVariable("_{$key}_", $value);
+            TransVars::setTempVariable($key, $value);
         }
         if ($value = ($this->auxBannerValues['eventBanner']??false)) {
             TransVars::setVariable("_banner_", $value);
         }
 
-        return $to;
     } // propagateDataToVariables
 
 

@@ -181,14 +181,14 @@ pfy-table-send-rec-mail-template:
     Hallo
     Hier sind die angeforderten Daten:
     
-    %data%
+    %_data_%
     
     Beste Grüsse, der Webmaster
   _:  |
     Hello
     Here are is the requested data record:
     
-    %data%
+    %_data_%
     
     Best, the webmaster
 
