@@ -466,7 +466,7 @@ pfy-dir-download-icon-tooltip:
   de: 'Den ganzen Ordner als Zip-Datei herunter laden.'
   _:  'Download the entire folder as a zip file.'
 
-pfy-download-insufficient-permissions:
+pfy-insufficient-access-permissions:
   de: '–– Sie müssen angemeldet sein, um diesen Inhalt sehen zu können. ––'
   de2: '–– Du musst angemeldet sein, um diesen Inhalt sehen zu können. ––'
   _:  '–– You need to be logged in to see this content. ––'

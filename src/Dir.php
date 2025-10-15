@@ -99,7 +99,7 @@ class Dir
 
         list($path, $pattern) = $this->parseOptions($args, $inx);
         if (!$this->permission) {
-            return '{{ pfy-download-insufficient-permissions }}';
+            return '{{ pfy-insufficient-access-permissions }}';
         }
         $this->origPathLen = strlen($path);
         $dirOffset = get('dir');
