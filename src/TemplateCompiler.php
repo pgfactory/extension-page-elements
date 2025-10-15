@@ -81,7 +81,9 @@ class TemplateCompiler
 
 
         $out = '';
+        $inx = 0;
         foreach ($data as $i => $rec) {
+            $inx++;
             // allow selection of category and element from fields in $rec:
             $categorySel = $rec[$categorySelector] ?? $categorySelector;
             $elementSel  = $rec[$elementSelector] ?? $elementSelector;
@@ -99,7 +101,7 @@ class TemplateCompiler
                 $template = self::handleMissingTemplate($rec);
             }
 
-            $s = self::compileTemplate($template, $rec);
+            $s = self::compileTemplate($template, $rec, $inx);
 
             if ($s && $compileMarkdown) {
                 $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
@@ -223,9 +225,10 @@ class TemplateCompiler
      * @param array $vars
      * @return string
      */
-    private static function compileTemplate(string $template, array $vars): string
+    private static function compileTemplate(string $template, array $vars, int $index): string
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
+        $template = str_replace('%%', $index, $template);
         $template = self::basicCompileTemplate($template, $vars);
         TransVars::setTempVariables($vars);
         $template = TwigLight::compile($template);
@@ -252,6 +255,7 @@ class TemplateCompiler
         if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
             self::removeUndefinedPlaceholders($template);
         }
+        $template = TransVars::resolveShortFormVariables($template, keepUnknows: true);
         return $template;
     } // basicCompileTemplate
 
