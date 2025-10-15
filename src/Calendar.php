@@ -228,6 +228,10 @@ EOT;
                 $formFields['Event']['defaultEventDuration'] = $this->defaultEventDuration;
             }
         }
+        $a = $formFields['category'];
+        if (!($formFields['category']['options']??false)) {
+            $formFields['category']['options'] = $this->categories;
+        }
 
         // add generic fields, if not defined yet:
         if (!isset($formFields['_delete'])) {
