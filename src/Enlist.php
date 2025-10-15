@@ -174,8 +174,9 @@ class Enlist
      */
     private function renderEnlistWidget(): string
     {
-        $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$this->widgetInx";
-        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$this->widgetInx " . $this->class);
+        $widgetInxCls = translateToClassName($this->widgetInx);
+        $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$widgetInxCls";
+        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$widgetInxCls " . $this->class??'');
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
         }

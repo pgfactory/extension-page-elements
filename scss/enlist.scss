@@ -20,13 +20,9 @@
 
 .pfy-default-styling {
 
-  .pfy-enlistment-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    align-content: space-between;
-    gap: 1em;
-    .pfy-enlist-wrapper {
-      flex: 1 0 14em;
+  .pfy-enlist-wrapper {
+    .pfy-table-wrapper {
+      padding-top: 0;
     }
   }
 
