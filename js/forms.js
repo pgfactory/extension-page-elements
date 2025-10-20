@@ -1297,7 +1297,7 @@ const pfyFormsHelper = {
 
 
   reloadAgent(arg) {
-    if (pfyFormRecLocking) {
+    if ((typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking) {
       pfyFormsHelper.unlockRecs();
     }
     reloadAgent(arg);
