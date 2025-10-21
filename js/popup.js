@@ -246,6 +246,7 @@ function pfyPopup( options ) {
     if (this.contentFrom) {
       content += this.getContentFrom();
     }
+    // <dialog open closedby="any">
     let html = `
               <dialog class="${cls}">
                    ${header}

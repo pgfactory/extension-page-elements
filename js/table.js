@@ -90,6 +90,7 @@ const tableHelper = {
           dataTables.forEach((tableWrapperEl) => {
             tableHelper.prepareTableWidths(tableWrapperEl);
           });
+          console.log('...done');
         } else {
           console.log('waiting for datatable to finish initializing...');
        }
