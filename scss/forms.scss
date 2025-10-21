@@ -111,6 +111,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   button {
     cursor: pointer;
   }
+  input:user-invalid {
+    outline: 1px solid red;
+  }
+  input:user-valid {
+    outline: 1px solid green;
+  }
 
   .pfy-label-wrapper, .pfy-input-wrapper {
     display: inline-block;
