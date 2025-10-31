@@ -95,6 +95,9 @@ const PE_PATH_DEFINITIONS = [
         PE_ASSETS_PATH.'js/sayTTS.js',
         PE_ASSETS_PATH.'css/-sayTTS.css',
     ],
+    'HTML_MAIL' => [
+        PE_ASSETS_PATH.'css/-htmlmail.css',
+    ],
 ];
 
 

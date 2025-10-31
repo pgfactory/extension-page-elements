@@ -1,0 +1,33 @@
+
+
+pfy-htmlmail-submit-button:
+  de: 'Vorschau aktualisieren'
+  _: 'Refresh preview'
+
+
+pfy-htmlmail-send-button:
+  de: 'Senden'
+  _: 'Send'
+
+pfy-htmlmail-form-accordion-label:
+  de: 'E-Mail bearbeiten'
+  _: 'Edit mail'
+
+pfy-htmlmail-preview-heading:
+  de: 'E-Mail Vorschau'
+  _: 'E-Mail Preview'
+
+pfy-htmlmail-preview-subject:
+  de: 'Betreff'
+  _: 'Subject'
+
+pfy-htmlmail-to:
+  de: 'An:'
+  _: 'To:'
+
+pfy-htmlmail-preview-sourcecode:
+  de: 'Quellcode'
+  _: 'Source Code'
+
+
+
