@@ -82,6 +82,10 @@ class PfyFormSplitSyntax extends PfyForm
             }
         }
 
+        if ($uptoWhich === 'rest') {
+            $html .= $this->renderFormButtons();
+        }
+
         // render everything after the last form element:
         if ($uptoWhich === 'tail') {
             if ($this->showForm) {

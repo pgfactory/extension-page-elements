@@ -557,6 +557,7 @@ const pfyFormsHelper = {
     }
     if (val) {
       isPreset = true;
+      val = this.fixAttribValue(val);
     }
 
     // get value, first try data-value:
@@ -565,13 +566,14 @@ const pfyFormsHelper = {
       if (val) {
         fieldWrapperElemEl.removeAttribute('data-value');
         isPreset = true;
-        val = (val === 'false') ? false: val;
+        val = this.fixAttribValue(val);
       }
     } else {
       domForOne(fieldWrapperElemEl, '[data-value]', el => {
         val = el.dataset.value;
         el.removeAttribute('data-value');
         isPreset = true;
+        val = this.fixAttribValue(val);
       })
     }
     // next try given data-rec (if present):
@@ -659,6 +661,19 @@ const pfyFormsHelper = {
       this.setPresetFlag(form);
     }
   }, // presetField
+
+
+  fixAttribValue(val) {
+    if (val === 'false') {
+      val = false;
+    } else {
+      // unshield shielded characters in attributes:
+      val = val.replace(/❛/g, '\'');
+      val = val.replace(/❝/g, '"');
+      val = val.replace(/∽/g, '~');
+    }
+    return val;
+  }, // fixAttribValue
 
 
   setFocus(el) {

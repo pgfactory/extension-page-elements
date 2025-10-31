@@ -10,10 +10,10 @@ namespace PgFactory\PageFactory;
 use Kirby\Exception\InvalidArgumentException;
 use Nette\Forms\Form;
 use Nette\Utils\Html;
-use Kirby\Email\PHPMailer;
 use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactoryElements\Events as Events;
+use PgFactory\PageFactoryElements\HtmlMail;
 use PgFactory\PageFactoryElements\PageElements;
 use PgFactory\PageFactoryElements\TemplateCompiler;
 use PgFactory\PageFactoryElements\TwigLight;
@@ -253,6 +253,8 @@ class PfyForm extends Form
         $html .= $this->renderFormHead();               //      form
                                                         //        pfy-elems-wrapper
         $html .= $this->renderFormFields();             //          pfy-elem-wrapper ...
+
+        $html .= $this->renderFormButtons();
 
         $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
                                                         //      /form
@@ -1286,6 +1288,11 @@ class PfyForm extends Form
                 $val = $rec['preset'];
                 if (str_contains($val, '%')) {
                     $val = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                    $val = str_replace('%', '\\%', $val);
+                }
+                if (str_contains($val, '"') || str_contains($val, "'")) {
+                    // replace quotes/double quotes with lookalikes to shield them:
+                    $val = str_replace(['"', "'"], ['❝', "❛"], $val);
                 }
               $dataAttrib .= " data-preset='$val'";
             }
@@ -1302,7 +1309,9 @@ class PfyForm extends Form
         } elseif ($type === 'literal') {
             $html .= $rec['html'] ?? '';
 
-        } elseif (str_contains(',cancel,submit,reset,button,newrec', ",$type,")) {
+        } elseif (str_contains(',cancel,submit,reset,formbutton,newrec', ",$type,")) {
+            // 'formbutton' is used to place a button inside the .pfy-form-buttons wrapper:
+            $type = ($type === 'formbutton') ? 'button' : $type;
             $cls = $rec['class'] ?? '';
             $callback = ($rec['callback']??false);
             if ($callback) {
@@ -1316,13 +1325,18 @@ class PfyForm extends Form
 
         } elseif ($type === 'button') {
             $cls = $rec['class'] ?? '';
-            $elem->setHtmlAttribute('class', "pfy-form-button $cls");
+            $elem->setHtmlAttribute('class', "pfy-button $cls");
             $callback = ($rec['callback']??false);
             if ($callback) {
                 $elem->setHtmlAttribute('data-callback', $callback);
             }
-            $this->formButtons .= (string)$elem->getControl() . "\n";
-            return '';
+            $html = (string)$elem->getControl();
+            $html = <<<EOT
+<div class="pfy-elem-wrapper pfy-button-wrapper">
+$html
+</div>
+EOT;
+
 
         } elseif (is_array($dataVal)) {
             $html = $this->renderFormElement_choiceTypes($elem, $type, $class, $input, $attr, $label, $dataVal);
@@ -1659,7 +1673,6 @@ EOT;
         }
 
         $html = '';
-        $html .= $this->renderFormButtons();
 
         // add standard hidden fields to identify data: which form, which data-record:
         $html .= $this->_renderFormTail();
@@ -1789,7 +1802,7 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private function renderFormButtons(): string
+    protected function renderFormButtons(): string
     {
         $html = '';
         if ($this->formButtons) {
@@ -2007,7 +2020,7 @@ EOT;
             return;
         }
 
-        $dataRec = $this->getValues('array');
+        $dataRec = $origDataRec = $this->getValues('array');
 
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
@@ -2045,6 +2058,10 @@ EOT;
 
         // handle 'dataReceivedCallback' on data received:
         if ($this->formOptions['dataReceivedCallback']) {
+            if ($this->keepSubmittedDataInForm) {
+                $this->retainSubmittedData($origDataRec, $formInxReceived);
+            }
+
             list($html, $continueEval) = $this->handleCallback($dataRec);
             if (!$continueEval) {
                 $this->formResponse =  $html;
@@ -2101,13 +2118,7 @@ EOT;
                 mylog($logMsg, 'form-log.txt');
             }
             if ($this->keepSubmittedDataInForm) {
-                $origDataRec['_reckey'] = $this->lastCreatedRecKey;
-                foreach ($origDataRec as $key => $value) {
-                    if (is_array($value)) {
-                        $origDataRec[$key] = implode(',', $value);
-                    }
-                }
-                Utils::setSessionVar("form-$formInxReceived", $origDataRec, overrideKey:$this->formDataId);
+//                $this->retainSubmittedData($origDataRec, $formInxReceived);
                 $this->showForm = true;
             }
         }
@@ -2734,6 +2745,9 @@ EOT;
 
         $to = $this->formOptions['mailTo']?: PageFactory::$webmasterEmail;
         if ($to === true) {
+            if (!PageFactory::$webmasterEmail) {
+                throw new \Exception('Error: config option "webmaster_email" is not set.');
+            }
             $to = PageFactory::$webmasterEmail;
         }
 
@@ -2831,6 +2845,11 @@ EOT;
      */
     private function sendMail(string|array $to, string $subject, string $body, string $cc = '', $html = '', $logComment = ''): void
     {
+        if (preg_match('/\n==== [A-Z]+\n/s', $body)) {
+            $htmlMail = new HtmlMail();
+            list($body, $html) = $htmlMail->compileForMail($body);
+        }
+
         $props = [
             'to' => $to,
             'from' => $this->formOptions['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
@@ -2852,12 +2871,19 @@ EOT;
             $to = implode(',', $to);
         }
 
-        new PHPMailer($props);
+        // 'attachments'
+
+        kirby()->email($props);
+
+        $log = "$to:\n$subject\n\n$body";
+        if ($html) {
+            $log .= "\n\n==== HTML\n$html";
+        }
         if ($logComment) {
-            mylog("$logComment $to:\n$subject\n\n$body", 'mail-log.txt');
+            mylog("$logComment $to:\n$log", 'mail-log.txt');
 
         } else {
-            mylog("$to:\n$subject\n\n$body", 'mail-log.txt');
+            mylog($log, 'mail-log.txt');
         }
     } // sendMail
 
@@ -3465,6 +3491,21 @@ EOT;
     } // getHeadAttributes
 
 
+    private function retainSubmittedData(array $origDataRec, mixed $formInxReceived): void
+    {
+        $origDataRec['_reckey'] = $this->lastCreatedRecKey;
+        foreach ($origDataRec as $key => $value) {
+            if (is_array($value)) {
+                $origDataRec[$key] = implode(',', $value);
+            } elseif (preg_match_all('/%(\w{1,30})%/', $value, $m)) {
+                //&#37;
+                $origDataRec[$key] = str_replace('%', '&#37;', $value);
+            }
+        }
+        Utils::setSessionVar("form-$formInxReceived", $origDataRec, overrideKey: $this->formDataId);
+    } // retainSubmittedData
+
+
     /**
      * @return void
      */
@@ -3529,6 +3570,5 @@ window.addEventListener("beforeunload", (ev) => {
 EOT;
         Page::addJs($js);
     } // activatebeforeunloadWarning
-
 
 } // PfyForm
