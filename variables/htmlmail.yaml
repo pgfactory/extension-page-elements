@@ -29,5 +29,13 @@ pfy-htmlmail-preview-sourcecode:
   de: 'Quellcode'
   _: 'Source Code'
 
+pfy-htmlmail-sent-confirmation:
+  de: |
+    <p>E-Mail wurde versendet.</p>
+    <p><a href="./">{{ pfy-continue }}...</a></p>
+
+  _: |
+    <p>E-Mail has been sent.</p>
+    <p><a href="./">{{ pfy-continue }}...</a></p>
 
 

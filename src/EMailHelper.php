@@ -8,6 +8,7 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyFormSplitSyntax;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 
 class EMailHelper
@@ -30,6 +31,10 @@ class EMailHelper
      */
     public static function render(array $options): string
     {
+        if (isset($_GET['sent'])) {
+            return '{{ pfy-htmlmail-sent-confirmation }}';
+        }
+
         Assets::addAssets('HTML_MAIL');
         self::parseOptions($options);
 
@@ -174,6 +179,8 @@ EOT;
     {
         if ($dataRec['_sendmail']) {
             self::sendMail($dataRec);
+            reloadAgent('./?sent');
+//            reloadAgent(message: '{{ pfy-htmlmail-sent-confirmation }}');
         }
         return false; // don't continue saving submitted data
     } // formCallback
