@@ -1233,7 +1233,7 @@ class PfyForm extends Form
         if ($type === 'password') {
             PageElements::loadIcons();
             $icon = "<svg viewBox='0 0 512 512' class='pfy-icon-show'><use href='#pfy-iconset-show' /></svg>".
-                "<svg viewBox='0 0 512 512' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
+                    "<svg viewBox='0 0 512 512' class='pfy-icon-hide'><use href='#pfy-iconset-hide' /></svg>";
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
         }
 
@@ -2717,6 +2717,7 @@ EOT;
     private function sendOwnerNotification(array $dataRec): void
     {
         $out = '';
+        $mdStr = '';
         $labelLen = 0;
         foreach ($dataRec as $key => $value) {
             $labelLen = max($labelLen, strlen($key));
@@ -2732,13 +2733,22 @@ EOT;
             if ($type === 'password') {
                 $value = '*****';
             }
-            $key1 = str_pad("$key: ", $labelLen, '. ');
+            $key1 = str_pad("$key: ", $labelLen, ' ');
             if (is_array($value)) {
                 $value = implode(', ', $value);
             }
             $out .= "$key1 $value\n";
+            $mdStr .= "| $key: | $value\n|---\n";
             $dataRec[$key] = $value;
         }
+        $mdStr = substr($mdStr, 0, -4);
+        $mdStr = <<<EOT
+|===
+$mdStr
+|===
+EOT;
+
+        $dataRec['_md_data_'] = $mdStr;
         $dataRec['_data_'] = $out;
 
         list($subject, $message) = $this->getEmailComponents('notificationTemplate', $dataRec, 'pfy-form-owner-notification');
@@ -2845,46 +2855,32 @@ EOT;
      */
     private function sendMail(string|array $to, string $subject, string $body, string $cc = '', $html = '', $logComment = ''): void
     {
-        if (preg_match('/\n==== [A-Z]+\n/s', $body)) {
+        if (preg_match('/\n==== [A-Z]+\n/s', "\n$body")) {
             $htmlMail = new HtmlMail();
-            list($body, $html) = $htmlMail->compileForMail($body);
+            list($html, $body, $images) = $htmlMail->compileForMail($body);
         }
 
         $props = [
             'to' => $to,
             'from' => $this->formOptions['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
             'fromName' => $this->formOptions['mailFromName'] ?: false,
-            'subject' => $subject,
-            'body' => $body,
+            'subject' => html_entity_decode($subject),
+            'body' => html_entity_decode($body),
         ];
         if ($cc) {
             $props['cc'] = $cc;
         }
+        if ($images??false) {
+            $props['attachments'] = $images;
+        }
+
         if ($html) {
             $props['body'] = [
                 'html' => $html,
                 'text' => $body,
             ];
         }
-
-        if (is_array($to)) {
-            $to = implode(',', $to);
-        }
-
-        // 'attachments'
-
-        kirby()->email($props);
-
-        $log = "$to:\n$subject\n\n$body";
-        if ($html) {
-            $log .= "\n\n==== HTML\n$html";
-        }
-        if ($logComment) {
-            mylog("$logComment $to:\n$log", 'mail-log.txt');
-
-        } else {
-            mylog($log, 'mail-log.txt');
-        }
+        HtmlMail::sendMail($props, $logComment);
     } // sendMail
 
 
