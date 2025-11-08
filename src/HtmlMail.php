@@ -23,7 +23,7 @@ class HtmlMail
     public static function compileForMail(string $markdown, string $css = '', bool $forPreview = false): array
     {
         $plaintext = $markdown;
-        if (preg_match('/\n==== [A-Z]+\n/s', $markdown)) {
+        if (preg_match('/\n==== [A-Z]+\n/s', "\n$markdown")) {
             list($plaintext, $markdown, $css) = self::parseSections($markdown);
         }
         $html = '';
@@ -62,13 +62,25 @@ class HtmlMail
                         }
                     }
                 }
-                $html = "<html><body class='outer-wrapper'>\n$html</body></html>";
+                $lang = PageFactory::$lang;
+                $html = <<<EOT
+<!DOCTYPE html>
+<html lang='$lang'>
+<body class='outer-wrapper'>
+<div lang='$lang'>
+$html
+</div>
+</body>
+</html>
+
+EOT;
             }
             $css = $css ?: PFY_HTMLMAIL_DEFAULT_STYLES;
             $html = self::applyInlineStyles($html, $css);
         }
         $plaintext = TransVars::resolveShortFormVariables($plaintext);
         $plaintext = self::stripFormatting($plaintext);
+        $plaintext = html_entity_decode($plaintext);
 
         return [$html, $plaintext, $images];
     } // compileForMail
@@ -89,10 +101,38 @@ class HtmlMail
         $dom->loadHTML($html);
         libxml_clear_errors();
 
+        $xpath = new DOMXPath($dom);
+
+        $theads = $xpath->query('//thead');
+
+        foreach ($theads as $thead) {
+            $ths = $xpath->query('.//th', $thead);
+            $allEmpty = true;
+
+            foreach ($ths as $th) {
+                $content = trim($th->textContent);
+                if ($content !== '') {
+                    $allEmpty = false;
+                    break;
+                }
+            }
+
+            if ($allEmpty && $ths->length > 0) {
+                $table = $thead->parentNode;
+                if ($table->nodeName === 'table') {
+                    $table->setAttribute('role', 'presentation');
+                    $table->setAttribute('border', '0');
+                    $table->setAttribute('cellpadding', '0');
+                    $table->setAttribute('cellspacing', '0');
+                }
+                $table->setAttribute('class', 'pfy-layout-table');
+                $thead->parentNode->removeChild($thead);
+            }
+        }
+
         // Loop through each CSS rule and apply it to the relevant elements
         foreach ($cssRules as $selector => $declarations) {
             // Find elements matching the CSS selector
-            $xpath = new DOMXPath($dom);
             $selector = new Translator($selector);
             $nodes = $xpath->query($selector);
 
@@ -100,9 +140,15 @@ class HtmlMail
                 foreach ($nodes as $node) {
                     // Combine the existing inline styles with new ones
                     $currentStyle = $node->getAttribute('style');
-                    $newStyle = $currentStyle . '; ' . $declarations;
-                    $newStyle = ltrim($newStyle, '; ');
-                    $node->setAttribute('style', $newStyle);
+                    if (preg_match('/align:\s*(\w+);?/', $declarations, $m)) {
+                        $declarations = str_replace($m[0], '', $declarations);
+                        $node->setAttribute('align', $m[1]);
+                    }
+                    if ($declarations) {
+                        $newStyle = $currentStyle . '; ' . $declarations;
+                        $newStyle = ltrim($newStyle, '; ');
+                        $node->setAttribute('style', $newStyle);
+                    }
                 }
             }
         }
@@ -188,7 +234,7 @@ class HtmlMail
         $text = str_replace("\r\n", "\n", trim($text));
 
         // Split on lines that start with "==== "
-        $parts = preg_split('/\n====[ \t]*(.+)\n/', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $parts = preg_split('/\n====[ \t]*(.+)\n/', "\n$text", -1, PREG_SPLIT_DELIM_CAPTURE);
 
         if (count($parts) === 1) {
             // No sections found, entire text is the plaintext
@@ -214,16 +260,35 @@ class HtmlMail
      * @return void
      * @throws \PHPMailer\PHPMailer\Exception
      */
-    public static function sendMail(array $props): void
+    public static function sendMail(array $props, $logComment = ''): void
     {
         $mailer             = new phpmailer();
         $mailer->From       = $props['from'];
         $mailer->FromName   = $props['fromName'];
-        $mailer->Subject    = $subject = $props['subject'];
-        $mailer->AddAddress($props['to']);
+        // convert subject iso-8859-1 charset:
+        $mailer->Subject    = iconv('UTF-8', 'ISO-8859-1', $props['subject']);
+
+        $subject            = $props['subject'];
+        $to                 = $props['to'];
+        if (is_string($to) && str_contains($to, ',')) {
+            foreach (explode(',', $to) as $to) {
+                $mailer->AddAddress($to);
+            }
+        } elseif (is_array($to)) {
+            foreach ($to as $to1) {
+                $mailer->AddAddress($to1);
+            }
+            $props['to'] = implode(', ', $to);
+        } else {
+            $mailer->AddAddress($to);
+        }
 
         // body:
-        if ($html = $props['body']['html']??'') {
+        if (is_string($props['body']??false)) {
+            $logText = $props['body'];
+            $mailer->Body = $logText;
+
+        } elseif ($html = $props['body']['html']??'') {
             $mailer->IsHTML(true);
             $html = str_replace(["&lt;", "&gt;"], ["<", ">"], htmlentities($html, ENT_NOQUOTES, 'UTF-8', FALSE));
             $mailer->Body = $html;
@@ -234,7 +299,10 @@ class HtmlMail
                 $logText = preg_replace("/(\n\s*)+/ms", "\\n", $logText);
                 $logText = preg_replace("/\s+/", " ", $logText);
                 $logText = str_replace("\\n", "\n", $logText);
+                $logText = html_entity_decode($logText);
             }
+            $mailer->AltBody = $logText;
+
             if (PageFactory::$dev) {
                 $logText .= "\n--- HTML ---\n$html\n--- END HTML ---";
             }
@@ -244,10 +312,11 @@ class HtmlMail
             } else {
                 $logText = "-- no text --";
             }
+            $mailer->AltBody = $logText;
         }
 
         // attachments:
-        if ($props['attachments']) {
+        if ($props['attachments']??false) {
             foreach ($props['attachments'] as $rec) {
                 if (is_array($rec)) {
                     $mailer->AddEmbeddedImage($rec['file'], $rec['cid'], basename($rec['file']));
@@ -258,8 +327,13 @@ class HtmlMail
         }
 
         $mailer->Send();
+        $subjectLabel =  TransVars::getVariable('pfy-htmlmail-preview-subject');
 
-        $logText = "email sent to {$props['to']}\n{$subject}\n$logText";
+        if ($logComment) {
+            $logText = "$logComment {$props['to']}:\n$subjectLabel: {$subject}\n$logText";
+        } else {
+            $logText = "email sent to {$props['to']}:\n$subjectLabel: {$subject}\n$logText";
+        }
         mylog($logText, 'mail-log.txt');
     } // sendMail
 

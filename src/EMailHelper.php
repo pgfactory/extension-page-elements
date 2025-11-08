@@ -10,7 +10,11 @@ use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
+use function PgFactory\PageFactory\timestampStr;
+use function PgFactory\PageFactory\writeFile;
 
+const HTML_MAIL_TEMPLATE_HISTORY_FOLDER = '~data/.history/';
+const HTML_MAIL_TEMPLATE_HISTORY_FILE = '_htmlmail-template-history.yaml';
 class EMailHelper
 {
     private static string $file = '';
@@ -19,6 +23,8 @@ class EMailHelper
     private static string $css = '';
     private static string $plaintext = '';
     private static string $to = '';
+    private static string $from = '';
+    private static string $fromName = '';
     private static string $macroName = '';
     private static array $attachments = [];
     private static array|false $schedule = [];
@@ -128,7 +134,7 @@ EOT;
             'Css'       => ['type' => 'textarea', 'preset' => self::$css],
             'Text'      => ['type' => 'textarea', 'preset' => self::$plaintext],
 
-            'To'        => ['type' => 'email', 'label'=> '{{ pfy-htmlmail-to }}','class' => 'halve-width', 'preset' => self::$to],
+            'To'        => ['type' => 'text', 'label'=> '{{ pfy-htmlmail-to }}','class' => 'halve-width', 'preset' => self::$to],
 
             'Send'      => [
                 'type' => 'button',
@@ -177,12 +183,32 @@ EOT;
      */
     public static function formCallback($dataRec): string
     {
-        if ($dataRec['_sendmail']) {
+        // check whether submitted data has been changed, save it if so:
+        $subject = str_replace("\r\n", "\n", self::$subject);
+        $markdown = str_replace("\r\n", "\n", self::$markdown);
+        $css = str_replace("\r\n", "\n", self::$css);
+        $plaintext = str_replace("\r\n", "\n", self::$plaintext);
+        if ($subject !== ($dataRec['Subject']??'') ||
+            $markdown !== ($dataRec['Markdown']??'') ||
+            $css !== ($dataRec['Css']??'') ||
+            $plaintext !== ($dataRec['Text']??'')
+        ) {
+            $tmp = $dataRec;
+            foreach ($tmp as $key => $value) {
+                if ($key[0] === '_') {
+                    unset($tmp[$key]);
+                }
+            }
+            $file = HTML_MAIL_TEMPLATE_HISTORY_FOLDER . timestampStr() . HTML_MAIL_TEMPLATE_HISTORY_FILE;
+            writeFile($file, $tmp);
+        }
+
+        // send data if requested:
+        if ($dataRec['_sendmail']??false) {
             self::sendMail($dataRec);
             reloadAgent('./?sent');
-//            reloadAgent(message: '{{ pfy-htmlmail-sent-confirmation }}');
         }
-        return false; // don't continue saving submitted data
+        return false; // don't continue saving submitted data by PfyForms
     } // formCallback
 
 
@@ -269,11 +295,14 @@ EOT;
         list($html, $plaintext, $images) = HtmlMail::compileForMail($markdown, $css);
         $plaintext  = ($dataRec['Text']??false) ?: $plaintext;
 
+        $subject = $dataRec['Subject'] ?? '';
+        $subject = "=?UTF-8?B?" . base64_encode($subject) . "?=";
+
         $props = [
             'to' => $to,
-            'from' => TransVars::getVariable('webmaster_email'),
-            'fromName' => 'Webmaster',
-            'subject' => $dataRec['Subject'] ?? '',
+            'from' => self::$from,
+            'fromName' => self::$fromName,
+            'subject' => $subject,
             'body' => $plaintext,
         ];
         if ($html) {
@@ -315,6 +344,8 @@ EOT;
         self::$schedule         = $options['schedule']??false;
         self::$macroName        = $options['macroName']??false;
         self::$to               = ($options['to']??false) ?: PageFactory::$webmasterEmail;
+        self::$from             = ($options['from']??false) ?: PageFactory::$webmasterEmail;
+        self::$fromName         = ($options['fromName']??false) ?: 'Webmaster';
         $attachments            = $options['attachments']??false;
         if (is_string($attachments)) {
             $attachments = explodeTrim(',', $attachments);
