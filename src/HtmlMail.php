@@ -29,41 +29,41 @@ class HtmlMail
         $html = '';
         $images = [];
 
-        if ($markdown) {
-            $html = TransVars::compile($markdown);
-            $html = TransVars::resolveShortFormVariables($html);
-            $html = preg_replace('/<!--.*?-->/', '', $html); // remove comments
+        $markdown = self::handleLinks($markdown);
+        $html = TransVars::compile($markdown);
+        $html = TransVars::resolveShortFormVariables($html);
+        $html = preg_replace('/<!--.*?-->/', '', $html); // remove comments
 
-            if ($forPreview) {
-                if (str_contains($html, 'cid:')) {
-                    if (preg_match_all('/<img .*? data-srcpath=\'(.*?)\' \s* data-url=\'(.*?)\' .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
-                        foreach ($m[3] as $i => $cid) {
-                            $path = $m[1][$i];
-                            $url = $m[2][$i];
-                            $html = str_replace(" data-srcpath='$path'", '', $html);
-                            $html = str_replace(" data-url='$url'", '', $html);
-                            $html = str_replace("src='cid:$cid'", "src='$url'", $html);
-                        }
+        if ($forPreview) {
+            if (str_contains($html, 'cid:')) {
+                if (preg_match_all('/<img .*? data-srcpath=\'(.*?)\' \s* data-url=\'(.*?)\' .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
+                    foreach ($m[3] as $i => $cid) {
+                        $path = $m[1][$i];
+                        $url = $m[2][$i];
+                        $html = str_replace(" data-srcpath='$path'", '', $html);
+                        $html = str_replace(" data-url='$url'", '', $html);
+                        $html = str_replace("src='cid:$cid'", "src='$url'", $html);
                     }
                 }
+            }
 
-                $html = "<div class='outer-wrapper'>\n$html</div>";
+            $html = "<div class='outer-wrapper'>\n$html</div>";
 
-            } else {
-                if (str_contains($html, 'cid:')) {
-                    if (preg_match_all('/<img .*? data-srcpath=\'(.*?)\' \s* data-url=\'(.*?)\' .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
-                        foreach ($m[3] as $i => $cid) {
-                            $path = $m[1][$i];
-                            $url = $m[2][$i];
-                            $images[$cid]['path'] = $path;
-                            $images[$cid]['url']  = $url;
-                            $html = str_replace(" data-srcpath='$path'", '', $html);
-                            $html = str_replace(" data-url='$url'", '', $html);
-                        }
+        } else {
+            if (str_contains($html, 'cid:')) {
+                if (preg_match_all('/<img .*? data-srcpath=\'(.*?)\' \s* data-url=\'(.*?)\' .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
+                    foreach ($m[3] as $i => $cid) {
+                        $path = $m[1][$i];
+                        $url = $m[2][$i];
+                        $images[$cid]['path'] = $path;
+                        $images[$cid]['url']  = $url;
+                        $html = str_replace(" data-srcpath='$path'", '', $html);
+                        $html = str_replace(" data-url='$url'", '', $html);
                     }
                 }
-                $lang = PageFactory::$lang;
-                $html = <<<EOT
+            }
+            $lang = PageFactory::$lang;
+            $html = <<<EOT
 <!DOCTYPE html>
 <html lang='$lang'>
 <body class='outer-wrapper'>
@@ -74,10 +74,10 @@ $html
 </html>
 
 EOT;
-            }
-            $css = $css ?: PFY_HTMLMAIL_DEFAULT_STYLES;
-            $html = self::applyInlineStyles($html, $css);
         }
+        $css = $css ?: PFY_HTMLMAIL_DEFAULT_STYLES;
+        $html = self::applyInlineStyles($html, $css);
+
         $plaintext = TransVars::resolveShortFormVariables($plaintext);
         $plaintext = self::stripFormatting($plaintext);
         $plaintext = html_entity_decode($plaintext);
@@ -94,6 +94,8 @@ EOT;
     public static function applyInlineStyles($html, $css) {
         // Parse CSS rules into an associative array
         $cssRules = self::parseCss($css);
+
+        $html = str_replace('&nbsp;', '##NBSP##', $html); // workaround for &nbsp;
 
         // Load the HTML content into a DOMDocument object
         $dom = new DOMDocument('1.0', 'UTF-8');
@@ -140,7 +142,7 @@ EOT;
                 foreach ($nodes as $node) {
                     // Combine the existing inline styles with new ones
                     $currentStyle = $node->getAttribute('style');
-                    if (preg_match('/align:\s*(\w+);?/', $declarations, $m)) {
+                    if (preg_match('/(?<!-)align:\s*(\w+);?/', $declarations, $m)) {
                         $declarations = str_replace($m[0], '', $declarations);
                         $node->setAttribute('align', $m[1]);
                     }
@@ -162,8 +164,24 @@ EOT;
         }
 
         $innerHTML = mb_convert_encoding($innerHTML, 'ISO-8859-1', 'UTF-8');
+        $innerHTML = str_replace('##NBSP##', '&nbsp;', $innerHTML);
         return $innerHTML;
     } // applyInlineStyles
+
+
+    private static function handleLinks(string $markdown): string
+    {
+        if (preg_match_all('/\{\{ \s* link\( (.*?) \)/x', $markdown, $matches)) {
+            foreach ($matches[1] as $i => $linkText) {
+                $linkText1 = $linkText;
+                if (!str_contains($linkText, 'icon:')) {
+                    $linkText1 .= ', icon:false';
+                }
+                $markdown = str_replace($linkText, $linkText1, $markdown);
+            }
+        }
+        return $markdown;
+    } // handleLinks
 
 
     /**
@@ -206,7 +224,8 @@ EOT;
         $css = trim($css);
 
         // Split CSS into individual rules by curly braces
-        preg_match_all('/([^{]+)\{([^}]+)}/', $css, $matches, PREG_SET_ORDER);
+        preg_match_all('/([^{]+) \{ ([^}]+) }/x', $css, $matches, PREG_SET_ORDER);
+//        preg_match_all('/([^{]+)\{([^}]+)}/', $css, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $match) {
             // Clean up the selector and declarations
@@ -265,8 +284,9 @@ EOT;
         $mailer             = new phpmailer();
         $mailer->From       = $props['from'];
         $mailer->FromName   = $props['fromName'];
-        // convert subject iso-8859-1 charset:
-        $mailer->Subject    = iconv('UTF-8', 'ISO-8859-1', $props['subject']);
+        $mailer->CharSet    = "UTF-8";
+        $subject    = $props['subject'];
+        $mailer->Subject    = $subject;
 
         $subject            = $props['subject'];
         $to                 = $props['to'];
@@ -327,6 +347,7 @@ EOT;
         }
 
         $mailer->Send();
+
         $subjectLabel =  TransVars::getVariable('pfy-htmlmail-preview-subject');
 
         if ($logComment) {

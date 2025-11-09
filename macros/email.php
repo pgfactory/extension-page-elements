@@ -18,6 +18,7 @@ return function ($args = '')
             'subject' => ['(string)', null],
             'subjectVar' => ['(string)', null],
             'markdownVar' => ['(string)', null],
+            'markdownFile' => ['(string)', null],
             'cssVar' => ['(string)', null],
             'plainTextVar' => ['(string)', null],
             'edit' => ['(bool|permission)', true],
@@ -46,9 +47,17 @@ EOT,
         list($options, $sourceCode, $inx) = $res;
         $str = $sourceCode;
     }
+    if ($options['markdownFile']??false) {
+        $file = $options['markdownFile'];
+        if ($file[0] !== '~') {
+            $file = "~page/$file";
+        }
+        $options['markdown'] = loadFile($file);
+    } elseif ($options['markdownVar']??false) {
+        $options['markdown'] = TransVars::getVariable($options['markdownVar'], varNameIfNotFound: true);
+    }
 
     $options['subject']     = ($options['subject']??false) ?: TransVars::getVariable((string)$options['subjectVar'], varNameIfNotFound: true);
-    $options['markdown']    = TransVars::getVariable($options['markdownVar'], varNameIfNotFound: false);
     $options['css']         = TransVars::getVariable($options['cssVar'], varNameIfNotFound: true);
     $options['plainText']   = TransVars::getVariable($options['plainTextVar'], varNameIfNotFound: false);
 

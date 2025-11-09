@@ -8,6 +8,7 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyFormSplitSyntax;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\timestampStr;
@@ -46,6 +47,15 @@ class EMailHelper
 
         self::handleScheduleOption();
 
+
+        if (!self::$markdown && $options['schedule']??false) {
+            $html = <<<EOT
+<h2>Availabe variables:</h2>
+<pre>{{ _data_ }}
+</pre>
+EOT;
+            return $html;
+        }
         list($emailPreview, $sourceCode) = self::renderPreview();
 
         list($html, $parts) = self::renderEditForm();
@@ -271,13 +281,18 @@ EOT;
         $sched = new Events($eventOptions);
         $nextEvents = $sched->getNextEvents(count: 1);
         $dataRec = $nextEvents[0] ?? [];
+        $_data_ = '';
         if ($dataRec) {
             foreach ($dataRec as $key => $value) {
                 if (is_array($value)) {
                     $value = $value[0] ?? json_encode($value);
                 }
                 TransVars::setTempVariable($key, $value);
+                if ($key[0] !== '_') {
+                    $_data_ .= "%$key%\n";
+                }
             }
+            TransVars::setTempVariable('_data_', $_data_);
         }
     } // handleScheduleOption
 
@@ -296,7 +311,6 @@ EOT;
         $plaintext  = ($dataRec['Text']??false) ?: $plaintext;
 
         $subject = $dataRec['Subject'] ?? '';
-        $subject = "=?UTF-8?B?" . base64_encode($subject) . "?=";
 
         $props = [
             'to' => $to,
