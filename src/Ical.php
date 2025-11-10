@@ -65,8 +65,14 @@ class Ical
      */
     public function getTargetFile(): string
     {
-        return $this->targetFileUrl;
+        return $this->targetFilePath;
     } // getTargetFile
+
+
+    public function getTargetUrl(): string
+    {
+        return $this->targetFileUrl;
+    } // getTargetUrl
 
 
     /**
