@@ -15,18 +15,19 @@ return function ($args = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'subject' => ['(string)', null],
-            'subjectVar' => ['(string)', null],
-            'markdownVar' => ['(string)', null],
-            'markdownFile' => ['(string)', null],
-            'cssVar' => ['(string)', null],
-            'plainTextVar' => ['(string)', null],
-            'edit' => ['(bool|permission)', true],
-            'to' => ['(string)', null],
-            'from' => ['(string)', null],
-            'fromName' => ['(string)', null],
-            'file' => ['(string)', null],
-            'attachments' => ['(string)', null],
+            'subject' => ['(string) String to be used for the mail\'s subject line.', null],
+            'subjectVar' => ['(string) Name of a variable that contains the subject line.', null],
+            'markdownVar' => ['(string) Name of a variable that contains the mail body in markdown format.', null],
+            'markdownFile' => ['(string) Path to a markdown file that contains the mail body.', null],
+            'cssVar' => ['(string) Name of a variable that contains CSS instructions to be applied to the mail.', null],
+            'plainTextVar' => ['(string) Name of a variable that contains the mail\'s body as plain text.'.
+                'If not defined plain text will be automatically generated', null],
+            // 'edit' => ['(bool|permission)', true],
+            'to' => ['(string) Destination mail address. Can be a comma-separated list of addresses.', null],
+            'from' => ['(string) Mail address that appears as the sender address. Should always belong to the '.
+                'same domain as the website.', null],
+            'fromName' => ['(string) Freely definable string that appears as the sender\'s name.', null],
+            'attachments' => ['(string) Path to a file that shall be sent as an attachment. E.g. "\~page/doc.pdf".', null],
             'schedule' => ['{options} If defined, the Events module is invoked to determine the next event and '.
                 'based on that, make values defined in the event available as variables (%key%). '.
                 '(For ref see macro *events()*).', false],
@@ -35,7 +36,13 @@ return function ($args = '')
 
 # $funcName()
 
-TBD
+Takes a markdown-formatted string and renders it as an HTML email.
+
+Then, presents a preview as well as a form to modify the mail content and destination address.
+
+A collapsed section provides access to the resulting HTML code, which you can copy and paste into your mail.
+
+Finally, a button allows to send the mail.
 
 EOT,
     ];
@@ -58,8 +65,8 @@ EOT,
     }
 
     $options['subject']     = ($options['subject']??false) ?: TransVars::getVariable((string)$options['subjectVar'], varNameIfNotFound: true);
-    $options['css']         = TransVars::getVariable($options['cssVar'], varNameIfNotFound: true);
-    $options['plainText']   = TransVars::getVariable($options['plainTextVar'], varNameIfNotFound: false);
+    $options['css']         = TransVars::getVariable($options['cssVar']??'');
+    $options['plainText']   = TransVars::getVariable($options['plainTextVar']??'');
 
     $str .= EMailHelper::render($options);
     return $str;

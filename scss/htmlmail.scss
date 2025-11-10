@@ -32,7 +32,6 @@
   }
 
   .pfy-htmlmail-preview {
-    padding: 1em;
     border: 1px solid #ddd;
     margin-top: 1em;
   }
@@ -42,15 +41,12 @@
       font-size: 10pt;
       margin: 0 0 2em 0;
     }
-    //    font-family: monospace;
-//    padding: 1em;
   }
   .pfy-button-wrapper {
     display: inline-block;
     font-size: 10pt;
   }
   .send-mail {
-//    background: #eff;
     border: 1px solid orange;
     padding-left: 0.5em;
     > div {

@@ -13,6 +13,7 @@ use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\timestampStr;
 use function PgFactory\PageFactory\writeFile;
+use function PgFactory\PageFactory\fileTime;
 
 const HTML_MAIL_TEMPLATE_HISTORY_FOLDER = '~data/.history/';
 const HTML_MAIL_TEMPLATE_HISTORY_FILE = '_htmlmail-template-history.yaml';
@@ -26,6 +27,8 @@ class EMailHelper
     private static string $to = '';
     private static string $from = '';
     private static string $fromName = '';
+    private static array $iCalOptions = [];
+    private static string $icsFile = '';
     private static string $macroName = '';
     private static array $attachments = [];
     private static array|false $schedule = [];
@@ -237,6 +240,7 @@ EOT;
 </code></pre>
 
 EOT;
+        $html .= self::showAttachments();
         return [$html, $sourceCode];
     } // renderPreview
 
@@ -275,11 +279,12 @@ EOT;
         if (!($src = ($eventOptions['src']??false))) {
             $src = $eventOptions['file']??false;
         }
+        $count = ($eventOptions['ical']['count']??false) ?: 1;
         $eventOptions['file'] = $src;
         $eventOptions['macroName'] = self::$macroName;
 
         $sched = new Events($eventOptions);
-        $nextEvents = $sched->getNextEvents(count: 1);
+        $nextEvents = $sched->getNextEvents(count: $count);
         $dataRec = $nextEvents[0] ?? [];
         $_data_ = '';
         if ($dataRec) {
@@ -293,8 +298,59 @@ EOT;
                 }
             }
             TransVars::setTempVariable('_data_', $_data_);
+
+            $fileTime = fileTime($src);
+        }
+        foreach ($nextEvents as $dataRec) {
+            self::$attachments[] = self::prepareIcsFile($dataRec, $fileTime);
         }
     } // handleScheduleOption
+
+
+    private static function prepareIcsFile(array $dataRec, int $filetime): string
+    {
+        $icalOptions = self::$iCalOptions;
+        if (!$icalOptions) {
+            return '';
+        } elseif (!is_array($icalOptions)) {
+            $title = $icalOptions;
+            $icalOptions = [
+                'title' => $title,
+                'shortName' => $title,
+            ];
+        }
+        $icalOptions['prefix'] = $icalOptions['shortName']??'';
+        $iCal = new Ical([$dataRec], $icalOptions);
+
+        $tTargetFile = $iCal->getTargetFileTime();
+        if ($filetime > $tTargetFile) {
+            $iCal->saveToFile();
+        }
+        return $iCal->getTargetFile();
+//        self::$icsFile = $iCal->getTargetFile();
+    } // prepareIcsFile
+
+
+    private static function showAttachments(): string
+    {
+        $html = '';
+        if (self::$attachments && is_array(self::$attachments)) {
+            foreach (self::$attachments as $file) {
+                $html .= "<li>File: $file</li>\n";
+            }
+        }
+
+        if ($html) {
+            $html = <<<EOT
+<div>Attachments:</div>
+<ul>
+$html
+</ul>
+
+EOT;
+        }
+        return $html;
+    } // showAttachments
 
 
     /**
@@ -326,10 +382,12 @@ EOT;
             ];
         }
 
+        $props['attachments'] = [];
         if (self::$attachments) {
             $props['attachments'] = self::$attachments;
-        } elseif ($images || self::$attachments) {
-            $props['attachments'] = [];
+        }
+        if (self::$icsFile) {
+            $props['attachments'][] = self::$icsFile;
         }
 
         if ($images) {
@@ -373,12 +431,16 @@ EOT;
         }
         self::$attachments = $attachments;
 
-        self::$file = $options['file']??'~data/email.json';
+        self::$file = '~data/email.json';
 
         if (preg_match('/\n==== [A-Z]+\n/s', self::$markdown)) {
             list($plaintext1, self::$markdown, $css1) = HtmlMail::parseSections(self::$markdown);
             self::$plaintext = $plaintext1 ?: self::$plaintext;
             self::$css = $css1 ?: self::$css;
+        }
+
+        if (self::$schedule) {
+            self::$iCalOptions = self::$schedule['ical']??[];
         }
 
         // update values if submitted by form:
