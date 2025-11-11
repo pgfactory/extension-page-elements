@@ -327,7 +327,6 @@ EOT;
             $iCal->saveToFile();
         }
         return $iCal->getTargetFile();
-//        self::$icsFile = $iCal->getTargetFile();
     } // prepareIcsFile
 
 
