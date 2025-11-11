@@ -21,6 +21,10 @@ pfy-htmlmail-preview-subject:
   de: 'Betreff'
   _: 'Subject'
 
+pfy-htmlmail-preview-attachments:
+  de: 'Anhänge'
+  _: 'Attachments'
+
 pfy-htmlmail-to:
   de: 'An:'
   _: 'To:'

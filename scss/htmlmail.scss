@@ -31,9 +31,29 @@
     width: calc(100% - 7em);
   }
 
-  .pfy-htmlmail-preview {
+  .pfy-htmlmail-subject {
+    display: inline-block;
+    background-color: #f4f4f4;
     border: 1px solid #ddd;
+    padding: 0.5em 1em;
+    margin-left: 1em;
+  }
+
+  .pfy-htmlmail-attachments {
     margin-top: 1em;
+    padding: 0.5em 1em;
+    background-color: #f3fcff;
+    border: 1px solid #ddd;
+  }
+
+  .pfy-htmlmail-preview {
+    .pfy-htmlmail-outer-wrapper {
+      border: 1px solid #ddd;
+    }
+    margin-top: 1em;
+  }
+  .pfy-htmlmail-outer-wrapper {
+    padding: 0.5em;
   }
 
   .pfy-htmlmail-source-code {

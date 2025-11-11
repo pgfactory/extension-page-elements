@@ -25,7 +25,7 @@ class EMailHelper
     private static string $css = '';
     private static string $plaintext = '';
     private static string $to = '';
-    private static string $from = '';
+    private static string|null $from = '';
     private static string $fromName = '';
     private static array $iCalOptions = [];
     private static string $icsFile = '';
@@ -82,7 +82,7 @@ _pfy-htmlmail-open-form-submit
 
 @@@@ .pfy-htmlmail-preview-subject
 
-{{ pfy-htmlmail-preview-subject }}: $subject
+{{ pfy-htmlmail-preview-subject }}: <span class="pfy-htmlmail-subject">$subject</span>
 
 @@@@ .pfy-htmlmail-preview
 
@@ -336,17 +336,19 @@ EOT;
         $html = '';
         if (self::$attachments && is_array(self::$attachments)) {
             foreach (self::$attachments as $file) {
-                $html .= "<li>File: $file</li>\n";
+                $file = substr($file, strlen(PFY_KIRBY_BASE_PATH));
+                $html .= "<li><code>$file</code></li>\n";
             }
         }
 
         if ($html) {
             $html = <<<EOT
-<div>Attachments:</div>
-<ul>
+<div class="pfy-htmlmail-attachments">
+<p>{{ pfy-htmlmail-preview-attachments }}:</p>
+<ol>
 $html
-</ul>
-
+</ol>
+</div>
 EOT;
         }
         return $html;

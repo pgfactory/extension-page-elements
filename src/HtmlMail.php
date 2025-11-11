@@ -11,7 +11,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\unshieldStr;
 
-const PFY_HTMLMAIL_DEFAULT_STYLES = '.outer-wrapper { font-family: Arial, sans-serif; }';
+const PFY_HTMLMAIL_DEFAULT_STYLES = '.pfy-htmlmail-outer-wrapper { font-family: Arial, sans-serif; }';
 class HtmlMail
 {
     /**
@@ -41,13 +41,13 @@ class HtmlMail
 
         $html = <<<EOT
 <div lang='$lang'>
-    <table class='outer-wrapper' role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
+    <table class='pfy-htmlmail-outer-wrapper' role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
         <tr>
             <td align="center" style="padding: 20px 0;">
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
                     <tr>
                         <td style="padding: 40px 30px;">
-                        <div class='inner-wrapper'>
+                        <div class='pfy-htmlmail-inner-wrapper'>
 $html
                         </div>
                         </td>
