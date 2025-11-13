@@ -2077,7 +2077,6 @@ EOT;
             return;
         }
 
-        $origDataRec = $dataRec;
         $dataRec = $this->normalizeData($dataRec);
         $this->formDataRec = $dataRec;
 
@@ -2145,6 +2144,9 @@ EOT;
 
         // handle optional confirmation mail:
         $formSuccessResponse .= $this->sendConfirmationMail($dataRec);
+
+        // clear temp variables to avoid conflicts in case of scheduled forms:
+        TransVars::purgeTempVariables();
 
         // write log:
         mylog(strip_tags($formSuccessResponse), 'form-log.txt');
@@ -3310,7 +3312,7 @@ EOT;
             TransVars::setTempVariable($key, $value);
         }
         if ($value = ($this->auxBannerValues['eventBanner']??false)) {
-            TransVars::setVariable("_banner_", $value);
+            TransVars::setTempVariable("_banner_", $value);
         }
 
     } // propagateDataToVariables
