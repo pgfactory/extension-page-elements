@@ -1,0 +1,54 @@
+
+.pfy-default-styling {
+  // === Post-It notes:
+  .pfy-post-it {
+    position: absolute;
+    top: 0; right: 0;
+    padding: 0.6em 0.5em 0.3em 0.5em;
+     transform: rotate(var(--pfy-post-it-angle, 10deg));
+
+    font-family: var(--pfy-post-it-font, fantasy), cursive;
+    min-width: 13em;
+    min-height: 4em;
+    background: var(--pfy-post-it-bg-color, #FAF9C7FF);
+    border: 1px solid var(--pfy-post-it-border-color, color-mix(in srgb, var(--pfy-post-it-bg-color, #FAF9C7FF) 90%, black));
+    z-index: 9;
+
+    overflow: hidden;
+    border-bottom-right-radius: 30px 45px;
+    box-shadow: 2px 2px 8px 1px rgba(0, 0, 0, 0.2);
+
+    &.pfy-post-it-removable:before {
+      content: "⛌";
+      display: block;
+      position: absolute;
+      font-family: monospace;
+      border: 1px solid #bbb;
+      font-size: 12pt;
+      width: 1.2em;
+      height: 1.1em;
+      text-align: center;
+      border-radius: 50%;
+      top: 0;
+      right: 0;
+      padding: 0.1em;
+      cursor: pointer;
+    }
+
+    &:after {
+      content: "";
+      display: block;
+      position: absolute;
+      width: 20px;
+      height: 25px;
+      background: var(--pfy-post-it-border-color, color-mix(in srgb, var(--pfy-post-it-bg-color, #ffefc2) 90%, black));
+      box-shadow: 3px -2px 10px rgba(0, 0, 0, 0.2),
+      inset 15px -15px 15px rgba(0, 0, 0, 0.3);
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      transform: skewX(-25deg);
+    }
+  }
+
+} // pfy-default-styling

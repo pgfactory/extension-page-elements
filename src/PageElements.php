@@ -98,6 +98,13 @@ const PE_PATH_DEFINITIONS = [
     'HTML_MAIL' => [
         PE_ASSETS_PATH.'css/-htmlmail.css',
     ],
+    'DRAGGABLE' => [
+        PE_ASSETS_PATH.'js/draggable.js',
+    ],
+    'POST_IT' => [
+        PE_ASSETS_PATH.'css/-postit.css',
+        PE_ASSETS_PATH.'js/-postit.js',
+    ],
 ];
 
 
