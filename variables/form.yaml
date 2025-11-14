@@ -19,27 +19,45 @@ pfy-form-success-continue:
   de: 'Weiter...'
   _:  'Continue...'
 
-pfy-form-owner-notification-label: #Neue Anemldung auf host.net
+pfy-form-response-label: #Neue Anemldung auf host.net
   de: Anmeldung
   _:  sign-up
 
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
-  de: '{{ pfy-form-owner-notification-label }} auf %host%'
-  _:  '{{ pfy-form-owner-notification-label }} on %host%'
+  de: 'Neue {{ pfy-form-response-label }} auf %pageUrl%'
+  _:  'New {{ pfy-form-response-label }} on %pageUrl%'
 
 pfy-form-owner-notification-message:
   de: |
     Guten Tag
-    Es gibt eine {{ pfy-form-owner-notification-label }}:
+    Es gibt eine neue {{ pfy-form-response-label }}:
     
     %_data_%
+    
+    ==== HTML
+    Guten Tag
+    
+    Es gibt eine neue {{ pfy-form-response-label }}:
+    
+    %_md_data_%
+    
+    Beste Grüsse von Ihrer Website
 
   _:  |
     Hello
-    We received a {{ pfy-form-owner-notification-label }}:
+    We received a new {{ pfy-form-response-label }}:
     
     %_data_%
     
+    ==== HTML
+    Hello
+    
+    We received a new {{ pfy-form-response-label }}:
+    
+    %_md_data_%
+    
+    Best Regards from your website
+
 
 #
 pfy-form-required-info:

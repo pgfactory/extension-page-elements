@@ -2800,8 +2800,22 @@ EOT;
 
         list($subject, $message) = $this->getEmailComponents('confirmationTemplate', $dataRec, 'pfy-confirmation-response');
 
-        if (str_contains($confirmationMail, '@')) {
+        if ($confirmationMail === true) {
+            // PHP 8.4:
+            //$res = array_find($this->formElements, function ($rec) {
+            //    return $rec['type'] === 'email';
+            //});
+            $res = array_filter($this->formElements, function ($rec) {
+                return $rec['type'] === 'email';
+            });
+            if ($res) {
+                $res = reset($res);
+                $to = $dataRec[$res['name']]??'';
+            }
+
+        } elseif (str_contains($confirmationMail, '@')) {
             $to = $confirmationMail;
+
         } else {
             $confirmationMail = str_replace('-', '_', $confirmationMail);
             $to = $dataRec[$confirmationMail]??false;
@@ -2906,6 +2920,9 @@ EOT;
         $formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
         $formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
         $formOptions['next']                = $formOptions['next'] ?: PFY_FORM_OPTIONS['next'];
+        if ($formOptions['responseLabel']??false) {
+            TransVars::setTempVariable('pfy-form-response-label', $formOptions['responseLabel']);
+        }
 
         $this->formIndex                    = $formOptions['formInx'] ?? self::$formCounter;
         $this->file                         = $formOptions['file'];
@@ -3303,6 +3320,7 @@ EOT;
         }
 
         $dataRec['host'] = PFY_HOST_URL;
+        $dataRec['pageUrl'] = PFY_PAGE_URL;
 
         // add variables for all form values, so they can be used in mail-template:
         foreach ($dataRec as $key => $value) {

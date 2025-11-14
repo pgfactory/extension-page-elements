@@ -41,26 +41,31 @@ return function ($args = '')
 
             'action' =>	['Argument applied to the form element\'s "action"-attribute.', false],
 
-            'ownerNotificationTo' =>	['If set, an email will be sent to this address each time the form is filled in.', false],
+            'responseLabel' =>	['Label that describes the nature of form data. Will be used in owner notification '.
+                'confirmation emails. (alternatively you can define variable `pfy-form-response-label`).', false],
+
+            'ownerNotificationTo' =>	['If set, an email will be sent to this address each time the form is filled in. '.
+                '(If true, the webmaster email is used).', false],
             'mailTo' =>	['Synonym for "ownerNotificationTo".', false],
 
-            'ownerNotificationTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
-                'Each may contain sub-elements containing language variants, such as "de" or "_".'.
-                'If not template is specified, TransVars "pfy-form-owner-notification-subject" and "pfy-form-owner-notification-message" '.
-                'are used instead.', null],
+            //'ownerNotificationTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
+            //  'Each may contain sub-elements containing language variants, such as "de" or "_".'.
+            //  'If not template is specified, TransVars "pfy-form-owner-notification-subject" and "pfy-form-owner-notification-message" '.
+            //  'are used instead.', null],
 
-            'confirmationEmailTo' =>	['[name-of-email-field] If set to the name of an '.
-                'e-mail field within the form, a confirmation mail will be sent.<br>'.
+            'confirmationEmailTo' =>	['[true|name-of-email-field] Sends a confirmation mail to the user. '.
+                'If true, picks the first e-mail field in the form.'.
+                'Else provide the name of an e-mail field within the form.<br>'.
                 'Variables ``&#123;&#123; pfy-confirmation-response-subject }}`` and '.
                 '``&#123;&#123; pfy-confirmation-response-message }}`` are used to compose message. '.
                 'Use placeholders like ``%key%`` to render corresponding form fields.', null],
 
             'confirmationEmail' =>	['Synonym for "confirmationEmailTo".', null],
 
-            'confirmationEmailTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
-                'Each may contain sub-elements containing language variants, such as "de" or "_".'.
-                'If not template is specified, TransVars "pfy-confirmation-response-subject" and "pfy-confirmation-response-message" '.
-                'are used instead..', null],
+            //'confirmationEmailTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
+            //    'Each may contain sub-elements containing language variants, such as "de" or "_".'.
+            //    'If not template is specified, TransVars "pfy-confirmation-response-subject" and "pfy-confirmation-response-message" '.
+            //    'are used instead..', null],
 
             'mailFrom' =>	['The address from which service emails are sent. (default: "{{ webmaster_email }}").', false],
             'mailFromName' =>	['Name from which service emails are sent.', ''],
@@ -184,47 +189,39 @@ return function ($args = '')
 
     \// Frontmatter:
     variables:
-    
-    notificationTemplate:
-        subject:
-            de: 'Neue Anmeldung auf %host%'
-            _:  'New sign-up on %host%'
-        message:
-            de: |
-                Guten Tag
-                Es gibt eine Anmeldung:
-                %\_data\_%    \// -> predefined shorthand that lists all received data elements
-                Beste Grüsse
-            _:  |
-                Hello
-                We received a sign-up:
-                %\_data_\%
-                Best regards
-    
-    confirmationTemplate:
-        subject: 'Sign-up confirmation from %host%'
-        message: 'Hello %Name% ... Time: \{{ %start%|date('H:i') }}...'
+    pfy-form-response-label: 'Event registration'
+    pfy-form-owner-notification-subject: .\..
+    pfy-form-owner-notification-message: .\..
+    pfy-confirmation-response-subject: .\.. %pageUrl%
+    pfy-confirmation-response-message: |
+        Plaintext version.\..
+        ==== CSS
+        .pfy-htmlmail-inner-wrapper td { font-size:12pt;padding: 0.2em 1.5em 0.2em 0; }
+        ==== HTML
+        Hello %Name%,
+        .\.. 
+
     \-\-\-\-
 
     \{{ form(
-        file:			'\~data/db.json',
-        editData:       true
-        tableOptions:    {interactive:true}
+        file:                '\~data/db.json',
+        editData:            true
+        tableOptions:        { interactive:true, paging:true }
+        responseLabel:       'Event registration' \// used in notification and confirmation emails
+        ownerNotificationTo: true  \// 'true' for webmaster-email or explicit e-mail address 
+        confirmationEmailTo: true  \// 'true' selects the first e-mail field below
+        mailFromName:        'Our organization'
         beforeunloadWarning: true
-        ownerNotificationTo: true \// 'true' for webmaster-email or explicit e-mail address 
-        ownerNotificationTemplate: notificationTemplate
-        confirmationEmailTo: EMail \// -> name of e-mail field below 
-        confirmationEmailTemplate: confirmationTemplate
-        \//maxCount:       12
-        \//deadline:       2025-06-03
+        \//maxCount:          12
+        \//deadline:          2025-06-03
 
-        Name:           { required:true }
-        Name2:          { antiSpam:Name }
-        EMail:          { type:email }
-        Comment:		{ type:textarea, reveal:true },
+        Name:                { required:true }
+        \// Name2:            { antiSpam:Name }
+        EMail:               { type:email }
+        Comment:             { type:textarea, reveal:true },
 
-        cancel:    		{ },
-        submit:    		{ },
+        cancel:              { },
+        submit:              { },
         ) 
     }}
 

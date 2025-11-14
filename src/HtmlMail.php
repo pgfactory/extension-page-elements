@@ -11,7 +11,13 @@ use PHPMailer\PHPMailer\PHPMailer;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\unshieldStr;
 
-const PFY_HTMLMAIL_DEFAULT_STYLES = '.pfy-htmlmail-outer-wrapper { font-family: Arial, sans-serif; }';
+const PFY_HTMLMAIL_DEFAULT_STYLES = <<<EOT
+.pfy-htmlmail-outer-wrapper { font-family: Arial, sans-serif; }
+.pfy-htmlmail-inner-wrapper { font-size:12pt; }
+.pfy-htmlmail-inner-wrapper td { font-size:12pt;padding: 0.2em 1.5em 0.2em 0; }
+
+EOT;
+
 class HtmlMail
 {
     /**
@@ -27,7 +33,8 @@ class HtmlMail
         
         $plaintext = $markdown;
         if (preg_match('/\n==== [A-Z]+\n/s', "\n$markdown")) {
-            list($plaintext, $markdown, $css) = self::parseSections($markdown);
+            list($plaintext, $markdown, $css1) = self::parseSections($markdown);
+            $css .= $css1;
         }
         $images = [];
 
@@ -41,13 +48,13 @@ class HtmlMail
 
         $html = <<<EOT
 <div lang='$lang'>
-    <table class='pfy-htmlmail-outer-wrapper' role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
+    <table class='pfy-htmlmail-outer-wrapper' role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4;">
         <tr>
-            <td align="center" style="padding: 20px 0;">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+            <td align="center">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;width:96%;max-width:800px;margin-top:15px;margin-bottom:15px;padding:15px">
                     <tr>
-                        <td style="padding: 40px 30px;">
-                        <div class='pfy-htmlmail-inner-wrapper'>
+                        <td>
+                        <div class='pfy-htmlmail-inner-wrapper' style="width:100%;max-width:800px;">
 $html
                         </div>
                         </td>
