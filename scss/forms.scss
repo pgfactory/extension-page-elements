@@ -228,7 +228,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     label {
       padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
       padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
-      width: calc(100% - 1.8em);
+      width: calc(100% - 2em);
       vertical-align: middle;
     }
   }
@@ -590,7 +590,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
           width: 1em;
         }
         label {
-          width: calc(100% - 1.8em);
+          width: calc(100% - 2em);
         }
 
       }
@@ -892,6 +892,20 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
 } // .pfy-default-styling
+
+
+// fix for safari quirk:
+#pfy.pfy-default-styling.pfy-small-screen {
+	[type="date"],
+	[type="time"],
+	[type="datetime-local"],
+	[type="month"],
+	[type="week"] {
+      width: var(--form-elem-date-width, calc(100vw - 2rem));
+      height: 2.2em;
+      display: block;
+	}
+}
 
 
 @supports selector(::details-content) {
