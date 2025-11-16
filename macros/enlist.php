@@ -169,7 +169,9 @@ Template File "template.txt" (used for rendering list header):
     pfy-enlist-del-visitor-confirmation-message:
     pfy-enlist-activated-visitor-confirmation-subject:
     pfy-enlist-activated-visitor-confirmation-message:
-   
+
+Alternative: 'pfy-enlist-subject' overrides all subjects above.
+
 EOT,
     ];
 

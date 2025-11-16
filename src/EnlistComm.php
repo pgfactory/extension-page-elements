@@ -49,6 +49,10 @@ class EnlistComm
             $subject = '{{ pfy-enlist-del-notification-subject }}';
             $body = '{{ pfy-enlist-del-notification-message }}';
         }
+        // if generic subject is set, override default:
+        if ($genericSubject = TransVars::getVariable('pfy-enlist-subject')) {
+            $subject = $genericSubject;
+        }
         $replace = [
             '%name%'    => $dataRec['Name'],
             '%email%'   => $dataRec['Email'],
@@ -90,6 +94,10 @@ class EnlistComm
         }
 
         $subject = TransVars::resolveVariables('{{ pfy-enlist-collapse-notification-subject }}');
+        // if generic subject is set, override default:
+        if ($genericSubject = TransVars::getVariable('pfy-enlist-subject')) {
+            $subject = $genericSubject;
+        }
         $body = TransVars::resolveVariables('{{ pfy-enlist-collapse-notification-message }}');
         $body = str_replace('%deleted%', $names, $body);
 
@@ -134,6 +142,10 @@ class EnlistComm
             $subject = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-subject }}');
             $body = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-message }}');
         }
+        // if generic subject is set, override default:
+        if ($genericSubject = TransVars::getVariable('pfy-enlist-subject')) {
+            $subject = $genericSubject;
+        }
 
         $replace = [
             '%name%'    => $newDataRec['Name'],
@@ -167,6 +179,10 @@ class EnlistComm
     {
         $title = str_replace("\n", ' ', $title);
         $subject = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-subject }}');
+        // if generic subject is set, override default:
+        if ($genericSubject = TransVars::getVariable('pfy-enlist-subject')) {
+            $subject = $genericSubject;
+        }
         $body = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-message }}');
         $replace = [
             '%name%' => $rec['Name'],
