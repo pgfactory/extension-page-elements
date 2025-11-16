@@ -50,8 +50,8 @@ return function ($args = '')
 
             'notifyActivatedReserve' =>	['[bool] If true, a notification mail is sent to the person '.
                 'who becomes active from a reserve position after a position ahead of that has been deleted. '.
-                'To customize, define variables ``pfy-enlist-notify-activated-reserve-subject`` and '.
-                '``pfy-enlist-notify-activated-reserve-subject``. (default: false)', null],
+                'To customize, define variables ``pfy-enlist-activated-visitor-confirmation-subject`` and '.
+                '``pfy-enlist-activated-visitor-confirmation-message``. (default: false)', null],
 
             'obfuscate' =>	['[false|placeholder|initials] If true, placeholders are shown for existing entries '.
                 'instead of the names. If "initials", the names initials are shown. (default: false)', null],
@@ -146,11 +146,30 @@ Example:
         count:2
     },
 
-Template File "template.txt":
+Template File "template.txt" (used for rendering list header):
 
     \*\{{ start|intlDate("D, d.F Y") }} {{ start|date("H.i") }}\*
 
+### Notification Email Templates (sent to webmaster):
+    pfy-enlist-add-notification-subject:
+    pfy-enlist-add-notification-message:
+    pfy-enlist-del-notification-subject:
+    pfy-enlist-del-notification-message:
+    pfy-enlist-activated-notification-subject:
+    pfy-enlist-activated-notification-message:
+    pfy-enlist-del-activated-notification-subject:
+    pfy-enlist-del-activated-notification-message:
+    pfy-enlist-collapse-notification-subject:
+    pfy-enlist-collapse-notification-message:
 
+### Confirmation Email Templates (sent to enlisted people):
+    pfy-enlist-add-visitor-confirmation-subject:
+    pfy-enlist-add-visitor-confirmation-message:
+    pfy-enlist-del-visitor-confirmation-subject:
+    pfy-enlist-del-visitor-confirmation-message:
+    pfy-enlist-activated-visitor-confirmation-subject:
+    pfy-enlist-activated-visitor-confirmation-message:
+   
 EOT,
     ];
 

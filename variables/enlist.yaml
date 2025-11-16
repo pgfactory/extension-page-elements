@@ -124,66 +124,163 @@ pfy-enlist-modified:
   de2: 'Dein Eintrag wurde geändert.'
   _:  'Your entry has been modified.'
 
+
+### Notification Email Templates (sent to webmaster):
 pfy-enlist-add-notification-subject:
   de: 'Neuer Eintrag für "%title%" (%host%)'
   _:  'Newly enlisted for "%title%" (%host%)'
+
+pfy-enlist-add-notification-message:
+  de: |
+    Hallo
+    %name% hat sich eingetragen auf der Liste "%title%" auf Seite %page%.
+
+    Der Webmaster
+
+  _: |
+    Hello
+    %name% has been entered on the list "%title%" on %page%.
+
+    The webmaster
 
 pfy-enlist-del-notification-subject:
   de: 'Neue Löschung aus "%title%" (%host%)'
   _:  'Deleted entry from "%title%" (%host%)'
 
+pfy-enlist-del-notification-message:
+  de: |
+    Hallo
+    %name% hat sich ausgetragen auf der Liste "%title%" auf Seite %page%.
+
+    Der Webmaster
+
+  _: |
+    Hello
+    %name% has been removed from the list "%title%" on %page%.
+
+    The webmaster
+  
+
 pfy-enlist-activated-notification-subject:
-  de: 'Neue Löschung aus "%title%" (%host%)'
-  _:  'Deleted entry from "%title%" (%host%)'
+  de: 'Neue Aktivierung in "%title%" (%host%)'
+  _:  'New activation in "%title%" (%host%)'
 
-
-pfy-enlist-add-notification-body:
+pfy-enlist-activated-notification-message:
   de: |
     Hallo
-    %name% hat sich eingetragen auf der Seite %page%.
-
-    Der Webmaster
-  _:  |
-    Hello
-    %name% enlisted on page %page%.
-
-    The webmaster
-
-pfy-enlist-del-notification-body:
-  de: |
-    Hallo
-    %name% hat sich abgemeldet von "%title%" auf Seite %page%.
+    %name% wurde aus der Reserve aktiviert auf der Liste "%title%" auf Seite %page%.
 
     Der Webmaster
 
-  _:  |
+  _: |
     Hello
-    %name% withdrew from "%title%" on %page%.
+    %name% has been activated on the list "%title%" on %page%.
 
     The webmaster
 
-pfy-enlist-activated-notification-body:
+pfy-enlist-del-activated-notification-subject:
+  de: 'Neue Aktivierung in "%title%" (%host%)'
+  _:  'New activation in "%title%" (%host%)'
+
+pfy-enlist-del-activated-notification-message:
   de: |
     Hallo
-    %name% hat sich abgemeldet von "%title%" auf Seite %page%.
+    Änderungen in Liste "%title%" auf Seite %page%:
     
-    Dabei wurde %activated% aus der Reserve aktiviert.
+    - '%deleted%' wurde aus der Liste gelöscht.
+    - '%activated%' wurde stattdess aktiviert.
 
     Der Webmaster
 
-  _:  |
+  _: |
     Hello
-    %name% withdrew from "%title%" on %page%.
+    Modifications of list "%title%" on %page%:
     
-    Thus, %activated% from reserve slots has been activated.
+    - '%deleted%' has been deleted from the list.
+    - '%activated%' has been activated instead.
 
     The webmaster
 
-pfy-enlist-notify-activated-reserve-subject:
+pfy-enlist-collapse-notification-subject:
   de: 'Einschreibeliste "%title%" (%host%)'
-  _:  'Entry list "%title%" (%host%)'
+  _: 'Entry list "%title%" (%host%)'
 
-pfy-enlist-notify-activated-reserve-body:
+pfy-enlist-collapse-notification-message:
+  de: |
+    Hallo
+    Die leeren Listenplätze "%title%" auf Seite %page%
+    wurde jetzt gelöscht:
+   
+    %deleted%
+
+    Der Webmaster
+
+  _: |
+    Hello
+    Empty slogs in list "%title%" on %page%
+    have been removed:
+
+    %deleted%
+
+    The webmaster
+
+
+
+
+### Confirmation Email Templates (sent to enlisted people):
+pfy-enlist-add-visitor-confirmation-subject:
+  de: 'Einschreibeliste "%title%" (%host%)'
+  _: 'Entry list "%title%" (%host%)'
+
+pfy-enlist-add-visitor-confirmation-message:
+  de: |
+    Hallo %name%
+    Sie sind jetzt eingetragen in die Liste "%title%" auf Seite %page%.
+    Besten Dank.
+
+    Der Webmaster
+
+  de2: |
+    Hallo %name%
+    Du bist jetzt eingetragen in die Liste "%title%" auf Seite %page%.
+    Besten Dank.
+
+    Der Webmaster
+
+  _: |
+    Hello %name%
+    You are now added to the list "%title%" on %page%.
+
+    The webmaster
+
+pfy-enlist-del-visitor-confirmation-subject:
+  de: 'Einschreibeliste "%title%" (%host%)'
+  _: 'Entry list "%title%" (%host%)'
+
+pfy-enlist-del-visitor-confirmation-message:
+  de: |
+    Hallo %name%
+    Sie sind jetzt ausgetragen von der Liste "%title%" auf Seite %page%.
+
+    Der Webmaster
+
+  de2: |
+    Hallo %name%
+    Du bist jetzt ausgetragen von der Liste "%title%" auf Seite %page%.
+
+    Der Webmaster
+
+  _: |
+    Hello %name%
+    You are now removed from the list "%title%" on %page%.
+
+    The webmaster
+
+pfy-enlist-activated-visitor-confirmation-subject:
+  de: 'Einschreibeliste "%title%" (%host%)'
+  _: 'Entry list "%title%" (%host%)'
+
+pfy-enlist-activated-visitor-confirmation-message:
   de: |
     Hallo %name%
     Sie waren als Reserve in der Einschreibeliste "%title%" eingetragen (auf Seite %page%).
@@ -200,43 +297,17 @@ pfy-enlist-notify-activated-reserve-body:
 
     Der Webmaster
 
-  _:  |
+  _: |
     Hello %name%
-   
+
     You were registered in the entry list "%title%" on a reserve position (on page %page%).
 
     Now you have been advanced to an active position, since a position ahead of you has been cleared.
 
     The webmaster
 
-pfy-enlist-visitor-confirmation-subject:
-  de: |
-    Eintragungsbestätigung
 
-  _:  |
-    Registration confirmation
 
-pfy-enlist-visitor-confirmation-body:
-  de: |
-    Guten Tag %name%
-
-    Wir haben Ihre Eintragung für "%title%" auf Seite %page% erhalten. 
-
-    Besten Dank.
-    
-  de2: |
-    Hallo %name%
-
-    Wir haben deine Eintragung für "%title%" auf Seite %page% erhalten.
-
-    Besten Dank.
-
-  _:  |
-    Hello %name%
-
-    We have received your list entry for "%title%" on page %page%.
-
-    Thank you.
 
 pfy-enlist-confirmation-banner-deleted:
   de: Eintrag gelöscht

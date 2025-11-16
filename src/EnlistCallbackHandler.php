@@ -97,7 +97,7 @@ class EnlistCallbackHandler
         $directlyToReserve = $newDataRec['directlyToReserve']? ' (to reserve)': '';
         $this->handleNotifyOwner($newDataRec, 'add', $newDataRec['widgetTitle']??'');
 
-        if ($this->handleSendConfirmation($newDataRec, $newDataRec['widgetTitle']??'')) {
+        if ($this->handleSendConfirmation($newDataRec, 'add', $newDataRec['widgetTitle']??'')) {
             mylog("EnList new entry$directlyToReserve & confirmation sent: {$newDataRec['Name']} {$newDataRec['Email']} $context", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-confirmation-sent }}');
         }
@@ -123,6 +123,7 @@ class EnlistCallbackHandler
         } else {
             $slots = $this->db->getEnlistSlots($widgetInx);
         }
+        $title = $newDataRec['widgetTitle']??'';
         $thisSlot = &$slots[$slotInx];
         $thisSlot['Email'] = $thisSlot['Email']??'';
         if (!$this->isEnlistAdmin && ($thisSlot['Email'] !== $newDataRec['Email'])) {
@@ -132,14 +133,18 @@ class EnlistCallbackHandler
         if ($mode === 'del') {
             $this->checkSlotFreezTime($widgetDescr, $widgetInx, $slotInx);
 
-            $becameActive = $this->db->emptySlot($widgetInx, $slotInx);
-            $mode = $becameActive ? 'activated' : 'del';
-            $becameActiveName = $becameActive['Name'] ?? 'somebody';
-            $this->handleNotifyOwner($newDataRec, $mode, ($newDataRec['widgetTitle']??''), $becameActiveName);
+            $deletedRec = $slots[$slotInx];
+            $becameActiveRec = $this->db->emptySlot($widgetInx, $slotInx);
+            $mode = $becameActiveRec ? 'activated' : 'del';
+            $becameActiveName = $becameActiveRec['Name'] ?? 'somebody';
 
-            if ($becameActive) {
-                $this->notifyActivatedReserve($becameActive, $newDataRec['widgetTitle']??'');
+            if ($becameActiveRec) {
+                $this->sendActivatedConfirmation($becameActiveRec, $deletedRec, $title);
+            } else {
+                $this->handleNotifyOwner($newDataRec, $mode, $title, $becameActiveName);
+                $this->handleSendConfirmation($newDataRec, $mode, $title);
             }
+
             mylog("EnList entry deleted: {$newDataRec['Name']} {$newDataRec['Email']}", 'enlist-log.txt');
             reloadAgent(message: '{{ pfy-enlist-confirmation-banner-deleted }}');
 
@@ -149,6 +154,13 @@ class EnlistCallbackHandler
     } // handleExistingEntry
 
 
+    /**
+     * @param mixed $widgetInx
+     * @param string $slotInx
+     * @param array $newDataRec
+     * @param string $context
+     * @return array
+     */
     private function moveSlot(mixed $widgetInx, string $slotInx, array $newDataRec, string $context): array
     {
         $slots = $this->db->getEnlistSlots($widgetInx);
@@ -240,13 +252,22 @@ class EnlistCallbackHandler
      * @param string $title
      * @return void
      */
-    public function notifyActivatedReserve(array $rec, string $title): void
+    public function sendActivatedConfirmation(array $becameActiveRec, array $deletedRec, string $title): void
     {
         if (!$this->options['notifyActivatedReserve']) {
             return;
         }
-        EnlistComm::notifyActivatedReserve($rec, $title);
-    } // notifyActivatedReserve
+        if (!($to = $this->options['notifyOwner']??false)) {
+            return;
+        }
+        if ($deletedRec) {
+            $mode = 'del&activated';
+        } else {
+            $mode = 'activated';
+        }
+        EnlistComm::sendActivatedConfirmation($becameActiveRec, $title);
+        EnlistComm::notifyOwner($to, $becameActiveRec, $mode, $title, $deletedRec);
+    } // sendActivatedConfirmation
 
 
     /**
@@ -256,12 +277,12 @@ class EnlistCallbackHandler
      * @param string $nameActivated
      * @return void
      */
-    private function handleNotifyOwner(array $newDataRec, string $mode, string $title, string $nameActivated = ''): void
+    private function handleNotifyOwner(array $newDataRec, string $mode, string $title): void
     {
         if (!($to = $this->options['notifyOwner']??false)) {
             return;
         }
-        EnlistComm::notifyOwner($to, $newDataRec, $mode, $title, $nameActivated);
+        EnlistComm::notifyOwner($to, $newDataRec, $mode, $title);
     } // handleNotifyOwner
 
 
@@ -270,12 +291,12 @@ class EnlistCallbackHandler
      * @param string $title
      * @return bool
      */
-    private function handleSendConfirmation(array $newDataRec, string $title): bool
+    private function handleSendConfirmation(array $newDataRec, string $mode, string $title): bool
     {
         if (!$this->options['sendConfirmation']??false) {
             return false;
         }
-        EnlistComm::sendConfirmation($newDataRec, $title);
+        EnlistComm::sendConfirmation($newDataRec, $mode, $title);
         return true;
     } // handleSendConfirmation
 

@@ -99,9 +99,15 @@ class EnlistData
             $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetInx);
             $widgetTitle = str_replace("\n", '', $widgetTitle);
             $names = '';
+            $nameList = '';
             foreach ($toNotify as $rec) {
-                EnlistComm::notifyActivatedReserve($rec, $widgetTitle);
+                EnlistComm::sendActivatedConfirmation($rec, $widgetTitle);
                 $names .= '<br>- '.$rec['Name']??'';
+                $nameList .= ', "'.($rec['Name']??'').'"';
+            }
+            if (($to = $this->options['notifyOwner']??false)) {
+                $title = "[$widgetInx: ".PFY_PAGE_URL.']';
+                EnlistComm::notifyOwnerOfListCollapse($to, $title, ltrim($nameList, ', '));
             }
             $msg = TransVars::getVariable('pfy-enlist-collapse-executed');
             $msg = str_replace('%names%', $names, $msg);
