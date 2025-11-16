@@ -32,6 +32,8 @@ const PFY_FORMS_SUPPORTED_TYPES =
     'button,reset,submit,cancel,@import,literal,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
+const PFY_NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
+const PFY_CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
 const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
@@ -2753,14 +2755,15 @@ EOT;
         $dataRec['_md_data_'] = $mdStr;
         $dataRec['_data_'] = $out;
 
-        list($subject, $message) = $this->getEmailComponents('notificationTemplate', $dataRec, 'pfy-form-owner-notification');
+        list($subject, $message) = $this->getEmailComponents($dataRec, PFY_NOTIFICATION_VAR_NAME);
 
-        $to = $this->formOptions['mailTo']?: PageFactory::$webmasterEmail;
-        if ($to === true) {
+        if ($this->formOptions['mailTo'] === true) {
             if (!PageFactory::$webmasterEmail) {
                 throw new \Exception('Error: config option "webmaster_email" is not set.');
             }
             $to = PageFactory::$webmasterEmail;
+        } else {
+            $to = $this->formOptions['mailTo'];
         }
 
         // dev mode -> override $to:
@@ -2798,7 +2801,7 @@ EOT;
         $dataRec += $eventData;
         $dataRec['hostUrl'] = PFY_HOST_URL;
 
-        list($subject, $message) = $this->getEmailComponents('confirmationTemplate', $dataRec, 'pfy-confirmation-response');
+        list($subject, $message) = $this->getEmailComponents($dataRec, PFY_CONFIRMATION_VAR_NAME);
 
         if ($confirmationMail === true) {
             $to = $this->pickFirstEmailField($dataRec);
@@ -2860,21 +2863,10 @@ EOT;
      *
      * @return array
      */
-    private function getEmailComponents(string $varName, array $dataRec, string $legacyVarName = ''): array
+    private function getEmailComponents(array $dataRec, string $varNameStub = ''): array
     {
-        $subject = '';
-        $message = '';
-        $confirmationEmailTemplateVar =  $this->formOptions[$varName] ?? $varName;
-        if ($confirmationEmailTemplate = TransVars::$transVars[$confirmationEmailTemplateVar] ?? false) {
-            $subject = $confirmationEmailTemplate['subject']??false;
-            $subject = TransVars::selectLangVariantOfTransVar($subject);
-
-            $message = $confirmationEmailTemplate['message']??false;
-            $message = TransVars::selectLangVariantOfTransVar($message);
-        }
-
-        $subject = $subject ?: TransVars::getVariable($legacyVarName.'-subject', varNameIfNotFound:true);
-        $message = $message ?: (TransVars::getVariable($legacyVarName.'-body') ?: TransVars::getVariable($legacyVarName.'-message', varNameIfNotFound:true));
+        $subject = TransVars::getVariable($varNameStub.'-subject', varNameIfNotFound:true);
+        $message = (TransVars::getVariable($varNameStub.'-body') ?: TransVars::getVariable($varNameStub.'-message', varNameIfNotFound:true));
 
         $dataRec['host'] = PFY_HOST_URL;
 
