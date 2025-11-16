@@ -2801,16 +2801,17 @@ EOT;
         list($subject, $message) = $this->getEmailComponents('confirmationTemplate', $dataRec, 'pfy-confirmation-response');
 
         if ($confirmationMail === true) {
-            // PHP 8.4:
-            //$res = array_find($this->formElements, function ($rec) {
-            //    return $rec['type'] === 'email';
-            //});
-            $res = array_filter($this->formElements, function ($rec) {
-                return $rec['type'] === 'email';
-            });
-            if ($res) {
-                $res = reset($res);
-                $to = $dataRec[$res['name']]??'';
+            $to = $this->pickFirstEmailField($dataRec);
+
+        } elseif (str_contains($confirmationMail, '!not-loggedin')) {
+            $confirmationMail = str_replace('!not-loggedin', '', $confirmationMail);
+            if (Permission::isLoggedIn() || Permission::isLocalhost()) {
+                $to = false;
+                mylog('Confirmation mail to non-logged-in user is not sent.');
+            } elseif ($confirmationMail) {
+                $to = $confirmationMail;
+            } else {
+                $to = $this->pickFirstEmailField($dataRec);
             }
 
         } elseif (str_contains($confirmationMail, '@')) {
@@ -2824,8 +2825,30 @@ EOT;
             $this->sendMail($to, $subject, $message, logComment: 'Confirmation Mail to Visitor');
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
         }
-        return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-missing }}</div>\n";
+        return '';
     } // sendConfirmationMail
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function pickFirstEmailField(array $dataRec): string
+    {
+        // PHP 8.4:
+        //$res = array_find($this->formElements, function ($rec) {
+        //    return $rec['type'] === 'email';
+        //});
+        $res = array_filter($this->formElements, function ($rec) {
+            return $rec['type'] === 'email';
+        });
+        if ($res) {
+            $res = reset($res);
+            return $dataRec[$res['name']]??'';
+        } else {
+            throw new \Exception('Error: no email field found in form for sending confirmation mail.');
+        }
+    } // pickFirstEmailField
 
 
     /**
@@ -2916,9 +2939,11 @@ EOT;
 
         $formOptions['dbOptions'] = $formOptions['dbOptions'] + PFY_FORM_OPTIONS['dbOptions'];
 
+        //ToDo: evaluate necessity:
+        //$formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
+        //$formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
+
         // make sure essential options are instantiated:
-        $formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
-        $formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
         $formOptions['next']                = $formOptions['next'] ?: PFY_FORM_OPTIONS['next'];
         if ($formOptions['responseLabel']??false) {
             TransVars::setTempVariable('pfy-form-response-label', $formOptions['responseLabel']);
@@ -3507,6 +3532,11 @@ EOT;
     } // getHeadAttributes
 
 
+    /**
+     * @param array $origDataRec
+     * @param mixed $formInxReceived
+     * @return void
+     */
     private function retainSubmittedData(array $origDataRec, mixed $formInxReceived): void
     {
         $origDataRec['_reckey'] = $this->lastCreatedRecKey;
