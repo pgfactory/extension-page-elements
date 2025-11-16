@@ -1,13 +1,21 @@
 
+@font-face {
+  font-family: 'KleeOne';
+  src: url('~/media/plugins/pgfactory/pagefactory-pageelements/fonts/KleeOne-Regular.ttf')
+  format('truetype');
+}
+
 .pfy-default-styling {
   // === Post-It notes:
+
   .pfy-post-it {
     position: absolute;
     top: 0; right: 0;
     padding: 1em 0.5em 0.5em 0.5em;
      transform: rotate(var(--pfy-post-it-angle, 10deg));
 
-    font-family: var(--pfy-post-it-font, bradley hand), Chalkduster, cursive;
+    font-family: var(--pfy-post-it-font, KleeOne),  bradley hand, Chalkduster, cursive;
+    font-size: 1.1em;
     min-width: 13em;
     min-height: 4em;
     background: var(--pfy-post-it-bg-color, #FAF9C7FF);
@@ -19,10 +27,10 @@
     box-shadow: 2px 2px 8px 1px rgba(0, 0, 0, 0.2);
 
     &.pfy-post-it-removable:before {
-      content: "⛌";
+      content: "✕";
       display: block;
       position: absolute;
-      font-family: monospace;
+      font-family: arial, sans-serif;
       border: 1px solid #bbb;
       font-size: 12pt;
       width: 1.2em;
