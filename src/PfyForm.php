@@ -77,6 +77,7 @@ const PFY_FORM_OPTIONS = [
         'obfuscateRecKeys' => true,
         'rowCallback' => true,
         'obfuscateCols' => ['passwor*'],
+        'dontPrint' => [],
     ],
     'dbOptions' => [
         'keepDataDuration' => false, // -> use DataSet default

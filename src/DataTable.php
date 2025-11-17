@@ -69,6 +69,7 @@ const PFY_TABLE_DEFAULT_OPTIONS = [
     'order' => false,
     'filter' => false,
     'reversed' => false,
+    'dontPrint' => false,
     'export' => false,
     'headers' => false,
     'footers' => false,
@@ -139,6 +140,7 @@ class DataTable
     private array $computedCells = [];
     private string $nameAttr = '';
     private string $viewTemplate = '';
+    private mixed $dontPrint = false;
 
     /**
      * @param string|array $dataSrc
@@ -212,6 +214,10 @@ EOT;
         $out .= $this->viewTemplate;
 
         $out .= "</div> <!-- /$this->tableWrapperClass -->\n\n";
+
+        // inject JS for properly printing table -> expand paging, hide unwanted elements:
+        $this->injectJsBeforePrint();
+
         return $out;
     } // render
 
@@ -479,7 +485,7 @@ EOT;
             $dataElemName = "data-elemname='$key'";
             $class = 'pfy-col-'.translateToClassName($value);
             if ($value !== $key) {
-                $class = 'pfy-col-'.translateToClassName($key);
+                $class = 'pfy-col-'.translateToClassName(ltrim($key, '_'));
             }
             if ($this->colClasses[$c]??'') {
                 $class .= ' ' . $this->colClasses[$c];
@@ -1054,6 +1060,43 @@ EOT;
     /**
      * @return void
      */
+    private function injectJsBeforePrint(): void
+    {
+        $js = "console.log('hiding from print:');\n";
+        if (!$this->dontPrint) {
+            $dontPrint = $this->dontPrint;
+            if (!is_array($dontPrint)) {
+                $dontPrint = explodeTrim(',', (string)$dontPrint);
+            }
+            foreach ($dontPrint as $elem) {
+                $js .= <<<EOT
+        domForAll('$elem', el => {
+            el.classList.add('pfy-dont-print');
+            console.log(el);
+        });
+
+EOT;
+            }
+        }
+        $js = <<<EOT
+if (typeof pfyDataTable !== 'undefined') {
+    window.addEventListener('beforeprint', () => {
+        console.log('expanding paged tables:');
+        pfyDataTable.forEach(dt => {
+            dt.page.len(1000).draw();
+        });
+$js
+    });
+}
+EOT;
+
+        Page::addJsReady($js);
+    } // injectJsBeforePrint
+
+
+    /**
+     * @return void
+     */
     private function renderViewTemplate(): void
     {
         $viewTemplate = '';
@@ -1171,6 +1214,7 @@ EOT;
         if ($this->rowCallback === true) {
             $this->rowCallback = 'true';
         }
+        $this->dontPrint = $options['dontPrint'];
         $this->export = $options['export'];
         $this->includeSystemElements = $options['includeSystemElements'];
         $this->includeTimestamp = $options['includeTimestamp'];

@@ -930,3 +930,19 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 } /* @supports */
 
 
+@media print {
+  #pfy.pfy-default-styling {
+    .dt-search,
+    .dataTables_filter,
+    .dt-layout-row:has(.dt-length,.dt-paging),
+    .pfy-table-buttons,
+    .pfy-form-wrapper {
+      display: none;
+    }
+
+    .pfy-table-wrapper {
+      border: none;
+      outline: none;
+    }
+  }
+}
