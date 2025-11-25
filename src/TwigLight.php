@@ -33,7 +33,7 @@ class TwigLight
         $input = str_replace(['&#123;%', '%&#125;'], ['{%', '%}'], $input);
 
         // Define the pattern for tokens -> separate {%...%} from any other text
-        $pattern = '/(\{% ([^%}]*) %}) | ( [^[{%]* )/xms';
+        $pattern = '/(\{% (.*?) %}) | ( [^{]+ )/xs';
 
         // Tokenize the input string
         preg_match_all($pattern, $input, $matches);
