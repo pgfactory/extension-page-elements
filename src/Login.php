@@ -128,7 +128,9 @@ EOT;
             'action'             => self::$selfLink,
             'showFeedbackInpage' => false,
             'class'              => 'pfy-form-colored',
-            'callback'           => function($data) { return self::loginCallback($data); },
+            'dataReceivedCallback'           => function($data) {
+                return self::loginCallback($data);
+            },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => "<span class='pfy-login-otc-unpw'>$message</span>",
             'problemWithFormBanner' => 'pfy-problem-with-login-banner',
@@ -187,14 +189,16 @@ EOT;
         $formOptions = [
             'action'             => self::$selfLink,
             'showFeedbackInpage' => false,
-            'callback'           => function($data) { return self::loginCallback($data); },
+            'dataReceivedCallback'=> function($data) {
+                return self::loginCallback($data);
+            },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => $message,
         ];
 
         $formElements = [
-            'email'     => ['label' => 'E-Mail:',   'name' => 'pfy-login-email', 'type' => 'text'],
-            'password'  => ['label' => 'Password:', 'name' => 'pfy-login-password', 'type' => 'password'],
+            'email'     => ['label' => 'E-Mail:',   'name' => 'pfyLoginEmail', 'type' => 'text'],
+            'password'  => ['label' => 'Password:', 'name' => 'pfyLoginPassword', 'type' => 'password'],
             'cancel'    => ['next' => self::$nextPage],
             'submit'    => ['type' => 'submit', 'label' => '{{ pfy-login-button }}'],
         ];
@@ -221,9 +225,9 @@ EOT;
      */
     private static function loginCallback(array $data): string|bool
     {
-        $code = $data['code']??false;
+        $code = $data['pfyLoginCode']??false;
         if ($code) {
-            // 'code' received -> validate:
+            // 'pfyLoginCode' received -> validate:
             try {
                 kirby()->auth()->verifyChallenge($code);
                 $email = self::getUsersEmail($data);
@@ -237,11 +241,10 @@ EOT;
             }
 
         } elseif ($email = self::getUsersEmail($data)) {
-            if ($password = ($data['password'] ?? false)) {
-                // 'password' received -> validate:
+            if ($password = ($data['pfyLoginPassword'] ?? false)) {
+                // 'pfyLoginPassword' received -> validate:
                 try {
                     // verify credentials:
-                    $email = self::getUsersEmail($data);
                     kirby()->auth()->login($email, $password);
                     $str = self::renderMsg('pfy-login-success', $email);
                     mylog("$email successfully logged in", PFY_LOGIN_LOG_FILE);
@@ -289,7 +292,7 @@ EOT;
      */
     private static function getUsersEmail(array $data): string|false
     {
-        if ($email = ($data['email']??false)) {
+        if ($email = ($data['pfyLoginEmail']??false)) {
             return Permission::findUsersEmail($email);
         }
         return false;
