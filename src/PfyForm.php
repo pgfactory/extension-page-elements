@@ -388,8 +388,8 @@ class PfyForm extends Form
             ]);
 
             $this->addElement('', ['type' => 'hidden', 'name' => '_dataSrcInx', 'value' => $this->formIndex]);
-            $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf()]);
         }
+        $this->addElement('', ['type' => 'hidden', 'name' => '_csrf', 'value' => csrf()]);
         $this->fireRenderEvents();
 
     } // createForm
@@ -1282,15 +1282,17 @@ class PfyForm extends Form
         } else {
             if ($rec['value'] ?? false) {
                 $val = $rec['value'];
-                if (str_contains($val, '%')) {
-                    $val = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                if (str_contains($val, '_')) {
+                    $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
                 }
-               $dataAttrib = " data-value='$val'";
+                $dataAttrib = " data-value='$val'";
             }
             if ($rec['preset'] ?? false) {
                 $val = $rec['preset'];
+                if (str_contains($val, '_')) {
+                    $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                }
                 if (str_contains($val, '%')) {
-                    $val = str_replace(['%today%', '%now%'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
                     $val = str_replace('%', '\\%', $val);
                 }
                 if (str_contains($val, '"') || str_contains($val, "'")) {
@@ -1727,11 +1729,9 @@ EOT;
 
             $elem = $this['_dataSrcInx'];
             $html .= $elem->getControl() . "\n";
-
-
-            $elem = $this['_csrf'];
-            $html .= $elem->getControl() . "\n";
         }
+        $elem = $this['_csrf'];
+        $html .= $elem->getControl() . "\n";
 
         $html .= "</div><!-- /pfy-elems-wrapper -->\n";
 
@@ -2039,11 +2039,11 @@ EOT;
         }
 
         // check presence of $formInxReceived:
-        $formInxReceived = $dataRec['_dataSrcInx'] ?? false;
+        $formInxReceived = $_POST['_form_'] ?? false;
 
         // check if page contains multiple forms, if so, check and skip the other ones:
         $sessKey = "form:" . PFY_PAGE_ID . ":formCount";
-        if (kirby()->session()->get($sessKey, false)) {
+        if (($formCount = kirby()->session()->get($sessKey, false)) && ($formCount > 1)) {
             // check whether received data applies to currently processed form (e.g. if there are multiple forms in a page):
             if (intval($formInxReceived) !== $this->formIndex) {
                 return; // signal 'processing skipped, continue processing'
@@ -2120,7 +2120,6 @@ EOT;
                 mylog($logMsg, 'form-log.txt');
             }
             if ($this->keepSubmittedDataInForm) {
-//                $this->retainSubmittedData($origDataRec, $formInxReceived);
                 $this->showForm = true;
             }
         }
@@ -2309,8 +2308,8 @@ EOT;
                     $v = $dataRec[$varName] ?? '';
                     $saveAs = str_replace($m[0], "'$v'", $saveAs);
                 }
-                if (str_contains($saveAs, '%')) {
-                    $saveAs = str_replace(['%today%', '%now%'], ['\'' . date('Y-m-d') . '\'', '\'' . date('Y-m-d H:i') . '\''], $saveAs);
+                if (str_contains($saveAs, '_')) {
+                    $saveAs = str_replace(['_today_', '_now_'], ['\'' . date('Y-m-d') . '\'', '\'' . date('Y-m-d H:i') . '\''], $saveAs);
                 }
                 try {
                     $value = eval("return $saveAs;");
@@ -2728,7 +2727,8 @@ EOT;
             $labelLen = max($labelLen, strlen($key));
         }
         $labelLen += 5;
-        $dataRec = $this->origReceivedData + $dataRec;
+        $dataRec = $dataRec + $this->origReceivedData;
+        // $dataRec = $this->origReceivedData + $dataRec; //??? -> consequences?
         foreach ($dataRec as $key => $value) {
             // skip meta and antiSpam fields:
             if ($key[0] === '_' || $this->formElements[$key]['antiSpam']??false) {
@@ -2740,7 +2740,11 @@ EOT;
             }
             $key1 = str_pad("$key: ", $labelLen, ' ');
             if (is_array($value)) {
-                $value = implode(', ', $value);
+                if (isset($value['_'])) {
+                    $value = str_replace(',', ', ', $value['_']);
+                } else {
+                    $value = implode(', ', $value);
+                }
             }
             $out .= "$key1 $value\n";
             $mdStr .= "| $key: | $value\n|---\n";
@@ -2777,7 +2781,15 @@ EOT;
         } elseif (str_contains($to, ',')) {
             $to = explodeTrim(',', $to);
         }
-        $this->sendMail($to, $subject, $message, logComment: 'Notification Mail to Owner');
+
+        if ($to) {
+            $this->sendMail([
+                'to'            => $to,
+                'subject'       => $subject,
+                'body'          => $message,
+                'logComment'    => 'Notification Mail to Owner',
+            ]);
+        }
     } // sendOwnerNotification
 
 
@@ -2826,7 +2838,12 @@ EOT;
             $to = $dataRec[$confirmationMail]??false;
         }
         if ($to) {
-            $this->sendMail($to, $subject, $message, logComment: 'Confirmation Mail to Visitor');
+            $this->sendMail([
+                'to'            => $to,
+                'subject'       => $subject,
+                'body'          => $message,
+                'logComment'    => 'Confirmation Mail to Visitor',
+            ]);
             return "<div class='pfy-form-confirmation-email-sent'>{{ pfy-form-confirmation-email-sent }}</div>\n";
         }
         return '';
@@ -2885,34 +2902,16 @@ EOT;
      * @param string $debugInfo
      * @return void
      */
-    private function sendMail(string|array $to, string $subject, string $body, string $cc = '', $html = '', $logComment = ''): void
+    private function sendMail(array $props): void
     {
-        if (preg_match('/\n==== [A-Z]+\n/s', "\n$body")) {
-            $htmlMail = new HtmlMail();
-            list($html, $body, $images) = $htmlMail->compileForMail($body);
-        }
-
-        $props = [
-            'to' => $to,
+        $props += [
             'from' => $this->formOptions['mailFrom'] ?: TransVars::getVariable('webmaster_email'),
             'fromName' => $this->formOptions['mailFromName'] ?: false,
-            'subject' => html_entity_decode($subject),
-            'body' => html_entity_decode($body),
+            'logComment' => '',
+            'subject' => '',
+            'body' => '',
         ];
-        if ($cc) {
-            $props['cc'] = $cc;
-        }
-        if ($images??false) {
-            $props['attachments'] = $images;
-        }
-
-        if ($html) {
-            $props['body'] = [
-                'html' => $html,
-                'text' => $body,
-            ];
-        }
-        HtmlMail::sendMail($props, $logComment);
+        HtmlMail::sendMail($props);
     } // sendMail
 
 

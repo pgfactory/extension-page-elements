@@ -24,39 +24,38 @@ pfy-form-response-label: #Neue Anemldung auf host.net
   _:  sign-up
 
 pfy-form-owner-notification-subject: #Neue Anemldung auf host.net
-  de: 'Neue {{ pfy-form-response-label }} auf %pageUrl%'
-  _:  'New {{ pfy-form-response-label }} on %pageUrl%'
+  de: 'Neue {{ pfy-form-response-label }} auf %host%'
+  _:  'New {{ pfy-form-response-label }} on %host%'
 
 pfy-form-owner-notification-message:
   de: |
-    Guten Tag
+    Benachrichtigung von der Webseite %pageUrl%:
+    
     Es gibt eine neue {{ pfy-form-response-label }}:
     
     %_data_%
     
     ==== HTML
-    Guten Tag
+    Benachrichtigung von der Webseite %pageUrl%:
     
     Es gibt eine neue {{ pfy-form-response-label }}:
     
     %_md_data_%
-    
-    Beste Grüsse von Ihrer Website
 
   _:  |
-    Hello
-    We received a new {{ pfy-form-response-label }}:
+    Notification from web page %pageUrl%:
+    
+    There is a new {{ pfy-form-response-label }}:
     
     %_data_%
     
     ==== HTML
-    Hello
+    Notification from web page %pageUrl%:
     
-    We received a new {{ pfy-form-response-label }}:
+    There is a new {{ pfy-form-response-label }}:
     
     %_md_data_%
-    
-    Best Regards from your website
+
 
 
 #
