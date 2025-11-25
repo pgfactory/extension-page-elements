@@ -58,6 +58,8 @@ function intlDate(string $format, mixed $time = false): string
         return date('Y-m-d H:i', $time);
     } elseif ($format === 'ISOT') {
         return date('Y-m-d\TH:i', $time);
+    } elseif ($format === 'r') {
+        return intlDateFormat('LONG,SHORT', $time);
     } elseif ($format === '') {
         return intlDateFormat('LONG,NONE', $time);
     }
@@ -124,9 +126,9 @@ function intlDateFormat(string $format, mixed $time = false): string
     }
 
     switch ($dateFormat) {
-        case 'FULL':   $dateFormat = IntlDateFormatter::NONE; $format = FULL_DATE_FORMAT; break;
-        case 'LONG':   $dateFormat = IntlDateFormatter::NONE; $format = LONG_DATE_FORMAT; break;
-        case 'MEDIUM': $dateFormat = IntlDateFormatter::NONE; $format = MEDIUM_DATE_FORMAT; break;
+        case 'FULL':   $dateFormat = IntlDateFormatter::FULL; break;
+        case 'LONG':   $dateFormat = IntlDateFormatter::LONG; break;
+        case 'MEDIUM': $dateFormat = IntlDateFormatter::MEDIUM; break;
         case 'SHORT':  $dateFormat = IntlDateFormatter::SHORT; break;
         case 'RELATIVE_LONG':   $dateFormat = IntlDateFormatter::RELATIVE_LONG; break;
         case 'RELATIVE_MEDIUM': $dateFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
