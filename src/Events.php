@@ -202,7 +202,7 @@ class Events extends DataSet
         }
 
         $duration = ($options['duration']??false) ? intval($options['duration']) * 60 : 3600; // s
-        $startTime = $options['startTime']??'12:00';
+        $startTime = $options['startTime']??'00:00';
         if ($endTime = ($options['endTime']??false)) {
             $startT = strtotime('1970-01-01 '.$startTime);
             $endT = strtotime('1970-01-01 '.$endTime);
@@ -245,8 +245,8 @@ class Events extends DataSet
             $events = [];
 
             foreach ($rrule as $occurrence) {
-                $event['start'] = $occurrence->format('Y-m-d ') . $startTime;
-                $event['end'] = date('Y-m-d H:i', strtotime($event['start']) + $duration);
+                $event['start'] = $occurrence->format('Y-m-d\T') . $startTime;
+                $event['end'] = date('Y-m-d\TH:i', strtotime($event['start']) + $duration);
                 $events[] = $event;
             }
         } catch (\Exception $e) {
