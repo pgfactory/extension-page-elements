@@ -41,13 +41,10 @@ class TemplateCompiler
      */
     public static function compile(mixed $data = false, array $templateOptions = [], string $categorySelector = 'category', string $elementSelector = 'element'): string
     {
-        if (!$data) {
-            if ($templateOptions['noDataAvailableText']??false) {
-                return TransVars::getVariable($templateOptions['noDataAvailableText'], true);
-            } else {
-                return '';
-            }
+        if (!$data && ($templateOptions['noDataAvailableText']??false)) {
+            return TransVars::getVariable($templateOptions['noDataAvailableText'], true);
         }
+
         if (!is_array($data)) {
             throw new \Exception('pfy-templatecompiler-bad-data');
         }
@@ -79,7 +76,7 @@ class TemplateCompiler
             $prefix .= "\n";
         }
 
-
+        $templateOptions['removeUndefinedPlaceholders'] = false;
         $out = '';
         $inx = 0;
         foreach ($data as $i => $rec) {
@@ -233,7 +230,7 @@ class TemplateCompiler
         TransVars::setTempVariables($vars);
         $template = TwigLight::compile($template);
         $str = TransVars::translate($template);
-        TransVars::setTempVariables([]);
+        TransVars::purgeTempVariables();
         return $str;
     } // compileTemplate
 
@@ -258,6 +255,7 @@ class TemplateCompiler
         $template = TransVars::resolveShortFormVariables($template, keepUnknows: true);
         return $template;
     } // basicCompileTemplate
+
 
 
     /**
