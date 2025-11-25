@@ -12,6 +12,7 @@ use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\timestampStr;
+use function PgFactory\PageFactory\unshieldStr;
 use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\fileTime;
 
@@ -32,6 +33,7 @@ class EMailHelper
     private static string $macroName = '';
     private static array $attachments = [];
     private static array|false $schedule = [];
+    private static array $events = [];
 
 
     /**
@@ -41,6 +43,7 @@ class EMailHelper
      */
     public static function render(array $options): string
     {
+        // handle '?sent':
         if (isset($_GET['sent'])) {
             return '{{ pfy-htmlmail-sent-confirmation }}';
         }
@@ -141,11 +144,15 @@ EOT;
             },
         ];
         $markdown = str_replace('~', '∽', self::$markdown);
+        $markdown = str_replace("{", "&#123;", $markdown);
+
+        $plaintext = HtmlMail::cleanupPlaintext(self::$plaintext);
+        $plaintext = str_replace("{", "&#123;", $plaintext);
         $formFields = [
             'Subject'   => ['preset' => self::$subject],
             'Markdown'  => ['type' => 'textarea', 'preset' => $markdown],
             'Css'       => ['type' => 'textarea', 'preset' => self::$css],
-            'Text'      => ['type' => 'textarea', 'preset' => self::$plaintext],
+            'Text'      => ['type' => 'textarea', 'preset' => $plaintext],
 
             'To'        => ['type' => 'text', 'label'=> '{{ pfy-htmlmail-to }}','class' => 'halve-width', 'preset' => self::$to],
 
@@ -206,12 +213,18 @@ EOT;
             $css !== ($dataRec['Css']??'') ||
             $plaintext !== ($dataRec['Text']??'')
         ) {
+            // anything changed, then save it:
             $tmp = $dataRec;
             foreach ($tmp as $key => $value) {
                 if ($key[0] === '_') {
                     unset($tmp[$key]);
                 }
             }
+            self::$subject = $subject;
+            self::$markdown = $markdown;
+            self::$css = $css;
+            self::$plaintext = $plaintext;
+
             $file = HTML_MAIL_TEMPLATE_HISTORY_FOLDER . timestampStr() . HTML_MAIL_TEMPLATE_HISTORY_FILE;
             writeFile($file, $tmp);
         }
@@ -219,7 +232,7 @@ EOT;
         // send data if requested:
         if ($dataRec['_sendmail']??false) {
             self::sendMail($dataRec);
-            reloadAgent('./?sent');
+            reloadAgent(PFY_PAGE_URL.'?sent');
         }
         return false; // don't continue saving submitted data by PfyForms
     } // formCallback
@@ -232,7 +245,7 @@ EOT;
     {
         $html       = self::compileForPreview();
 
-        $sourceCode = self::compile();
+        $sourceCode = self::compileForMail();
         $sourceCode = htmlentities($sourceCode);
         $sourceCode = <<<EOT
 
@@ -249,11 +262,12 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private static function compile(): string
+    private static function compileForMail(): string
     {
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css);
+        $data = reset(self::$events) ?: [];
+        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data);
         return $html;
-    } // compile
+    } // compileForMail
 
 
     /**
@@ -262,7 +276,8 @@ EOT;
      */
     private static function compileForPreview(): string
     {
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, forPreview: true);
+        $data = reset(self::$events) ?: [];
+        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, forPreview: true);
         if (self::$plaintext === '-auto-') {
             self::$plaintext = $plaintext;
         }
@@ -304,6 +319,7 @@ EOT;
         foreach ($nextEvents as $dataRec) {
             self::$attachments[] = self::prepareIcsFile($dataRec, $fileTime);
         }
+        self::$events = $nextEvents;
     } // handleScheduleOption
 
 
@@ -361,11 +377,15 @@ EOT;
      */
     private static function sendMail(array $dataRec): void
     {
+        $eventData = reset(self::$events) ?: [];
         $to = $dataRec['To'] ?? PageFactory::$webmasterEmail;
-        $markdown   = $dataRec['Markdown'] ?? '';
-        $css        = $dataRec['Css'] ?? '';
-        list($html, $plaintext, $images) = HtmlMail::compileForMail($markdown, $css);
-        $plaintext  = ($dataRec['Text']??false) ?: $plaintext;
+        $markdown   = self::$markdown;
+
+        $plaintext  = TransVars::translate(self::$plaintext, $eventData);
+
+        $css        = self::$css;
+
+        list($html, $plaintext, $images) = HtmlMail::compileForMail($markdown, $css, data:$eventData, plaintext: $plaintext);
 
         $subject = $dataRec['Subject'] ?? '';
 

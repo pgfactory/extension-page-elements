@@ -475,6 +475,17 @@ EOT;
         } else {
             $colHeaders = $this->tableHeaders;
         }
+
+        // skip system columns if requested:
+        if (!$this->options['includeSystemElements'] ?? false) {
+            if (isset($colHeaders[DATAREC_RECKEY])) {
+                unset($colHeaders[DATAREC_RECKEY]);
+            }
+            if (isset($colHeaders[DATAREC_TIMESTAMP])) {
+                unset($colHeaders[DATAREC_TIMESTAMP]);
+            }
+        }
+
         $i = sizeof($this->columns) + 1;
         foreach ($colHeaders as $key => $value) {
             if ($this->translateHeaders) {
@@ -1003,7 +1014,12 @@ EOT;
         $template = TransVars::getVariable('pfy-table-send-rec-mail-template');
         $body = str_replace('%_data_%', $str, $template);
 
-        Utils::sendMail($email, $subject, $body);
+        $props = [
+            'to' => $email,
+            'subject' => $subject,
+            'body' => $body,
+        ];
+        Utils::sendMail($props);
         $message = TransVars::getVariable('pfy-table-send-rec-confirmation');
         $message = str_replace('%email%', $email, $message);
         reloadAgent('', message: $message);

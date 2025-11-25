@@ -36,10 +36,10 @@ pfy-htmlmail-preview-sourcecode:
 pfy-htmlmail-sent-confirmation:
   de: |
     <p>E-Mail wurde versendet.</p>
-    <p><a href="./">{{ pfy-continue }}...</a></p>
+    <p><a href="~page/">{{ pfy-continue }}...</a></p>
 
   _: |
     <p>E-Mail has been sent.</p>
-    <p><a href="./">{{ pfy-continue }}...</a></p>
+    <p><a href="~page/">{{ pfy-continue }}...</a></p>
 
 

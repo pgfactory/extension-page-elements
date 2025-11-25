@@ -44,6 +44,10 @@ A collapsed section provides access to the resulting HTML code, which you can co
 
 Finally, a button allows to send the mail.
 
+**Hint:**  
+When using a schedule, you can omit the template. 
+Then the macro will present available data elements as optained from scheduled events.
+
 EOT,
     ];
 

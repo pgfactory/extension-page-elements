@@ -27,21 +27,31 @@ class HtmlMail
      * @return array
      * @throws \Exception
      */
-    public static function compileForMail(string $markdown, string $css = '', bool $forPreview = false): array
+    public static function compileForMail(string $markdown, string $css = '', array $data = [], string $plaintext = '', bool $forPreview = false): array
     {
         $css = $css ?: PFY_HTMLMAIL_DEFAULT_STYLES;
-        
-        $plaintext = $markdown;
+
+        if (!$plaintext) {
+            $plaintext = self::stripMarkdownPlus($markdown);
+            $plaintext = self::cleanupPlaintext($plaintext);
+        }
         if (preg_match('/\n==== [A-Z]+\n/s', "\n$markdown")) {
-            list($plaintext, $markdown, $css1) = self::parseSections($markdown);
+            list($plaintext1, $markdown, $css1) = self::parseSections($markdown);
             $css .= $css1;
+            if ($plaintext1) {
+                $plaintext = $plaintext1;
+            }
         }
         $images = [];
 
         $lang = PageFactory::$lang;
         $markdown = self::handleLinks($markdown);
-        $html = TransVars::compile($markdown);
-        $html = TransVars::resolveShortFormVariables($html);
+        $templateOptions = [
+            'element' => $markdown,
+            'markdown' => true,
+        ];
+
+        $html = TemplateCompiler::compile($data, $templateOptions);
         $html = preg_replace('/<!--.*?-->/', '', $html); // remove comments
 
         $html = self::fixMdpLayoutTables($html);
@@ -76,11 +86,33 @@ EOT;
             $html = self::wrapForMail($html, $lang);
         }
 
-        $plaintext = unshieldStr(TransVars::translate($plaintext));
-        $plaintext = self::stripFormatting($plaintext);
-
         return [$html, $plaintext, $images];
     } // compileForMail
+
+
+    public static function cleanupPlaintext(string $plaintext): string
+    {
+        $plaintext = unshieldStr($plaintext);
+        $plaintext = strip_tags($plaintext);
+        $plaintext = str_replace(['&nbsp;', "\r\n", "\n\r", '\\', '→', '⇒'], [' ', "\n", "\n", '', '->', '=>'], $plaintext);
+        $plaintext = preg_replace("/\n{2,}/", "\n\n", $plaintext);
+        $plaintext = preg_replace(['/\{\{\s*(img|vgap).*?}}/'], [''], $plaintext);
+        if (preg_match_all('/\{\{\s* link\( (.*?) \).*?}}/x', $plaintext, $m)) {
+            foreach ($m[1] as $i => $linkText) {
+                $a = explode(',', $linkText);
+                $linkText = $a[0];
+                $text = $a[1]??'';
+                $linkText = preg_replace('/(mailto:|tel:|sms:|)/', '', $linkText);
+                $linkText = preg_replace(['/^["\']/', '/["\']$/'], '', $linkText);
+                if ($text) {
+                    $linkText = "$text ($linkText)";
+                }
+                $plaintext = str_replace($m[0][$i], $linkText, $plaintext);
+            }
+        }
+        $plaintext = trim($plaintext);
+        return $plaintext;
+    } // cleanupPlaintext
 
 
     private static function handleImagesForPreview(string $html): string
@@ -197,6 +229,9 @@ EOT;
 
     
     public static function fixMdpLayoutTables($html) {
+        if (!$html) {
+            return '';
+        }
         $html = str_replace('&nbsp;', '##NBSP##', $html); // workaround for &nbsp;
 
         // Load the HTML content into a DOMDocument object
@@ -269,7 +304,7 @@ EOT;
      * @param string $mdStr The string to be shortened
      * @return string The shortened string
      */
-    private static function stripFormatting(string $mdStr): string
+    private static function stripMarkdownPlus(string $mdStr): string
     {
         $mdStr = preg_replace([
             '/\*\*(.*?)\*\*/',    // Bold **text**
@@ -285,7 +320,7 @@ EOT;
         ], "$1 ($2)", $mdStr);
 
         $mdStr = str_replace(["\r\n","\n\r",'<br>'], "\n", $mdStr);
-        $mdStr = preg_replace(["/\|---.*/","/\|===.*/",'/\|\s?/', '/\\\ /'], '', $mdStr);
+        $mdStr = preg_replace(["/\|---.*/","/\|===.*/",'/\|\s/', '/\\\ /'], '', $mdStr);
         $mdStr = preg_replace(["/\n@@@.*?\n/ms", '/\{:.*?}/'], ["\n", ''], $mdStr);
         $mdStr = str_replace(' BR ', "\n", $mdStr);
         $mdStr = strip_tags($mdStr);
@@ -293,7 +328,7 @@ EOT;
         $mdStr = str_replace(['&nbsp;'], [' '], $mdStr);
         $mdStr = trim($mdStr);
         return $mdStr;
-    } // stripFormatting
+    } // stripMarkdownPlus
 
 
     /**
@@ -359,16 +394,53 @@ EOT;
      * @return void
      * @throws \PHPMailer\PHPMailer\Exception
      */
-    public static function sendMail(array $props, $logComment = ''): void
+    public static function sendMail(array $props): void
     {
+        $props += [
+            'to' => '',
+            'cc' => '',
+            'from' => TransVars::getVariable('webmaster_email'),
+            'fromName' => false,
+            'subject' => '',
+            'body' => '',
+        ];
+        $logComment = $props['logComment']??'';
+
+        $subject = $props['subject'];
+        $body = $props['body'];
+
+        if (str_contains($subject, '{{')) {
+            $subject = TransVars::translate($subject);
+        }
+
+        if (is_string($body)) {
+            if (preg_match('/\n==== [A-Z]+\n/s', "\n$body")) {
+                if (str_contains($body, '{{')) {
+                    $body = TransVars::translate($body);
+                }
+                $htmlMail = new HtmlMail();
+                list($html, $text, $images) = $htmlMail->compileForMail($body);
+                $props['body'] = [];
+                $props['body']['text'] = $text;
+                $props['body']['html'] = $html;
+            }
+        } else {
+            if ($body['html']??false) {
+                if ($body['text'] && str_contains($body['text'], '{{')) {
+                    $props['body']['text'] = TransVars::translate($body['text']);
+                }
+                if ($body['html'] && str_contains($body['html'], '{{')) {
+                    $props['body']['html'] = TransVars::translate($body['html']);
+                }
+            }
+        }
+
         $mailer             = new phpmailer();
         $mailer->From       = $props['from'];
         $mailer->FromName   = $props['fromName'];
         $mailer->CharSet    = "UTF-8";
-        $subject    = $props['subject'];
         $mailer->Subject    = $subject;
 
-        $subject            = $props['subject'];
         $to                 = $props['to'];
         if (is_string($to) && str_contains($to, ',')) {
             foreach (explode(',', $to) as $to) {
@@ -437,6 +509,5 @@ EOT;
         }
         mylog($logText, 'mail-log.txt');
     } // sendMail
-
 
 } // HtmlMail
