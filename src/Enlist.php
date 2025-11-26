@@ -18,7 +18,7 @@ use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 
 const ENLIST_INFO_ICON      = 'ⓘ';
-const ENLIST_COLLAPSE_ICON  = '⏯'; //'⇡'; //'⇪'; // <span class='mdp-icon'><svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><use href='#pfy-iconsrc-align_vertical' /></svg></span>
+const ENLIST_COLLAPSE_ICON  = '⇪';
 const ENLIST_MAIL_ICON      = '✉';
 const ENLIST_ADD_ICON       = '+';
 const ENLIST_MODIFY_ICON    = '✎';
@@ -49,6 +49,7 @@ class Enlist
 
     public object|false $db = false;
     private array $widgetDescr = []; // data record containing widgetSlots ('slots') and options
+    private string $widgetKey;
     private array $widgetSlots = []; // received slots data
     private bool $directlyReservePossible = false;
     private bool $deadlineExpired = false;
@@ -83,8 +84,6 @@ class Enlist
      */
     public function __construct($options, $customFields)
     {
-        $this->widgetInx = self::$enlistWidgetIndex;
-
         $this->parseOptions($options, $customFields);
 
         $this->openDb();
@@ -120,7 +119,8 @@ class Enlist
                 return $html[0];
             }
         } else {
-            $this->widgetInx = self::$enlistWidgetIndex++;
+            $this->parseWidgetOptions();
+            $this->widgetKey = $this->title ?: "Enlist-$this->widgetInx";
             $this->initData();
             $this->directlyReservePossible = $this->directlyToReserve;
             $html .= $this->renderEnlistWidget();
@@ -138,20 +138,24 @@ class Enlist
     private function renderByEvents(): mixed
     {
         $html = '';
-        foreach ($this->events as $i => $event) {
+        foreach ($this->events as $event) {
             self::$enlistWidgetIndex++;
+            $this->widgetInx = self::$enlistWidgetIndex;
             $this->event = $event;
+
+            $this->parseWidgetOptions();
+
             if (str_starts_with($event['eventBanner'], '<h2>Template-Variables')) {
                 return [$event['eventBanner']]; // special case: provide help about available variables
             }
-
-            $this->title = $event['eventBanner'];
-            $widgetName = $event['start'];
-            // normalize widgetDescr name, e.g. 2024-04-01 12:34 to "2024-04-01T12:34"
-            if (preg_match('/(\d{4}-\d\d-\d\d).(\d\d:\d\d)/', $widgetName, $m)) {
-                $widgetName = str_replace($m[0], $m[1].'T'.$m[2], $widgetName);
+            if ($this->options['title']) {
+                $title = str_replace('%eventBanner%', $event['eventBanner'], $this->options['title']);
+            } else {
+                $title = $event['eventBanner'];
             }
-            $this->widgetInx = $widgetName;
+            $this->title = trim(str_replace("\n", ' ', strip_tags($title)));
+            $this->widgetKey = str_replace('T00:00', '', $event['start']);
+
             $this->initData();
 
             if ($event['info']??false) {
@@ -174,7 +178,7 @@ class Enlist
      */
     private function renderEnlistWidget(): string
     {
-        $widgetInxCls = translateToClassName($this->widgetInx);
+        $widgetInxCls = translateToClassName($this->widgetKey);
         $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$widgetInxCls";
         $class = rtrim("pfy-enlist-wrapper pfy-enlist-$widgetInxCls " . $this->class??'');
         if ($this->isEnlistAdmin) {
@@ -202,13 +206,14 @@ class Enlist
         if ($this->nTotalSlots === 1) {
             $class .= ' pfy-enlist-hide-num';
         }
+        $title = $this->widgetDescr['title'];
         if ($this->deadlineExpired) {
-            $this->title .= ' {{ pfy-enlist-dealine-past }}';
+            $title .= ' {{ pfy-enlist-dealine-past }}';
         }
 
         $html = <<<EOT
-<div id='$id' class='$class' data-widget-inx="$this->widgetInx"$attrib>
-<div class='pfy-enlist-title$this->titleClass'><div class="pfy-enlist-title-inner">$this->title</div>$headButtons</div>
+<div id='$id' class='$class' data-widget-key="$this->widgetKey"$attrib>
+<div class='pfy-enlist-title$this->titleClass'><div class="pfy-enlist-title-inner">$title</div>$headButtons</div>
 $html
 </div>
 EOT;
@@ -274,18 +279,18 @@ EOT;
         $emptyRow = $this->prepareEmptyRow();
         list($deleteIcon, $addIcon) = $this->prepareIcons();
 
-        $slots = $this->db->getEnlistSlots($this->widgetInx);
+        $slots = $this->db->getEnlistSlots($this->widgetKey);
 
         // check and fix number of slots:
         $n = sizeof($slots);
         if ($n > $this->nTotalSlots) {
             $slots = array_slice($slots, 0, $this->nTotalSlots);
-            $this->db->updateWidgetSlots($this->widgetInx, $slots);
+            $this->db->updateWidgetSlots($this->widgetKey, $slots);
         } elseif ($n < $this->nTotalSlots) {
             for ($i=$n; $i < $this->nTotalSlots; $i++) {
                 $slots[] = [];
             }
-            $this->db->updateWidgetSlots($this->widgetInx, $slots);
+            $this->db->updateWidgetSlots($this->widgetKey, $slots);
         }
 
         // create new array just containing data to be rendered:
@@ -379,6 +384,7 @@ EOT;
         $headButtons .= $this->renderCollapseEmptySlotsButton();
         $headButtons .= $this->renderSendMailToAllButton();
         $headButtons = <<<EOT
+
     <div class='pfy-enlist-head-buttons-wrapper'>
 $headButtons
     </div>
@@ -531,7 +537,7 @@ EOT;
         $formFields['cancel']           = [];
         $formFields['submit']           = [];
         $formFields['mode']             = ['type' => 'hidden'];
-        $formFields['widgetInx']        = ['type' => 'hidden'];
+        $formFields['widgetKey']        = ['type' => 'hidden'];
         $formFields['widgetTitle']      = ['type' => 'hidden'];
 
         $form = new PfyForm($formOptions);
@@ -800,6 +806,7 @@ EOT;
         if (!$this->db) {
             $this->db = new EnlistData($this->options);
         }
+        EnlistComm::setDb($this->db);
     } // openDb
 
 
@@ -808,7 +815,7 @@ EOT;
      */
     private function initData(): void
     {
-        $this->widgetDescr = $this->db->getWidgetDescr($this->widgetInx);
+        $this->widgetDescr = $this->db->getWidgetDescr($this->widgetKey, $this->title);
         $this->widgetSlots = $this->widgetDescr['slots'];
         $this->nSlots = $this->db->nSlots();
         $this->nReserveSlots = $this->db->nReserveSlots();
@@ -828,113 +835,6 @@ EOT;
     {
         return $this->options;
     } // getOptions
-
-
-    /**
-     * @param array $options
-     * @param array $customFields
-     * @return void
-     * @throws Exception
-     */
-    private function parseOptions(array $options, array $customFields): void
-    {
-        $options['widgetInx'] = $this->widgetInx;
-
-        if ($options['description'] ?? false) {
-            $options['info'] = $options['description'];
-        }
-
-        $this->handlePersistentOptions($options, $customFields);
-
-        $options['tooltip'] = '{{ pfy-enlist-ical-tooltip }}';
-        $this->options = $options;
-        $options = &$this->options;
-
-        $options['file'] = $this->determineDataFile();
-
-        $title = $options['title'];
-        $this->nSlots = $options['nSlots'];
-        $this->nReserveSlots = $options['nReserveSlots'];
-        $this->info = $options['info'];
-        $this->placeholder = $options['placeholder'];
-        $this->info0 = $this->info;
-        $this->freezeTime = $options['freezeTime'];
-        $this->obfuscate = $options['obfuscate'];
-        $this->admin = $options['admin'];
-        $this->class = $options['class'];
-        $this->directlyToReserve = $options['directlyToReserve'];
-        $this->editable = $options['editable'];
-        $deadline = $options['deadline'];
-        if ($deadline) {
-            $deadlineStr = $deadline;
-            $deadline = strtotime($deadline);
-            $title = str_replace('%deadline%', $deadlineStr, $title);
-            if (preg_match('/\d{4}-\d\d-\d\d$/', $deadlineStr)) {
-                $deadline += 86400;
-            }
-            // determine whether list is past deadline:
-            $this->deadlineExpired = ($deadline < time());
-        }
-
-        $this->title = $title;
-
-        if ($permissionQuery = $this->admin) {
-            if ($permissionQuery === true) {
-                $permissionQuery = 'localhost|loggedin';
-            }
-            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
-            if ($this->isEnlistAdmin && ($this->widgetInx === 1)) {
-                Page::addBodyTagClass('pfy-enlist-admin');
-            }
-        }
-
-        $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
-
-        // --- process schedule options:
-        $this->events = $this->handleScheduleOption();
-
-        // --- process custom fields:
-        $hasVisibleCustomFields = false;
-        if ($customFields) {
-            // Replace - with _ in all keys;
-            $customFields1 = $customFields;
-            $customFields = [];
-            foreach ($customFields1 as $key => $rec) {
-                $key = str_replace('-', '_', $key);
-                $key = preg_replace('/\W/', '', $key);
-                if (!($rec['hidden']??false)) {
-                    $customFields[$key] = $rec;
-                    $hasVisibleCustomFields = true;
-                }
-            }
-
-            $nCustFields = sizeof($customFields);
-            foreach ($customFields1 as $key => $customField) {
-                // special case 'checkbox options':
-                if ((($customField['type'] ?? 'text') === 'checkbox') ||
-                    ($customField['options'] ?? false)) {
-                    $customField['type'] = 'checkbox';
-                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
-                    $customFields[$key]['options'] = $customOptions;
-                    if ($customField['splitOutput']??false) {
-                        $nCustFields += sizeof($customOptions) - 1;
-                    }
-                }
-            }
-            $this->hasVisibleCustomFields = $hasVisibleCustomFields;
-            $this->customFields = $customFields;
-            $this->customFormFields = $customFields1;
-        }
-
-
-        $options = [
-            'nSlots' => $this->nSlots,
-            'nReserveSlots' => $this->nReserveSlots,
-            'nTotalSlots' => $this->nTotalSlots,
-            'isEnlistAdmin' => $this->isEnlistAdmin,
-        ] + $options;
-
-    } // parseOptions
 
 
     /**
@@ -1012,7 +912,7 @@ EOT;
      * @return array|false
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private function handleScheduleOption(): array|false
+    private function getScheduleEvents(): array|false
     {
         if (!($eventOptions = $this->options['schedule']??false)) {
             return false;
@@ -1028,7 +928,7 @@ EOT;
         $count = $eventOptions['count']??false;
         $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;
-    } // handleScheduleOption
+    } // getScheduleEvents
 
 
     /**
@@ -1044,5 +944,129 @@ EOT;
             reloadAgent();
         }
     } // checkCollapseRequest
+
+
+    /**
+     * @param array $options
+     * @param array $customFields
+     * @return void
+     * @throws Exception
+     */
+    private function parseOptions(array $options, array $customFields): void
+    {
+        if ($options['description'] ?? false) {
+            $options['info'] = $options['description'];
+        }
+
+        $this->handlePersistentOptions($options, $customFields);
+
+        $options['tooltip'] = '{{ pfy-enlist-ical-tooltip }}';
+        $this->options = $options;
+        $options = &$this->options;
+
+        $options['file'] = $this->determineDataFile();
+
+        $this->nSlots = $options['nSlots'];
+        $this->nReserveSlots = $options['nReserveSlots'];
+        $this->info = $options['info'];
+        $this->placeholder = $options['placeholder'];
+        $this->info0 = $this->info;
+        $this->freezeTime = $options['freezeTime'];
+        $this->obfuscate = $options['obfuscate'];
+        $this->admin = $options['admin'];
+        $this->class = $options['class'];
+        $this->directlyToReserve = $options['directlyToReserve'];
+        $this->editable = $options['editable'];
+
+        $this->nTotalSlots = $this->nSlots + $this->nReserveSlots;
+
+        // --- process schedule options:
+        $this->events = $this->getScheduleEvents();
+
+        if (!$this->events) {
+            // Note: if list is based on scheduled events, widgetInx and title are defined by the event itself
+            self::$enlistWidgetIndex++;
+            $this->widgetInx = self::$enlistWidgetIndex;
+            $options['title'] = ($options['title']??false) ?: '';
+        }
+
+        // --- process custom fields:
+        $hasVisibleCustomFields = false;
+        if ($customFields) {
+            // Replace - with _ in all keys;
+            $customFields1 = $customFields;
+            $customFields = [];
+            foreach ($customFields1 as $key => $rec) {
+                $key = str_replace('-', '_', $key);
+                $key = preg_replace('/\W/', '', $key);
+                if (!($rec['hidden']??false)) {
+                    $customFields[$key] = $rec;
+                    $hasVisibleCustomFields = true;
+                }
+            }
+
+            $nCustFields = sizeof($customFields);
+            foreach ($customFields1 as $key => $customField) {
+                // special case 'checkbox options':
+                if ((($customField['type'] ?? 'text') === 'checkbox') ||
+                    ($customField['options'] ?? false)) {
+                    $customField['type'] = 'checkbox';
+                    $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
+                    $customFields[$key]['options'] = $customOptions;
+                    if ($customField['splitOutput']??false) {
+                        $nCustFields += sizeof($customOptions) - 1;
+                    }
+                }
+            }
+            $this->hasVisibleCustomFields = $hasVisibleCustomFields;
+            $this->customFields = $customFields;
+            $this->customFormFields = $customFields1;
+        }
+
+
+        $options = [
+                'nSlots' => $this->nSlots,
+                'nReserveSlots' => $this->nReserveSlots,
+                'nTotalSlots' => $this->nTotalSlots,
+                'isEnlistAdmin' => $this->isEnlistAdmin,
+            ] + $options;
+
+        if ($options['emailFromName']??false) {
+            EnlistComm::setEmailFromName($options['emailFromName']);
+        }
+    } // parseOptions
+
+
+    /**
+     * @return void
+     */
+    private function parseWidgetOptions(): void
+    {
+        $options = &$this->options;
+        $title = $options['title'];
+        $deadline = $options['deadline'];
+        if ($deadline) {
+            $deadlineStr = $deadline;
+            $deadline = strtotime($deadline);
+            $title = str_replace('%deadline%', $deadlineStr, $title);
+            if (preg_match('/\d{4}-\d\d-\d\d$/', $deadlineStr)) {
+                $deadline += 86400;
+            }
+            // determine whether list is past deadline:
+            $this->deadlineExpired = ($deadline < time());
+        }
+
+        $this->title = $options['title'] = $title;
+        $this->widgetKey = $title ?: 'Enlist-' > ($this->widgetInx + 1);
+        if ($permissionQuery = $this->admin) {
+            if ($permissionQuery === true) {
+                $permissionQuery = 'localhost|loggedin';
+            }
+            $this->isEnlistAdmin = Permission::evaluate($permissionQuery, allowOnLocalhost: PageFactory::$dev);
+            if ($this->isEnlistAdmin && ($this->widgetInx === 1)) {
+                Page::addBodyTagClass('pfy-enlist-admin');
+            }
+        }
+    } // parseWidgetOptions
 
 } // Enlist

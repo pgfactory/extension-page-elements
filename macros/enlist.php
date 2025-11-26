@@ -77,6 +77,8 @@ return function ($args = '')
 
             'listName' =>	['[string] For legacy compatibility.', null],
 
+            'emailFromName' =>	['[string] Name used in notification and confirmation mails.', null],
+
             'output' =>	['[bool] If false, no output is rendered (can be useful to set defaults.', true],
 
             'setDefaults' => ['[bool] If true, sets persistent options: '.

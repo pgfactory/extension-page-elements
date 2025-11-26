@@ -9,18 +9,42 @@ use function PgFactory\PageFactory\mylog;
 
 class EnlistComm
 {
+    private static object $db;
+    private static string $emailFromName = '';
+
+    /**
+     * @param object $db
+     * @return void
+     */
+    public static function setDb(object $db): void
+    {
+        self::$db = $db;
+    } // setEmailFromName
+
+
+    /**
+     * @param string $name
+     * @return void
+     */
+    public static function setEmailFromName(string $name): void
+    {
+        self::$emailFromName = $name;
+    } // setEmailFromName
+
+
     /**
      * @param string|bool $to
      * @param array $dataRec
      * @param string $mode
-     * @param string $title
+     * @param string $widgetKey
      * @param string $nameActivated
      * @return void
      * @throws \Exception
      */
-    public static function notifyOwner(string|bool $to, array $dataRec, string $mode, string $title, array $delectedRec = []): void
+    public static function sendNotification(string|bool $to, array $dataRec, string $mode, string $widgetKey, array $delectedRec = []): void
     {
-        $title = str_replace("\n", ' ', $title);
+        $widgetDescr = self::$db->getWidgetDescr($widgetKey);
+        $title = $widgetDescr['title'] ?: '';
         if ($to === true) {
             $to = PageFactory::$webmasterEmail;
         }
@@ -57,6 +81,7 @@ class EnlistComm
             '%name%'    => $dataRec['Name'],
             '%email%'   => $dataRec['Email'],
             '%title%'   => $title,
+            '%listId%'  => $widgetKey ? "[$widgetKey] $title": $title,
             '%host%'    => PFY_HOST_URL,
             '%hostUrl%' => PFY_HOST_URL,
             '%page%'    => self::pageLink(),
@@ -70,9 +95,15 @@ class EnlistComm
             array_keys($replace),
             array_values($replace),
             TransVars::resolveVariables($body));
+        $props = [
+            'to' => $to,
+            'fromName' => self::$emailFromName,
+            'subject' => $subject,
+            'body' => $body,
+        ];
 
-        Utils::sendMail($to, $subject, $body );
-    } // notifyOwner
+        Utils::sendMail($props);
+    } // sendNotification
 
 
     /**
@@ -82,7 +113,7 @@ class EnlistComm
      * @return void
      * @throws \Exception
      */
-    public static function notifyOwnerOfListCollapse(string|bool $to, string $title, string $names): void
+    public static function sendNotificationOfListCollapse(string|bool $to, string $widgetKey, string $title, string $names): void
     {
         $title = str_replace("\n", ' ', $title);
         if ($to === true) {
@@ -99,14 +130,15 @@ class EnlistComm
             $subject = $genericSubject;
         }
         $body = TransVars::resolveVariables('{{ pfy-enlist-collapse-notification-message }}');
-        $body = str_replace('%deleted%', $names, $body);
+        $body = str_replace('%activated%', $names, $body);
 
         $replace = [
-            '%title%'   => $title,
-            '%host%'    => PFY_HOST_URL,
-            '%hostUrl%' => PFY_HOST_URL,
-            '%page%'    => self::pageLink(),
-            '%pageUrl%' => self::pageLink(),
+            '%title%'       => $title,
+            '%listId%'  => $widgetKey ? "[$widgetKey] $title": $title,
+            '%host%'        => PFY_HOST_URL,
+            '%hostUrl%'     => PFY_HOST_URL,
+            '%page%'        => self::pageLink(),
+            '%pageUrl%'     => self::pageLink(),
         ];
 
         $subject = str_replace(
@@ -118,8 +150,14 @@ class EnlistComm
             array_values($replace),
             TransVars::resolveVariables($body));
 
-        Utils::sendMail($to, $subject, $body );
-    } // notifyOwner
+        $props = [
+            'to' => $to,
+            'subject' => $subject,
+            'body' => $body,
+        ];
+
+        Utils::sendMail($props);
+    } // sendNotification
 
 
     /**
@@ -127,9 +165,12 @@ class EnlistComm
      * @param string $title
      * @return bool
      */
-    public static function sendConfirmation(array $newDataRec, string $mode, string $title): void
+    public static function sendConfirmation(array $newDataRec, string $mode, string $widgetKey): void
     {
-        $title = str_replace("\n", ' ', $title);
+        $widgetDescr = self::$db->getWidgetDescr($widgetKey);
+        $title = $widgetDescr['title'] ?: $widgetKey;
+        $newDataRec['title'] = $title;
+        TransVars::setTempVariables($newDataRec);
         if ($mode === 'add') {
             $subject = TransVars::resolveVariables('{{ pfy-enlist-add-visitor-confirmation-subject }}');
             $body = TransVars::resolveVariables('{{ pfy-enlist-add-visitor-confirmation-message }}');
@@ -148,13 +189,14 @@ class EnlistComm
         }
 
         $replace = [
-            '%name%'    => $newDataRec['Name'],
-            '%email%'   => $newDataRec['Email'],
-            '%title%'   => $title,
-            '%host%'    => PFY_HOST_URL,
-            '%hostUrl%' => PFY_HOST_URL,
-            '%page%'    => self::pageLink(),
-            '%pageUrl%' => self::pageLink(),
+            '%name%'        => $newDataRec['Name'],
+            '%email%'       => $newDataRec['Email'],
+            '%title%'       => $title,
+            '%listId%'      => $widgetKey,
+            '%host%'        => PFY_HOST_URL,
+            '%hostUrl%'     => PFY_HOST_URL,
+            '%page%'        => self::pageLink(),
+            '%pageUrl%'     => self::pageLink(),
         ];
         $subject = str_replace(
             array_keys($replace),
@@ -164,32 +206,55 @@ class EnlistComm
             array_keys($replace),
             array_values($replace),
             $body);
- //ToDo: email with ics attachment
-        Utils::sendMail($newDataRec['Email'], $subject, $body );
+
+        if (str_contains($subject, '%')) {
+            $subject = TransVars::resolveShortFormVariables($subject);
+        }
+        if (str_contains($body, '%')) {
+            $body = TransVars::resolveShortFormVariables($body);
+        }
+
+
+        //ToDo: email with ics attachment
+        $props = [
+            'to' => $newDataRec['Email'],
+            'subject' => $subject,
+            'body' => $body,
+            'attachment' => false,
+        ];
+
+        TransVars::purgeTempVariables();
+        Utils::sendMail($props);
     } // sendConfirmation
 
 
     /**
      * @param array $rec
-     * @param string $title
+     * @param string $widgetKey
      * @return void
      * @throws \Exception
      */
-    public static function sendActivatedConfirmation(array $rec, string $title): void
+    public static function sendActivatedConfirmation(array $rec, string $widgetKey): void
     {
-        $title = str_replace("\n", ' ', $title);
+        $widgetDescr = self::$db->getWidgetDescr($widgetKey);
+        $title = $widgetDescr['title'] ?: $widgetKey;
+        TransVars::setTempVariables($rec);
         $subject = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-subject }}');
         // if generic subject is set, override default:
         if ($genericSubject = TransVars::getVariable('pfy-enlist-subject')) {
             $subject = $genericSubject;
         }
         $body = TransVars::resolveVariables('{{ pfy-enlist-activated-visitor-confirmation-message }}');
+
         $replace = [
-            '%name%' => $rec['Name'],
-            '%email%' => $rec['Email'],
-            '%title%' => $title,
-            '%host%' => PFY_HOST_URL,
-            '%page%' => self::pageLink(),
+            '%name%'        => $rec['Name'],
+            '%email%'       => $rec['Email'],
+            '%title%'       => $title,
+            '%listId%'      => $widgetKey,
+            '%host%'        => PFY_HOST_URL,
+            '%hostUrl%'     => PFY_HOST_URL,
+            '%page%'        => self::pageLink(),
+            '%pageUrl%'     => self::pageLink(),
         ];
         $subject = str_replace(
             array_keys($replace),
@@ -200,8 +265,22 @@ class EnlistComm
             array_values($replace),
             $body);
 
-        Utils::sendMail($rec['Email'], $subject, $body );
+        if (str_contains($subject, '%')) {
+            $subject = TransVars::resolveShortFormVariables($subject);
+        }
+        if (str_contains($body, '%')) {
+            $body = TransVars::resolveShortFormVariables($body);
+        }
+
+
+        $props = [
+            'to' => $rec['Email'],
+            'subject' => $subject,
+            'body' => $body,
+        ];
+        Utils::sendMail($props);
         mylog("Newly activated reserve slot notified: {$rec['Name']} {$rec['Email']}", 'enlist-log.txt');
+        TransVars::purgeTempVariables();
     } // sendActivatedConfirmation
 
 

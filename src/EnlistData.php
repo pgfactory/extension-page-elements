@@ -40,40 +40,67 @@ class EnlistData
 
 
     /**
-     * @return int
+     * @param int|string $widgetKey
+     * @return array|false
      */
-    public function nSlots(): int
+    public function getWidgetDescr(int|string $widgetKey, string|false $title = false): array|false
     {
-        return $this->nSlots;
-    } // nSlots
+        $widgetDescr = $this->findWidgetDescr($widgetKey);
+        if (!$widgetDescr) {
+            $widgetDescr = $this->prepareWidgetDescr($widgetKey, $title);
+        }
+        $this->updateWidgetDescriptor($widgetDescr, $widgetKey, $title);
+        return $widgetDescr;
+    } // getWidgetDescr
 
 
     /**
-     * @return int
+     * @param int|string $widgetKey
+     * @return array|false
      */
-    public function nReserveSlots(): int
+    public function getWidgetSlots(int|string $widgetKey): array|false  // -> used by EnlistCallbackHandler
     {
-        return $this->nReserveSlots;
-    } // nReserveSlots
+        $widgetDescr = $this->getWidgetDescr($widgetKey);
+        return $widgetDescr['slots'];
+    } // getWidgetSlots
 
 
     /**
-     * @return int
-     */
-    public function nTotalSlots(): int
-    {
-        return $this->nTotalSlots;
-    } // nTotalSlots
-
-
-    /**
-     * @param mixed $widgetInx
+     * @param array $widgetDescr
+     * @param int|string $widgetKey
      * @return void
      */
-    public function collapseEmptySlots(mixed $widgetInx, string $widgetTitle): void
+    private function updateWidgetDescriptor(array $widgetDescr, int|string $widgetKey, string|false $title = false)
     {
-        $widgetDescr = $this->enlistWidgets[$widgetInx];
-        $widgetSlots = &$widgetDescr['slots'];
+        $slots = $widgetDescr['slots'];
+        $widgetDescr['slots'] = $slots;
+        $widgetDescr['nSlots'] = $this->options['nSlots'];
+        $widgetDescr['nReserveSlots'] = $this->options['nReserveSlots'];
+        if ($title) {
+            $widgetDescr['title'] = $title;
+        }
+        $widgetDescr['widgetKey'] = $widgetKey;
+        if ($this->options['freezeTime']) {
+            $widgetDescr['freezeTime'] = $this->options['freezeTime'];
+        }
+        if ($this->options['deadline']) {
+            $widgetDescr['deadline'] = $this->options['deadline'];
+        }
+        if ($this->options['directlyToReserve']) {
+            $widgetDescr['directlyToReserve'] = $this->options['directlyToReserve'];
+        }
+        $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetKey);
+    } // updateWidgetDescriptor
+
+
+    /**
+     * @param mixed $widgetKey
+     * @return void
+     */
+    public function collapseEmptySlots(mixed $widgetKey, string $widgetTitle): void
+    {
+        $widgetDescr = $this->enlistWidgets[$widgetKey];
+        $widgetSlots = $widgetDescr['slots'];
         $entriesFound = false;
         $toNotify = [];
         for ($i = $this->nTotalSlots-1; $i>=0; $i--) {
@@ -95,19 +122,22 @@ class EnlistData
                 $entriesFound = true;
             }
         }
+
+        $this->enlistWidgets[$widgetKey]['slots'] = array_values($widgetSlots);
+        $this->updateWidgetDescr($this->enlistWidgets[$widgetKey], recKeyToUse: $widgetKey);
+
         if ($toNotify) {
-            $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetInx);
             $widgetTitle = str_replace("\n", '', $widgetTitle);
             $names = '';
             $nameList = '';
             foreach ($toNotify as $rec) {
-                EnlistComm::sendActivatedConfirmation($rec, $widgetTitle);
+                EnlistComm::sendActivatedConfirmation($rec, $widgetKey);
                 $names .= '<br>- '.$rec['Name']??'';
-                $nameList .= ', "'.($rec['Name']??'').'"';
+                $nameList .= '- '.($rec['Name']??'')."\n";
             }
             if (($to = $this->options['notifyOwner']??false)) {
-                $title = "[$widgetInx: ".PFY_PAGE_URL.']';
-                EnlistComm::notifyOwnerOfListCollapse($to, $title, ltrim($nameList, ', '));
+                $title = $widgetDescr['title'];
+                EnlistComm::sendNotificationOfListCollapse($to, $widgetKey, $title, $nameList);
             }
             $msg = TransVars::getVariable('pfy-enlist-collapse-executed');
             $msg = str_replace('%names%', $names, $msg);
@@ -116,93 +146,14 @@ class EnlistData
     } // collapseEmptySlots
 
 
-    /**
-     * @return void
-     * @throws \Exception
-     */
-    private function openDb(): void
-    {
-        $file = $this->options['file'];
-        $this->dataFile = $file;
-        $this->db = new DataSet($file, [
-            'masterFileRecKeyType' => 'origKey',
-            'masterFileRecKeySort' => true,
-            'masterFileRecKeySortOnElement' => '_origRecKey',
-            'recKeyType' => '_reckey',
-        ]);
-
-        $this->enlistWidgets = $this->db->data();
-    } // openDb
-
 
     /**
-     * @param int|string $widgetInx
-     * @return array|false
-     */
-    public function getWidgetDescr(int|string $widgetInx): array|false
-    {
-        $widgetDescr = $this->findWidgetDescr($widgetInx);
-        if (!$widgetDescr) {
-            $widgetDescr = $this->prepareWidgetDescr($widgetInx);
-        }
-        $this->checkAndUpdateWidgetDescr($widgetDescr, $widgetInx);
-        return $widgetDescr;
-    } // getWidgetDescr
-
-
-    /**
-     * @param int|string $widgetInx
-     * @return array|false
-     */
-    public function getWidgetSlots(int|string $widgetInx): array|false  // -> used by EnlistCallbackHandler
-    {
-        $widgetDescr = $this->getWidgetDescr($widgetInx);
-        return $widgetDescr['slots'];
-    } // getWidgetSlots
-
-
-    /**
-     * @param array $widgetDescr
-     * @param int|string $widgetInx
-     * @return void
-     */
-    private function checkAndUpdateWidgetDescr(array $widgetDescr, int|string $widgetInx)
-    {
-        $needsUpdate = false;
-        foreach (['nSlots', 'nReserveSlots','title', 'freezeTime', 'deadline','directlyToReserve'] as $key) {
-            if ($this->options[$key] && (($widgetDescr[$key]??false) !== $this->options[$key])) {
-                $needsUpdate = true;
-                break;
-            }
-        }
-        if ($needsUpdate) {
-            $slots = $widgetDescr['slots'];
-            $widgetDescr = [];
-            $widgetDescr['slots'] = $slots;
-            $widgetDescr['nSlots'] = $this->options['nSlots'];
-            $widgetDescr['nReserveSlots'] = $this->options['nReserveSlots'];
-            $widgetDescr['title'] = $this->options['title'];
-            if ($this->options['freezeTime']) {
-                $widgetDescr['freezeTime'] = $this->options['freezeTime'];
-            }
-            if ($this->options['deadline']) {
-                $widgetDescr['deadline'] = $this->options['deadline'];
-            }
-            if ($this->options['directlyToReserve']) {
-                $widgetDescr['directlyToReserve'] = $this->options['directlyToReserve'];
-            }
-            $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetInx);
-        }
-    } // checkAndUpdateWidgetDescr
-
-
-    /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @return array
      */
-    public function getEnlistSlots(int|string $widgetInx): array
+    public function getEnlistSlots(int|string $widgetKey): array
     {
-        if ($widgetDescr = ($this->enlistWidgets[$widgetInx]??false)) {
+        if ($widgetDescr = ($this->enlistWidgets[$widgetKey]??false)) {
             return $widgetDescr['slots'];
         } else {
             return [];
@@ -220,46 +171,46 @@ class EnlistData
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @param int $slotInx
      * @param array $newDataRec
      * @param string $context
      * @return mixed
      */
-    public function fillSlot(int|string $widgetInx, int $slotInx, array $newDataRec, string $context)  // -> used by EnlistCallbackHandler
+    public function fillSlot(int|string $widgetKey, int $slotInx, array $newDataRec, string $context)  // -> used by EnlistCallbackHandler
     {
-        $slotInx = $this->selectSlot($widgetInx, $slotInx, $newDataRec, $context);
+        $slotInx = $this->selectSlot($widgetKey, $slotInx, $newDataRec, $context);
         unset($newDataRec['directlyToReserve']);
-        unset($newDataRec['widgetInx']);
+        unset($newDataRec['widgetKey']);
         unset($newDataRec['widgetTitle']);
-        $this->enlistWidgets[$widgetInx]['slots'][$slotInx] = $newDataRec;
-        $this->updateWidgetDescr($this->enlistWidgets[$widgetInx], recKeyToUse: $widgetInx);
+        $this->enlistWidgets[$widgetKey]['slots'][$slotInx] = $newDataRec;
+        $this->updateWidgetDescr($this->enlistWidgets[$widgetKey], recKeyToUse: $widgetKey);
         return $slotInx;
     } // fillSlot
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @param array $slots
      * @return void
      */
-    public function updateWidgetSlots(int|string $widgetInx, array $slots): void  // -> used by Enlist and EnlistCallbackHandler
+    public function updateWidgetSlots(int|string $widgetKey, array $slots): void  // -> used by Enlist and EnlistCallbackHandler
     {
-        $widgetDescr = $this->enlistWidgets[$widgetInx];
+        $widgetDescr = $this->enlistWidgets[$widgetKey];
         $widgetDescr['slots'] = $slots;
-        $this->updateWidgetDescr($widgetDescr, recKeyToUse: $widgetInx);
+        $this->updateWidgetDescr($widgetDescr, recKeyToUse: $widgetKey);
     } // updateWidgetSlots
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @param int $slotInx
      * @return array|false
      */
-    public function emptySlot(int|string $widgetInx, int $slotInx): array|false  // -> used by Enlist and EnlistCallbackHandler
+    public function emptySlot(int|string $widgetKey, int $slotInx): array|false  // -> used by Enlist and EnlistCallbackHandler
     {
         $becameActive = false;
-        $slots = $this->enlistWidgets[$widgetInx]['slots'];
+        $slots = $this->enlistWidgets[$widgetKey]['slots'];
         $hasEmptySlots = !($slots[$this->nSlots - 1]['Name']??false);
         $hasFilledReserveSlots = $this->nReserveSlots && ($slots[$this->nSlots]['Name']??false);
 
@@ -280,29 +231,29 @@ class EnlistData
             $slots[] = [];
         }
 
-        $this->enlistWidgets[$widgetInx]['slots'] = array_values($slots);
-
-        $this->updateWidgetDescr($this->enlistWidgets[$widgetInx], recKeyToUse: $widgetInx);
+        $this->enlistWidgets[$widgetKey]['slots'] = array_values($slots);
+        $this->updateWidgetDescr($this->enlistWidgets[$widgetKey], recKeyToUse: $widgetKey);
         return $becameActive;
     } // emptySlot
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @return array
      */
-    private function prepareWidgetDescr(int|string $widgetInx): array
+    private function prepareWidgetDescr(int|string $widgetKey, string $title): array
     {
-        $widgetDescr = $this->db->getRecData($widgetInx);
+        $widgetDescr = $this->db->getRecData($widgetKey);
         if ($widgetDescr) {
-            $this->enlistWidgets[$widgetInx] = $widgetDescr;
+            $this->enlistWidgets[$widgetKey] = $widgetDescr;
         } else {
             $widgetDescr = WIDGET_DATA_TEMPLATE;
             $nTotalSlots = $this->options['nSlots'] + $this->options['nReserveSlots'];
             $widgetDescr['slots'] = array_fill(0, $nTotalSlots, []);
             $widgetDescr['nSlots'] = $this->options['nSlots'];
             $widgetDescr['nReserveSlots'] = $this->options['nReserveSlots'];
-            $widgetDescr['title'] = $this->options['title'];
+            $widgetDescr['title'] = $title;
+            $widgetDescr['widgetKey'] = $widgetKey;
             //ToDo: add custom fields
             if ($this->options['freezeTime']) {
                 $widgetDescr['freezeTime'] = $this->options['freezeTime'];
@@ -313,24 +264,24 @@ class EnlistData
             if ($this->deadlineExpired) {
                 $widgetDescr['deadlineExpired'] = true;
             }
-            $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetInx);
-            $this->enlistWidgets[$widgetInx] = $widgetDescr;
+            $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetKey);
+            $this->enlistWidgets[$widgetKey] = $widgetDescr;
         }
         return $widgetDescr;
     } // prepareWidgetDescr
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @return array|false
      */
-    private function findWidgetDescr(int|string $widgetInx): array|false
+    private function findWidgetDescr(int|string $widgetKey): array|false
     {
-        if ($this->enlistWidgets[$widgetInx]??false) {
-            return $this->enlistWidgets[$widgetInx];
+        if ($this->enlistWidgets[$widgetKey]??false) {
+            return $this->enlistWidgets[$widgetKey];
         }
         foreach ($this->enlistWidgets as $widgetDescr) {
-            if (($widgetDescr['_reckey']??false) === $widgetInx) {
+            if (($widgetDescr['_reckey']??false) === $widgetKey) {
                 return $widgetDescr;
             }
         }
@@ -339,18 +290,18 @@ class EnlistData
 
 
     /**
-     * @param int|string $widgetInx
+     * @param int|string $widgetKey
      * @param int $slotInx
      * @param array $newDataRec
      * @param string $context
      * @return mixed
      * @throws \Exception
      */
-    public function selectSlot(int|string $widgetInx, int $slotInx, array $newDataRec, string $context): mixed
+    public function selectSlot(int|string $widgetKey, int $slotInx, array $newDataRec, string $context): mixed
     {
         $slotInx0 = $slotInx;
-        $widgetDescr = $this->getWidgetDescr($widgetInx);
-        $slots = $this->getEnlistSlots($widgetInx);
+        $widgetDescr = $this->getWidgetDescr($widgetKey);
+        $slots = $this->getEnlistSlots($widgetKey);
         $nTotalSlots = $this->nTotalSlots;
         $directlyToReserve = ($newDataRec['directlyToReserve']??false) && $this->options['directlyToReserve'];
         if (!$directlyToReserve) {
@@ -389,6 +340,52 @@ class EnlistData
     {
         return $this->db->addRec($rec, $flush, $recKeyToUse);
     } // updateWidgetDescr
+
+
+    /**
+     * @return int
+     */
+    public function nSlots(): int
+    {
+        return $this->nSlots;
+    } // nSlots
+
+
+    /**
+     * @return int
+     */
+    public function nReserveSlots(): int
+    {
+        return $this->nReserveSlots;
+    } // nReserveSlots
+
+
+    /**
+     * @return int
+     */
+    public function nTotalSlots(): int
+    {
+        return $this->nTotalSlots;
+    } // nTotalSlots
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function openDb(): void
+    {
+        $file = $this->options['file'];
+        $this->dataFile = $file;
+        $this->db = new DataSet($file, [
+            'masterFileRecKeyType' => 'origKey',
+            'masterFileRecKeySort' => true,
+            'masterFileRecKeySortOnElement' => '_origRecKey',
+            'recKeyType' => '_reckey',
+        ]);
+
+        $this->enlistWidgets = $this->db->data();
+    } // openDb
 
 
     /**

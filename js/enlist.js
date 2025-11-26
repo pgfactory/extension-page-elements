@@ -142,9 +142,12 @@ const Enlist = {
     if (typeof elem !== 'undefined') {
       const rowEl = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
       const enlistElemInx = rowEl.dataset.reckey;
-      const widgetTitle = elem.closest('.pfy-enlist-wrapper').querySelector('.pfy-enlist-title-inner').innerText;
+      const widgetEl = elem.closest('.pfy-enlist-wrapper');
+      const widgetKey = widgetEl.dataset.widgetKey;
+      const widgetTitle = widgetEl.querySelector('.pfy-enlist-title-inner').innerText;
       options.onOpen = function() {
         Enlist.preparePopupForm(mode, rowEl, enlistElemInx);
+/*
         domForOne('.pfy-popup-wrapper .pfy-form-wrapper', popupFormWrapper => {
           if (mode === 'add' && rowEl.classList.contains('pfy-enlist-reserve')) {
             popupFormWrapper.classList.add('pfy-hide-direct-reserve');
@@ -154,7 +157,11 @@ const Enlist = {
           domForOne(popupFormWrapper, 'input[name="widgetTitle"]', el => {
             el.value = widgetTitle;
           })
+          domForOne(popupFormWrapper, 'input[name="widgetKey"]', el => {
+            el.value = widgetKey;
+          })
         });
+*/
       };
     }
     Enlist.currentlyOpenPopup = pfyPopup(options);
@@ -167,11 +174,18 @@ const Enlist = {
     const recKey = rowEl.dataset.reckey;
     const listEl = rowEl.closest('.pfy-enlist-wrapper');
     const widgetEl = rowEl.closest('.pfy-enlist-wrapper');
-    const widgetInx = widgetEl.dataset.widgetInx;
+    const widgetKey = widgetEl.dataset.widgetKey;
     let   directreserve = listEl.dataset.directreserve;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
 
     const formEl = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
+
+    domForOne(formEl, 'input[name="_reckey"]', el => {
+      el.value = recKey;
+    })
+    domForOne(formEl, 'input[name="widgetKey"]', el => {
+      el.value = widgetKey;
+    })
 
     localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
 
@@ -222,9 +236,9 @@ const Enlist = {
       });
     });
 
-    const inxEl = formEl.querySelector('[name=widgetInx]');
+    const inxEl = formEl.querySelector('[name=widgetKey]');
 
-    formEl.querySelector('[name=widgetInx]').value = `${widgetInx}/${recKey}`;
+//    formEl.querySelector('[name=widgetInx]').value = `${widgetInx}/${recKey}`;
 
     // === add mode =========================================
     if (mode === 'add') {
@@ -405,8 +419,9 @@ const Enlist = {
       });
       pfyConfirm(`{{ pfy-enlist-collapse-confirm-text }}`).then(
         () => {
-          const widgetInx = btnEl.closest('[data-widget-inx]').dataset.widgetInx;
-          const arg = `?collapse-enlist=${widgetInx}&widgetTitle=${widgetTitle}`;
+          const widgetKey = btnEl.closest('[data-widget-key]').dataset.widgetKey;
+          const arg = `?collapse-enlist=${widgetKey}&widgetTitle=${widgetTitle}`;
+//          const arg = `?collapse-enlist=${widgetKey}`;
           reloadAgent(arg);
         },
         () => { console.log('Enlist collapse not executed.');}
