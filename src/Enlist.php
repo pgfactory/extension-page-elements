@@ -86,8 +86,6 @@ class Enlist
     {
         $this->parseOptions($options, $customFields);
 
-        $this->openDb();
-
         if (!self::$initialized) {
             self::$initialized = true;
             Assets::addAssets('FORMS');
@@ -119,14 +117,10 @@ class Enlist
                 return $html[0];
             }
         } else {
-            $this->parseWidgetOptions();
-            $this->widgetKey = $this->title ?: "Enlist-$this->widgetInx";
-            $this->initData();
-            $this->directlyReservePossible = $this->directlyToReserve;
             $html .= $this->renderEnlistWidget();
         }
 
-        $this->propagateUsernameToBrowser(); // if user enlisted already, preset that name&email in further cases
+        $this->propagateUsernameToBrowser(); // if user enlisted before, preset that name&email in further cases
 
         return $html;
     } // render
@@ -139,12 +133,6 @@ class Enlist
     {
         $html = '';
         foreach ($this->events as $event) {
-            self::$enlistWidgetIndex++;
-            $this->widgetInx = self::$enlistWidgetIndex;
-            $this->event = $event;
-
-            $this->parseWidgetOptions();
-
             if (str_starts_with($event['eventBanner'], '<h2>Template-Variables')) {
                 return [$event['eventBanner']]; // special case: provide help about available variables
             }
@@ -815,16 +803,18 @@ EOT;
      */
     private function initData(): void
     {
-        $this->widgetDescr = $this->db->getWidgetDescr($this->widgetKey, $this->title);
+        $widgetOptions = [
+            'widgetKey' => $this->widgetKey,
+            'title' => $this->title,
+            'nSlots' => $this->nSlots,
+            'nReserveSlots' => $this->nReserveSlots,
+            'nTotalSlots' => $this->nTotalSlots,
+            'freezeTime' => $this->freezeTime,
+            'directlyToReserve' => $this->directlyToReserve,
+//ToDo: custom fields
+        ];
+        $this->widgetDescr = $this->db->prepareWidgetDescr($this->widgetKey, $widgetOptions);
         $this->widgetSlots = $this->widgetDescr['slots'];
-        $this->nSlots = $this->db->nSlots();
-        $this->nReserveSlots = $this->db->nReserveSlots();
-        $this->nTotalSlots = $this->db->nTotalSlots();
-        for($i=0; $i<$this->nTotalSlots; $i++) {
-            if (!isset($this->widgetSlots[$i])) {
-                $this->widgetSlots[$i] = [];
-            }
-        }
     } // initData
 
 
@@ -983,13 +973,6 @@ EOT;
         // --- process schedule options:
         $this->events = $this->getScheduleEvents();
 
-        if (!$this->events) {
-            // Note: if list is based on scheduled events, widgetInx and title are defined by the event itself
-            self::$enlistWidgetIndex++;
-            $this->widgetInx = self::$enlistWidgetIndex;
-            $options['title'] = ($options['title']??false) ?: '';
-        }
-
         // --- process custom fields:
         $hasVisibleCustomFields = false;
         if ($customFields) {
@@ -1034,6 +1017,29 @@ EOT;
         if ($options['emailFromName']??false) {
             EnlistComm::setEmailFromName($options['emailFromName']);
         }
+
+        // prepare database:
+        $this->openDb();
+        if ($this->events) {
+            foreach ($this->events as $event) {
+                self::$enlistWidgetIndex++;
+                $this->widgetInx = self::$enlistWidgetIndex;
+                $this->event = $event;
+
+                $this->parseWidgetOptions();
+            }
+        } else {
+            // Note: if list is based on scheduled events, widgetInx and title are defined by the event itself
+            self::$enlistWidgetIndex++;
+            $this->widgetInx = self::$enlistWidgetIndex;
+            $options['title'] = ($options['title']??false) ?: '';
+
+            $this->parseWidgetOptions();
+            $this->widgetKey = $this->title ?: "Enlist-$this->widgetInx";
+            $this->initData();
+            $this->directlyReservePossible = $this->directlyToReserve;
+        }
+
     } // parseOptions
 
 

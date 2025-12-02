@@ -43,14 +43,9 @@ class EnlistData
      * @param int|string $widgetKey
      * @return array|false
      */
-    public function getWidgetDescr(int|string $widgetKey, string|false $title = false): array|false
+    public function getWidgetDescr(int|string $widgetKey): array|false
     {
-        $widgetDescr = $this->findWidgetDescr($widgetKey);
-        if (!$widgetDescr) {
-            $widgetDescr = $this->prepareWidgetDescr($widgetKey, $title);
-        }
-        $this->updateWidgetDescriptor($widgetDescr, $widgetKey, $title);
-        return $widgetDescr;
+        return $this->findWidgetDescr($widgetKey);
     } // getWidgetDescr
 
 
@@ -63,34 +58,6 @@ class EnlistData
         $widgetDescr = $this->getWidgetDescr($widgetKey);
         return $widgetDescr['slots'];
     } // getWidgetSlots
-
-
-    /**
-     * @param array $widgetDescr
-     * @param int|string $widgetKey
-     * @return void
-     */
-    private function updateWidgetDescriptor(array $widgetDescr, int|string $widgetKey, string|false $title = false)
-    {
-        $slots = $widgetDescr['slots'];
-        $widgetDescr['slots'] = $slots;
-        $widgetDescr['nSlots'] = $this->options['nSlots'];
-        $widgetDescr['nReserveSlots'] = $this->options['nReserveSlots'];
-        if ($title) {
-            $widgetDescr['title'] = $title;
-        }
-        $widgetDescr['widgetKey'] = $widgetKey;
-        if ($this->options['freezeTime']) {
-            $widgetDescr['freezeTime'] = $this->options['freezeTime'];
-        }
-        if ($this->options['deadline']) {
-            $widgetDescr['deadline'] = $this->options['deadline'];
-        }
-        if ($this->options['directlyToReserve']) {
-            $widgetDescr['directlyToReserve'] = $this->options['directlyToReserve'];
-        }
-        $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetKey);
-    } // updateWidgetDescriptor
 
 
     /**
@@ -127,7 +94,6 @@ class EnlistData
         $this->updateWidgetDescr($this->enlistWidgets[$widgetKey], recKeyToUse: $widgetKey);
 
         if ($toNotify) {
-            $widgetTitle = str_replace("\n", '', $widgetTitle);
             $names = '';
             $nameList = '';
             foreach ($toNotify as $rec) {
@@ -241,26 +207,13 @@ class EnlistData
      * @param int|string $widgetKey
      * @return array
      */
-    private function prepareWidgetDescr(int|string $widgetKey, string $title): array
+    public function prepareWidgetDescr(int|string $widgetKey, array $widgetOptions): array
     {
         $widgetDescr = $this->db->getRecData($widgetKey);
         if ($widgetDescr) {
             $this->enlistWidgets[$widgetKey] = $widgetDescr;
         } else {
-            $widgetDescr = WIDGET_DATA_TEMPLATE;
-            $nTotalSlots = $this->options['nSlots'] + $this->options['nReserveSlots'];
-            $widgetDescr['slots'] = array_fill(0, $nTotalSlots, []);
-            $widgetDescr['nSlots'] = $this->options['nSlots'];
-            $widgetDescr['nReserveSlots'] = $this->options['nReserveSlots'];
-            $widgetDescr['title'] = $title;
-            $widgetDescr['widgetKey'] = $widgetKey;
-            //ToDo: add custom fields
-            if ($this->options['freezeTime']) {
-                $widgetDescr['freezeTime'] = $this->options['freezeTime'];
-            }
-            if ($this->options['directlyToReserve']) {
-                $widgetDescr['directlyToReserve'] = $this->options['directlyToReserve'];
-            }
+            $widgetDescr = $widgetOptions + WIDGET_DATA_TEMPLATE;
             if ($this->deadlineExpired) {
                 $widgetDescr['deadlineExpired'] = true;
             }
@@ -299,11 +252,13 @@ class EnlistData
      */
     public function selectSlot(int|string $widgetKey, int $slotInx, array $newDataRec, string $context): mixed
     {
-        $slotInx0 = $slotInx;
-        $widgetDescr = $this->getWidgetDescr($widgetKey);
-        $slots = $this->getEnlistSlots($widgetKey);
-        $nTotalSlots = $this->nTotalSlots;
-        $directlyToReserve = ($newDataRec['directlyToReserve']??false) && $this->options['directlyToReserve'];
+        $slotInx0           = $slotInx;
+        $widgetDescr        = $this->getWidgetDescr($widgetKey);
+        $slots              = $this->getEnlistSlots($widgetKey);
+        $nSlots             = $widgetDescr['nSlots'];
+        $nReserveSlots      = $widgetDescr['nReserveSlots']??0;
+        $nTotalSlots        = $nSlots + $nReserveSlots;
+        $directlyToReserve  = ($newDataRec['directlyToReserve']??false) && ($widgetDescr['directlyToReserve']??false);
         if (!$directlyToReserve) {
             if ($slotInx > $nTotalSlots) {
                 mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
