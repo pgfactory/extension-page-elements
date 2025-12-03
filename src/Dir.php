@@ -178,6 +178,10 @@ EOT;
             $data = reset($data);
         }
 
+        if (!$data) {
+            return $str;
+        }
+
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($this->templateOptions);
         $currLevelFiles = TemplateCompiler::compile($data, $templateOptions);
 
