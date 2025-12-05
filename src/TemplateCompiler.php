@@ -9,7 +9,7 @@ use function PgFactory\PageFactory\shieldStr;
 use function PgFactory\PageFactory\var_r;
 
 const EVENT_INDEX_PLACEHOLDER = '%%';
-const DEFAULT_OPTIONS = [
+const TEMPL_COMPILER_DEFAULT_OPTIONS = [
     'prefix' => '',
     'element' => '',
     'file' => '',
@@ -173,7 +173,7 @@ class TemplateCompiler
      */
     public static function sanitizeTemplateOption(array|string $options): array
     {
-        $templateOptions = DEFAULT_OPTIONS;
+        $templateOptions = TEMPL_COMPILER_DEFAULT_OPTIONS;
         if (is_string($options)) {
             $templateOptions['element'] = $options;
             // shortcut: "template: ~page/file.txt":
@@ -182,7 +182,7 @@ class TemplateCompiler
                 $templateOptions['element'] = '';
             }
         } else {
-            $templateOptions = $options + DEFAULT_OPTIONS;
+            $templateOptions = $options + TEMPL_COMPILER_DEFAULT_OPTIONS;
         }
 
         // special case: for convenience, element may contain file:
@@ -257,6 +257,14 @@ class TemplateCompiler
     } // basicCompileTemplate
 
 
+    /**
+     * @return array
+     */
+    public static function getTemplateDefaultOptionNames(): array
+    {
+        return array_keys(TEMPL_COMPILER_DEFAULT_OPTIONS);
+    } // getTemplateDefaultOptionNames
+
 
     /**
      * @param string $template
@@ -307,7 +315,7 @@ class TemplateCompiler
             $out .= "&#37;$k&#37;  \n";
         }
         $out .= "\n## Template-Options:\n\n";
-        $out .= shieldStr("<pre>" . var_r(DEFAULT_OPTIONS) . "</pre>\n");
+        $out .= shieldStr("<pre>" . var_r(TEMPL_COMPILER_DEFAULT_OPTIONS) . "</pre>\n");
         $out = \PgFactory\PageFactory\markdown($out);
         return $out;
     } // handleHelpRequest
