@@ -530,11 +530,22 @@ class Events extends DataSet
 
         $nextEvents = array_splice($sortedData, $nextEventInx, $count);
 
-        $templateOptions = TemplateCompiler::sanitizeTemplateOption($options['template']??[]);
+        $templOptions = $options['template']??[];
+
+        // template options other than 'element' and '_macroName' are considered auxiliary elements:
+        $auxTemplateELems = array_filter($templOptions, function ($k) {
+            return !str_contains('element,_macroName', $k);
+        }, ARRAY_FILTER_USE_KEY);
+        $templateOptions = TemplateCompiler::sanitizeTemplateOption($templOptions);
 
         foreach ($nextEvents as $i => $rec) {
             $eventBanner = TemplateCompiler::compile($rec, $templateOptions);
             $nextEvents[$i]['eventBanner'] = $eventBanner;
+
+            // compile auxiliary elements:
+            foreach ($auxTemplateELems as $k => $v) {
+                $nextEvents[$i][$k] = TemplateCompiler::compile($rec, $templateOptions, elementSelector: $k);
+            }
         }
 
         return $nextEvents;
