@@ -102,12 +102,16 @@
     position: relative;
     border: 1px solid #aaa;
     display: flex;
+    justify-content: space-between;
     background-color: var(--pfy-enlist-title-bg, inherit);
 
     > div:first-child {
       padding: 5px;
       font-weight: bold;
-      flex: 1 0 auto;
+      flex: 1 1 auto;
+    }
+    > div:last-child {
+      flex: 0 0 auto;
     }
 
     button {
@@ -144,9 +148,14 @@
       display: none;
     }
   }
+  button.pfy-enlist-ical-button {
+    transform: translateY(1px);
+    height: calc(100% - 1px);
+  }
   .pfy-enlist-collapse-button span {
     color: #888;
     display: inline-block;
+    font-size: 85%;
   }
 
   .pfy-enlist-add {

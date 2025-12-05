@@ -391,7 +391,7 @@ EOT;
             $mailIcon = ENLIST_MAIL_ICON;
 
             $headButtons = <<<EOT
-        <button class="pfy-enlist-sendmail-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-sendmail-button-title }}">$mailIcon</button>
+        <button class="pfy-enlist-sendmail-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-sendmail-button-title }}"><span>$mailIcon</span></button>
 EOT;
         }
         return $headButtons;
@@ -604,15 +604,7 @@ EOT;
             $iCal->saveToFile();
         }
 
-        $link = $iCal->renderIcsLink();
-        $out = <<<EOT
-
-<div class='pfy-enlist-ical-wrapper'>
-$link
-</div>
-
-EOT;
-        return $out;
+        return $iCal->renderIcsLink();
     } // renderICal
 
 
