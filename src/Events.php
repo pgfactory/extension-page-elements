@@ -531,10 +531,11 @@ class Events extends DataSet
         $nextEvents = array_splice($sortedData, $nextEventInx, $count);
 
         $templOptions = $options['template']??[];
-
-        // template options other than 'element' and '_macroName' are considered auxiliary elements:
-        $auxTemplateELems = array_filter($templOptions, function ($k) {
-            return !str_contains('element,_macroName', $k);
+        // template options other than $defaultOptions are considered auxiliary elements:
+        $defaultOptions = TemplateCompiler::getTemplateDefaultOptionNames();
+        $defaultOptions[] = '_macroName';
+        $auxTemplateELems = array_filter($templOptions, function ($k) use ($defaultOptions) {
+            return !in_array($k, $defaultOptions);
         }, ARRAY_FILTER_USE_KEY);
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($templOptions);
 
