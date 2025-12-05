@@ -369,8 +369,10 @@ EOT;
         $headButtons = '';
         $headButtons .= $this->renderInfoButton();
         $headButtons .= $this->renderICal();
-        $headButtons .= $this->renderCollapseEmptySlotsButton();
-        $headButtons .= $this->renderSendMailToAllButton();
+        if ($this->isEnlistAdmin) {
+            $headButtons .= $this->renderCollapseEmptySlotsButton();
+            $headButtons .= $this->renderSendMailToAllButton();
+        }
         $headButtons = <<<EOT
 
     <div class='pfy-enlist-head-buttons-wrapper'>
@@ -386,14 +388,10 @@ EOT;
      */
     private function renderSendMailToAllButton(): string
     {
-        $headButtons = '';
-        if ($this->isEnlistAdmin) {
-            $mailIcon = ENLIST_MAIL_ICON;
-
-            $headButtons = <<<EOT
+        $mailIcon = ENLIST_MAIL_ICON;
+        $headButtons = <<<EOT
         <button class="pfy-enlist-sendmail-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-sendmail-button-title }}"><span>$mailIcon</span></button>
 EOT;
-        }
         return $headButtons;
     } // renderSendMailToAllButton
 
