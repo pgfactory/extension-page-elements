@@ -3012,6 +3012,9 @@ EOT;
         }
         $tableOptions['mailFrom']               = ($this->formOptions['mailFrom']) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']          = ($this->formOptions['confirmationEmail']) ?: $this->formOptions['emailFieldName'];
+        if (!filter_var($tableOptions['mailFrom'], FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception('Error: invalid email for "mailFrom" option.');
+        }
         return $tableOptions;
     } // parseTableOptions
 
