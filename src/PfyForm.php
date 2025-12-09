@@ -48,6 +48,7 @@ const PFY_FORM_OPTIONS = [
     'formHint' => false,
     'formBottom' => false,
     'confirmationEmail' => '',
+    'confirmationEmailTo' => '',
     'emailFieldName' => '',
     'mailFrom' => false,
     'mailFromName' => false,
@@ -2130,25 +2131,29 @@ EOT;
             return;
         }
 
-        // success:
-        $this->propagateDataToVariables($dataRec); // make dataRec and scheduleData available as transvars
+        // success...
 
-        if ($this->formOptions['mailTo']) {
-            $this->sendOwnerNotification($dataRec);
+        // handle notifications:
+        if ($this->formOptions['mailTo'] || $this->formOptions['confirmationEmailTo']) {
+            $dataRecInclEvent = $this->prepareMailData($dataRec);
+            $this->propagateDataToVariables($dataRecInclEvent); // make dataRec and scheduleData available as transvars
+
+            // handle optional form owner notification:
+            $this->sendOwnerNotification($dataRec, $dataRecInclEvent);
+
+            if ($this->formOptions['confirmationText']) {
+                $formSuccessResponse = $this->formOptions['confirmationText'];
+            } else {
+                $formSuccessResponse = "{{ pfy-form-submit-success }}";
+            }
+            $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
+
+            // handle optional visitor confirmation mail:
+            $formSuccessResponse .= $this->sendConfirmationMail($dataRecInclEvent);
+
+            // clear temp variables to avoid conflicts in case of scheduled forms:
+            TransVars::purgeTempVariables();
         }
-
-        if ($this->formOptions['confirmationText']) {
-            $formSuccessResponse = $this->formOptions['confirmationText'];
-        } else {
-            $formSuccessResponse = "{{ pfy-form-submit-success }}";
-        }
-        $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
-
-        // handle optional confirmation mail:
-        $formSuccessResponse .= $this->sendConfirmationMail($dataRec);
-
-        // clear temp variables to avoid conflicts in case of scheduled forms:
-        TransVars::purgeTempVariables();
 
         // write log:
         mylog(strip_tags($formSuccessResponse), 'form-log.txt');
@@ -2715,11 +2720,15 @@ EOT;
     // === Sending Mails ==================================================================
     /**
      * @param array $dataRec
+     * @param array $dataRecInclEvent
      * @return void
-     * @throws \Kirby\Exception\InvalidArgumentException
+     * @throws \Exception
      */
-    private function sendOwnerNotification(array $dataRec): void
+    private function sendOwnerNotification(array $dataRec, array $dataRecInclEvent): void
     {
+        if (!$this->formOptions['mailTo']) {
+            return;
+        }
         $out = '';
         $mdStr = '';
         $labelLen = 0;
@@ -2728,10 +2737,9 @@ EOT;
         }
         $labelLen += 5;
         $dataRec = $dataRec + $this->origReceivedData;
-        // $dataRec = $this->origReceivedData + $dataRec; //??? -> consequences?
         foreach ($dataRec as $key => $value) {
             // skip meta and antiSpam fields:
-            if ($key[0] === '_' || $this->formElements[$key]['antiSpam']??false) {
+            if ($key[0] === '_' || isset($this->formElements[$key]['antiSpam'])) {
                 continue;
             }
             $type = $this->formElements[$key]['type']??false;
@@ -2748,7 +2756,7 @@ EOT;
             }
             $out .= "$key1 $value\n";
             $mdStr .= "| $key: | $value\n|---\n";
-            $dataRec[$key] = $value;
+            $dataRecInclEvent[$key] = $value;
         }
         $mdStr = substr($mdStr, 0, -4);
         $mdStr = <<<EOT
@@ -2757,10 +2765,10 @@ $mdStr
 |===
 EOT;
 
-        $dataRec['_md_data_'] = $mdStr;
-        $dataRec['_data_'] = $out;
+        $dataRecInclEvent['_md_data_'] = $mdStr;
+        $dataRecInclEvent['_data_'] = $out;
 
-        list($subject, $message) = $this->getEmailComponents($dataRec, PFY_NOTIFICATION_VAR_NAME);
+        list($subject, $message) = $this->getEmailComponents($dataRecInclEvent, PFY_NOTIFICATION_VAR_NAME);
 
         if ($this->formOptions['mailTo'] === true) {
             if (!PageFactory::$webmasterEmail) {
@@ -2803,16 +2811,6 @@ EOT;
         if (!($confirmationMail = $this->formOptions['confirmationEmailTo']??false)) {
             return '';
         }
-        $dataRec = $this->origReceivedData + $dataRec;
-        $eventData = $this->auxBannerValues;
-        foreach ($eventData as $key => $value) {
-            $value = TransVars::getVariable($value, true);
-            if ($value) {
-                $eventData[$key] = $value;
-            }
-        }
-        $dataRec += $eventData;
-        $dataRec['hostUrl'] = PFY_HOST_URL;
 
         list($subject, $message) = $this->getEmailComponents($dataRec, PFY_CONFIRMATION_VAR_NAME);
 
@@ -2848,6 +2846,28 @@ EOT;
         }
         return '';
     } // sendConfirmationMail
+
+
+    /**
+     * @param array $dataRec
+     * @return array
+     */
+    private function prepareMailData(array $dataRec): array
+    {
+        $dataRec = $this->origReceivedData + $dataRec;
+        if ($eventData = $this->auxBannerValues) {
+            foreach ($eventData as $key => $value) {
+                $value = TransVars::getVariable($value, true);
+                if ($value) {
+                    $eventData[$key] = $value;
+                }
+            }
+            $dataRec += $eventData;
+        }
+        $dataRec['hostUrl'] = PFY_HOST_URL;
+        $dataRec['pageUrl'] = PFY_PAGE_URL;
+        return $dataRec;
+    } // prepareMailData
 
 
     /**
@@ -3323,7 +3343,8 @@ EOT;
             $str = str_replace("'{=={'", '{{', $str);
         }
         if (str_contains($str, '{{')) {
-            $str = TransVars::translate($str);
+            $str = TransVars::translate($str, $dataRec);
+//            $str = TransVars::translate($str);
         }
         return $str;
     } // $str
