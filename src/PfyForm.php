@@ -2859,7 +2859,7 @@ EOT;
             foreach ($eventData as $key => $value) {
                 $value = TransVars::getVariable($value, true);
                 if ($value) {
-                    $eventData[$key] = $value;
+                    $eventData[$key] = MdPlusHelper::translateSmartypants($value);
                 }
             }
             $dataRec += $eventData;
@@ -3344,7 +3344,6 @@ EOT;
         }
         if (str_contains($str, '{{')) {
             $str = TransVars::translate($str, $dataRec);
-//            $str = TransVars::translate($str);
         }
         return $str;
     } // $str
