@@ -10,14 +10,20 @@ class TwigLight
      * @param string $str
      * @return string
      */
-    public static function compile(string $str): string
+    public static function compile(string $str, array $data = []): string
     {
         if (!str_contains($str, '{%')) {
             return $str;
         }
+        if ($data) {
+            TransVars::setTempVariables($data);
+        }
 
         $tokens = self::tokenize($str);
         list($out) = self::evalTokens($tokens);
+        if ($data) {
+            TransVars::purgeTempVariables();
+        }
         return $out;
     } // compile
 

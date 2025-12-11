@@ -2134,6 +2134,7 @@ EOT;
         // success...
 
         // handle notifications:
+        $formSuccessResponse = '';
         if ($this->formOptions['mailTo'] || $this->formOptions['confirmationEmailTo']) {
             $dataRecInclEvent = $this->prepareMailData($dataRec);
             $this->propagateDataToVariables($dataRecInclEvent); // make dataRec and scheduleData available as transvars
@@ -2906,8 +2907,6 @@ EOT;
         $subject = TransVars::getVariable($varNameStub.'-subject', varNameIfNotFound:true);
         $message = (TransVars::getVariable($varNameStub.'-body') ?: TransVars::getVariable($varNameStub.'-message', varNameIfNotFound:true));
 
-        $dataRec['host'] = PFY_HOST_URL;
-
         $subject = $this->compileTempate($subject, $dataRec);
         $message = $this->compileTempate($message, $dataRec);
 
@@ -3321,7 +3320,7 @@ EOT;
     {
         $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
 
-        $str = TwigLight::compile($str);
+        $str = TwigLight::compile($str, $dataRec);
 
         if (preg_match_all('/%([\w-]{1,16})%/', $str, $m)) {
             $dataRec += $this->origReceivedData; // add internal data elements, i.e. those like '_xy'
