@@ -110,17 +110,19 @@ class Calendar
      */
     public function render()
     {
-        $str = $this->renderForm();
+        $formHtml = $this->renderForm();
 
         $lang = PageFactory::$lang;
         $timezone = PageFactory::$timezone;
         $draggable = ($this->options['draggable']??false) ? 'true':'false';
         $useDblClick = ($this->options['useDblClick']??false) ? 'true':'false';
         $freezePast = $this->freezePast? 'true': 'false';
+        $hideAllDayInListView = ($this->options['hideAllDayInListView']??false) ? 'true':'false';
 
         $calOptions = <<<EOT
     inx: $this->inx,
     initialView:            '$this->defaultView',
+    hideAllDayInListView:   $hideAllDayInListView,
     admin:                  $this->adminPermStr,
     edit:                   $this->edPermStr,
     draggable:              $draggable,
@@ -151,14 +153,62 @@ $calOptions
 EOT;
         Page::addJsReady( $jq );
 
-        $str .= "<div id='$this->id' class='pfy-calendar pfy-calendar-$this->inx $this->class' data-calInx='$this->inx' data-datasrc='DATA-REF'>CAL PLACEHOLDER</div>\n";
+        $catSelectors = $this->renderCatSelectors();
+
+        $html = "<div id='$this->id' class='pfy-calendar pfy-calendar-$this->inx $this->class' data-calInx='$this->inx' data-datasrc='DATA-REF'>CAL PLACEHOLDER</div>\n";
+
+        $html = <<<EOT
+<div class="pfy-calendar-wrapper">
+$formHtml
+$catSelectors
+$html
+</div>
+EOT;
+
 
         // save sessCalRec in session for use in AjaxHandler:
         kirby()->session()->set($this->sessCalRecKey, $this->sessCalRec);
         kirby()->session()->set($this->sessDbFileKey, resolvePath($this->source));
 
-        return $str;
+        return $html;
     } // render
+
+
+    /**
+     * @return string
+     */
+    private function renderCatSelectors(): string
+    {
+        if (!$this->categories || !($this->options['showCatSelectors'] ?? false)) {
+            return '';
+        }
+        $activeCatFilters = $this->sessCalRec['catfilter']??'';
+        $accordionOpenCls = $activeCatFilters ? '' : ' mdp-accordion-initially-closed';
+        $catSelectors = '';
+        $categories = explodeTrim(',', $this->categories, excludeEmptyElems:true);
+        foreach ($categories as $category) {
+            $name = translateToIdentifier($category, toLowerCase:true);
+            $id = "pfy-cat-sel-$name";
+            $checked = str_contains(",$activeCatFilters,", ",pfy-event-$name,") ? '' : 'checked';
+            $catSelectors .= <<<EOT
+    <div class="pfy-cal-cat-selector">
+        <input id='$id' type='checkbox' value='pfy-event-$name' $checked><label for='$id'>$category</label>
+    </div>
+
+EOT;
+        }
+        $catSelectors = <<<EOT
+<div class="pfy-cal-cat-selectors">
+<details class="mdp-accordion$accordionOpenCls">
+      <summary>{{ pfy-cal-cat-selectors-label }}</summary>
+      <div class="mdp-accordion-body">
+$catSelectors
+      </div><!-- /.mdp-accordion-body -->
+    </details>
+</div>
+EOT;
+        return $catSelectors;
+    } // renderCatSelectors
 
 
     /**
@@ -228,8 +278,12 @@ EOT;
                 $formFields['Event']['defaultEventDuration'] = $this->defaultEventDuration;
             }
         }
-        $a = $formFields['category'];
-        if (!($formFields['category']['options']??false)) {
+
+        // add category selector with options from calendar, if not explicitly defined:
+        if (!isset($formFields['category']['options'])) {
+            if (!isset($formFields['category'])) {
+                $formFields = ['category' => ['type' => 'select', 'label' => '{{ pfy-cal-category-label }}']]+ $formFields;
+            }
             $formFields['category']['options'] = $this->categories;
         }
 

@@ -35,6 +35,10 @@ function PfyCalendar() {
   this.clicks = 0;
   this.calEvs = {};
   this.fullCalendarOptions = null;
+
+  // Control array: list-view <tr> rows with any of these classes will be removed
+  this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
+
   return this;
 } // PfyCalendar
 
@@ -43,6 +47,8 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   const parent = this;
   let   dataRef = '';
   this.calendarEl = calendarEl;
+
+  this.initCatSelectrHandler();
 
   domForOne(this.formWrapperEl, '[name=_dataSrcInx]', (dataRefElem) => {
     dataRef = dataRefElem.value;
@@ -115,7 +121,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
             success: function( data ) {
               if (typeof data === 'object') {
                 console.log('cal events fetched: ' + data.length);
-                setTimeout(parent.onCalendarReady, 1);
+                parent.removeHiddenElements(data);
               } else {
                 console.log(data);
               }
@@ -146,9 +152,13 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
          eventResize: function (calEv) {
              parent.calEventChanged(calEv);
          },
-        windowResize: function() {
+         windowResize: function() {
             parent.handleWindowWidth();
-        }
+         },
+         datesSet(events) {
+          // events are loaded + placed into the view
+          parent.onCalendarReady(events);
+         },
   };
 
   // Merging default options with provided options
@@ -193,6 +203,7 @@ PfyCalendar.prototype.renderEvent = function( calArgs ) {
     html += event._def.extendedProps.description;
   }
   html = html.replace(/^<span/, `<span data-event-id='${id}'`);
+//  this.updateSelectedCategories();
   return { html: html };
 }; // renderEvent
 
@@ -222,6 +233,7 @@ PfyCalendar.prototype.calEventChanged = async function(event0) {
 
 
 PfyCalendar.prototype.onCalendarReady = function() {
+  const parent = this;
   domForEach('.fc-view', (calendarEl) => {
     domForEach(calendarEl, '.fc-event', (calEventEl) => {
 
@@ -243,7 +255,18 @@ PfyCalendar.prototype.onCalendarReady = function() {
         }
       })
     })
-  })
+  });
+
+//  if (typeof this.fullCal !== 'undefined') {
+//    this.updateSelectedCategories();
+//  }
+//  parent.fullCal.updateSelectedCategories(parent.fullCal);
+//  const parent = this;
+//  if (typeof parent.fullCal !== 'undefined') {
+//    setTimeout(function() {
+//      parent.updateSelectedCategories(parent);
+//    }, 1100);
+//  }
 }; // onCalendarReady
 
 
@@ -264,6 +287,16 @@ PfyCalendar.prototype.storeViewMode = function(viewName) {
       console.log('storeViewMode done: ' + data);
     });
 }; // storeViewMode
+
+
+PfyCalendar.prototype.storeCatFilter = function() {
+  let catfilter = this.getCatFilterStates();
+  catfilter = catfilter.join(',');
+  execAjaxPromise(`&mode=${catfilter}&catfilter`, null, this.ajaxUrl)
+    .then(function (data) {
+      console.log('storeViewMode done: ' + data);
+    });
+}; // storeCatFilter
 
 
 PfyCalendar.prototype.openNewEventPopup = function (dateObj) {
@@ -760,7 +793,81 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
   } else {
     fun(parent, argObj1, argObj2);
   }
-
 } // invokeHandler
 
+
+PfyCalendar.prototype.initCatSelectrHandler = function() {
+  const parent = this;
+  console.log('initCatSelectrHandler');
+  domForEach('.pfy-cal-cat-selector input', (el) => {
+    el.addEventListener('change', function () {
+      parent.fullCal.refetchEvents();
+      parent.storeCatFilter();
+    });
+  })
+} // closeContextMenu
+
+
+PfyCalendar.prototype.getCatFilterStates = function() {
+  let filteredClasses = [];
+  domForEach('.pfy-cal-cat-selector input', (el) => {
+    if (!el.checked) {
+      filteredClasses.push(el.value);
+    }
+  })
+  return filteredClasses;
+}
+
+PfyCalendar.prototype.removeHiddenElements = function(data) {
+  if (typeof data === 'undefined') {
+    return data;
+  }
+
+  const listView = (this.fullCal.view.type === 'listYear');
+  let filteredClasses = this.getCatFilterStates();
+  if (!filteredClasses && !listView) {
+    return data;
+  }
+  filteredClasses.forEach((cls) => {
+    let i = 0;
+    while (typeof data[i] !== 'undefined') {
+      if (data[i].summary.match(cls)) {
+        //console.log('removing ',data[i]);
+        this.removeAndShift(data, i);
+      }
+      i++;
+    }
+  })
+
+  if (listView && this.options.hideAllDayInListView) {
+    let i = 0;
+    while (typeof data[i] !== 'undefined') {
+      if (data[i].start.length <= 12) {
+        //console.log('removing ', data[i]);
+        this.removeAndShift(data, i);
+      }
+      i++;
+    }
+  }
+
+} // removeHiddenElements
+
+
+PfyCalendar.prototype.removeAndShift = (obj, keyToRemove) => {
+  const target = parseInt(keyToRemove);
+
+  // 1. Delete the target property
+  delete obj[target];
+
+  // 2. Find all keys, sort them, and shift higher ones down
+  Object.keys(obj)
+    .map(Number)
+    .filter(key => key > target)
+    .sort((a, b) => a - b) // Sort ascending to move them in order
+    .forEach(key => {
+      obj[key - 1] = obj[key];
+      delete obj[key];
+    });
+  obj.length--;
+} // removeAndShift
 

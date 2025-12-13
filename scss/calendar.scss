@@ -205,6 +205,26 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     }
   }
 
+  .pfy-cal-cat-selectors {
+    margin: 1em 0;
+    padding: 0 0.5em 0.5em 0.5em;
+    border: 1px solid #ddd;
+    .pfy-cal-cat-selectors-label {
+      margin: 0.5em 0;
+    }
+    .pfy-cal-cat-selector {
+      display: inline-block;
+      margin-right: 1em;
+    }
+    input {
+      margin-right: 0.3em;
+    }
+  }
+
+  .fc-list-event-time {
+    width: 7.5em;
+  }
+
 } // pfy-default-styling
 
 

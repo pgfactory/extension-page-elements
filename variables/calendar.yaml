@@ -191,3 +191,8 @@ pfy-cal-no-permission-others-category:
 
 pfy-warning-insufficient-privileges:
     _: "You don't have permission to modify this calendar entry."
+
+pfy-cal-cat-selectors-label:
+  de: 'Kategorien-Auswahl'
+  _:  'Category selection'
+

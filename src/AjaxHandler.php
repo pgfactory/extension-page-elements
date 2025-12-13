@@ -437,7 +437,12 @@ class AjaxHandler
      */
     private static function saveMode(): string
     {
-        self::$sessRec['mode'] = $_GET['mode'];
+        if (isset($_GET['catfilter'])) {
+            self::$sessRec['catfilter'] = $_GET['mode'];
+
+        } else {
+            self::$sessRec['mode'] = $_GET['mode'];
+        }
         kirby()->session()->set(self::$sessCalRecKey, self::$sessRec);
         return '"ok"';
     } // saveMode
