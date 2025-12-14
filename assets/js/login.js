@@ -14,7 +14,7 @@ window.addEventListener("load", (event) => {
       wrapper.classList.add('pfy-login-otc');
       const form = event.target.closest('.pfy-form');
       setTimeout(function () {
-        const input = form.querySelector('input[name=email]');
+        const input = form.querySelector('input[name=pfyLoginEmail]');
         input.focus();
       }, 50);
     });
@@ -30,7 +30,7 @@ window.addEventListener("load", (event) => {
       wrapper.classList.remove('pfy-login-otc');
       const form = event.target.closest('.pfy-form');
       setTimeout(function () {
-        const input = form.querySelector('input[name=email]');
+        const input = form.querySelector('input[name=pfyLoginEmail]');
         input.focus();
       }, 50);
     });
@@ -40,9 +40,16 @@ window.addEventListener("load", (event) => {
   const loginWrapper = document.querySelector('.pfy-login-wrapper');
   if (loginWrapper) {
     setTimeout(function () {
-      const input = loginWrapper.querySelector('input[name=email]');
+      const input = loginWrapper.querySelector('input[name=pfyLoginEmail]');
       input.focus();
     }, 50);
   }
 
 });
+
+// register event handler for cancel button in login/logout form:
+handleEvent('.pfy-login-box input.pfy-cancel', ev => {
+  ev.preventDefault();
+  console.log('cancel');
+  pfyFormsHelper.reloadAgent();
+})

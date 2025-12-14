@@ -28,12 +28,11 @@ class Login
      */
     public static function init(array $options = []): void
     {
+        Assets::addAssets('LOGIN');
+        $currPageUrl = PFY_PAGE_URL;
         if ($options['as-popup']??false) {
-            $options['nextPage'] = './';
-            self::$selfLink = './?login';
-        }
-        if (str_starts_with(self::$selfLink, './')) {
-            self::$selfLink = PFY_PAGE_URL . substr(self::$selfLink, 2);
+            $options['nextPage'] = $currPageUrl;
+            self::$selfLink = "$currPageUrl?login";
         }
 
         // check url for arg 'next':
@@ -48,7 +47,7 @@ class Login
 
         $nextPage = ($options['nextPage']??false) ?: ($options['next']??false);
         if ($nextPage) {
-            if (str_starts_with($nextPage, './')) {
+            if (str_starts_with($nextPage, $currPageUrl)) {
                 $nextPage = PFY_PAGE_URL . substr($nextPage, 2);
             }
             self::$nextPage = $nextPage;
@@ -110,7 +109,6 @@ $html
 EOT;
 
         $html = shieldStr($html);
-        Assets::addAssets('LOGIN');
         Page::applyRobotsAttrib();
         return $html;
     } // render
@@ -305,10 +303,11 @@ EOT;
      */
     private static function renderLogoutForm(mixed $username): string
     {
+        $currPageUrl = PFY_PAGE_URL;
         $html = <<<EOT
 <div class='pfy-already-logged-in'>
     <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
-    <p><a class="pfy-button" href='./'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></p>
+    <p><a class="pfy-button" href='$currPageUrl'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='$currPageUrl?logout'>{{ pfy-logout }}</a></p>
 </div>
 EOT;
         return $html;
@@ -323,11 +322,12 @@ EOT;
     {
         $urlChangePw = PFY_APP_BASE_URL.'panel/reset-password';
         $labelChangePw = '{{ pfy-login-reset-pw }}';
+        $currPageUrl = PFY_PAGE_URL;
         $html = <<<EOT
 <div class='pfy-already-logged-in'>
     <p>{{ pfy-logged-in-as }} $username.<br>&nbsp;</p>
     <div class="pfy-login-reset-pw"><a href="$urlChangePw">$labelChangePw</a></div>
-    <div class="pfy-login-button-row"><a class="pfy-button" href='./'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='./?logout'>{{ pfy-logout }}</a></div>
+    <div class="pfy-login-button-row"><a class="pfy-button" href='$currPageUrl'>{{ pfy-login-remain-loggedin }}</a> <a class="pfy-button" href='$currPageUrl?logout'>{{ pfy-logout }}</a></div>
 </div>
 EOT;
         return $html;
