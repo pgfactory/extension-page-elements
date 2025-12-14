@@ -263,6 +263,7 @@ All:
 : - info        >> [string] info icon showing info text as tooltip
 : - description     >> [string] text next/below input field
 : - antiSpam        >> [string] -> see below
+: - columnHeader    >> [string] -> if set, replaces 'label' as column header for the output table
 
 textarea:
 : - reveal      >> [string|true] If set, textarea is hidden until label is clicked

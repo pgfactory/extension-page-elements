@@ -3081,6 +3081,7 @@ EOT;
 
         $elemOptions['name'] = $name;
         $elemOptions['label'] = $label;
+        $label0 = str_replace(':', '', $label);
         $_name = strtolower($name);
 
         // handle 'info' option:
@@ -3144,7 +3145,7 @@ EOT;
 
         // register found $name with global list of field-names (used for table-output):
         if (!str_contains('submit,cancel,newrec', $_name)) {
-            $this->fieldNames[$name] = $label;
+            $this->fieldNames[$name] = ($elemOptions['columnHeader']??false) ?: $label0;
         }
         $elemOptions['isArray'] = false;
 
