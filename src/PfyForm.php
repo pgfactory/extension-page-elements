@@ -3367,7 +3367,7 @@ EOT;
             if (is_array($value)) {
                 $value = $value[0]?? json_encode($value);
             }
-            TransVars::setTempVariable($key, $value);
+            TransVars::setTempVariable($key, (string)$value);
         }
         if ($value = ($this->auxBannerValues['eventBanner']??false)) {
             TransVars::setTempVariable("_banner_", $value);
