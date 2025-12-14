@@ -179,7 +179,7 @@ EOT;
      */
     private function renderCatSelectors(): string
     {
-        if (!$this->categories || !($this->options['showCatSelectors'] ?? false)) {
+        if (!$this->categories || !($this->options['showCatSelection'] ?? false)) {
             return '';
         }
         $activeCatFilters = $this->sessCalRec['catfilter']??'';
@@ -199,7 +199,7 @@ EOT;
         }
         $catSelectors = <<<EOT
 <div class="pfy-cal-cat-selectors">
-<details class="mdp-accordion$accordionOpenCls">
+<details class="mdp-accordion$accordionOpenCls mdp-border">
       <summary>{{ pfy-cal-cat-selectors-label }}</summary>
       <div class="mdp-accordion-body">
 $catSelectors

@@ -31,7 +31,7 @@ return function ($args = '')
             'freezePast' => ['[bool] If true, users (other than admin) cannot modify events in the past.', true],
             'categories' => ['[comma-separated-list] A list of supported categories: only events with matching '.
                 'category attribute will be displayed.', false],
-            'showCatSelectors' => ['If true, category selectors are presented above the calendar.', null],
+            'showCatSelection' => ['If true, category selection is presented above the calendar.', null],
             'defaultView' => ['[week,month,year] Defines the initial view when the widget is presented for the very first time', ''],
             'hideAllDayInListView' => ['If true, all-day events are omitted in list view.', false],
             'headerLeftButtons' => ['[next,prev,today] Defines which buttons (to select views) will be displayed and in which order (ltr)', 'prev,today,next'],
