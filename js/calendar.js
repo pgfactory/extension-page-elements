@@ -256,17 +256,6 @@ PfyCalendar.prototype.onCalendarReady = function() {
       })
     })
   });
-
-//  if (typeof this.fullCal !== 'undefined') {
-//    this.updateSelectedCategories();
-//  }
-//  parent.fullCal.updateSelectedCategories(parent.fullCal);
-//  const parent = this;
-//  if (typeof parent.fullCal !== 'undefined') {
-//    setTimeout(function() {
-//      parent.updateSelectedCategories(parent);
-//    }, 1100);
-//  }
 }; // onCalendarReady
 
 
@@ -832,10 +821,10 @@ PfyCalendar.prototype.removeHiddenElements = function(data) {
     let i = 0;
     while (typeof data[i] !== 'undefined') {
       if (data[i].summary.match(cls)) {
-        //console.log('removing ',data[i]);
         this.removeAndShift(data, i);
+      } else {
+        i++;
       }
-      i++;
     }
   })
 
@@ -849,7 +838,6 @@ PfyCalendar.prototype.removeHiddenElements = function(data) {
       i++;
     }
   }
-
 } // removeHiddenElements
 
 
