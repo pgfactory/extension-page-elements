@@ -166,9 +166,6 @@ const pfyFormsHelper = {
     if (res === false) {
       return;
     }
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-    ev.preventDefault();
 
     const form = btn.closest('.pfy-form');
     const changed = this.isFormModified(form);
@@ -199,8 +196,6 @@ const pfyFormsHelper = {
       }
     }
     form.classList.add('pfy-form-cleared');
-
-    const formWrapper = form.closest('.pfy-form-wrapper');
   }, // cancelButtonHandler
 
 
