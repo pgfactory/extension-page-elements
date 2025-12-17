@@ -2219,7 +2219,7 @@ EOT;
         }
 
         $path = $this->formElements[$key]['path']??false;
-        if ($p = (strpos($path, '$'))) {
+        if (($p = (strpos($path, '$'))) !== false) {
             // case given path contains patter '$xy', where xy is name of other data element:
             $k = substr($path, $p+1);
             $k = preg_replace('|\W.*|', '', $k); // remove trailing characters
