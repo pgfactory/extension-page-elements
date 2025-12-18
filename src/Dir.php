@@ -10,7 +10,6 @@ use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\dir_name;
 use function PgFactory\PageFactory\fixPath;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
@@ -524,7 +523,7 @@ EOT;
         if ($this->wrapperClass) {
             $this->wrapperClass = " class='{$this->wrapperClass}'";
         }
-        $path = resolvePath($this->path);
+        $path = Utils::resolvePath($this->path);
         preparePath($path);
         return array($path, $pattern);
     } // parseOptions

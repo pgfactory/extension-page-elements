@@ -102,7 +102,7 @@ EOT,
         $args['permission'] .= 'num';
     }
 
-    $file = resolvePath($file);
+    $file = Utils::resolvePath($file);
     $ds = new DataTable($file, $args);
     $str .= $ds->render();
 

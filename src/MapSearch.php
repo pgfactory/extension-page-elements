@@ -14,7 +14,7 @@ class MapSearch
 
     public function __construct()
     {
-        $this->localIconsPath = resolvePath(LOCAL_ICON_PATH);
+        $this->localIconsPath = Utils::resolvePath(LOCAL_ICON_PATH);
         $this->localIconsUrl = Utils::resolveUrls(LOCAL_ICON_PATH);
     }
 
@@ -215,7 +215,7 @@ EOT;
         } elseif (is_string($customPOIs)) {
             if (preg_match('/^(\w+):(.*)/', $customPOIs, $m)) {
                 if ($m[1] === 'file') {
-                    $file = resolvePath($m[2]);
+                    $file = Utils::resolvePath($m[2]);
                     if (file_exists($file)) {
                         $db = new DataSet($file);
                         $recs = $db->read();

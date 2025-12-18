@@ -11,12 +11,9 @@ use Kirby\Http\Url;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
-use function PgFactory\PageFactory\getFile;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
-use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\mylog;
 
 

@@ -46,7 +46,7 @@ EOT,
     $pageId = page()->id(); //??? PageFactory::$pageId;
     $file = $options['file'] ?: "~data/writable/$pageId.json";
     $sessDbFileKey = "db:$pageId:$writableGroupName:file";
-    kirby()->session()->set($sessDbFileKey, resolvePath($file));
+    kirby()->session()->set($sessDbFileKey, Utils::resolvePath($file));
     $db = new DataSet($file, [
         'masterFileRecKeyType' => '_reckey',
         'obfuscateRecKeys' => false,

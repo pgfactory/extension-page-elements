@@ -10,7 +10,6 @@ use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\dir_name;
 use function PgFactory\PageFactory\fileTime;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToFilename;
@@ -297,7 +296,7 @@ class Ical
             }
             $file = ICAL_DOWNLOAD_PATH . $this->path . $this->filename;
         }
-        $this->targetFilePath = resolvePath($file);
+        $this->targetFilePath = Utils::resolvePath($file);
         $this->targetFileUrl  = Utils::resolveUrls($file, forResoucres:true);
     } // determineTargetFile
 

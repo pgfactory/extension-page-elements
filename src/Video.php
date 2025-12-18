@@ -3,8 +3,8 @@
 namespace PgFactory\PageFactoryElements;
 
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\explodeTrim;
-use function PgFactory\PageFactory\resolvePath;
 
 class Video
 {
@@ -44,7 +44,7 @@ class Video
         // case 1: no comma-separated list, no extension or last car is '*':
         if (!str_contains($file, ',') && !(pathinfo($file, PATHINFO_EXTENSION)) || (substr($file, -1) === '*')) {
             $path = dirname($file) . '/';
-            $file = resolvePath(rtrim($file, '*'));
+            $file = Utils::resolvePath(rtrim($file, '*'));
             $files = [];
             foreach (PFY_SUPPORTED_VIDEO_FORMATS as $ext) {
                 $f = "$file.$ext";

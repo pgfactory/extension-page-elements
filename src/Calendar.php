@@ -168,7 +168,7 @@ EOT;
 
         // save sessCalRec in session for use in AjaxHandler:
         kirby()->session()->set($this->sessCalRecKey, $this->sessCalRec);
-        kirby()->session()->set($this->sessDbFileKey, resolvePath($this->source));
+        kirby()->session()->set($this->sessDbFileKey, Utils::resolvePath($this->source));
 
         return $html;
     } // render

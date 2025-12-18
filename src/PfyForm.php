@@ -2232,7 +2232,7 @@ EOT;
             // case nothing specified -> use ~/uploads/:
             $path = '~/uploads/';
         }
-        $path = resolvePath($path);
+        $path = Utils::resolvePath($path);
         preparePath($path);
         $filename = $uploadObj->name;
         $filename = basename($filename);
@@ -2477,7 +2477,7 @@ EOT;
         if ($this->isFormAdmin) {
             $pgUri = PFY_PAGE_ID;
             $sessKey = "db:$pgUri:$this->formIndex:file";
-            kirby()->session()->set($sessKey, resolvePath($this->file));
+            kirby()->session()->set($sessKey, Utils::resolvePath($this->file));
         }
         return $this->db;
     } // openDB
@@ -3446,7 +3446,7 @@ EOT;
     private function handlePhpCallback(string $callback, array &$dataRec): mixed
     {
         $res = true;
-        $file = resolvePath($callback);
+        $file = Utils::resolvePath($callback);
         if ((fileExt($file) === 'php') && file_exists($file)) {
             list($res, $rec) = require $file;
             if (is_bool($res)) {
@@ -3468,7 +3468,7 @@ EOT;
             $file = $rec;
             if ($name === '@import') {
                 if ($file[0] === '~') {
-                    $file = resolvePath($file);
+                    $file = Utils::resolvePath($file);
                 }
                 $newFields = loadFile($file, useCaching: true);
                 if (!is_array($newFields)) {

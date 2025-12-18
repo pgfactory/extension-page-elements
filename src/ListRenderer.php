@@ -6,7 +6,6 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\fileExt;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\getDir;
@@ -146,7 +145,7 @@ class ListRenderer
         $reversed = ($options['reversed']??false);
 
         $path = $options['path'] ?? '';
-        $path = resolvePath($path);
+        $path = Utils::resolvePath($path);
         $dir = getDir($path);
         if (!$dir || !is_array($dir)) {
             return '';
@@ -253,7 +252,7 @@ class ListRenderer
 
         } elseif (is_string($tmpl)) {
             if ($tmpl[0] === '~') {
-                $templateFile = resolvePath($tmpl);
+                $templateFile = Utils::resolvePath($tmpl);
                 if (file_exists($templateFile)) {
                     $template = loadFile($templateFile);
                 }

@@ -13,7 +13,6 @@ use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\reloadAgent;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 
@@ -829,7 +828,7 @@ EOT;
             if (!str_contains($file, '~')) {
                 $file = "~data/$file";
             }
-            $file = resolvePath($file);
+            $file = Utils::resolvePath($file);
             if (self::$_file) {
                 if (self::$_file !== $file) {
                     throw new Exception("Error: all enlist widgets in a page must use same data-file.");
@@ -838,9 +837,9 @@ EOT;
                 self::$_file = $file;
             }
         } elseif (!self::$_file) {
-            self::$_file = resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
+            self::$_file = Utils::resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
         } else {
-            return resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
+            return Utils::resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
         }
         return self::$_file;
     } // determineDataFile

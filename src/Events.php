@@ -20,7 +20,6 @@ use PgFactory\PageFactory\Utils;
 use RRule\RRule;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\loadFile;
 
 class Events extends DataSet
@@ -40,7 +39,7 @@ class Events extends DataSet
         parent::__construct($file, $options);
 
         if ($file) {
-            if (($ftime = fileTime(resolvePath($file)))) {
+            if (($ftime = fileTime(Utils::resolvePath($file)))) {
                 $this->filetime = date("d.F Y", $ftime);
             } else {
                 $this->filetime = '{|! pfy-event-source-filetime-unknown !|}';
@@ -160,7 +159,7 @@ class Events extends DataSet
         $ical = new Ical($events, $iCalOptions);
         $tTargetFile = $ical->getTargetFileTime();
 
-        $dataFile = resolvePath($this->options['file']);
+        $dataFile = Utils::resolvePath($this->options['file']);
         $tDataFile = fileTime($dataFile);
         if ($tDataFile > $tTargetFile) {
             $ical->saveToFile();

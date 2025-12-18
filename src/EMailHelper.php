@@ -6,13 +6,11 @@ use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyFormSplitSyntax;
+use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;
-use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\reloadAgent;
-use function PgFactory\PageFactory\resolvePath;
 use function PgFactory\PageFactory\timestampStr;
-use function PgFactory\PageFactory\unshieldStr;
 use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\fileTime;
 
@@ -447,7 +445,7 @@ EOT;
         }
         if ($attachments) {
             foreach ($attachments as $key => $attachment) {
-                $attachments[$key] = resolvePath($attachment);
+                $attachments[$key] = Utils::resolvePath($attachment);
             }
         }
         self::$attachments = $attachments;
