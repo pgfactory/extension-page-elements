@@ -600,6 +600,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
           max-width: 49%;
         }
       }
+
+      .pfy-form-buttons input {
+        margin: 0.5em 0;
+      }
     }
   } // pfy-small-screen
 
