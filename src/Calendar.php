@@ -7,23 +7,15 @@
 
 
 namespace PgFactory\PageFactoryElements;
-use DateTimeZone;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\DataSet;
-use PgFactory\PageFactory\Maintenance;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\PfyForm;
-use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\getFile;
 use function PgFactory\PageFactory\isAdmin;
-use function \PgFactory\PageFactory\resolvePath;
 use function \PgFactory\PageFactory\explodeTrim;
-use function PgFactory\PageFactory\createHash;
-use function PgFactory\PageFactory\fileExt;
-use function PgFactory\PageFactory\preparePath;
-use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\translateToIdentifier;
 
@@ -54,25 +46,10 @@ class Calendar
     private mixed $categories;
     private string $edPermStr;
     private string $adminPermStr;
-    /**
-     * @var false|mixed
-     */
     private mixed $modifyPermission;
-    /**
-     * @var false|mixed
-     */
     private bool $userCategories;
-    /**
-     * @var mixed|string
-     */
     private mixed $headerLeftButtons;
-    /**
-     * @var mixed|string
-     */
     private mixed $headerRightButtons;
-    /**
-     * @var false|mixed
-     */
     private mixed $freezePast;
     private $businessHours;
     private $visibleHours;
