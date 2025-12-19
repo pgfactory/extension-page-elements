@@ -1156,7 +1156,7 @@ const pfyFormsHelper = {
         }
       }
     }
-    const img = hostUrl + 'media/plugins/pgfactory/pagefactory-pageelements/icons/sleeping.png';
+    const img = hostAssetUrl + 'media/plugins/pgfactory/pagefactory-pageelements/icons/sleeping.png';
     const overlay = '<div class="pfy-overlay-background pfy-v-h-centered"><div><img src="' + img + '" alt="Sleeping..." class="pfy-timeout-img" /></div></div>';
 
     if (this.windowTimeout) {
