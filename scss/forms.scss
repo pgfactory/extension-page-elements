@@ -604,6 +604,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       .pfy-form-buttons input {
         margin: 0.5em 0;
       }
+
+      .pfy-address-elem .pfy-form-field-description {
+        display: none;
+      }
     }
   } // pfy-small-screen
 
