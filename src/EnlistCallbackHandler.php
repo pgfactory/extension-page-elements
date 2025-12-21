@@ -89,8 +89,7 @@ class EnlistCallbackHandler
         } else {
             $newDataRec['_time'] = date('Y-m-d\TH:i');
         }
-
-        $this->db->fillSlot($widgetKey, $slotInx, $newDataRec, $context);
+        $this->db->fillSlot($widgetKey, (int)$slotInx, $newDataRec, $context);
 
         $directlyToReserve = $newDataRec['directlyToReserve']? ' (to reserve)': '';
         $this->handleNotifyOwner($newDataRec, 'add', $widgetKey);
