@@ -563,6 +563,9 @@ EOT;
 
 
     /**
+     * To activate, add option 'iframeAutoSizingChild'/'iframeAutoSizingParent' to config.php
+     * or define equally named variables in z.txt meta files of pages.
+     * Arguments is ID of iframe element (true = 'pfy-iframe').
      * @return void
      * @throws \Kirby\Exception\Exception
      */
@@ -570,7 +573,7 @@ EOT;
     {
         $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingChild') ?: page()->iframeAutoSizingChild()->value();
         if ($iFrameId) {
-            $iFrameId = ($iFrameId === true) ? 'pfyIframe' : ltrim($iFrameId, '#');
+            $iFrameId = ($iFrameId === true) ? 'pfy-iframe' : ltrim($iFrameId, '#');
             Page::addJsReady("console.log('activating iframeAutoSizing as iframe child for id \"$iFrameId\"');");
             Assets::addAssets('IFRAME_RESIZER_CHILD');
             Page::addJsReady("window.iframeResizer = {license: 'GPLv3'};");
@@ -580,7 +583,7 @@ EOT;
         $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingParent') ?: page()->iframeAutoSizingParent()->value();
         if ($iFrameId) {
             Assets::addAssets('IFRAME_RESIZER_PARENT');
-            $iFrameId = ($iFrameId === true) ? 'pfyIframe' : ltrim($iFrameId, '#');
+            $iFrameId = ($iFrameId === true) ? 'pfy-iframe' : ltrim($iFrameId, '#');
             Page::addJsReady("console.log('activating iframeAutoSizing as iframe parent for id \"$iFrameId\"');\n".
                 "iframeResize({ licence: 'GPLv3', log: true }, '#$iFrameId');");
         }
