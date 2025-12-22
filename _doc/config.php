@@ -18,5 +18,7 @@
 //        'presentationAutoSizing'      => true,
 //        'autoSlideNumbering'          => true, // false, true or 'toc' (= first slide per page is TOC)
 //        'presentationDefaultSize'     => '1.8vw',
+//        'iframeAutoSizingChild'       => true, // activates iframe-resizer for iframe src (=child)
+//        'iframeAutoSizingParent'      => true, // activates iframe-resizer for iframe parent
     ],
 

@@ -11,6 +11,8 @@
 //        'activatePresentationSupport' => true,
 //        'presentationAutoSizing'      => true,
 //        'presentationDefaultSize'     => '1.8vw',
+//        'iframeAutoSizingChild'       => true, // activates iframe-resizer for iframe src (=child)
+//        'iframeAutoSizingParent'      => true, // activates iframe-resizer for iframe parent
     ],
 
 
