@@ -574,7 +574,7 @@ EOT;
             Page::addJsReady("console.log('activating iframeAutoSizing as iframe child for id \"$iFrameId\"');");
             Assets::addAssets('IFRAME_RESIZER_CHILD');
             Page::addJsReady("window.iframeResizer = {license: 'GPLv3'};");
-            Page::addCss("body {min-width: initial!important; min-height: initial!important;};");
+            Page::addCss("body {min-width: initial!important; min-height: initial!important;}");
         }
 
         $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingParent') ?: page()->iframeAutoSizingParent()->value();
