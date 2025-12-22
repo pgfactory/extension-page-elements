@@ -481,7 +481,7 @@ EOT;
             if (isset($colHeaders[DATAREC_RECKEY])) {
                 unset($colHeaders[DATAREC_RECKEY]);
             }
-            if (isset($colHeaders[DATAREC_TIMESTAMP])) {
+            if (isset($colHeaders[DATAREC_TIMESTAMP]) && !$this->includeTimestamp) {
                 unset($colHeaders[DATAREC_TIMESTAMP]);
             }
         }
