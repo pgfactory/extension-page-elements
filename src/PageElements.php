@@ -14,6 +14,7 @@ use function \PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\isAdmin;
 use function PgFactory\PageFactory\isLocalhost;
+use function PgFactory\PageFactory\mylog;
 use function \PgFactory\PageFactory\rrmdir;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
@@ -105,6 +106,12 @@ const PE_PATH_DEFINITIONS = [
         PE_ASSETS_PATH.'css/-postit.css',
         PE_ASSETS_PATH.'js/-postit.js',
     ],
+    'IFRAME_RESIZER_CHILD' => [
+        PE_ASSETS_PATH.'js/iframe-resizer.child.js',
+    ],
+    'IFRAME_RESIZER_PARENT' => [
+        PE_ASSETS_PATH.'js/iframe-resizer.parent.js',
+    ],
 ];
 
 
@@ -135,6 +142,8 @@ class PageElements
 
         $this->handleUrlRequests();
         Assets::addAssets('PE');
+
+        $this->handleIframeOptions();
     } // __construct
 
 
@@ -551,5 +560,30 @@ EOT;
             Page::addBodyEndInjections($pfyIcons);
         }
     } // loadIcons()
+
+
+    /**
+     * @return void
+     * @throws \Kirby\Exception\Exception
+     */
+    private function handleIframeOptions(): void
+    {
+        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingChild') ?: page()->iframeAutoSizingChild()->value();
+        if ($iFrameId) {
+            $iFrameId = ($iFrameId === true) ? 'pfyIframe' : ltrim($iFrameId, '#');
+            Page::addJsReady("console.log('activating iframeAutoSizing as iframe child for id \"$iFrameId\"');");
+            Assets::addAssets('IFRAME_RESIZER_CHILD');
+            Page::addJsReady("window.iframeResizer = {license: 'GPLv3'};");
+            Page::addCss("body {min-width: initial!important; min-height: initial!important;};");
+        }
+
+        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingParent') ?: page()->iframeAutoSizingParent()->value();
+        if ($iFrameId) {
+            Assets::addAssets('IFRAME_RESIZER_PARENT');
+            $iFrameId = ($iFrameId === true) ? 'pfyIframe' : ltrim($iFrameId, '#');
+            Page::addJsReady("console.log('activating iframeAutoSizing as iframe parent for id \"$iFrameId\"');\n".
+                "iframeResize({ licence: 'GPLv3', log: true }, '#$iFrameId');");
+        }
+    } // handleIframeOptions
 
 } // PageElements
