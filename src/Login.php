@@ -33,6 +33,8 @@ class Login
         if ($options['as-popup']??false) {
             $options['nextPage'] = $currPageUrl;
             self::$selfLink = "$currPageUrl?login";
+        } elseif (!($options['nextPage']??false)) {
+            $options['nextPage'] = $currPageUrl;
         }
 
         // check url for arg 'next':
@@ -47,8 +49,8 @@ class Login
 
         $nextPage = ($options['nextPage']??false) ?: ($options['next']??false);
         if ($nextPage) {
-            if (str_starts_with($nextPage, $currPageUrl)) {
-                $nextPage = PFY_PAGE_URL . substr($nextPage, 2);
+            if (str_starts_with($nextPage, '~/')) {
+                $nextPage = PFY_APP_BASE_URL . substr($nextPage, 2);
             }
             self::$nextPage = $nextPage;
         }

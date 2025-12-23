@@ -429,7 +429,7 @@ EOT;
         // handle ?login:
         //   => request later handled by Login::loginCallback()
         if (isset($_GET['login'])) {
-            Login::init(['as-popup' => true]);
+            Login::init();
             $html = Login::render();
             if ($html) {
                 Page::overrideContent($html);
