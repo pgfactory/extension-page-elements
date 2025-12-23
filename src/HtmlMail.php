@@ -90,6 +90,10 @@ EOT;
     } // compileForMail
 
 
+    /**
+     * @param string $plaintext
+     * @return string
+     */
     public static function cleanupPlaintext(string $plaintext): string
     {
         $plaintext = unshieldStr($plaintext);
@@ -115,6 +119,10 @@ EOT;
     } // cleanupPlaintext
 
 
+    /**
+     * @param string $html
+     * @return string
+     */
     private static function handleImagesForPreview(string $html): string
     {
         if (str_contains($html, 'cid:')) {
@@ -132,6 +140,10 @@ EOT;
     } // handleImagesForPreview
 
 
+    /**
+     * @param string $html
+     * @return array
+     */
     private static function handleImagesForMail(string $html): array
     {
         $images = [];
@@ -151,6 +163,11 @@ EOT;
     } // handleImagesForMail
 
 
+    /**
+     * @param string $html
+     * @param string $lang
+     * @return string
+     */
     private static function wrapForMail(string $html, string $lang): string
     {
         $html = <<<EOT
@@ -227,7 +244,11 @@ EOT;
         return $innerHTML;
     } // applyInlineStyles
 
-    
+
+    /**
+     * @param $html
+     * @return array|string|string[]
+     */
     public static function fixMdpLayoutTables($html) {
         if (!$html) {
             return '';
@@ -283,6 +304,10 @@ EOT;
     } // fixMdpLayoutTables
 
 
+    /**
+     * @param string $markdown
+     * @return string
+     */
     private static function handleLinks(string $markdown): string
     {
         if (preg_match_all('/\{\{ \s* link\( (.*?) \)/x', $markdown, $matches)) {
