@@ -1,34 +1,38 @@
 <?php
+/*
+ * Template for Passwordless Login Code E-Mail
+ * See https://getkirby.com/docs/guide/authentication/login-methods
+ */
 
 use PgFactory\MarkdownPlus\Permission;
-use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\TransVars;
 
 $text = TransVars::getVariable('pfy-login-code-mail-body');
-$webmasterEmail = file_get_contents(PFY_WEBMASTER_EMAIL_CACHE);
+$webmasterEmail = PageFactory::$webmasterEmail;
+$code = str_replace(' ', '', $code);
 
 $text = str_replace(
-  [
-    '%user%',
-    '%timeout%',
-    '%code%',
-    '%url%',
-    '%webmaster%',
-  ],
-  [
-    $user->nameOrEmail(),
-    $timeout,
-    $code,
-    PFY_APP_BASE_URL,
-    $webmasterEmail,
-  ],
-  $text);
+    [
+        '%user%',
+        '%timeout%',
+        '%code%',
+        '%url%',
+        '%webmaster%',
+    ],
+    [
+        $user->nameOrEmail(),
+        $timeout,
+        $code,
+        PFY_APP_BASE_URL,
+        $webmasterEmail,
+    ],
+    $text);
 
 if (Permission::isLocalhost()) {
-  $code2 = str_replace(' ', '', $code);
-  $popup = "<pre>$text</pre>";
-  Page::setPopup($popup, 'Login Code E-Mail');
+    $popup = "<pre>$text</pre>";
+    Page::setPopup($popup, 'Login Code E-Mail');
 }
 
 echo $text;
