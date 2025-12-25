@@ -230,7 +230,12 @@ EOT;
             // 'pfyLoginCode' received -> validate:
             try {
                 kirby()->auth()->verifyChallenge($code);
-                $email = self::getUsersEmail($data);
+                $user = Permission::getLoggedInUser();
+                $email = $user->nameOrEmail()->value();
+                if (!$email) {
+                    mylog("Login Code '$code' failed", PFY_LOGIN_LOG_FILE);
+                    reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
+                }
                 $str = self::renderMsg('pfy-login-success', $email);
                 mylog("Login Code '$code' successfully verified", PFY_LOGIN_LOG_FILE);
                 reloadAgent(self::$nextPage, $str);
