@@ -4,6 +4,11 @@
 
     .pfy-login-wrapper {
       width: 100%;
+      .pfy-input-wrapper input.pfy-form-button {
+        font-size: 80%;
+        min-width: 8.5em !important;
+        padding: 0.3em 0.5em !important;
+      }
       .pfy-form-tooltip {
         width: 12em;
       }
@@ -28,15 +33,15 @@
       }
     }
 
-      &.pfy-login-code {
+    &.pfy-login-code {
         .pfy-login-otc,
         .pfy-login-unpw,
         .pfy-login-otc-unpw,
         .pfy-login-both,
         .pfy-elem-wrapper.pfy-email,
         .pfy-elem-wrapper.pfy-password {
-        display: none;
-      }
+          display: none;
+        }
     }
 
     --pfy-form-label-width: 8em;

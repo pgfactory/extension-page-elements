@@ -319,6 +319,10 @@ pfy-login-username-info:
 pfy-login-button:
   _:  Login
 
+pfy-form-subm_unpw-button-title: ''
+pfy-form-subm_code-button-title: ''
+pfy-form-subm_otc-button-title: ''
+
 pfy-login-pwless-button:
   de: Code bestellen
   _:  Request Code

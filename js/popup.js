@@ -14,6 +14,7 @@
 
 "use strict";
 
+console.log('pfyPopup.js');
 /*
 class XY {
 

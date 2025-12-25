@@ -276,11 +276,10 @@ EOT;
      * @param string $str
      * @return string
      */
-    private static function renderMsg(string $str, $username = ''): string
+    private static function renderMsg(string $str): string
     {
-        if (!$username) {
-            $username = PageFactory::$userName;
-        }
+        $user = Permission::getLoggedInUser();
+        $username = $user->nameOrEmail()->value();
         $str = TransVars::getVariable($str);
         return str_replace('{{ username }}', $username, $str);
     } // renderMsg
