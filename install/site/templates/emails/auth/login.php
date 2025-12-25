@@ -8,6 +8,7 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\TransVars;
+use function \PgFactory\PageFactory\mylog;
 
 $text = TransVars::getVariable('pfy-login-code-mail-body');
 $webmasterEmail = PageFactory::$webmasterEmail;
@@ -35,4 +36,7 @@ if (Permission::isLocalhost()) {
     Page::setPopup($popup, 'Login Code E-Mail');
 }
 
+if (PageFactory::$dev) {
+    mylog("Login email prepared with code '$code'.", 'login-log.txt');
+}
 echo $text;
