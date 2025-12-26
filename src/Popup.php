@@ -7,7 +7,7 @@ use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\compileMarkdown;
 
-class Popup extends PageElements
+class Popup
 {
     public static $inx = 1;
 
@@ -32,7 +32,7 @@ class Popup extends PageElements
             $html = "\t\t<div class='pfy-popup-src pfy-popup-src-$inx'><div class='pfy-popup'>$msg</div></div>\n";
             $jq = "pfyPopup({contentFrom: '.pfy-popup-src-$inx .pfy-popup', header:'$header', draggable: true})";
             Page::addJsReady($jq);
-            $this->addAssets('POPUPS');
+            Page::addAssets('POPUPS');
         }
         return $html;
     } // render

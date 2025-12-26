@@ -12,6 +12,7 @@
 //        ],
 //        'templateCompilerDefaultMode' => 'twig', // default mode for TemplateCompiler, e.g. used by macro form()
 //        'allowChangePassword'         => true,
+//        'enableOnboardingAid'         => true, // enables the '?onboardingaid' feature
 //        'initCode'                    => 'init.php', // run init code in site/custom/code/
 //        'login-mode'                  => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
 //        'activatePresentationSupport' => true,

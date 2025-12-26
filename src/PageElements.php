@@ -451,7 +451,7 @@ EOT;
     {
         $str = '';
         $url = PFY_PAGE_URL;
-        if (Permission::isLoggedIn()) {
+        if (Permission::isLoggedIn() && kirby()->option('pgfactory.pagefactory-elements.enableOnboardingAid')) {
             $str = <<<EOT
 <a href="$url?onboardingaid" class="pfy-onboardingaid-button pfy-onboardingaid" title="{{ pfy-onboardingaid-title }}">
 {{ pfy-onboardingaid-icon }}
@@ -460,7 +460,7 @@ EOT;
 EOT;
         }
         TransVars::setVariable('pfy-onboardingaid', $str);
-    } // onboardingaid
+    } // initOnboardingAid
 
 
     /**
@@ -469,9 +469,15 @@ EOT;
      */
     private function renderOnboardingAid(): void
     {
-        if ($user = Permission::getLoggedInUser()) {
-            if ($this->getAccessLink($user)) {
-                $str = <<<EOT
+        if (!kirby()->option('pgfactory.pagefactory-elements.enableOnboardingAid')) {
+            return; // not enabled in config.php
+        }
+        if (!($user = Permission::getLoggedInUser())) {
+            return; // no logged in user
+        }
+
+        if ($link = $this->getAccessLink($user)) {
+            $str = <<<EOT
 
 <section class="pfy-section-wrapper">
 <div class="pfy-onboardingaid">
@@ -480,8 +486,8 @@ EOT;
 </section>
 
 EOT;
-            } else {
-                $str = <<<EOT
+        } else {
+            $str = <<<EOT
 
 <section class="pfy-section-wrapper">
 <div class="pfy-onboardingaid">
@@ -491,10 +497,16 @@ EOT;
 
 EOT;
 
-            }
-            $html = TransVars::compile($str);
-            Page::overrideContent($html);
         }
+        $html = TransVars::compile($str);
+        $html = str_replace('pfy-user-accesslink', $link, $html);
+        $js = <<<EOT
+history.pushState({}, null, '$link');
+
+EOT;
+
+        Page::addJsReady($js);
+        Page::setPopup($html, "", mdCompile: false);
     } // renderOnboardingAid
 
 
@@ -502,7 +514,7 @@ EOT;
      * @param $user
      * @return bool
      */
-    private function getAccessLink($user): bool
+    private function getAccessLink($user): string|bool
     {
         $link = '';
         if ($content = $user->content()) {
@@ -514,8 +526,7 @@ EOT;
                 $link = PFY_PAGE_URL."?a=$accessCode";
             }
         }
-        TransVars::setVariable('pfy-user-accesslink', $link);
-        return true;
+        return $link;
     } // getAccessLink
 
 
