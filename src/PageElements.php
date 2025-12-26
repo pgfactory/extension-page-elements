@@ -507,6 +507,7 @@ EOT;
 
         Page::addJsReady($js);
         Page::setPopup($html, "", mdCompile: false);
+        Page::addCss(".pfy-default-styling .pfy-popup-wrapper { width: 90vw; }");
     } // renderOnboardingAid
 
 
