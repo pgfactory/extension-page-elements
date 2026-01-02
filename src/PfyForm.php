@@ -2730,6 +2730,12 @@ EOT;
         if (!$this->formOptions['mailTo']) {
             return;
         }
+
+        // handle option ownerNotificationIf -> omit notif mail if mentioned field is empty:
+        if (($this->formOptions['ownerNotificationIf']??false) && !($dataRec["Bemerkung"]??false)) {
+            return;
+        }
+        
         $out = '';
         $mdStr = '';
         $labelLen = 0;

@@ -60,6 +60,8 @@ return function ($args = '')
                 '``&#123;&#123; pfy-confirmation-response-message }}`` are used to compose message. '.
                 'Use placeholders like ``%key%`` to render corresponding form fields.', null],
 
+            'ownerNotificationIf' =>	['(field-name) If set, notification mail is sent ONLY if given field '.
+                'is NOT empty. E.g. "ownerNotificationIf: Comment".', null],
             'confirmationEmail' =>	['Synonym for "confirmationEmailTo".', null],
 
             //'confirmationEmailTemplate' =>	['(string) Name of a special TransVar that contains elements "subject" and "message". '.
