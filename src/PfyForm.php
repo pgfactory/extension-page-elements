@@ -2735,7 +2735,7 @@ EOT;
         if (($this->formOptions['ownerNotificationIf']??false) && !($dataRec["Bemerkung"]??false)) {
             return;
         }
-        
+
         $out = '';
         $mdStr = '';
         $labelLen = 0;

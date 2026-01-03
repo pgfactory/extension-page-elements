@@ -204,6 +204,7 @@
   }
 
 
+  // === Enlist Form ====================================
   #pfy-enlist-form {
     display: none;
     background: yellow; // should never be visible
@@ -338,3 +339,12 @@
   }
 
 } // .pfy-default-styling
+
+#pfy.pfy-default-styling .pfy-popup-container .pfy-form {
+  input.pfy-form-button {
+    width: 9em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+}
+

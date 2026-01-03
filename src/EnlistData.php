@@ -211,6 +211,9 @@ class EnlistData
     {
         $widgetDescr = $this->db->getRecData($widgetKey);
         if ($widgetDescr) {
+            if (!isset($widgetDescr['slots'])) {
+                $widgetDescr['slots'] = [];
+            }
             $this->enlistWidgets[$widgetKey] = $widgetDescr;
         } else {
             $widgetDescr = $widgetOptions + WIDGET_DATA_TEMPLATE;
