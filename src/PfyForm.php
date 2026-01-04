@@ -1281,14 +1281,14 @@ class PfyForm extends Form
             }
 
         } else {
-            if ($rec['value'] ?? false) {
+            if (isset($rec['value'])) {
                 $val = $rec['value'];
                 if (str_contains($val, '_')) {
                     $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
                 }
                 $dataAttrib = " data-value='$val'";
             }
-            if ($rec['preset'] ?? false) {
+            if (isset($rec['preset'])) {
                 $val = $rec['preset'];
                 if (str_contains($val, '_')) {
                     $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
