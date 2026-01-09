@@ -467,7 +467,12 @@ class AjaxHandler
                 $rec->update('start', $_GET['start'], false);
             }
             if (isset($_GET['end'])) {
-                $rec->update('end', $_GET['end'], false);
+                $end = $_GET['end'];
+                if (strlen($end) < 16) {
+                    // case allday event -> need to fix end date::
+                    $end = date('Y-m-d', strtotime($end) - 1);
+                }
+                $rec->update('end', $end, false);
             }
             $rec->flush();
         }

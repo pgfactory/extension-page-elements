@@ -119,7 +119,7 @@ $this->fullCalendarOptions
     },
 EOT;
 
-        $jq = <<<EOT
+        $js = <<<EOT
 const calElem = document.querySelector('#pfy-calendar-$this->inx');
 if (calElem) {
     let pfyCalendar = new PfyCalendar();
@@ -128,7 +128,7 @@ $calOptions
     });
 }
 EOT;
-        Page::addJsReady( $jq );
+        Page::addJsReady( $js );
 
         $catSelectors = $this->renderCatSelectors();
 
@@ -257,7 +257,7 @@ EOT;
         }
 
         // add category selector with options from calendar, if not explicitly defined:
-        if (!isset($formFields['category']['options'])) {
+        if (!isset($formFields['category']['options']) && ($this->options['categories']??false)) {
             if (!isset($formFields['category'])) {
                 $formFields = ['category' => ['type' => 'select', 'label' => '{{ pfy-cal-category-label }}']]+ $formFields;
             }
