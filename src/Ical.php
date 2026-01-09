@@ -154,6 +154,14 @@ class Ical
      */
     private function popupateICalElements(array $rec): array
     {
+        if ($rec['allday']??false) {
+            $rec['start'] = substr($rec['start'], 0, 10);
+                if (isset($rec['end'])) {
+                        $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['end'])));
+                } else {
+                    $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['start'])));
+                }
+        }
         $icalElements = [
             'start'         => $rec['start']??'',
             'end'           => $rec['end']??'',
@@ -162,7 +170,7 @@ class Ical
             'description'   => $this->compileICalElement('description', $rec),
             'organizer'     => $this->compileICalElement('organizer', $rec),
             'status'        => $this->compileICalElement('status', $rec),
-            'fullDay'       => $this->compileICalElement('fullDay', $rec),
+            'fullDay'       => $this->compileICalElement('allday', $rec),
         ];
         $uniqueIdentifier = $rec['_reckey']??'';
         if ($uniqueIdentifier) {
@@ -177,10 +185,14 @@ class Ical
      * @param array $rec
      * @return string
      */
-    private function compileICalElement(string $fieldName, array $rec): string
+    private function compileICalElement(string $fieldName, array $rec): string|bool
     {
         if (isset($rec[$fieldName])) {
-            return $rec[$fieldName];
+            if ($fieldName === 'allday') {
+                return ($rec[$fieldName] !== 'false');
+            } else {
+                return $rec[$fieldName];
+            }
         }
         $fieldValue = $this->options[$fieldName]??'';
         if (!$fieldValue) {
