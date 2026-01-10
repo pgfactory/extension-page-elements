@@ -41,6 +41,9 @@ return function ($args = '')
             'fullCalendarOptions' => ['[string] Will be passed through to the FullCalendar object (see https://fullcalendar.io/docs#toc)', ''],
             'keepDataDuration' => ['[month] Defines the time after which older events are discarded and '.
                 'moved to an archive file.', 12],
+            'iCal' => ['[array] Specifies options for ical creation.<br>In particular defines how to populate ical elements '.
+                '(title, location, description, organizer, status, fullDay, uniqueIdentifier).<br>'.
+                'E.g. iCal: { title: "[XY] \%category\%" }', null],
             'form' => ['Definition of form fields.', null],
             'useDblClick' => ['[bool] Whether to open calendar popups on single or double clicks.', true],
  //            'publish' => ['[true|filepath] If given, the calendar will be exported to designated file. The file will be place in ics/ if not specified explicitly.', false],

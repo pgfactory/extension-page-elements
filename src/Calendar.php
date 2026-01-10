@@ -9,11 +9,13 @@
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\PfyForm;
+use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\isAdmin;
 use function \PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\mylog;
@@ -146,6 +148,8 @@ EOT;
         // save sessCalRec in session for use in AjaxHandler:
         kirby()->session()->set($this->sessCalRecKey, $this->sessCalRec);
         kirby()->session()->set($this->sessDbFileKey, Utils::resolvePath($this->source));
+
+        $this->handleICal();
 
         return $html;
     } // render
@@ -394,6 +398,69 @@ EOT;
         return $fields;
     } // fixCategories
 
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function handleICal(): void
+    {
+        if (($this->options['iCal']??null) !== null) {
+            $db = new DataSet($this->source);
+            $events = $db->data();
+            if ($this->options['iCal']['saveAllToFile']??false) {
+                $icalLink = $this->getICalLink($events);
+                TransVars::setVariable('icalLink', $icalLink);
+            }
+            $this->injectICalLinks($events);
+        }
+    } // handleICal
+
+
+    /**
+     * @param array $events
+     * @return void
+     */
+    private function injectICalLinks(array &$events): void
+    {
+        foreach ($events as $i => $event) {
+            $link = $this->getICalLink([$event]);
+            $events[$i]['icalLink'] = $link;
+        }
+    } // injectICalLinks
+
+
+    /**
+     * @param array $events
+     * @return string
+     * @throws \Exception
+     */
+    private function getICalLink(array $events): string
+    {
+        $iCalOptions = $this->options['iCal'];
+        $iCalOptions += [
+            'tooltip' => '{{ pfy-ical-link-tooltip }}',
+            'linkText' => '{{ pfy-ical-link-text }}',
+        ];
+        $ical = new Ical($events, $iCalOptions);
+        $tTargetFile = $ical->getTargetFileTime();
+
+        $dataFile = Utils::resolvePath($this->options['file']);
+        $tDataFile = fileTime($dataFile);
+        if ($tDataFile > $tTargetFile) {
+            $ical->saveToFile();
+        }
+
+        if ($iCalOptions['saveAllToFile']??false) {
+            $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
+            $url = Utils::normalizePath($url);
+        } else {
+            $url = $ical->renderIcsLink();
+
+        }
+        return $url;
+    } // getICalLink
+    
 
     /**
      * @param array $args
