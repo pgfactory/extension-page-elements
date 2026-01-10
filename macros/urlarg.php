@@ -12,7 +12,8 @@ return function ($args = '')
     $config =  [
         'options' => [
             'name' => ['Name of the url-argument as in "?myarg=xy"', false],
-            'default' => ['Name of the url-argument as in "?myarg=xy"', null],
+            'default' => ['Default value in case no url-arg is available.', null],
+            'offset' => ['In case of numerical url-args, given offset is added to the value.', null],
         ],
         'summary' => <<<EOT
 
@@ -45,13 +46,16 @@ EOT,
                 $value = $default;
             }
             TransVars::setVariable($urlArgName, $value);
-            $str .= $value;
 
         } else {
             TransVars::setVariable($urlArgName, $default);
-            $str .= $default;
+            $value = $default;
         }
     }
+    if ($options['offset'] && is_numeric($value)) {
+        $value += $options['offset'];
+    }
+    $str .= $value;
 
     return $str;
 };
