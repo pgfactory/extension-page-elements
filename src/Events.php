@@ -489,9 +489,6 @@ class Events extends DataSet
      * @param int|false $count
      * @return array|false
      * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     public function getNextEvents(string|false $category = false, int $offset = 0, int|false $count = false): array|false
     {
@@ -524,7 +521,7 @@ class Events extends DataSet
         }
 
         if ($count === false) {
-            $count = 1;
+            $count = ($this->options['count']??false) ?: 1;
         }
 
         $nextEvents = array_splice($sortedData, $nextEventInx, $count);
