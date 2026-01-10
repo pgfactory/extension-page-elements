@@ -400,7 +400,7 @@ class Events extends DataSet
         foreach ($sortedData as $i => $rec) {
             $start = $rec['start'] ?? '';
             $startT = strtotime($start);
-            if ($startT > $targetDateT) {
+            if ($startT >= $targetDateT) {
                 $found = $i;
                 break;
             }
