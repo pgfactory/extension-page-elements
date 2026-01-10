@@ -442,6 +442,24 @@ EOT;
             'tooltip' => '{{ pfy-ical-link-tooltip }}',
             'linkText' => '{{ pfy-ical-link-text }}',
         ];
+        $link = $this->saveEventsToICal($events, $iCalOptions);
+
+        if ($iCalOptions['saveAllToFile']??false) {
+            $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
+            return Utils::normalizePath($url);
+        }
+        return $link;
+    } // getICalLink
+
+
+    /**
+     * @param array $events
+     * @param array $iCalOptions
+     * @return string
+     * @throws \Exception
+     */
+    private function saveEventsToICal(array $events, array $iCalOptions): string
+    {
         $ical = new Ical($events, $iCalOptions);
         $tTargetFile = $ical->getTargetFileTime();
 
@@ -450,17 +468,9 @@ EOT;
         if ($tDataFile > $tTargetFile) {
             $ical->saveToFile();
         }
+        return $ical->renderIcsLink();
+    } // saveEventsToICal
 
-        if ($iCalOptions['saveAllToFile']??false) {
-            $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
-            $url = Utils::normalizePath($url);
-        } else {
-            $url = $ical->renderIcsLink();
-
-        }
-        return $url;
-    } // getICalLink
-    
 
     /**
      * @param array $args
