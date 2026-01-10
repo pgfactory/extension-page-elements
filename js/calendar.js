@@ -35,6 +35,7 @@ function PfyCalendar() {
   this.clicks = 0;
   this.calEvs = {};
   this.fullCalendarOptions = null;
+  this.useDblClick = false;
 
   // Control array: list-view <tr> rows with any of these classes will be removed
   this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
@@ -63,6 +64,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   this.editPermission = this.options.edit || this.options.admin;
   this.freezePast = options.freezePast;
   this.fullCalendarOptions = options.fullCalendarOptions;
+  this.useDblClick = (typeof this.options.useDblClick !== 'undefined') && this.options.useDblClick;
 
   // Setting default values for 'calDayStart' property
   if (typeof options.fullCalendarOptions.slotMinTime !== 'undefined') {
@@ -138,7 +140,6 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
         },
         viewDidMount: function (calEv) {
             parent.onViewReady( calEv );
-          parent.onCalendarReady();
         },
         dateClick: function (dateObj) {
             parent.openNewEventPopup(dateObj);
@@ -156,8 +157,10 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
             parent.handleWindowWidth();
          },
          datesSet(events) {
-          // events are loaded + placed into the view
-          parent.onCalendarReady(events);
+            // events are loaded but not placed into the view
+            setTimeout(() => {
+              parent.onCalendarReady(events);
+            }, 300);
          },
   };
 
@@ -247,7 +250,7 @@ PfyCalendar.prototype.onCalendarReady = function() {
         if (descr.innerHTML.trim()) {
           tippy(calEventEl, {
             content: descr.innerHTML,
-            trigger: 'click',
+            trigger: parent.useDblClick ? 'click' : 'mouseenter focus',
             allowHTML: true,
             theme: 'light',
             delay: [0, 200],
@@ -647,84 +650,90 @@ PfyCalendar.prototype.setupSwipe = function() {
 
 PfyCalendar.prototype.setupContextMenu = function() {
   const parent = this;
-  setTimeout(() => {
-    domForEach('.fc-event', (calEventEl) => {
-      calEventEl.addEventListener('contextmenu', (ev) => {
-        ev.preventDefault();
-
-        const parentEl = calEventEl.parentElement.parentElement;
-        let tippyInstance = parent.tippyInstance = tippy(calEventEl, {
-          content: pfyCalContextMenu,
-          placement: 'right-end',
-          trigger: 'manual',
-          interactive: true,
-          arrow: false,
-          allowHTML: true,
-          hideOnClick: true,
-          theme: 'light', //???
-          offset: [0, 10],
-          onShown(tippyInstance) {
-            setTimeout(() => {
-              const id = '#' + tippyInstance.popper.id;
-
-              // delete
-              domForOne(id+' .pfy-cal-delete', (el) => {
-                el.addEventListener('click', (ev) => {
-                  ev.stopPropagation();
-                  ev.stopImmediatePropagation();
-                  ev.preventDefault();
-                  domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
-                    const recKey = el.dataset.reckey;
-                    execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
-                      .then(function (data) {
-                        parent.fullCal.refetchEvents();
-                      });
-                  });
-                });
-              });
-
-              // duplicate
-              domForOne(id + ' .pfy-cal-duplicate', (el) => {
-                el.addEventListener('click', (ev) => {
-                  console.log(ev.target);
-                  console.log('duplicate');
-                  ev.stopPropagation();
-                  ev.stopImmediatePropagation();
-                  ev.preventDefault();
-                  domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
-                    const recKey = el.dataset.reckey;
-                    execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
-                      .then(function (data) {
-                        parent.fullCal.refetchEvents();
-                      });
-                  });
-                });
-              });
-
-              // edit
-              domForOne(id + ' .pfy-cal-edit', (el) => {
-                el.addEventListener('click', (ev) => {
-                  console.log(ev.target);
-                  console.log('edit');
-                  parent.closeContextMenu();
-                  let calObj = null; //???
-                  domForOne(calEventEl, '[data-event-id]', (el) => {
-                    console.log(el);
-                    console.log(calEventEl);
-                    const defId = el.dataset.eventId;
-                    calEv = parent.calEvs[defId];
-                    parent._openExistingEventPopup(parent, calEv, calEventEl);
-                  })
-                })
-              })
-            }, 200);
-          },
-        });
-        tippyInstance.show();
-      });
-    });
-  }, 500);
+  document.addEventListener('contextmenu', (ev) => {
+    if (!ev.target.closest('.fc-event')) {
+      return;
+    }
+    parent.handleContextMenu(ev);
+  })
 } // setupContextMenu
+
+
+PfyCalendar.prototype.handleContextMenu = function(ev) {
+  const parent = this;
+  ev.preventDefault();
+  const calEventEl = ev.target.closest('.fc-event');
+
+  const parentEl = calEventEl.parentElement.parentElement;
+  let tippyInstance = parent.tippyInstance = tippy(calEventEl, {
+    content: pfyCalContextMenu,
+    placement: 'right-end',
+    trigger: 'manual',
+    interactive: true,
+    arrow: false,
+    allowHTML: true,
+    hideOnClick: true,
+    theme: 'light', //???
+    offset: [0, 10],
+    onShown(tippyInstance) {
+      setTimeout(() => {
+        const id = '#' + tippyInstance.popper.id;
+
+        // delete
+        domForOne(id+' .pfy-cal-delete', (el) => {
+          el.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            ev.stopImmediatePropagation();
+            ev.preventDefault();
+            domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+              const recKey = el.dataset.reckey;
+              execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
+                .then(function (data) {
+                  parent.fullCal.refetchEvents();
+                });
+            });
+          });
+        });
+
+        // duplicate
+        domForOne(id + ' .pfy-cal-duplicate', (el) => {
+          el.addEventListener('click', (ev) => {
+            console.log(ev.target);
+            console.log('duplicate');
+            ev.stopPropagation();
+            ev.stopImmediatePropagation();
+            ev.preventDefault();
+            domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+              const recKey = el.dataset.reckey;
+              execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
+                .then(function (data) {
+                  parent.fullCal.refetchEvents();
+                });
+            });
+          });
+        });
+
+        // edit
+        domForOne(id + ' .pfy-cal-edit', (el) => {
+          el.addEventListener('click', (ev) => {
+            console.log(ev.target);
+            console.log('edit');
+            parent.closeContextMenu();
+            let calObj = null; //???
+            domForOne(calEventEl, '[data-event-id]', (el) => {
+              console.log(el);
+              console.log(calEventEl);
+              const defId = el.dataset.eventId;
+              calEv = parent.calEvs[defId];
+              parent._openExistingEventPopup(parent, calEv, calEventEl);
+            })
+          })
+        })
+      }, 200);
+    },
+  });
+  tippyInstance.show();
+} // handleContextMenu
 
 
 PfyCalendar.prototype.closeContextMenu = function() {
@@ -767,7 +776,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
   }
 
   const parent = this;
-  if ((typeof this.options.useDblClick !== 'undefined') && this.options.useDblClick) {
+  if (this.useDblClick) {
     this.clicks++;
     if (this.clicks === 1) {
       setTimeout(function () {

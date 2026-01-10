@@ -9,11 +9,13 @@
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\DataSet;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\PfyForm;
+use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\isAdmin;
 use function \PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\mylog;
@@ -119,7 +121,7 @@ $this->fullCalendarOptions
     },
 EOT;
 
-        $jq = <<<EOT
+        $js = <<<EOT
 const calElem = document.querySelector('#pfy-calendar-$this->inx');
 if (calElem) {
     let pfyCalendar = new PfyCalendar();
@@ -128,7 +130,7 @@ $calOptions
     });
 }
 EOT;
-        Page::addJsReady( $jq );
+        Page::addJsReady( $js );
 
         $catSelectors = $this->renderCatSelectors();
 
@@ -146,6 +148,8 @@ EOT;
         // save sessCalRec in session for use in AjaxHandler:
         kirby()->session()->set($this->sessCalRecKey, $this->sessCalRec);
         kirby()->session()->set($this->sessDbFileKey, Utils::resolvePath($this->source));
+
+        $this->handleICal();
 
         return $html;
     } // render
@@ -257,7 +261,7 @@ EOT;
         }
 
         // add category selector with options from calendar, if not explicitly defined:
-        if (!isset($formFields['category']['options'])) {
+        if (!isset($formFields['category']['options']) && ($this->options['categories']??false)) {
             if (!isset($formFields['category'])) {
                 $formFields = ['category' => ['type' => 'select', 'label' => '{{ pfy-cal-category-label }}']]+ $formFields;
             }
@@ -393,6 +397,79 @@ EOT;
         }
         return $fields;
     } // fixCategories
+
+
+    /**
+     * @return void
+     * @throws \Exception
+     */
+    private function handleICal(): void
+    {
+        if (($this->options['iCal']??null) !== null) {
+            $db = new DataSet($this->source);
+            $events = $db->data();
+            if ($this->options['iCal']['saveAllToFile']??false) {
+                $icalLink = $this->getICalLink($events);
+                TransVars::setVariable('icalLink', $icalLink);
+            }
+            $this->injectICalLinks($events);
+        }
+    } // handleICal
+
+
+    /**
+     * @param array $events
+     * @return void
+     */
+    private function injectICalLinks(array &$events): void
+    {
+        foreach ($events as $i => $event) {
+            $link = $this->getICalLink([$event]);
+            $events[$i]['icalLink'] = $link;
+        }
+    } // injectICalLinks
+
+
+    /**
+     * @param array $events
+     * @return string
+     * @throws \Exception
+     */
+    private function getICalLink(array $events): string
+    {
+        $iCalOptions = $this->options['iCal'];
+        $iCalOptions += [
+            'tooltip' => '{{ pfy-ical-link-tooltip }}',
+            'linkText' => '{{ pfy-ical-link-text }}',
+        ];
+        $link = $this->saveEventsToICal($events, $iCalOptions);
+
+        if ($iCalOptions['saveAllToFile']??false) {
+            $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
+            return Utils::normalizePath($url);
+        }
+        return $link;
+    } // getICalLink
+
+
+    /**
+     * @param array $events
+     * @param array $iCalOptions
+     * @return string
+     * @throws \Exception
+     */
+    private function saveEventsToICal(array $events, array $iCalOptions): string
+    {
+        $ical = new Ical($events, $iCalOptions);
+        $tTargetFile = $ical->getTargetFileTime();
+
+        $dataFile = Utils::resolvePath($this->options['file']);
+        $tDataFile = fileTime($dataFile);
+        if ($tDataFile > $tTargetFile) {
+            $ical->saveToFile();
+        }
+        return $ical->renderIcsLink();
+    } // saveEventsToICal
 
 
     /**
