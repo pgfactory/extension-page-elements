@@ -2,7 +2,22 @@
 // 'auth.challenge.email.from' => 'webmaster@domain.net',
 
     'pgfactory.pagefactory-elements' => [
-        'enableCoop' => true,            // automatically inject HTTP header 'Cross-Origin-Opener-Policy: same-origin'
+        'enableCoop'            => true,            // automatically inject HTTP header 'Cross-Origin-Opener-Policy: same-origin'
+        'allowChangePassword'   => true,
+        'login-mode'            => 'passwordless',
+        'enableOnboardingAid'   => true,
+        'formAutofillAssoc'     => [
+            'vorname'           => 'given-name',
+            'name'              => 'family-name',
+            'nachname'          => 'family-name',
+            'benutzername'      => 'username',
+            'e_mail'            => 'email',
+        ],
+    ],
+
+
+//    'pgfactory.pagefactory-elements' => [
+//        'enableCoop' => true,            // automatically inject HTTP header 'Cross-Origin-Opener-Policy: same-origin'
 //        'formAutofillAssoc' => [    // used in forms to apply 'autocomplete' attribute based on field names
 //          'vorname'       => 'given-name',
 //          'name'          => 'family-name',
@@ -21,5 +36,5 @@
 //        'presentationDefaultSize'     => '1.8vw',
 //        'iframeAutoSizingChild'       => true, // activates iframe-resizer for iframe src (=child)
 //        'iframeAutoSizingParent'      => true, // activates iframe-resizer for iframe parent
-    ],
+//    ],
 
