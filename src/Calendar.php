@@ -91,7 +91,7 @@ class Calendar
     {
         $formHtml = $this->renderForm();
 
-        $lang = PageFactory::$lang;
+        $lang = PageFactory::$langCode;
         $timezone = PageFactory::$timezone;
         $draggable = ($this->options['draggable']??false) ? 'true':'false';
         $useDblClick = ($this->options['useDblClick']??false) ? 'true':'false';
