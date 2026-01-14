@@ -536,8 +536,14 @@ EOT;
      */
     private static function handleCoop(): void
     {
-        if (option('pgfactory.pagefactory-elements.enableCoop')) {
-            header('Cross-Origin-Opener-Policy: same-origin');
+        $coop = option('pgfactory.pagefactory-elements.enableCoop');
+        if ($coop !== null) {
+            if ($coop === true) {
+                $coop = 'same-origin';
+            } elseif ($coop === false) {
+                $coop = 'unsafe-none';
+            }
+            header("Cross-Origin-Opener-Policy: $coop");
         }
     } // handleCoop
 
