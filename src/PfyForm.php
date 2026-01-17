@@ -704,6 +704,9 @@ class PfyForm extends Form
             $elemOptions['class'] .= (($layout = ($elemOptions['layout']??false)) && ($layout[0] !== 'h')) ? '' : ' pfy-horizontal';
 
         } else {
+            if (isset($elemOptions['preset'])) {
+                $elemOptions['preset'] = $elemOptions['preset'] ? 'checked' : 'false';
+            }
             $elemOptions['class'] .= ' pfy-single-checkbox';
             if (!str_contains($elemOptions['class'], 'reversed')) {
                 $label = rtrim($label, ':');
