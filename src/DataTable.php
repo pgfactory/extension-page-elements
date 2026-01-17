@@ -763,6 +763,8 @@ EOT;
             if ($entriesPerPageLabel) {
                 $entriesPerPageLabel = "lengthMenu: '$entriesPerPageLabel',";
             }
+        } else {
+            $paging = "pageLength: -1,";
         }
         $orderable = '';
         $scrollable = '';
