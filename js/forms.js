@@ -264,7 +264,7 @@ const pfyFormsHelper = {
       }
       const key = ev.key;
       const keyCode = ev.keyCode;
-      if (keyCode < 65 && !(key === 'Delete' || key === 'Backspace' || keyCode === 32)) {
+      if (keyCode <= 32 && !(key === 'Delete' || key === 'Backspace')) {
         return;
       }
     }
