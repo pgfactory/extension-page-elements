@@ -56,6 +56,10 @@ pfy-table-send-rec-title:
   de: 'Diesen Datensatz per E-Mail versenden'
   _:  'Send this data record by e-mail'
 
+pfy-table-duplicate-rec-title:
+  de: 'Diesen Datensatz bearbeiten und als neuen Datensatz abspeichern'
+  _:  'Edit this data record and save as a new record'
+
 
 pfy-table-download-title:
   de: 'Diese Tabelle herunter laden'
@@ -103,6 +107,8 @@ pfy-table-data-output-header:
 
 pfy-row-send-header: ':mail_send:'
 
+pfy-row-duplicate-header: ':duplicate:'
+
 pfy-row-edit-header: ':edit:'
 
 pfy-row-view-header: ':eye:'
@@ -110,6 +116,10 @@ pfy-row-view-header: ':eye:'
 pfy-table-edit-rec-popup-header:
   de: 'Datensatz bearbeiten'
   _:  'Edit Data Record'
+
+pfy-table-duplicate-rec-popup-header:
+  de: 'Datensatz duplizieren'
+  _:  'Duplicate Data Record'
 
 pfy-table-new-rec-popup-header:
   de: 'Neuer Datensatz'

@@ -41,6 +41,9 @@ const tableHelper = {
       if (el.closest('td .pfy-row-send-button')) {
         tableHelper.sendTableButtonHandler(ev);
       }
+      if (el.closest('td .pfy-row-duplicate-button')) {
+        tableHelper.duplicateTableButtonHandler(ev);
+      }
       if (el.closest('td .pfy-row-edit-button, .pfy-table-fill-first-row')) {
         tableHelper.editButtonsHandler(ev);
       }
@@ -402,6 +405,26 @@ const tableHelper = {
   }, // sendTableButtonHandler
 
 
+  duplicateTableButtonHandler(ev) {
+    const el = ev.target;
+    console.log('duplicateTableButtonHandler');
+    if (!el.closest('.pfy-form-and-table-wrapper')) {
+      alert(`Error: edit button in table not supported without related form.`);
+    }
+
+    if (!(el.closest('.pfy-row-duplicate-button'))) {
+      return;
+    }
+
+    if (el.closest('.pfy-rec-locked')) {
+      el.closest('.pfy-rec-locked').classList.remove('pfy-rec-locked');
+    }
+
+    ev.stopImmediatePropagation();
+    tableHelper.prepareForm(el, 'duplicate');
+  }, // duplicateTableButtonHandler
+
+
   doSendRec: function (args, recKey) {
     const input = document.getElementById('pfy-table-send-rec-input');
     if (input) {
@@ -522,7 +545,7 @@ const tableHelper = {
   }, // fillForm
 
 
-  prepareForm: function (el) {
+  prepareForm: function (el, duplicateMode = false) {
     const outerWrapperEl = el.closest('.pfy-form-and-table-wrapper');
     const tableWrapperEl = el.closest('.pfy-table-wrapper');
     const editbyPopupMode = !!el.closest('.pfy-table-edit-popup');
@@ -530,9 +553,10 @@ const tableHelper = {
     const recKeyEl = el.closest('[data-reckey]');
     const recKey = recKeyEl ? recKeyEl.dataset.reckey : '';
     const dataSrcInx = outerWrapperEl.querySelector('[data-src-inx]').dataset.srcInx;
+    const headerStr = duplicateMode ? `{{ pfy-table-duplicate-rec-popup-header }}` : `{{ pfy-table-edit-rec-popup-header }}`;
     if (editbyPopupMode) {
       const options = {
-        header: `{{ pfy-table-edit-rec-popup-header }}`,
+        header: headerStr,
         contentFrom: formWrapper,
         closeOnBgClick: false,
         onClose: function () {
@@ -541,7 +565,7 @@ const tableHelper = {
         onOpen: function () {
           domForOne('.pfy-popup-wrapper .pfy-form', formEl => {
             if (recKey) {
-              pfyFormsHelper.fetchDataAndFillForm(formEl, recKey, true);
+              pfyFormsHelper.fetchDataAndFillForm(formEl, recKey, true, duplicateMode);
             }
             pfyFormsHelper.presetForm(formEl);
             formEl.removeAttribute('id');
@@ -560,7 +584,7 @@ const tableHelper = {
         })
    } else {
       if (recKey) {
-        pfyFormsHelper.fetchDataAndFillForm(tableWrapperEl, recKey, true);
+        pfyFormsHelper.fetchDataAndFillForm(tableWrapperEl, recKey, true, duplicateMode);
       }
       tableHelper.enableEditButtons(tableWrapperEl);
     }

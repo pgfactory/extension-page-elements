@@ -575,6 +575,14 @@ EOT;
                 $hdr = $hdrCell;
                 $class = 'pfy-row-send';
 
+            } elseif (str_starts_with($elem, 'duplicate')) {
+                $icon = MdPlusHelper::renderIcon('duplicate');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-duplicate-button' type='button' title='{{ pfy-table-duplicate-rec-title }}'>$icon</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-duplicate-header');
+                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-duplicate-rec-title }}');
+                $hdr = $hdrCell;
+                $class = 'pfy-row-duplicate';
+
             } else {
                 // check whether element is defined as "Header:TableCell",
                 //   where TableCell may contain an ":icon:"

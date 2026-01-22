@@ -406,7 +406,7 @@ const pfyFormsHelper = {
   }, // setupSubmitHandler
 
 
-  fetchDataAndFillForm(el, recKey, retainData = false) {
+  fetchDataAndFillForm(el, recKey, retainData = false, createNewRec = false) {
     let formWrapper;
     if (el.closest('.pfy-form-wrapper')) {
       formWrapper = el.closest('.pfy-form-wrapper');
@@ -448,6 +448,9 @@ const pfyFormsHelper = {
 
         // popup is open, now prepare the form, inject obtained data:
         console.log(data);
+        if (createNewRec) {
+          recKey = ''; // omitting the recKey will create a new record
+        }
         pfyFormsHelper.presetForm(form, data, recKey)
         form.removeAttribute('data-loading');
 
