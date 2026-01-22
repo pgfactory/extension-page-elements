@@ -118,8 +118,8 @@ pfy-table-edit-rec-popup-header:
   _:  'Edit Data Record'
 
 pfy-table-duplicate-rec-popup-header:
-  de: 'Datensatz duplizieren'
-  _:  'Duplicate Data Record'
+  de: 'Neuer Datensatz'
+  _:  'New Data Record'
 
 pfy-table-new-rec-popup-header:
   de: 'Neuer Datensatz'
