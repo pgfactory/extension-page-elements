@@ -81,9 +81,12 @@ $focus-color: orange;
     padding: 0.3em 0.5em;
   }
   .pfy-row-edit-button,
+  .pfy-row-duplicate-button,
   .pfy-row-view-button,
   .pfy-row-send-button {
-    width: 2em;
+    width: 1.6em;
+    margin-left: 0.1em;
+    margin-right: 0.1em;
     padding: 0;
   }
   .pfy-row-view-button svg {
