@@ -154,7 +154,9 @@ class PageElements
     private function init()
     {
         // save config and data path for AjaxHandler:
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $_SESSION['pfy.dataPath'] = PageFactory::$dataPath;  // may depend on onair-state
         $_SESSION['pfy.configPath'] = PageFactory::$customConfigPath;
         session_write_close();
