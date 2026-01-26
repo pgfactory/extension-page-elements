@@ -210,6 +210,10 @@ pfy-form-maxcount-reached-warning:
       <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
     </div>
 
+pfy-form-available-seats-banner:
+  de: '(noch %available% freie Plätze)'
+  _:  '(%available% seats left)'
+
 pfy-form-no-event-found:
   de: Derzeit sind keine Veranstaltungsdaten bekannt.
   _:  Currently no event dates available.

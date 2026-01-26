@@ -92,6 +92,9 @@ return function ($args = '')
 
             'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
 
+            'lowSeatsWarning' => ['(integer) If lowSeatsWarning is set, variable "pfy-form-available-seats-banner" '.
+                'is shown, if number of available seats is less that given value.', false],
+
             'next' =>	['[URL] If set, defines the link target (href) of the "Continue..." response.', false],
 
             'formFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.

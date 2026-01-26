@@ -36,7 +36,9 @@ const PFY_NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
 const PFY_CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
+const PFY_LOW_SEATS_WARNING_THRESHOLD = 10;
 const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
+
 const PFY_FORM_OPTIONS = [
     'file' => false,
     'confirmationText' => false,
@@ -293,17 +295,20 @@ class PfyForm extends Form
         }
 
         // add 'continue...' if direct feedback is active:
-        if ($this->showFeedbackInpage && $formResponse) {
+        if ($this->showFeedbackInpage && $this->formResponse) {
             $next = $this->formOptions['next'];
             $class = 'pfy-form-continue';
             if ($next === '~page/') {
+                $next = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
                 $class .= ' pfy-form-continue-same';
             }
             $formResponse .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
         }
 
         if ($formResponse) {
-            $this->injectNoShowCssRule();
+            if ($this->formResponse) {
+                $this->injectNoShowCssRule();
+            }
             $formTopBanner = $this->injectScrollToFormJs();
             $formTopBanner .= $this->renderFormTopBanner();
 
@@ -934,6 +939,15 @@ class PfyForm extends Form
         ];
 
         $this->formElements = array_splice_associative($this->formElements, $name, 1, $eventElements);
+
+        if (!isset($this->formOptions['dbOptions']['masterFileRecKeySort'])) {
+            $this->formOptions['dbOptions']['masterFileRecKeySort'] = true;
+            $this->db->setOption('masterFileRecKeySort', true);
+        }
+        if (!isset($this->formOptions['dbOptions']['masterFileRecKeySortOnElement'])) {
+            $this->formOptions['dbOptions']['masterFileRecKeySortOnElement'] = 'start';
+            $this->db->setOption('masterFileRecKeySortOnElement', 'start');
+        }
 
         if ($rec['repeatable']??false) {
             $this->composeRruleElement($name, $rec);
@@ -1603,7 +1617,9 @@ EOT;
             if ($this->formOptions['action'] ?? false) {
                 $this->setAction($this->formOptions['action']);
             } else {
-                $this->setAction(PFY_PAGE_URL); // this page's URL, poss. including ?xy
+                $action = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
+                $this->setAction($action); // this page's URL, poss. including ?xy
+                $this->formOptions['next'] = $action;
             }
         }
         $presetCallback = '';
@@ -1757,6 +1773,7 @@ EOT;
         if ($str = $this->formOptions['formTop']) {
             $str = $this->compileFormBanner($str);
             $str = "\n<div class='pfy-form-top'>$str</div>\n";
+            $this->formOptions['formTop'] = '';
         }
         return $str;
     } // renderFormTopBanner
@@ -1950,7 +1967,7 @@ EOT;
         }
 
         // %available%:
-        if (str_contains($str, '%available%') && ($maxCount = $this->formOptions['maxCount'])) {
+        if (str_contains($str, '%available') && ($maxCount = $this->formOptions['maxCount'])) {
             $this->openDB();
             if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $currCount = $this->db->sum($maxCountOn);
@@ -1958,6 +1975,19 @@ EOT;
                 $currCount = $this->db->count();
             }
             $available = $maxCount - $currCount;
+            if ($this->formOptions['lowSeatsWarning']) {
+                if ($this->formOptions['lowSeatsWarning'] === true) {
+                    $lowSeatsThreshold = PFY_LOW_SEATS_WARNING_THRESHOLD;
+                } else {
+                    $lowSeatsThreshold = $this->formOptions['lowSeatsWarning'];
+                }
+                if ($available < $lowSeatsThreshold) {
+                    $availableSeatsBanner = TransVars::getVariable('pfy-form-available-seats-banner');
+                } else {
+                    $availableSeatsBanner = '';
+                }
+                $str = str_replace('%availableBanner%', (string)$availableSeatsBanner, $str);
+            }
             $str = str_replace('%available%', $available, $str);
         }
 
@@ -3222,7 +3252,7 @@ EOT;
             return;
         }
 
-        $nextT = date('_Y-m-d', strtotime($nextEvent['start']));
+        $nextT = date('_Y-m-d_H.i', strtotime($nextEvent['start']));
         $file = $this->file;
         $file = fileExt($file, true).$nextT.'.'.fileExt($file);
         $this->file = $file;
@@ -3242,11 +3272,20 @@ EOT;
 
         if ($maxCount = ($nextEvent['maxCount']??false)) {
             $this->formOptions['maxCount'] = $maxCount;
-            $this->tableOptions['minRows'] = $maxCount;
         }
 
         if ($deadline = ($nextEvent['deadline']??false)) {
             $this->formOptions['deadline'] = $deadline;
+        }
+
+        // handle case where form is controlled by an url-arg:
+        if ($this->formOptions['action']??false) {
+            $action = $this->formOptions['action'];
+            if (preg_match('/%\?(\w+)%/', $action, $m)) {
+                $urlKey = $m[1];
+                $urlArg = $_GET[$urlKey]??'';
+                $this->formOptions['action'] = str_replace($m[0], "$urlKey=$urlArg",$action);
+            }
         }
 
         self::$scheduleRecs[self::$formCounter] = $nextEvent;
