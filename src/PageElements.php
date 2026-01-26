@@ -154,12 +154,9 @@ class PageElements
     private function init()
     {
         // save config and data path for AjaxHandler:
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $_SESSION['pfy.dataPath'] = PageFactory::$dataPath;  // may depend on onair-state
-        $_SESSION['pfy.configPath'] = PageFactory::$customConfigPath;
-        session_write_close();
+        $session = kirby()->session();
+        $session->set('pfy.dataPath', PageFactory::$dataPath);
+        $session->set('pfy.configPath', PageFactory::$customConfigPath);
 
         // run init-code if requested in config.php:
         if ($code = kirby()->option('pgfactory.pagefactory-elements.initCode')) {
