@@ -74,7 +74,7 @@ class TwigLight
             switch (true) {
                 case preg_match('/^{%\s*if\s+(.*?)\s*%}$/', $token, $matches):
                     $varname = trim($matches[1]);
-                    if (!preg_match('/\W/', $varname)) {
+                    if (preg_match('/^[\w.]+$/', $varname)) {
                         // condition contains nothing but a string, i.e. a variable:
                         $condition = (bool)TransVars::getVariable($varname);
                     } else {
