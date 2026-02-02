@@ -42,7 +42,7 @@ const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
 const PFY_FORM_OPTIONS = [
     'file' => false,
     'confirmationText' => false,
-    'mailTo' => false,
+    'ownerNotificationTo' => false,
     'maxCount' => false,
     'maxCountOn' => false,
     'labelWidth' => false,
@@ -292,17 +292,6 @@ class PfyForm extends Form
         $formResponse = $this->deadlinePassed . $this->maxCountExceeded . $this->formResponse;
         if (!$this->showFeedbackInpage && $formResponse) {
             reloadAgent(message: strip_tags($formResponse));
-        }
-
-        // add 'continue...' if direct feedback is active:
-        if ($this->showFeedbackInpage && $this->formResponse) {
-            $next = $this->formOptions['next'];
-            $class = 'pfy-form-continue';
-            if ($next === '~page/') {
-                $next = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
-                $class .= ' pfy-form-continue-same';
-            }
-            $formResponse .= "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
         }
 
         if ($formResponse) {
@@ -974,8 +963,21 @@ class PfyForm extends Form
         if ($description = ($this->formElements[$name]['description']??'')) {
             $description = parseArgumentStr($description);
         }
-        if ($presets = ($this->formElements[$name]['preset']??'')) {
-            $presets = parseArgumentStr($presets);
+        if (!$this->formErrorState) {
+            $presets = ($this->formElements[$name]['preset'] ?? ($this->formElements[$name]['presets'] ?? ''));
+            if ($presets) {
+                $presets = parseArgumentStr($presets);
+                if (array_keys($presets)[0] === '_anonInx0') {
+                    $presets = array_combine(['street', 'zip', 'city'], $presets);
+                }
+            }
+            $values = ($this->formElements[$name]['value'] ?? ($this->formElements[$name]['values'] ?? ''));
+            if ($values) {
+                $values = parseArgumentStr($values);
+                if (array_keys($values)[0] === '_anonInx0') {
+                    $values = array_combine(['street', 'zip', 'city'], $values);
+                }
+            }
         }
         if ($names = ($this->formElements[$name]['names'] ?? ($this->formElements[$name]['name']??''))) {
             $names = parseArgumentStr($names);
@@ -1011,6 +1013,9 @@ class PfyForm extends Form
         if ($presets['street']??false) {
             $addressElements[$elName]['preset'] = $presets['street'];
         }
+        if ($values['street']??false) {
+            $addressElements[$elName]['value'] = $values['street'];
+        }
 
         $combinedLabel = TransVars::getVariable('pfy-form-address-combined-label');
         if ($required) {
@@ -1035,6 +1040,9 @@ class PfyForm extends Form
         if ($presets['zip']??false) {
             $addressElements[$elName]['preset'] = $presets['zip'];
         }
+        if ($values['zip']??false) {
+            $addressElements[$elName]['value'] = $values['zip'];
+        }
         if ($names['zip']??false) {
             $addressElements[$elName]['name'] = $names['zip'];
         }
@@ -1055,6 +1063,9 @@ class PfyForm extends Form
         }
         if ($presets['city']??false) {
             $addressElements[$elName]['preset'] = $presets['city'];
+        }
+        if ($values['city']??false) {
+            $addressElements[$elName]['value'] = $values['city'];
         }
         if ($names['city']??false) {
             $addressElements[$elName]['name'] = $names['city'];
@@ -1248,7 +1259,7 @@ class PfyForm extends Form
         $attr = '';
 
         // if nette forms applied a value, turn it into a data-value (same for checked and selected):
-        $input = $this->applyFormFieldValues($input, $type, $name);
+        list($input, $dataAttrib) = $this->applyFormFieldValues($input, $type, $name);
 
         // for password field prepare required icons:
         if ($type === 'password') {
@@ -1289,36 +1300,39 @@ class PfyForm extends Form
         if ($type !== $nameCls) {
             $class .= " pfy-$nameCls";
         }
+        if (!$this->formErrorState) {
+            if ($dataVal = ($this->formDataRec[$name] ?? '')) {
+                // if data has been received previously (in retainData mode), that has priority:
+                if (!is_array($dataVal)) {
+                    $dataAttrib = " data-value='$dataVal'";
+                }
 
-        $dataAttrib = '';
-        if ($dataVal = $this->formDataRec[$name]??'') {
-            // if data has been received previously (in retainData mode), that has priority:
-            if (!is_array($dataVal)) {
-                $dataAttrib = " data-value='$dataVal'";
+            } else {
+                if (isset($rec['value']) && !str_contains($input, 'data-value=')) {
+                    // run this code unless value is already set due to an error in received data:
+                    $val = $rec['value'];
+                    if (str_contains($val, '_')) {
+                        $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                    }
+                    $dataAttrib = " data-value='$val'";
+                }
+                if (isset($rec['preset'])) {
+                    $val = $rec['preset'];
+                    if (str_contains($val, '_')) {
+                        $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
+                    }
+                    if (str_contains($val, '%')) {
+                        $val = str_replace('%', '\\%', $val);
+                    }
+                    if (str_contains($val, '"') || str_contains($val, "'")) {
+                        // replace quotes/double quotes with lookalikes to shield them:
+                        $val = str_replace(['"', "'"], ['❝', "❛"], $val);
+                    }
+                    $dataAttrib .= " data-preset='$val'";
+                }
             }
-
         } else {
-            if (isset($rec['value'])) {
-                $val = $rec['value'];
-                if (str_contains($val, '_')) {
-                    $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
-                }
-                $dataAttrib = " data-value='$val'";
-            }
-            if (isset($rec['preset'])) {
-                $val = $rec['preset'];
-                if (str_contains($val, '_')) {
-                    $val = str_replace(['_today_', '_now_'], [date('Y-m-d'), date('Y-m-d H:i')], $val);
-                }
-                if (str_contains($val, '%')) {
-                    $val = str_replace('%', '\\%', $val);
-                }
-                if (str_contains($val, '"') || str_contains($val, "'")) {
-                    // replace quotes/double quotes with lookalikes to shield them:
-                    $val = str_replace(['"', "'"], ['❝', "❛"], $val);
-                }
-              $dataAttrib .= " data-preset='$val'";
-            }
+            $dataVal = '';
         }
 
         // === render type-specific =====================================
@@ -2002,7 +2016,7 @@ EOT;
         }
 
         // remove remaining variable patterns from string:
-        $str = preg_replace("/\%\w{1,12}\%/", '', $str);
+        $str = preg_replace("/%\w{1,12}%/", '', $str);
 
         return $str;
     } // handleFormBannerValues
@@ -2054,6 +2068,7 @@ EOT;
     protected function __processReceivedData(): void
     {
         if (!$this->isSuccess()) {
+            $this->formErrorState = $this->hasErrors(); // obtain error-state from nette
             return;
         }
 
@@ -2107,10 +2122,11 @@ EOT;
         }
 
         $recKey = $dataRec['_reckey']??false;
-        
+
         // handle delete request:
         if ($this->handleDeleteRequest($dataRec, $recKey)) {
-            $this->formResponse =  '{{ pfy-form-rec-deleted-confirmation }}';
+            $this->formResponse =  '<p>{{ pfy-form-rec-deleted-confirmation }}</p>';
+            $this->formResponse .= $this->getContinueLink();
             return;
         }
 
@@ -2120,7 +2136,8 @@ EOT;
         if (is_string($dataRec)) {
             // string means spam detected:
             $this->showForm = false;
-            $this->formResponse =  "<div class='pfy-form-error'>$dataRec</div>\n";
+            $this->formResponse =  "<div class='pfy-form-error'><p>$dataRec</p></div>\n";
+            $this->formResponse .= $this->getContinueLink();
             return;
         }
 
@@ -2139,7 +2156,7 @@ EOT;
 
         // handle uploads
         $dataRec = $this->handleUploads($dataRec);
-
+        
         // if 'file' defined, save received data:
         $formErrorResponse = '';
         if ($this->file) {
@@ -2160,15 +2177,16 @@ EOT;
 
         if ($this->formErrorState) {
             // error:
-            $this->formResponse = "<div class='pfy-form-error'>$formErrorResponse</div>\n";
+            $this->formResponse = "<div class='pfy-form-error'><p>$formErrorResponse</p></div>\n";
+            $this->formResponse .= $this->getContinueLink();
             return;
         }
 
         // success...
+        $formSuccessResponse = "{{ pfy-form-submit-success }}";
 
         // handle notifications:
-        $formSuccessResponse = '';
-        if ($this->formOptions['mailTo'] || $this->formOptions['confirmationEmailTo']) {
+        if ($this->formOptions['ownerNotificationTo'] || $this->formOptions['confirmationEmailTo']) {
             $dataRecInclEvent = $this->prepareMailData($dataRec);
             $this->propagateDataToVariables($dataRecInclEvent); // make dataRec and scheduleData available as transvars
 
@@ -2176,11 +2194,8 @@ EOT;
             $this->sendOwnerNotification($dataRec, $dataRecInclEvent);
 
             if ($this->formOptions['confirmationText']) {
-                $formSuccessResponse = $this->formOptions['confirmationText'];
-            } else {
-                $formSuccessResponse = "{{ pfy-form-submit-success }}";
+                $formSuccessResponse = "<p>{$this->formOptions['confirmationText']}</p>";
             }
-            $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
 
             // handle optional visitor confirmation mail:
             $formSuccessResponse .= $this->sendConfirmationMail($dataRecInclEvent);
@@ -2191,6 +2206,9 @@ EOT;
 
         // write log:
         mylog(strip_tags($formSuccessResponse), 'form-log.txt');
+
+        $formSuccessResponse .= $this->getContinueLink();
+        $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
 
         if (isset($_POST)) {
             unset($_POST);
@@ -2760,7 +2778,7 @@ EOT;
      */
     private function sendOwnerNotification(array $dataRec, array $dataRecInclEvent): void
     {
-        if (!$this->formOptions['mailTo']) {
+        if (!$this->formOptions['ownerNotificationTo']) {
             return;
         }
 
@@ -2810,13 +2828,13 @@ EOT;
 
         list($subject, $message) = $this->getEmailComponents($dataRecInclEvent, PFY_NOTIFICATION_VAR_NAME);
 
-        if ($this->formOptions['mailTo'] === true) {
+        if ($this->formOptions['ownerNotificationTo'] === true) {
             if (!PageFactory::$webmasterEmail) {
                 throw new \Exception('Error: config option "webmaster_email" is not set.');
             }
             $to = PageFactory::$webmasterEmail;
         } else {
-            $to = $this->formOptions['mailTo'];
+            $to = $this->formOptions['ownerNotificationTo'];
         }
 
         // dev mode -> override $to:
@@ -2943,8 +2961,19 @@ EOT;
      */
     private function getEmailComponents(array $dataRec, string $varNameStub = ''): array
     {
-        $subject = TransVars::getVariable($varNameStub.'-subject', varNameIfNotFound:true);
-        $message = (TransVars::getVariable($varNameStub.'-body') ?: TransVars::getVariable($varNameStub.'-message', varNameIfNotFound:true));
+        $subject = TransVars::getVariable($varNameStub.'-subject');
+        $errMsg = '';
+        if (!$subject) {
+            $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
+        }
+        $message = (TransVars::getVariable($varNameStub.'-body') ?: TransVars::getVariable($varNameStub.'-message'));
+        if (!$message) {
+            $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
+
+        }
+        if ($errMsg) {
+            throw new \Exception($errMsg);
+        }
 
         $subject = $this->compileTempate($subject, $dataRec);
         $message = $this->compileTempate($message, $dataRec);
@@ -3304,19 +3333,69 @@ EOT;
      * @param string $name
      * @return array
      */
-    private function applyFormFieldValues(string $input, string $type, string $name): string
+    private function applyFormFieldValues(string $input, string $type, string $name): array
     {
-        if (!str_contains('button,hidden,cancel,submit,reset,select,multiselect,radio,checkbox,upload', $type)) {
-            if (preg_match('/(?<! data-)value="(.*?)"/', $input, $m)) {
-                if (!$this->formErrorState) {
-                    $input = preg_replace('/(?<! data-)value="(.*?)"/', '', $input);
-                } else {
+        $dataAttrib = '';
+        if ($type === 'textarea') {
+            if (preg_match('|>(.*?)</textarea|', $input, $m) && $m[1]) {
+                if ($this->formErrorState) {
                     $val = $m[1];
-                    $input = preg_replace('/(?<! data-)value="(.*?)"/', "data-value=\"$val\"", $input);
+                    $input = str_replace($m[0], "data-value=\"$val\"></textarea", $input);
+                } else {
+                    $input = str_replace($m[0], "></textarea", $input);
                 }
             }
+
+        } elseif ($type === 'select' || $type === 'multiselect') {
+            $selectedOptions = '';
+            if (preg_match_all('|<option value="(.*?)"( selected)?>(.*?)</option>|', $input, $m)) {
+                foreach ($m[1] as $inx => $val) {
+                    if (!$m[2][$inx]) {
+                       continue;
+                    }
+                    $selectedOptions .= $m[3][$inx] . ',';
+                }
+            }
+            $selectedOptions = rtrim($selectedOptions, ',');
+            if ($selectedOptions && preg_match('|<select([^>]+)>|', $input, $m)) {
+                $input = str_replace($m[0], "<select{$m[1]} data-value=\"$selectedOptions\">", $input);
+            }
+
+        } elseif ($type === 'checkbox') {
+            if (preg_match_all('|<input .*? [^>]*?>|x', $input, $m)) {
+                $checkedOptions = '';
+                foreach ($m[0] as $val) {
+                    if (str_contains($val, ' checked ') && preg_match('|value="(.*?)"|', $val, $m2)) {
+                        $checkedOptions .= $m2[1] . ',';
+                    }
+                }
+                $checkedOptions = rtrim($checkedOptions, ',');
+                $dataAttrib = " data-value=\"$checkedOptions\"";
+            }
+
+        } elseif ($type === 'radio') {
+            if (preg_match_all('|<input .*? [^>]*?>|x', $input, $m)) {
+                $checkedOptions = '';
+                foreach ($m[0] as $val) {
+                    if (!str_contains($val, ' checked ')) {
+                        continue;
+                    }
+                    if (preg_match('|value="(.*?)"|', $val, $m2)) {
+                        $checkedOptions .= $m2[1] . ',';
+                    }
+                }
+                $checkedOptions = rtrim($checkedOptions, ',');
+                $dataAttrib = " data-value=\"$checkedOptions\"";
+            }
+
+        } elseif (!str_contains('button,hidden,cancel,submit,reset,select,multiselect,radio,checkbox,upload', $type)) {
+            // other types, such as text, date, integer etc.
+            if (preg_match('/(?<! data-)value="(.*?)"/', $input, $m)) {
+                $input = preg_replace('/(?<! data-)value="(.*?)"/', "data-value=\"{$m[1]}\"", $input);
+            }
         }
-        return $input;
+
+        return [$input, $dataAttrib];
     } // applyFormFieldValues
 
 
@@ -3679,5 +3758,24 @@ window.addEventListener("beforeunload", (ev) => {
 EOT;
         Page::addJs($js);
     } // activatebeforeunloadWarning
+
+
+    /**
+     * @return string
+     */
+    private function getContinueLink(): string
+    {
+        if ($this->popupMode) {
+            return '';
+        }
+        $next = $this->formOptions['next'];
+        $class = 'pfy-form-continue';
+        if ($next === '~page/') {
+            $next = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
+            $class .= ' pfy-form-continue-same';
+        }
+        $continueLink = "<div class='$class'><a href='$next'>{{ pfy-form-success-continue }}</a></div>\n";
+        return $continueLink;
+    } // getContinueLink
 
 } // PfyForm

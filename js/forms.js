@@ -176,6 +176,7 @@ const pfyFormsHelper = {
       pfyFormsHelper.reloadAgent(`clearform=${formInx}`);
     }
 
+    this.clearErrors(form);
     this.clearModifiedFlag(form);
     this.clearPresetFlag(form);
     this.clearRowSelection(form);
@@ -501,6 +502,11 @@ const pfyFormsHelper = {
 
 
   presetFields(form, data) {
+    if (form.closest('.pfy-table-edit-popup') || form.closest('.pfy-form-is-preset')) {
+      // in popup mode, skip preset fields - they will be preset upon opening the popup
+      return;
+    }
+
     let isPreset = false;
     if (isEmpty(data)) {
       data = {};
@@ -615,7 +621,7 @@ const pfyFormsHelper = {
         });
       }
 
-    } else if (type === 'select') {
+    } else if (type === 'select' || type === 'multiselect') {
       // --- select
       if (typeof val === 'string') {
         val = `,${val},`;
@@ -715,6 +721,16 @@ const pfyFormsHelper = {
       formWrapper.classList.remove('pfy-form-is-modified');
     });
   }, // setPresetFlag
+
+
+  clearErrors(form) {
+    domForAll(form, '.pfy-form-elem-error-msg', el => {
+      el.remove();
+    });
+    domForAll(form, '.pfy-form-elem-has-error', el => {
+      el.classList.remove('pfy-form-elem-has-error');
+    });
+  }, // clearModifiedFlag
 
 
   clearModifiedFlag(el) {

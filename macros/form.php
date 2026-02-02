@@ -365,13 +365,15 @@ EOT,
         $options['showData'] = true;
     }
 
-    // ownerNotificationTo synonyme for mailTo:
-    if ($options['ownerNotificationTo']??false) {
-        $options['mailTo'] = $options['ownerNotificationTo'];
+    // mailTo synonyme for ownerNotificationTo:
+    if ($options['mailTo']??false) {
+        $options['ownerNotificationTo'] = $options['mailTo'];
+        unset($options['mailTo']);
     }
-    // ownerNotificationTo synonyme for mailTo:
+    // confirmationEmail synonyme for ownerNotificationTo:
     if ($options['confirmationEmail']??false) {
         $options['confirmationEmailTo'] = $options['confirmationEmail'];
+        unset($options['confirmationEmail']);
     }
 
     // make type=datetime synonym for type=datetime-local:
