@@ -24,6 +24,7 @@ use function \PgFactory\PageFactory\parseArgumentStr;
 
 const TABLE_SUM_SYMBOL = '%sum%';
 const TABLE_COUNT_SYMBOL = '%count%';
+const DEFAULT_PAGEING_LENGTH = 25;
 
 if (!function_exists('array_is_list')) {
     function array_is_list($array) {
@@ -752,6 +753,7 @@ EOT;
 
         // paging:
         $paging = $entriesPerPageLabel = '';
+        $pagingLength = DEFAULT_PAGEING_LENGTH;
         if ($this->paging) {
             $layout = [
                 'topStart' => 'info',
@@ -759,10 +761,10 @@ EOT;
                 'bottomEnd' => 'paging',
             ];
             if (is_numeric($this->paging)) {
-                $pageLength = str_contains(',10,25,50,100,', ",$this->paging,") ? $this->paging : '10';
-                $paging = "lengthMenu: [10, 25, 50, 100],\n  pageLength: $pageLength,";
+                $pagingLength = str_contains(',10,25,50,100,', ",$this->paging,") ? $this->paging : $pagingLength;
+                $paging = "lengthMenu: [10, 25, 50, 100],\n  pageLength: $pagingLength,";
             } elseif ($this->paging === true) {
-                $paging = "lengthMenu: [10, 25, 50, 100],";
+                $paging = "lengthMenu: [10, 25, 50, 100],\n  pageLength: $pagingLength,";
             } else {
                 $paging = "$this->paging,";
             }

@@ -16,6 +16,10 @@ const tableHelper = {
 
       tables.forEach(function (table) {
         tableHelper.setupPropagateCheckbox(table); // problematic to handle by global trigger
+        domForOne(table, '^.pfy-form-and-table-wrapper.pfy-table-edit-popup .pfy-form-has-errors', form => {
+          // if form related to table has errors, open edit popup immediately:
+          tableHelper.prepareForm(form);
+        })
       });
       tableHelper.prepareAdaptToWidthHandler();
     }
@@ -44,10 +48,10 @@ const tableHelper = {
       if (el.closest('td .pfy-row-duplicate-button')) {
         tableHelper.duplicateTableButtonHandler(ev);
       }
-      if (el.closest('td .pfy-row-edit-button, .pfy-table-fill-first-row')) {
+      if (el.closest('td .pfy-row-edit-button')) {
         tableHelper.editButtonsHandler(ev);
       }
-      if (el.closest('.pfy-form-and-table-wrapper')) {
+      if (el.closest('.pfy-form-and-table-wrapper, .pfy-table-fill-first-row')) {
         tableHelper.newRecButtonHandler(ev);
       }
       if (ev.target.closest('tr') && !ev.target.closest('.pfy-service-col')) {
@@ -436,7 +440,7 @@ const tableHelper = {
 
 
   newRecButtonHandler: function (ev) {
-    const newRecBtn = ev.target.closest('.pfy-table-new-rec');
+    const newRecBtn = ev.target.closest('.pfy-table-new-rec, .pfy-table-fill-first-row');
     if (!newRecBtn) {
       return;
     }
@@ -566,8 +570,9 @@ const tableHelper = {
           domForOne('.pfy-popup-wrapper .pfy-form', formEl => {
             if (recKey) {
               pfyFormsHelper.fetchDataAndFillForm(formEl, recKey, true, duplicateMode);
+            } else {
+              pfyFormsHelper.presetForm(formEl);
             }
-            pfyFormsHelper.presetForm(formEl);
             formEl.removeAttribute('id');
 
             domForAll(formEl, 'input.pfy-cancel', input => {
