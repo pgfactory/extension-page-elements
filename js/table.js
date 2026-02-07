@@ -85,13 +85,20 @@ const tableHelper = {
     if (dataTables.length > 0) {
       // there are dataTables, so wait until all are loaded:
       let goOn;
+      let counter = 10;
       let t = setInterval(() => {
         goOn = true;
         dataTables.forEach((tableWrapperEl) => {
           if (!tableWrapperEl.querySelector('.dt-container')) {
             goOn = false;
           }
+          counter--;
         });
+        if (counter === 0) {
+          clearInterval(t);
+          console.log('Something went wrong, tables not initialized properly...');
+          return;
+        }
         if (goOn) {
           clearInterval(t);
           dataTables.forEach((tableWrapperEl) => {
@@ -99,9 +106,9 @@ const tableHelper = {
           });
           console.log('...done');
         } else {
-          console.log('waiting for datatable to finish initializing...');
+          console.log('waiting for datatable to finish initializing... '+counter);
        }
-      }, 20);
+      }, 100);
 
     } else {
       let tables = document.querySelectorAll('.pfy-table-wrapper');
@@ -433,7 +440,7 @@ const tableHelper = {
     const input = document.getElementById('pfy-table-send-rec-input');
     if (input) {
       const email = encodeURI(input.value);
-      mylog(window.location.href + '?sendto='+email+'&recId='+recKey);
+      console.log(window.location.href + '?sendto='+email+'&recId='+recKey);
       window.location.href = window.location.href + '?sendto='+email+'&recid='+recKey;
     }
   }, // doSendRec
@@ -485,7 +492,7 @@ const tableHelper = {
           // after confirmation:
           this.defaultRowClickHandler(el, tableFormWrapper);
         },
-        () => { mylog('denied');  }
+        () => { console.log('denied');  }
       );
     } else {
       this.defaultRowClickHandler(el, tableFormWrapper);
