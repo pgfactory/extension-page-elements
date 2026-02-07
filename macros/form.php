@@ -184,7 +184,7 @@ return function ($args = '')
             'sideBySide' =>	['If true, the data table will be rendered next to the form. '.
                 'Moreover, clicking a row will present the corresponding record in the from.', null],
 
-            'beforeunloadWarning' => ['[bool] If true and user has modified form fields and then wants '.
+            'warnBeforeLeavingPage' => ['[bool] If true and user has modified form fields and then wants '.
                 'to leave the page, the browser shows a warning.', false],
         ],
         'summary' => <<<EOT
@@ -217,7 +217,7 @@ return function ($args = '')
         ownerNotificationTo: true  \// 'true' for webmaster-email or explicit e-mail address 
         confirmationEmailTo: true  \// 'true' selects the first e-mail field below
         mailFromName:        'Our organization'
-        beforeunloadWarning: true
+        warnBeforeLeavingPage: true
         \//maxCount:          12
         \//deadline:          2025-06-03
 
