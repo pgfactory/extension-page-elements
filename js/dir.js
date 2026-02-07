@@ -17,7 +17,7 @@ window.onload = function() {
 
     pfyConfirm(options).then(
       () => {
-        mylog('Confirmed, continue downloading');
+        console.log('Confirmed, continue downloading');
         document.location.href = url;
         }
     );

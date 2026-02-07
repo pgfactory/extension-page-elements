@@ -62,7 +62,7 @@ const Enlist = {
     });
 
     mailAddresses = mailAddresses.replace(/^[,;]/, '');
-    mylog('MailTo: ' + mailAddresses);
+    console.log('MailTo: ' + mailAddresses);
     const url = `mailto:${mailAddresses}`;
     window.open(url,"_blank");
 }, // handleSendToAll

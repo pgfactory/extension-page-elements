@@ -16,7 +16,7 @@ const pfyEventsHelper = {
     const catSelect = document.querySelector('#frm-category');
     if (catSelect) {
       catSelect.addEventListener('change', function (e) {
-        mylog(e);
+        console.log(e);
       });
     }
   }, // setupTriggers

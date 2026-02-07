@@ -101,11 +101,11 @@ function executeCallbackCode(callbackFun, arg = null) {
 
 function serverLog(text, logFileName) {
   let url = appendToUrl(window.location.href, '?ajax&log=' +  encodeURI(text));
-  mylog('url: ' + url);
+  console.log('url: ' + url);
   if (typeof logFileName !== 'undefined') {
     url += '&filename=' + encodeURI(logFileName);
   }
-  mylog('url: ' + url);
+  console.log('url: ' + url);
   fetch(url, { headers: {'Content-Type': 'application/json'} });
 } // serverLog
 

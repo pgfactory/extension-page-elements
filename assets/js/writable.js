@@ -56,19 +56,19 @@ class WritableWidget {
     // handler when writable field is changed -> send to host:
     inputEl.addEventListener('change', (ev) => {
       if (!saveToHost) {
-        mylog('writable-widget: not saving to host');
+        console.log('writable-widget: not saving to host');
         return;
       }
       const value = encodeURIComponent(inputEl.value);
       const name = inputEl.name;
       const inpWrapper = inputEl.closest('.pfy-writable-widget-wrapper');
       const dataSrcInx = inpWrapper.dataset.writableGroup;
-      mylog(`${name}: ${value} (${dataSrcInx})`);
+      console.log(`${name}: ${value} (${dataSrcInx})`);
 
       let cmd = `?ajax&writable&datasrcinx=${dataSrcInx}&name=${name}&value=${value}`;
       execAjaxPromise(cmd).then((data) => {
         if (typeof data === 'object' && data[name] !== undefined) {
-          mylog(`storing writable done: "${data[name]}"`);
+          console.log(`storing writable done: "${data[name]}"`);
           inputEl.value = data[name];
         }
       });

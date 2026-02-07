@@ -4,10 +4,10 @@
 * Usage:
   pfyConfirm('Continue...?').then(
     function(value) {
-      mylog('Ok');
+      console.log('Ok');
     },
     function(error) {
-      mylog('Canceled');
+      console.log('Canceled');
     }
   );
 */
@@ -555,7 +555,7 @@ function pfyPopup( options ) {
     if (typeof el === 'undefined' || el === document.body) {
       const parent = this;
       domForEach('.pfy-popup-bg', function (popupBg) {
-        //mylog('closing all popups');
+        //console.log('closing all popups');
         parent._close(popupBg);
       });
 
@@ -658,8 +658,8 @@ pfyPopupPromise({
     buttons: 'Cancel,Continue',
 })
 .then(
-    (data) => { mylog('success: ' + data); },
-    (data) => { mylog('failed: ' + data);  }
+    (data) => { console.log('success: ' + data); },
+    (data) => { console.log('failed: ' + data);  }
 );
  */
 function pfyPopupPromise( options ) {
@@ -702,8 +702,8 @@ function pfyPopupPromise( options ) {
 /*
 pfyConfirm('Test')
     .then(
-        (data) => { mylog('success: ' + data); },
-        (data) => { mylog('failed: ' + data);  }
+        (data) => { console.log('success: ' + data); },
+        (data) => { console.log('failed: ' + data);  }
     );
  */
 function pfyConfirm( options ) {
