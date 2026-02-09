@@ -77,7 +77,8 @@ const PFY_FORM_OPTIONS = [
         'masterFileRecKeyType' => 'index',
         'scrollHints' => false,
         'markLocked' => false,
-        'obfuscateRecKeys' => true,
+        'obfuscateRecKeys' => false,
+//        'obfuscateRecKeys' => true,
         'rowCallback' => true,
         'obfuscateCols' => ['passwor*'],
         'dontPrint' => [],
@@ -99,7 +100,7 @@ const PFY_FORM_OPTIONS = [
     'init' => true,
     'showData' => null,
     'editData' => null,
-    'beforeunloadWarning' => false,
+    'warnBeforeLeavingPage' => false,
     'keepSubmittedDataInForm' => false,
 ];
 
@@ -226,7 +227,7 @@ class PfyForm extends Form
                 Page::addJsReady("pfyFormsHelper.init($setFocus);");
             }
             $this->activateWindowFreeze();
-            $this->activatebeforeunloadWarning();
+            $this->activateWarnBeforeUnload();
         }
         if ($this->keepSubmittedDataInForm && (($_GET['clearform']??false) == $this->formIndex)) {
             Utils::pullSessionVar("form-$this->formIndex", overrideKey:$this->formDataId);
@@ -1568,7 +1569,9 @@ EOT;
                 Utils::setSessionVar("form-$this->formIndex", $this->formDataRec, overrideKey:$this->formDataId);
             }
         } elseif ($this->keepSubmittedDataInForm) {
-            $this->formDataRec = Utils::getSessionVar("form-$this->formIndex", [], overrideKey:$this->formDataId);
+            $this->formDataRec = $rec = Utils::getSessionVar("form-$this->formIndex", [], overrideKey:$this->formDataId);
+            unset($rec['_isModified']);
+            Utils::setSessionVar("form-$this->formIndex", $rec, overrideKey:$this->formDataId);
         }
 
         // handle case where data rec is to be preset:
@@ -1576,8 +1579,9 @@ EOT;
             // case url-arg "?presetForm=ABCDEF&asmodified":
             if ($this->formDataRec['_isModified']??false) {
                 $wrapperClass .= ' pfy-form-mark-as-modified';
-            } else {
-                $wrapperClass .= ' pfy-form-is-preset';
+				// modif cause sfs-vm
+				//            } else {
+				//                $wrapperClass .= ' pfy-form-is-preset';
             }
         }
         if ($this->readonly) {
@@ -2156,7 +2160,7 @@ EOT;
 
         // handle uploads
         $dataRec = $this->handleUploads($dataRec);
-        
+
         // if 'file' defined, save received data:
         $formErrorResponse = '';
         if ($this->file) {
@@ -2172,6 +2176,7 @@ EOT;
             }
             if ($this->keepSubmittedDataInForm) {
                 $this->showForm = true;
+                $this->retainSubmittedData($origDataRec, $formInxReceived);
             }
         }
 
@@ -3685,7 +3690,7 @@ EOT;
         foreach ($origDataRec as $key => $value) {
             if (is_array($value)) {
                 $origDataRec[$key] = implode(',', $value);
-            } elseif (preg_match_all('/%(\w{1,30})%/', $value, $m)) {
+            } elseif ($value && preg_match_all('/%(\w{1,30})%/', $value, $m)) {
                 //&#37;
                 $origDataRec[$key] = str_replace('%', '&#37;', $value);
             }
@@ -3741,9 +3746,9 @@ EOT;
     /**
      * @return void
      */
-    private function activatebeforeunloadWarning(): void
+    private function activateWarnBeforeUnload(): void
     {
-        if (!$this->formOptions['beforeunloadWarning']) {
+        if (!$this->formOptions['warnBeforeLeavingPage']) {
             return;
         }
         $js = <<<EOT
@@ -3757,7 +3762,7 @@ window.addEventListener("beforeunload", (ev) => {
 
 EOT;
         Page::addJs($js);
-    } // activatebeforeunloadWarning
+    } // activateWarnBeforeUnload
 
 
     /**
@@ -3765,7 +3770,7 @@ EOT;
      */
     private function getContinueLink(): string
     {
-        if ($this->popupMode) {
+        if ($this->popupMode || !$this->showFeedbackInpage) {
             return '';
         }
         $next = $this->formOptions['next'];

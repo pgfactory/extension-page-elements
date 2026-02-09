@@ -201,14 +201,17 @@ const pfyFormsHelper = {
 
 
   newrecButtonHandler(ev) {
-    const btn = ev.target.closest('input.pfy-newrec');
+    const btn = ev.target.closest('input');
     if (!btn) {
       return;
     }
-    const form = ev.target.closest('.pfy-form');
-    if (!pfyFormsHelper.isFormModified(form) && !pfyFormsHelper.isFormPreset(form)) {
-      return;
+    if (!btn.classList.contains('pfy-newrec')) {
+      const name = String(btn.getAttribute('name'));
+      if (!name.includes('newrec')) {
+        return;
+      }
     }
+    const form = ev.target.closest('.pfy-form');
 
     const check = pfyFormsHelper.checkHonigtopf(form);
     if (!check) {
@@ -502,7 +505,9 @@ const pfyFormsHelper = {
 
 
   presetFields(form, data) {
-    if (form.closest('.pfy-table-edit-popup') || form.closest('.pfy-form-is-preset')) {
+    if (form.closest('.pfy-table-edit-popup')) {
+    // modif cause sfs-vm
+    //    if (form.closest('.pfy-table-edit-popup') || form.closest('.pfy-form-is-preset')) {
       // in popup mode, skip preset fields - they will be preset upon opening the popup
       return;
     }
