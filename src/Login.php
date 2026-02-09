@@ -152,7 +152,7 @@ EOT;
         $formElements = [
             'email'     => ['label' => '{{ pfy-login-email }}:',   'name' => 'pfyLoginEmail', 'type' => 'text', 'info' => $infoEmail, 'class' => 'pfy-email'],
             'password'  => ['label' => '{{ pfy-login-password }}:', 'name' => 'pfyLoginPassword', 'type' => 'password', 'info' => '{{ pfy-login-otc-info }}'],
-            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'pfyLoginCode', 'info' => $infoOnCode, 'class' => 'pfy-login-code'],
+            'code'      => ['label' => '{{ pfy-login-code }}:',     'name' => 'otp', 'info' => $infoOnCode, 'class' => 'pfy-login-code', 'autocomplete' => 'one-time-code'],
             'cancel'    => ['next' => self::$nextPage],
             'subm-unpw' => ['type' => 'submit', 'label' => '{{ pfy-login-button }}', 'class' => 'pfy-login-unpw'],
             'subm-otc'  => ['type' => 'submit', 'label' => '{{ pfy-login-pwless-button }}', 'class' => 'pfy-login-otc'],
@@ -169,6 +169,33 @@ EOT;
         // now render the form:
         $form = new PfyForm($formOptions);
         $html = $form->renderForm($formElements);
+
+        // add js to check for OTP in SMS or Email:
+        $js = <<<EOT
+(async function startWebOTP() {
+  if (!('OTPCredential' in window)) return;
+
+  try {
+    const controller = new AbortController();
+
+    const otp = await navigator.credentials.get({
+      otp: { transport: ['sms', 'email'] },
+      signal: controller.signal
+    });
+
+    if (otp?.code) {
+      const input = document.querySelector('#otp');
+      input.value = otp.code;
+      document.querySelector('form').submit();
+    }
+  } catch (err) {
+    // Silent failure is correct
+    console.debug('WebOTP not available', err);
+  }
+})();
+
+EOT;
+        Page::addJsReady($js);
 
         $html = $loginHeader."\n$html";
         return $html;
@@ -225,7 +252,7 @@ EOT;
      */
     private static function loginCallback(array $data): string|bool
     {
-        $code = $data['pfyLoginCode']??false;
+        $code = $data['otp']??false;
         if ($code) {
             // 'pfyLoginCode' received -> validate:
             try {
