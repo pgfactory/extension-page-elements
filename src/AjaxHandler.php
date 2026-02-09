@@ -232,6 +232,7 @@ class AjaxHandler
             return self::$db;
         }
         $file = kirby()->session()->get(self::$sessDbFileKey, false);
+        // mylog("OpenDB: file = '$file'");
         if (!$file) {
             exit('"Error: file unknown"');
         }
