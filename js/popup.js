@@ -252,7 +252,9 @@ function pfyPopup( options ) {
               <dialog class="${cls}">
                    ${header}
                   <div class="${containerClass}" role="document">
+                    <div>
                       ${content}
+                    </div>
                   </div>
                   ${this.buttonHtml}
               </dialog>
@@ -400,7 +402,7 @@ function pfyPopup( options ) {
 
   this.setupOpenTrigger = function () {
     if (this.trigger === true) { // open immediately
-        this.open();
+        this.openPopup();
     }
     if (!this.triggerInitialized && this.trigger && (this.trigger !== true)) {
       if (this.triggerEvent === 'right-click') {
@@ -413,7 +415,7 @@ function pfyPopup( options ) {
           e.stopPropagation();
           e.preventDefault();
           parent.triggerElem.setAttribute('aria-expanded','true');
-          parent.open();
+          parent.openPopup();
         });
       }
       this.triggerInitialized = true;
@@ -499,7 +501,7 @@ function pfyPopup( options ) {
   }; // initDraggable
 
 
-  this.open = function () {
+  this.openPopup = function () {
     this.popupInstance++;
     this.id = 'pfy-popup-' + this.popupInstance;
 
@@ -548,7 +550,7 @@ function pfyPopup( options ) {
     this.trapFocus(popup);
 
     return this;
-  }; // open
+  }; // openPopup
 
 
   this.close = function (el) {

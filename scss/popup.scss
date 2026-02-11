@@ -16,7 +16,7 @@
   }
   &:not(.pfy-modal) .pfy-popup-bg {
     position: fixed;
-    top: 30%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     .pfy-popup-wrapper {
@@ -49,7 +49,7 @@
     background-color: #fff;
     box-shadow: 10px 10px 60px #0008;
     overflow: hidden;
-    font-size: 12pt !important;
+    font-size: 11pt;
   }
 
   .pfy-popup-header {
@@ -82,12 +82,20 @@
     font-size: 130%;
   }
 
+  .pfy-popup-wrapper {
+    max-width: calc(100dvw - 10px);
+    max-height: calc(100dvh - 10px);
+  }
   .pfy-popup-container {
-    overflow-y: scroll;
-    max-height: calc(100dvh - 8em);
+    overflow: auto;
+    max-height: calc(100dvh - 4em);
     padding: 1.6em 1.6em 0 1.6em;
     margin-bottom: 1.4em;
     font-family: Verdana, sans-serif;
+    > div {
+      width: fit-content;
+      height: fit-content;
+    }
   }
 
   .pfy-popup-with-header .pfy-popup-close-button.pfy-popup-close-button {
