@@ -159,6 +159,10 @@ pfy-table-entries-per-page-label:
   de: '_MENU_ Datensätze pro Seite'
   _:  '_MENU_ Entries per page'
 
+pfy-table-rec-preview-popup-header:
+  de: 'Vorschau'
+  _:  'Preview'
+
 
 #pfy-table-send-rec:
 pfy-table-send-rec-popup:

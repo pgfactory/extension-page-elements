@@ -345,6 +345,7 @@ const tableHelper = {
     pfyPopup({
       contentFrom: '.pfy-table-wrapper ' + templateClass,
       modal: false,
+      header: `{{ pfy-table-rec-preview-popup-header }}`,
       scrollHints: false,
       closeOnBgClick: true,
       onOpen: () => {
