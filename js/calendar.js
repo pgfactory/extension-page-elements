@@ -36,6 +36,7 @@ function PfyCalendar() {
   this.calEvs = {};
   this.fullCalendarOptions = null;
   this.useDblClick = false;
+  this.overrideDblClick = false;
 
   // Control array: list-view <tr> rows with any of these classes will be removed
   this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
@@ -50,6 +51,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   this.calendarEl = calendarEl;
 
   this.initCatSelectrHandler();
+  this.setupContextMenu();
 
   domForOne(this.formWrapperEl, '[name=_dataSrcInx]', (dataRefElem) => {
     dataRef = dataRefElem.value;
@@ -269,7 +271,6 @@ PfyCalendar.prototype.onViewReady = function( calendarObj ) {
     this.storeViewMode(viewType);
     this.options.initialView = viewType;
   }
-  this.setupContextMenu();
 }; // onViewReady
 
 
@@ -631,7 +632,6 @@ PfyCalendar.prototype.modifyEvent = function(event0, start, end) {
     .then(function (data) {
       // update calendar:
       fullCal.refetchEvents();
-      parent.setupContextMenu();
     })
     .then(function (msg) {
       console.log(msg);
@@ -660,9 +660,17 @@ PfyCalendar.prototype.setupSwipe = function() {
 
 
 PfyCalendar.prototype.setupContextMenu = function() {
+console.log('setupContextMenu');
   const parent = this;
   document.addEventListener('contextmenu', (ev) => {
     if (!ev.target.closest('.fc-event')) {
+      return;
+    }
+    parent.openContextMenu(ev);
+  })
+
+  document.addEventListener('click', (ev) => {
+    if (!ev.target.closest('.tippy-content')) {
       return;
     }
     parent.handleContextMenu(ev);
@@ -670,7 +678,7 @@ PfyCalendar.prototype.setupContextMenu = function() {
 } // setupContextMenu
 
 
-PfyCalendar.prototype.handleContextMenu = function(ev) {
+PfyCalendar.prototype.openContextMenu = function(ev) {
   const parent = this;
   ev.preventDefault();
   const calEventEl = ev.target.closest('.fc-event');
@@ -686,65 +694,69 @@ PfyCalendar.prototype.handleContextMenu = function(ev) {
     hideOnClick: true,
     theme: 'light', //???
     offset: [0, 10],
-    onShown(tippyInstance) {
-      setTimeout(() => {
-        const id = '#' + tippyInstance.popper.id;
-
-        // delete
-        domForOne(id+' .pfy-cal-delete', (el) => {
-          el.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            ev.stopImmediatePropagation();
-            ev.preventDefault();
-            domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
-              const recKey = el.dataset.reckey;
-              execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
-                .then(function (data) {
-                  parent.fullCal.refetchEvents();
-                });
-            });
-          });
-        });
-
-        // duplicate
-        domForOne(id + ' .pfy-cal-duplicate', (el) => {
-          el.addEventListener('click', (ev) => {
-            console.log(ev.target);
-            console.log('duplicate');
-            ev.stopPropagation();
-            ev.stopImmediatePropagation();
-            ev.preventDefault();
-            domForOne(tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
-              const recKey = el.dataset.reckey;
-              execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
-                .then(function (data) {
-                  parent.fullCal.refetchEvents();
-                });
-            });
-          });
-        });
-
-        // edit
-        domForOne(id + ' .pfy-cal-edit', (el) => {
-          el.addEventListener('click', (ev) => {
-            console.log(ev.target);
-            console.log('edit');
-            parent.closeContextMenu();
-            let calObj = null; //???
-            domForOne(calEventEl, '[data-event-id]', (el) => {
-              console.log(el);
-              console.log(calEventEl);
-              const defId = el.dataset.eventId;
-              calEv = parent.calEvs[defId];
-              parent._openExistingEventPopup(parent, calEv, calEventEl);
-            })
-          })
-        })
-      }, 200);
-    },
   });
   tippyInstance.show();
+} // openContextMenu
+
+
+PfyCalendar.prototype.handleContextMenu = function(ev) {
+  const parent = this;
+  ev.preventDefault();
+  const el = ev.target;
+  if (el.closest('button.pfy-cal-delete')) {
+    parent.handleContextMenuDelete(ev);
+
+  } else if (el.closest('button.pfy-cal-duplicate')) {
+    parent.handleContextMenuDuplicate(ev);
+
+  } else if (el.closest('button.pfy-cal-edit')) {
+    parent.handleContextMenuEdit(ev);
+  }
 } // handleContextMenu
+
+
+PfyCalendar.prototype.handleContextMenuDelete = function(ev) {
+  const parent = this;
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  ev.preventDefault();
+  domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+    const recKey = el.dataset.reckey;
+    execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
+      .then(function (data) {
+        parent.fullCal.refetchEvents();
+      });
+  });
+} // handleContextMenuDelete
+
+
+PfyCalendar.prototype.handleContextMenuDuplicate = function(ev) {
+  const parent = this;
+  console.log(ev.target);
+  console.log('duplicate');
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  ev.preventDefault();
+  domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+    const recKey = el.dataset.reckey;
+    execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
+      .then(function (data) {
+        parent.fullCal.refetchEvents();
+      });
+  });
+} // handleContextMenuDuplicate
+
+
+PfyCalendar.prototype.handleContextMenuEdit = function(ev) {
+  const parent = this;
+  console.log(ev.target);
+  console.log('edit');
+  const calEventEl = this.tippyInstance.reference;
+  parent.closeContextMenu();
+  this.overrideDblClick = true;
+  // emulate click on cal event to open edit popup:
+  calEventEl.click();
+} // handleContextMenuEdit
 
 
 PfyCalendar.prototype.closeContextMenu = function() {
@@ -787,7 +799,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
   }
 
   const parent = this;
-  if (this.useDblClick) {
+  if (this.useDblClick && !this.overrideDblClick) {
     this.clicks++;
     if (this.clicks === 1) {
       setTimeout(function () {
@@ -802,6 +814,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
   } else {
     fun(parent, argObj1, argObj2);
   }
+  this.overrideDblClick = false
 } // invokeHandler
 
 
