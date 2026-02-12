@@ -1984,8 +1984,8 @@ EOT;
             $str = str_replace('%sum%', $sum, $str);
         }
 
-        // %available%:
-        if (str_contains($str, '%available') && ($maxCount = $this->formOptions['maxCount'])) {
+        // %available% or %availableBanner%:
+        if (($maxCount = $this->formOptions['maxCount']) && str_contains($str, '%available')) {
             $this->openDB();
             if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $currCount = $this->db->sum($maxCountOn);
@@ -2006,8 +2006,10 @@ EOT;
                 }
                 $str = str_replace('%availableBanner%', (string)$availableSeatsBanner, $str);
             }
+            $str = str_replace(['%available%', '%availableBanner%'], [$available, ''], $str);
             $str = str_replace('%available%', $available, $str);
         }
+        $str = str_replace(['%available%', '%availableBanner%'], '', $str);
 
         // %max% or %total%:
         if (str_contains($str, '%max%') || str_contains($str, '%total%')) {
