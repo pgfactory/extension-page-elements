@@ -2,6 +2,8 @@
 
 $focus-color: orange;
 
+// --pfy-table-footer-header-bg: #eee;
+
 .pfy-default-styling {
 
     .pfy-table-wrapper {
@@ -45,10 +47,11 @@ $focus-color: orange;
           padding: 0.5em 0.6em 0.2em 0.6em;
         }
         thead th {
-            background: #eee;
+            background: var(--pfy-table-footer-header-bg, #eee);
         }
-        tfoot td {
-            background: #eee;
+        tfoot td,
+        tfoot td * {
+          background: var(--pfy-table-footer-header-bg, #eee);
         }
     }
   .pfy-row-selector input {

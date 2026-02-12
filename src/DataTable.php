@@ -315,6 +315,7 @@ EOT;
         $cell = $def['cellContent'];
         if (($cell[0] ?? '') === '=') {
             $cell = $this->renderComputedCells($recKey, $r, $c, substr($cell, 1));
+            $this->tableData[$recKey][$def['key']] = $cell;
 
         } elseif (($cell[0] ?? '') === '$') {
             $elemKey = substr($cell, 1);
@@ -351,21 +352,19 @@ EOT;
      */
     private function renderComputedCells(string  $recKey, int $r, int $c, string $cell): string
     {
+        $cell0 = $cell;
         $rec = $this->tableData[$recKey];
-        while (preg_match_all('/\$([\w.]+)/', $cell, $m)) {
+        while (preg_match_all('/\$([\w\d.]+)/', $cell, $m)) {
             foreach ($m[1] as $ii => $vv) {
                 $x = $rec[$vv] ?? '';
                 $cell = str_replace($m[0][$ii], $x, $cell);
             }
         }
-        if (str_starts_with($cell, 'PHP:')) {
-            $cell = substr($cell, 4);
-            try {
-                $cell = "return $cell;";
-                $cell = eval($cell);
-            } catch (\Exception $e) {
-                exit("Error: $e");
-            }
+        try {
+            $cell = "return $cell;";
+            $cell = eval($cell);
+        } catch (\Exception $e) {
+            exit("Error in computedCell definition \"$cell0\": $e");
         }
         return $cell;
     } // renderComputedCells
