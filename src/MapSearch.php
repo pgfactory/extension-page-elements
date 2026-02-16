@@ -217,7 +217,7 @@ EOT;
                 if ($m[1] === 'file') {
                     $file = Utils::resolvePath($m[2]);
                     if (file_exists($file)) {
-                        $db = new DataSet($file);
+                        $db = new DataStore($file);
                         $recs = $db->read();
                         foreach ($recs as $rec) {
                             if (isset($rec[0])) {

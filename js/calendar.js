@@ -392,16 +392,16 @@ PfyCalendar.prototype.setupAllDayHandler = function(form) {
 
 
 PfyCalendar.prototype.setAlldayMode = function(form, allday) {
-  // if month view, default to allday, unless there is a preset value:
-  domForOne(form, '.pfy-elem-wrapper.pfy-cal-allday', el => {
-    const presetVal = el.dataset.preset;
-    console.log('preset: ' + presetVal);
-    if (typeof presetVal !== 'undefined') {
-      if (presetVal === 'false' || !presetVal) {
-        allday = false;
-      }
-    }
-  })
+//  // if month view, default to allday, unless there is a preset value:
+//  domForOne(form, '.pfy-elem-wrapper.pfy-cal-allday', el => {
+//    const presetVal = el.dataset.preset;
+//    console.log('preset: ' + presetVal);
+//    if (typeof presetVal !== 'undefined') {
+//      if (presetVal === 'false' || !presetVal) {
+//        allday = false;
+//      }
+//    }
+//  })
 
   if (allday) {
     console.log('is allday');

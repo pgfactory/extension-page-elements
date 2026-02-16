@@ -167,7 +167,7 @@ return function ($args = '')
             'scriptInjectionFilter' =>	['Activates a filter against script injection attacks. '.
                 'Example: "`<script>alert(\'malicious code\')</script>`".<br>Caution: only disable in justified cases!', true],
 
-            'dbOptions' =>	['[{options}] Provide auxiliary options to DataSet class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
+            'dbOptions' =>	['[{options}] Provide auxiliary options to DataStore class, e.g. "dbOptions: {masterFileRecKeySort: true}".', []],
 
             'output' =>	['Option to control split syntax rendering: <br>'.
                 '1) ``false`` to define form without output.<br>'.

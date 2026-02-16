@@ -5,7 +5,7 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
-use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\Data2DSet as Data2DSet;
 use PgFactory\PageFactory\TransVars;
@@ -915,14 +915,15 @@ EOT;
      * @return void
      * @throws \Exception
      */
-    private function archive($key) {
-        $dataRec = $this->data2Dset->find($key);
+    private function archive($key)
+    {
         // in case data was empty and we added an empty rec, remove it again here:
-        if ($dataRec) {
-            $rec = $dataRec->data();
-            $dataRec->remove();
-            $this->archiveDb->addRec($rec);
+        $rec = $this->data2Dset->getRec($key);
+        if (!$rec) {
+            return;
         }
+        $this->data2Dset->deleteRec($key);
+        $this->archiveDb->addRec($rec);
     } // archive
 
 
@@ -1059,7 +1060,7 @@ EOT;
         if ($archiveMode) {
             $archiveFile = $this->file;
             $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
-            $this->archiveDb = new DataSet($archiveFile);
+            $this->archiveDb = new DataStore($archiveFile);
             $msg = '{{ pfy-form-rec-archived }}';
         }
         if ($keysSelected) {
@@ -1069,7 +1070,7 @@ EOT;
                         if ($archiveMode) {
                             $this->archive($key);
                         } else {
-                            $this->data2Dset->remove($key);
+                            $this->data2Dset->deleteRec($key);
                         }
                     }
                 }
@@ -1289,12 +1290,6 @@ EOT;
                 $this->tableHeaders = $this->parseArrayArg('tableHeaders');
             }
             if (is_numeric(array_keys($this->tableHeaders)[0])) {
-//??? => check with Forms
-//                $tableHeaders = [];
-//                foreach ($this->tableHeaders as $str) {
-//                    $tableHeaders[str_replace('-', '_', $str)] = $str;
-//                }
-//                $this->tableHeaders = $tableHeaders;
                 $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
             }
 

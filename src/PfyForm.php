@@ -84,7 +84,7 @@ const PFY_FORM_OPTIONS = [
         'dontPrint' => [],
     ],
     'dbOptions' => [
-        'keepDataDuration' => false, // -> use DataSet default
+        'keepDataDuration' => false, // -> use DataStore default
         'keepDataOnField' => false,
         'masterFileRecKeyType' => 'index',
         'includeMeta' => true,
@@ -2529,7 +2529,7 @@ EOT;
         if (is_bool($this->file)) {
             return false;
         }
-        $this->db = new DataSet($this->file, $this->formOptions['dbOptions']);
+        $this->db = new DataStore($this->file, $this->formOptions['dbOptions']);
 
         // remember db-file for use by ajax_server.php, if user is form-admin:
         if ($this->isFormAdmin) {
@@ -3079,7 +3079,7 @@ EOT;
         $tableOptions += PFY_FORM_OPTIONS['tableOptions'];
 
         // short hand 'editData: true':
-        if ($this->formOptions['editData'] === true) {
+        if ($this->formOptions['editData'] === true && !$tableOptions['tableButtons']) {
             $tableOptions['tableButtons'] = 'delete,download';
         }
         if (!isset($tableOptions['permission'])) {

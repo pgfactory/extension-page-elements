@@ -3,7 +3,6 @@
 namespace PgFactory\PageFactoryElements;
 
 use Kirby\Exception\Exception;
-use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;

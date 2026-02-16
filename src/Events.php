@@ -14,7 +14,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
-use PgFactory\PageFactory\DataSet as DataSet;
+use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use RRule\RRule;
@@ -22,7 +22,7 @@ use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\loadFile;
 
-class Events extends DataSet
+class Events extends DataStore
 {
     public $filetime;
 

@@ -11,8 +11,7 @@ use Kirby\Http\Url;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
-use PgFactory\PageFactory\DataSet;
-use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\DataStore;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\mylog;
 
@@ -80,7 +79,7 @@ class AjaxHandler
             self::handleCalendarRequests();
             unset($_GET['calendar']);
         }
-
+//ToDo
         if (isset($_GET['writable'])) {
             self::handleWritableWidgetRequests();
             unset($_GET['writable']);
@@ -125,16 +124,10 @@ class AjaxHandler
      */
     private static function lockRec(string $recKey): void
     {
-        $rec = self::findRec($recKey);
-        if ($rec) {
-            try {
-                $rec->lock();
-                exit('"ok"');
-            } catch (\Exception $e) {
-                exit('"rec locked"');
-            }
-        } else {
-            exit('"recKey unknown"');
+        $db = self::openDb();
+        $res = $db->lockRec($recKey);
+        if (!$res) {
+            exit("\"failed to lock rec '$recKey'\"");
         }
     } // lockRec
 
@@ -145,12 +138,10 @@ class AjaxHandler
      */
     private static function unlockRec(string|bool $recKey): void
     {
-        $rec = self::findRec($recKey);
-        if ($rec) {
-            $rec->unlock();
-            exit('"ok"');
-        } else {
-            exit('"recKey unknown"');
+        $db = self::openDb();
+        $res = $db->unlockRec($recKey);
+        if (!$res) {
+            exit("\"failed to unlock rec '$recKey'\"");
         }
     } // unlockRec
 
@@ -172,58 +163,52 @@ class AjaxHandler
      */
     private static function getRec(string $recKey): void
     {
-        $rec = self::findRec($recKey);
+        $rec = self::getDataRec($recKey);
         if (!$rec) {
             exit('"rec not found"');
         }
-        // lock record, if requested:
-        if (isset($_GET['lock'])) {
-            if ($rec->lock(blocking: true)) {
-            } else {
-                // rec is locked -> report back:
-                exit('"locked"');
-            }
-        }
-
-        // get data rec:
-        $recData = $rec->data();
-        if ($rec->isLocked()) {
-            $recData['_state'] = 'locked';
-        }
-
         if (isset($_GET['retainData'])) {
             $formInx = $_GET['retainData'];
-            $recData['_reckey'] = $recKey;
-            Utils::setSessionVar("form-$formInx", $recData);
+            Utils::setSessionVar("form-$formInx", $rec);
         }
 
+        unset($rec[PFY_DB_METAREC_KEY]);
         // avoid sending values for password fields (even though they are only a hash):
         // Note: at this point we only have the field name, not the actual type, so it's a best guess.
-        array_walk($recData, function (&$v, $k){
+        array_walk($rec, function (&$v, $k){
             $v = str_contains($k, 'passwor') ? '' : $v;
         });
-        exit(json_encode($recData));
+        exit(json_encode($rec));
     } // getRec
 
 
-    /**
-     * @param string $recKey
-     * @return mixed
-     * @throws \Exception
-     */
-    private static function findRec(string $recKey): mixed
+    private static function getDataRec(string $recKey, $includeMeta = true): mixed
     {
         if (!$recKey) {
             exit('"recKey unknown"');
         }
 
         $db = self::openDb();
-        return $db->find($recKey);
-    } // findRec
+
+        // lock record, if requested:
+        if (isset($_GET['lock'])) {
+            if (!$db->lockRec($recKey)) {
+                // rec is locked -> report back:
+                exit('"locked"');
+            }
+        }
+
+        $recKey =  $db->find($recKey);
+        $rec = $db->getRec($recKey, includeMeta: $includeMeta);
+        if (!$rec) {
+            exit('"rec not found"');
+        }
+        return $rec;
+    } // getDataRec
 
 
     /**
-     * @return object|DataSet
+     * @return object|DataStore
      * @throws \Exception
      */
     private static function openDb(string $masterFileRecKeyType = 'index'): object
@@ -232,11 +217,10 @@ class AjaxHandler
             return self::$db;
         }
         $file = kirby()->session()->get(self::$sessDbFileKey, false);
-        // mylog("OpenDB: file = '$file'");
         if (!$file) {
             exit('"Error: file unknown"');
         }
-        $db = new DataSet($file, [
+        $db = new DataStore($file, [
             'masterFileRecKeyType' => $masterFileRecKeyType,
             'obfuscateRecKeys' => true,
         ]);
@@ -282,8 +266,7 @@ class AjaxHandler
     {
         $recKey = get('delete');
         $db = self::openDb();
-        $dataRec = $db->find($recKey);
-        $dataRec->delete(true);
+        $db->deleteRec($recKey, flush:true);
         mylog("Rec $recKey deleted");
         return '"ok"';
     } // deleteRec
@@ -296,10 +279,9 @@ class AjaxHandler
     private static function duplicateRec(): string
     {
         $recKey = get('duplicate');
-        $db = self::openDb();
-        $dataSet = $db->find($recKey);
-        $rec = $dataSet->data();
+        $rec = self::getDataRec($recKey);
         $recKey = createHash();
+        $db = self::openDb();
         $db->addRec($rec, true, $recKey);
         mylog("Rec $recKey duplicated");
         return '"ok"';
@@ -455,25 +437,25 @@ class AjaxHandler
         }
 
         $recKey = $_GET['modifyRec'];
-        $rec = self::findRec($recKey);
-        if (!$rec) {
-            return '"rec not found"';
+        $db = self::openDb();
+        if ($db->isRecLocked($recKey)) {
+            return '"record is locked"';
         }
 
-        if (!$rec->isLocked()) {
-            if (isset($_GET['start'])) {
-                $rec->update('start', $_GET['start'], false);
-            }
-            if (isset($_GET['end'])) {
-                $end = $_GET['end'];
-                if (strlen($end) < 16) {
-                    // case allday event -> need to fix end date::
-                    $end = date('Y-m-d', strtotime($end) - 1);
-                }
-                $rec->update('end', $end, false);
-            }
-            $rec->flush();
+        $rec = self::getDataRec($recKey);
+
+        if (isset($_GET['start'])) {
+            $rec['start'] = $_GET['start'];
         }
+        if (isset($_GET['end'])) {
+            $end = $_GET['end'];
+            if (strlen($end) < 16) {
+                // case allday event -> need to fix end date::
+                $end = date('Y-m-d', strtotime($end) - 1);
+            }
+            $rec['end'] = $end;
+        }
+        $db->updateRec($rec, $recKey, true);
         return '"ok"';
     } // modifyCalRec
 
@@ -485,7 +467,7 @@ class AjaxHandler
     private static function getCalRec(): array
     {
         $recKey = $_GET['getCalRec'];
-        $rec = self::findRec($recKey);
+        $rec = self::getDataRec($recKey);
         if (!$rec) {
             exit('"rec not found"');
         }
@@ -508,7 +490,7 @@ class AjaxHandler
             define('PFY_LOGS_PATH', URL::index() . '/site/logs/');
         }
         mylog("Writable update: '$datasrcinx:$name' <= '$value'", 'writable-log.txt');
-        $db = self::openDb('_origRecKey');
+        $db = self::openDb();
         $data = $db->data();
         if (isset($data[$datasrcinx])) {
             $rec = &$data[$datasrcinx];

@@ -11,7 +11,7 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
-use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory as PageFactory;
 use PgFactory\PageFactory\PfyForm;
@@ -406,7 +406,7 @@ EOT;
     private function handleICal(): void
     {
         if (($this->options['iCal']??null) !== null) {
-            $db = new DataSet($this->source);
+            $db = new DataStore($this->source);
             $events = $db->data();
             if ($this->options['iCal']['saveAllToFile']??false) {
                 $icalLink = $this->getICalLink($events);
@@ -559,7 +559,7 @@ EOT;
      */
     private function checkAndFixDB(): mixed
     {
-        $db = new DataSet($this->source,[
+        $db = new DataStore($this->source,[
             'masterFileRecKeyType' => 'index',
             'obfuscateRecKeys' => true,
             'keepDataDuration' => $this->options['keepDataDuration']??false,

@@ -2,7 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
-use PgFactory\PageFactory\DataSet;
+use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\mylog;
@@ -209,7 +209,7 @@ class EnlistData
      */
     public function prepareWidgetDescr(int|string $widgetKey, array $widgetOptions): array
     {
-        $widgetDescr = $this->db->getRecData($widgetKey);
+        $widgetDescr = $this->db->getRec($widgetKey);
         if ($widgetDescr) {
             if (!isset($widgetDescr['slots'])) {
                 $widgetDescr['slots'] = [];
@@ -335,10 +335,10 @@ class EnlistData
     {
         $file = $this->options['file'];
         $this->dataFile = $file;
-        $this->db = new DataSet($file, [
+        $this->db = new DataStore($file, [
             'masterFileRecKeyType' => 'origKey',
             'masterFileRecKeySort' => true,
-            'masterFileRecKeySortOnElement' => '_origRecKey',
+            'masterFileRecKeySortOnElement' => '_origRecKey',//???
             'recKeyType' => '_reckey',
         ]);
 
