@@ -79,7 +79,7 @@ class AjaxHandler
             self::handleCalendarRequests();
             unset($_GET['calendar']);
         }
-//ToDo
+
         if (isset($_GET['writable'])) {
             self::handleWritableWidgetRequests();
             unset($_GET['writable']);
@@ -222,7 +222,6 @@ class AjaxHandler
         }
         $db = new DataStore($file, [
             'masterFileRecKeyType' => $masterFileRecKeyType,
-            'obfuscateRecKeys' => true,
         ]);
         self::$db = $db;
         return $db;
@@ -491,18 +490,11 @@ class AjaxHandler
         }
         mylog("Writable update: '$datasrcinx:$name' <= '$value'", 'writable-log.txt');
         $db = self::openDb();
-        $data = $db->data();
-        if (isset($data[$datasrcinx])) {
-            $rec = &$data[$datasrcinx];
-            $rec[$name] = $value;
-        } else {
-            $data[$datasrcinx] = [$name => $value];
-        }
-        $db->write($data);
 
-        // read back stored value:
         $data = $db->data();
-        $value = $data[$datasrcinx][$name]??'';
+        $rec = &$data[$datasrcinx];
+        $rec[$name] = $value;
+        $db->updateRec($rec, $datasrcinx, flush: true);
         $res = json_encode([$name => $value]);
         exit($res);
     } // handleWritableWidgetRequests
