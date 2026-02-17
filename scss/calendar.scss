@@ -223,6 +223,10 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     width: 7.5em;
   }
 
+  .fc-event-selected::after, .fc-event:focus::after {
+    // hack to suppress scrollbars and lasting dimming when opening context menu:
+    display: none;
+  }
 } // pfy-default-styling
 
 
