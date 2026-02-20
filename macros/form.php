@@ -246,7 +246,7 @@ Syntax: ``field-name: { field arguments, \... }``
 `text, password, email, textarea, hidden, url,
 date, datetime (resp. datetime-local), time, month,
 number, integer, range, tel, 
-radio, checkbox, dropdown, select, multiselect, upload, multiupload, bypassed, 
+radio, checkbox, dropdown, select, multiselect, menuselect, upload, multiupload, bypassed, 
 button, reset, submit, cancel`
 
 Default type: **text**  
@@ -285,6 +285,25 @@ radio/checkbox/dropdown/select/multiselect:
 : - preset          >> [string] initially selected option
 : - splitOutput     >> [bool] If true, table of "showData" output shows row for each option 
 : - layout          >> [horizontal,vertical]
+
+menuselect:
+: - id         >> Id applied to the outer wrapper
+: - attrib     >> Use attrib to define reference to controller, e.g. "attrib: 'data-controlled-by:#controller-id'"
+: - label      >> Defines the outer widget label, e.g. 'Menu Choice:'
+: - max        >> Identifies the field controlling the max number of visitors per sign-up, e.g. 'Count', 
+: - options    >> Defines the options, e.g. 'Meat: meat dish, Vegi: Vegetarian meal, Salad: Salad plate',
+
+    Count:{ type:integer, min:1, max:3, preset:1, attrib:'aria-controls:#menu'} \// controlling field
+    Menu: {
+        id:         menu \// id of outer widget -> to refer from controlled field
+        attrib:     'data-controlled-by:#count' \// id of controlling field
+        type:       menuselect, 
+        label:      'Menu Choice:', \// Outer label of widget
+        max:        '=Count', \// where 'Count is name of controlling field
+        options:    'Meat: meat dish, Vegi: Vegetarian meal, Salad: Salad plate',
+        preset:     0 
+    },
+
 
 upload/multiupload: (currently only image files supported)
 : - maxMegaByte     >> [integer] allowed file size in MB
