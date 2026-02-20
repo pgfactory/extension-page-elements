@@ -58,7 +58,16 @@ pfy-form-owner-notification-message:
 
 
 
-#
+
+pfy-form-owner-notification-maxcount-subject:
+  de: 'Formular {{ pfy-form-response-label }} geschlossen auf %pageUrl%'
+  _:  'Form {{ pfy-form-response-label }} closed on %pageUrl%'
+
+pfy-form-owner-notification-maxcount-message:
+  de: 'Die maximale Anzahl von Anmeldungen wurde erreicht.\nDas Formular %pageUrl% wurde geschlossen.'
+  _:  'Max number of sign-ups reached.\nForm %pageUrl% is closed now.'
+
+
 pfy-form-required-info:
   de: '<span class="pfy-form-required-marker">*</span> Erforderliche Eingaben'
   _:  '<span class="pfy-form-required-marker">*</span> Required input'

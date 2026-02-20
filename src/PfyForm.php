@@ -28,7 +28,7 @@ const PFY_FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
     'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
-    'event,address,'.
+    'event,address,menuselect,'.
     'button,reset,submit,cancel,@import,literal,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
@@ -850,8 +850,12 @@ class PfyForm extends Form
             $type = ($rec['type']??false);
             if ($type === 'event') {
                 $this->composeEventElement($name, $rec);
+
             } elseif ($type === 'address') {
                 $this->composeAddressElement($name, $rec);
+
+            } elseif ($type === 'menuselect') {
+                $this->composeMenuSelectElement($name, $rec);
             }
         }
     } // handleComposedFields
@@ -943,6 +947,73 @@ class PfyForm extends Form
             $this->composeRruleElement($name, $rec);
         }
     } // composeEventElement
+
+
+    /**
+     * @param int|string $name
+     * @param array $rec
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    private function composeMenuSelectElement(int|string $name, array $rec): void
+    {
+        $menuselectElements = [];
+        $required = ($rec['required']??false);
+        $label = $rec['label']??$name;
+
+        if ($id = ($rec['id']??'')) {
+            unset($rec['id']);
+        }
+        $preset = ($rec['preset']??'');
+        $max = ($rec['max']??'');
+        $attrib = ($rec['attrib']??'');
+        $controlledBy = '';
+        if (preg_match('/data-controlled-by:([.#][\w-]+)/', $attrib, $m)) {
+            $controlledBy = $m[1];
+        }
+        if ($infos = ($rec['infos']??($rec['info']??''))) {
+            $infos = parseArgumentStr($infos);
+        }
+        if ($descriptions = ($rec['descriptions']??($rec['description']??''))) {
+            $descriptions = parseArgumentStr($descriptions);
+        }
+
+        $menuElems = $rec['options'];
+        $menuElems = parseArgumentStr($menuElems);
+
+        $i = 0;
+        foreach ($menuElems as $optName => $optLabel) {
+            $menuselectElements[$optName] = [
+                'type' => 'integer',
+                'label' => $optLabel,
+                'menulabel' => $label,
+                'class' => 'pfy-menuselect-elem',
+                'required' => $required,
+                'min' => 0,
+            ];
+            if ($id) {
+                $menuselectElements[$optName]['groupid'] = $id;
+            }
+            if ($preset !== false) {
+                $menuselectElements[$optName]['preset'] = $preset;
+            }
+            if ($max) {
+                $menuselectElements[$optName]['max'] = $max;
+            }
+            if ($controlledBy) {
+                $menuselectElements[$optName]['controlledBy'] = $controlledBy;
+            }
+            if ($info = ($infos["_anonInx$i"]??($infos[$i]??''))) {
+                $menuselectElements[$optName]['info'] = $info;
+            }
+            if ($description = ($descriptions["_anonInx$i"]??($descriptions[$i]??''))) {
+                $menuselectElements[$optName]['description'] = $description;
+            }
+            $i++;
+        }
+
+        $this->formElements = array_splice_associative($this->formElements, $name, 1, $menuselectElements);
+    } // composeMenuSelectElement
 
 
     /**
@@ -1206,24 +1277,8 @@ class PfyForm extends Form
      * @param string $name
      * @return string
      */
-    protected function renderFormElement(string $name): string
+    protected function renderFormElement(string $name, array $rec): string
     {
-        if (isset($this->formElements[$name])) {
-            $rec = $this->formElements[$name];
-        } else {
-            // find rec with this $name:
-            foreach ($this->formElements as $rec) {
-                if ($rec['name'] === $name) {
-                    $found = true;
-                    break;
-                }
-            }
-            // PHP 8.4+ alternative:
-            //            $rec = array_find($this->formElements, function ($elem) use ($name) {
-            //                return $elem['name'] === $name;
-            //            });
-        }
-
         // special case: type literal -> just output literal
         if (($rec['type']??false) === 'literal') {
             return $rec['html']??'';
@@ -1239,6 +1294,14 @@ class PfyForm extends Form
                 $elem = $this['_'.$netteFormElemName];
             } catch (\Exception $e) {
                 throw new \Exception("Error: form element '{$netteFormElemName}' unknown to Nette Forms.");
+            }
+        }
+
+        if ($attribs = ($rec['attribs']??($rec['attrib']??false))) {
+            $attribs = explodeTrim(',', $attribs);
+            foreach ($attribs as $attrib) {
+                list($key, $val) = explodeTrim(':', $attrib);
+                $elem->setHtmlAttribute($key, $val);
             }
         }
 
@@ -1374,7 +1437,6 @@ class PfyForm extends Form
 $html
 </div>
 EOT;
-
 
         } elseif (is_array($dataVal)) {
             $html = $this->renderFormElement_choiceTypes($elem, $type, $class, $input, $attr, $label, $dataVal);
@@ -1697,12 +1759,63 @@ EOT;
         }
 
         $html = '';
+        $inGroup = false;
         foreach ($this->formElements as $name => $rec) {
-            $html .= $this->renderFormElement($name);
+            $elemHtml = $this->renderFormElement($name, $rec);
+
+            if (!$inGroup && ($rec['menulabel'] ?? false)) {
+                $groupLabel = $rec['menulabel'];
+                $id = ($rec['groupid']??false) ? " id='{$rec['groupid']}'" : '';
+                if ($max = ($rec['max']??'')) {
+                    $max = ltrim($max, '=$');
+                    $max = " data-max='$max'";
+                }
+                if ($controlledBy = $rec['controlledBy']??false) {
+                    $max .= " data-controlled-by='$controlledBy'";
+                }
+                $inGroup = true;
+                $elemHtml = $this->injectRadioInput($elemHtml, $groupLabel);
+                $cls = translateToClassName($groupLabel);
+                $html .= <<<EOT
+<!-- ====== pfy-form-field-group -->
+
+<div$id class="pfy-form-field-group pfy-form-menuselect-group pfy-form-group-$cls"$max>
+    <div class="pfy-form-field-group-label">$groupLabel</div>
+$elemHtml
+
+EOT;
+
+
+            } elseif ($inGroup && ($rec['menulabel'] ?? false)) {
+                $html .= $this->injectRadioInput($elemHtml, $groupLabel);
+
+            } else {
+                if ($inGroup) {
+                    $inGroup = false;
+                    $html .= <<<EOT
+</div> <!-- ====== /pfy-form-field-group -->
+
+EOT;
+                }
+                $html .= $elemHtml;
+            }
         } // loop over formElements
 
         return $html;
     } // renderFormFields
+
+
+    private function injectRadioInput(string $elemHtml, string $groupLabel): string
+    {
+         if (preg_match('/<input.*?name="(.*?)"/', $elemHtml, $m)) {
+             $input = $m[0];
+             $name = $m[1];
+             $cls = translateToClassName($groupLabel);
+             $radio = "<input type='radio' name='__$cls' class='pfy-radio pfy-choice  pfy-horizontal' value='$name'>";
+             $elemHtml = str_replace($m[0], "$radio$input", $elemHtml);
+         }
+        return $elemHtml;
+    } // injectRadioInput
 
 
     /**
@@ -2638,7 +2751,8 @@ EOT;
             $tableOptions['headers'] = $tableOptions['tableHeaders'];
             unset($tableOptions['tableHeaders']);
         }
-        $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames;
+        $tableOptions['headers'] = $tableOptions['headers'] ?: array_keys($fieldNames);
+        // $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames; //??? compatibility?
 
         $file = $this->file;
         if ($tableOptions['file']??false) {
@@ -2748,25 +2862,65 @@ EOT;
      */
     private function checkMaxCount(array $dataRec = []): bool
     {
-        if ($dataRec && ($maxCountOn = $this->formOptions['maxCountOn'])) {
-            $pending = $dataRec[$maxCountOn]??1;
+        if ($dataRec) {
+            if ($maxCountOn = $this->formOptions['maxCountOn']) {
+                $pending = $dataRec[$maxCountOn]??1;
+            } else {
+                $pending = 1;
+            }
         } else {
-            $pending = 1;
+            $pending = 0;
         }
         list($available, $maxCount, $currCount) = $this->getAvailableAndMaxCount();
         if ($maxCount) {
-            if ($pending) {
-                $currCount += ($pending - 1);
-            }
-            if ($currCount >= $maxCount) {
-                if (!$this->isFormAdmin) {
-                    if ($maxCountNotice = ($this->formOptions['maxCountNotice']??false)) {
-                        $this->maxCountExceeded = $maxCountNotice;
-                    } else {
-                        $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+            if ($dataRec) {
+                $currCount += $pending;
+                // check if maxCount exceeded while new data was submitted -> would be a hacking attempt at this point:
+                if ($currCount > $maxCount) {
+                    if (!$this->isFormAdmin) {
+                        if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
+                            $this->maxCountExceeded = $maxCountNotice;
+                        } else {
+                            $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+                        }
                     }
+                }
+
+                // check if maxCount reached -> send warning email:
+                if ($currCount >= $maxCount && !$this->isFormAdmin) {
+                    // send notification to owner:
+                    if ($to = $this->formOptions['ownerNotificationTo']) {
+                        // dev mode -> override $to:
+                        if (PageFactory::$dev && ($mailOverride = kirby()->option('pgfactory.pagefactory.emailDevModeOverride'))) {
+                            $to = $mailOverride;
+                        }
+                        if ($to) {
+                            list($subject, $message) = $this->getEmailComponents([], 'pfy-form-owner-notification-maxcount');
+                            $this->sendMail([
+                                'to' => $to,
+                                'subject' => $subject,
+                                'body' => $message,
+                                'logComment' => 'Notification Mail to Owner',
+                            ]);
+                        }
+                    }
+
                 } else {
                     $this->maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
+                }
+
+            } else {
+                // simple check while no new data is submitted:
+                if ($currCount >= $maxCount) {
+                    if (!$this->isFormAdmin) {
+                        if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
+                            $this->maxCountExceeded = $maxCountNotice;
+                        } else {
+                            $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+                        }
+                    } else {
+                        $this->maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
+                    }
                 }
             }
         }
@@ -2929,8 +3083,6 @@ EOT;
             }
             $dataRec += $eventData;
         }
-        $dataRec['hostUrl'] = PFY_HOST_URL;
-        $dataRec['pageUrl'] = PFY_PAGE_URL;
         return $dataRec;
     } // prepareMailData
 

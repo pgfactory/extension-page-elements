@@ -266,6 +266,62 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
   }
 
+  .pfy-form-menuselect-group {
+    position: relative;
+
+    > div {
+      display: inline-block;
+    }
+
+    .pfy-form-field-group-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
+      width: calc(var(--pfy-form-label-width, 6em) - 2px);
+    }
+
+    > .pfy-menuselect-elem {
+      display: flex;
+      flex-direction: row-reverse;
+      gap: 0.5em;
+      margin-left: calc(var(--pfy-form-label-width, 6em) + 0.25em);
+      outline-offset: 1px;
+
+      .pfy-label-wrapper {
+        width: calc(100% - 1em);
+      }
+    }
+
+    .pfy-input-wrapper {
+      width: 1em;
+      padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 4);
+    }
+    input.pfy-integer {
+        display: none;
+      }
+
+        &.pfy-multiple-enabled {
+          .pfy-label-wrapper {
+            width: calc(100% - 3em);
+          }
+
+          .pfy-menuselect-elem {
+            .pfy-input-wrapper {
+              width: 3em;
+            }
+
+            input.pfy-integer {
+              display: inline-block;
+            }
+
+            input.pfy-radio {
+              display: none;
+            }
+          }
+        }
+  } // .pfy-form-menuselect-group
+
   .pfy-elem-wrapper.reversed:not(.pfy-single-checkbox) .pfy-choice-wrapper {
     display: inline-flex;
     flex-direction: row-reverse;

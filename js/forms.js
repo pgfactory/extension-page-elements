@@ -11,6 +11,7 @@ const pfyFormsHelper = {
   formInitialized: false,
   formRecLocking: (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking,
   recLocked: false,
+  menuSelectWrapperEl: false,
 
   init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
@@ -52,6 +53,7 @@ const pfyFormsHelper = {
     if (!this.formInitialized) {
       this.setupTriggers();
       this.setupRevealHandlers();
+      this.setupMenuSelectWidget(form);
       this.formInitialized = true;
       //console.log('forms initialized');
     }
@@ -98,6 +100,9 @@ const pfyFormsHelper = {
       parent.categoryChangeMonitorHandler(ev);
       parent.revealHandler(ev.target);
       parent.repetitionChangeHandler(ev);
+      if (this.menuSelectWrapperEl) {
+        parent.menuSelectChangeHandler(ev);
+      }
     });
 
     document.addEventListener('keydown', (ev) => {
@@ -1071,6 +1076,20 @@ const pfyFormsHelper = {
       input.value = '******';
     });
 
+    domForAll('.pfy-form-menuselect-group', menuselectEl => {
+      // check all menuselect groups:
+      if (menuselectEl.classList.contains('pfy-multiple-enabled')) {
+        return;
+      }
+      // if in radio mode, transfer checked values to integer fields:
+      domForAll(menuselectEl, 'input.pfy-radio', radioEl => {
+        const val = radioEl.checked ? 1 : 0;
+        domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
+          integerEl.value = val;
+        });
+      });
+    })
+
     const data = new FormData(clone);
     const dataStr = JSON.stringify(Array.from(data.entries()));
     serverLog('Browser submits: ' + dataStr, 'form-log.txt');
@@ -1225,6 +1244,17 @@ const pfyFormsHelper = {
   }, // initSpinner
 
 
+  setupMenuSelectWidget(form) {
+    domForOne(form, '.pfy-form-menuselect-group', (el) => {
+      this.menuSelectWrapperEl = el;
+      const maxRefName = el.dataset.max;
+      domForOne(form, `[name=${maxRefName}]`, el => {
+        this.menuSelectRefEl = el;
+      })
+    })
+  }, // setupMenuSelectWidget
+
+
   setTriggerOnContinueLink()  {
     const continueLinks = document.querySelectorAll('.pfy-form-continue-same');
     if (continueLinks) {
@@ -1266,6 +1296,65 @@ const pfyFormsHelper = {
       rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
     }
   }, // repetitionChangeHandler
+
+
+  // every time the menuSelect controller or one of the menuselect-group's children changes,
+  // we need to update the max value of each option:
+  menuSelectChangeHandler(ev) {
+    if (ev.target !== this.menuSelectRefEl && !ev.target.closest('.pfy-form-menuselect-group')) {
+      return;
+    }
+
+    const targetId = ev.target.getAttribute('aria-controls');
+    const groupEl = targetId ? document.querySelector(targetId) : ev.target.closest('.pfy-form-menuselect-group');
+    const maxVal = parseInt(this.menuSelectRefEl.value);
+
+    let currSum = 0;
+    if (!groupEl) {
+      alert('pfyFormsHelper.menuSelectChangeHandler: groupEl not found!');
+    }
+
+    // switch between radio and integer input:
+    if (maxVal === 1) {
+      // switch to radio:
+      if (groupEl.classList.contains('pfy-multiple-enabled')) {
+        groupEl.classList.remove('pfy-multiple-enabled');
+        domForEach(groupEl, 'input.pfy-integer', (integerEl) => {
+          const val = integerEl.value !== '0';
+          domForOne(integerEl, '^.pfy-input-wrapper input.pfy-radio', (radioEl) => {
+            radioEl.checked = val;
+          });
+        })
+      }
+      return;
+    }
+
+    // switch to integer:
+    if (!groupEl.classList.contains('pfy-multiple-enabled')) {
+      // initialize integer inputs after switching from radio:
+      domForEach(groupEl, 'input.pfy-radio', (radioEl) => {
+        const val = radioEl.checked ? 1 : 0;
+        domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
+          integerEl.value = val;
+        });
+      })
+    }
+    groupEl.classList.add('pfy-multiple-enabled');
+    groupEl.dataset.max = currSum;
+
+    // determine sum of existing choices:
+    domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
+      currSum += inputEl.value ? parseInt(inputEl.value) : 0;
+    })
+    const available = maxVal - currSum;
+
+    // update all integer inputs:
+    domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
+      const currVal = inputEl.value ? parseInt(inputEl.value) : 0;
+      inputEl.value = currVal;
+      inputEl.setAttribute('max', currVal + available);
+    })
+  }, // menuSelectChangeHandler
 
 
   // used by calendar.js:
