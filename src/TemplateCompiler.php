@@ -243,6 +243,9 @@ class TemplateCompiler
      */
     public static function basicCompileTemplate(string $template, array $vars): string
     {
+        $vars['hostUrl'] = PFY_HOST_URL;
+        $vars['pageUrl'] = PFY_PAGE_URL;
+
         foreach ($vars as $key => $value) {
             if (is_string($value)) {
                 $template = str_replace('%!' . $key . '!%', shieldStr($value, 'immutable'), $template);
