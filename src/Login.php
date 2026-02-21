@@ -390,8 +390,7 @@ EOT;
      */
     private static function checkUsersDefined(): bool
     {
-        $users = kirby()->users();
-        if (!$users->data()) {
+        if (!kirby()->users()->count()) {
             if (isLocalhost()) {
                 throw new \Exception('Warning: no users defined yet');
             } else {
