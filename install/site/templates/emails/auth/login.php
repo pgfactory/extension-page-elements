@@ -47,6 +47,7 @@ $webmasterEmail = PageFactory::$webmasterEmail;
 if (!$webmasterEmail) {
   $webmasterEmail = kirby()->option('pgfactory.pagefactory.webmaster_email') ?: '';
 }
+
 $code = str_replace(' ', '', $code);
 
 $text = str_replace(
