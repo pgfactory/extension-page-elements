@@ -268,8 +268,9 @@ EOT;
                 reloadAgent(self::$nextPage, $str);
 
             } catch (\Exception $e) {
-                mylog("Login Code '$code' failed", PFY_LOGIN_LOG_FILE);
-                reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
+                $errMsg = $e->getMessage();
+                mylog("Login Code '$code' failed ($errMsg)", PFY_LOGIN_LOG_FILE);
+                reloadAgent(self::$nextPage, '{{ pfy-login-failed }} '.$errMsg);
             }
 
         } elseif ($email = self::getUsersEmail($data)) {

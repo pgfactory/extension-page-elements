@@ -70,9 +70,7 @@ $text = str_replace(
 if (Permission::isLocalhost()) {
     $popup = "<pre>$text</pre>";
     Page::setPopup($popup, 'Login Code E-Mail');
-}
-
-if (PageFactory::$dev??false) {
     mylog("Login email prepared with code '$code'.", 'login-log.txt');
 }
+
 echo $text;
