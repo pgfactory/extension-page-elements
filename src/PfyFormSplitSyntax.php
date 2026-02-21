@@ -78,7 +78,7 @@ class PfyFormSplitSyntax extends PfyForm
                     throw new \Exception("Split-Form element unknown: '$uptoWhich'");
                 }
                 $name = $names[$i];
-                $html .= $this->renderFormElement($name);
+                $html .= $this->renderFormElement($name, $this->formElements[$name]);
             }
         }
 
