@@ -458,7 +458,7 @@ EOT;
 
 EOT;
             $str = TransVars::translate($str);
-            Utils::$loginButton .= $str;
+            Utils::$loginButton = $str;
         }
         TransVars::setVariable('pfy-onboardingaid', $str);
         TransVars::setVariable('onboardingaid', $str);
