@@ -2904,9 +2904,6 @@ EOT;
                             ]);
                         }
                     }
-
-                } else {
-                    $this->maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
                 }
 
             } else {
