@@ -2446,7 +2446,7 @@ EOT;
 
         // perform script injection check on overy data element:
         foreach ($dataRec as $name => $value) {
-            if ($value && is_string($value) && str_contains($value, '<')) {
+            if ($value && is_string($value) && preg_match('/<(?!br>)/', $value)) {
                 $dataRec[$name] = str_replace(['<', '>'], ['&lt;', '&gt;'], $value);
                 mylog("!!! Security check: possible script injection detected in '$name':\n\"$value\"");
             }
