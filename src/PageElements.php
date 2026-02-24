@@ -69,7 +69,6 @@ const PE_PATH_DEFINITIONS = [
     ],
     'REVEAL' => [
         PE_ASSETS_PATH.'js/reveal.js',
-        PE_ASSETS_PATH.'css/-reveal.css',
     ],
     'LOGIN' => [
         PE_ASSETS_PATH.'js/login.js',

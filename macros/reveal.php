@@ -10,12 +10,13 @@ return function ($argStr = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'label' => ['Text that prepresents the controlling element.', false],
+            'controller' => ['[css selector] CSS selector of ', false],
             'target' => ['[css selector] CSS selector of the DIV that shall be revealed, e.g. "#box"', false],
+            'label' => ['Text that prepresents the controlling element.', ''],
             'class' => ['(optional) A class that will be applied to the controlling element.', false],
-            'symbol' => ['[\'plus-minus\'|character(s)] If defined, the symbol on the left hand side of the label '.
-                'will be modified. (currently just "triangle" implemented.)', false],
-            'symbol-rotation' => ['[deg2|deg1,deg2] Defines rotation angle of icon for end state (resp. start and end state).', false],
+            'icon' => ['[character(s)] If defined, the symbol on the left hand side of the label '.
+                'will be modified. e.g. "＋,—".', false],
+            'iconRotation' => ['[deg2|deg1,deg2] Defines rotation angle of icon for end state (resp. start and end state).', '0deg,90deg'],
             'frame' => ['(true, class) If true, class "pfy-reveal-frame" is added, painting a frame around the element by default.', false],
             'shadow' => ['If true, adds a shadow to make it look like opening a drawer.', null],
         ],
@@ -34,6 +35,25 @@ Displays a clickable label. When clicked, opens and closes the target element sp
 - ``\--pfy-reveal-container-border``  (e.g. ``\--pfy-reveal-container-border: 1px solid gray;``)
 - ``\--pfy-reveal-container-padding`` (e.g. ``\--pfy-reveal-container-padding: 1em;``)
 
+## Example
+Without separate controller element:
+
+    \{{ reveal(target: "#box", **label: "Show"**) }}
+    
+    @@@ #box
+    This is the target element.
+    @@@
+
+or with a form element to control the target:
+
+    \{{ reveal(**controller: "#chbx"**, target: "#box2") }}
+    
+    <input type='checkbox' id='chbx'> <label for='chbx'>Show</label>
+    
+    @@@ #box2
+    This is the target element.
+    @@@
+
 EOT,
     ];
 
@@ -41,74 +61,20 @@ EOT,
     if (is_string($str = TransVars::initMacro(__FILE__, $config, $argStr))) {
         return $str;
     } else {
-        list($args, $sourceCode, $inx, $funcName) = $str;
-        $out = $sourceCode;
+        list($options, $sourceCode, $inx, $funcName) = $str;
     }
 
     // assemble output:
     Assets::addAssets('REVEAL');
 
-    $id = "pfy-reveal-controller-$inx";
-    $class = $args['class'];
-
-    if ($args['frame']) {
-        $class = $class? "$class pfy-reveal-frame": 'pfy-reveal-frame';
-        if ($args['shadow'] !== false) {
-            $args['shadow'] = true;
-        }
-    }
-
-    $deg1 = $deg2 = false;
-    $icon = $args['symbol'];
-    // standard symbol: triangle
-    $iconClosed = '▷';
-    $iconOpen = '▷';
-
-    // 'plus-minus' is second standard symbol:
-    if (str_starts_with($args['symbol'], 'plu')) {
-        $iconClosed = '+';
-        $iconOpen = '–';
-        $deg1 = 0;
-        $deg2 = 180;
-
-    } elseif ($icon) {
-        if (str_contains($icon, ',')) {
-            list($iconClosed, $iconOpen) = explodeTrim(',', $icon);
-        } else {
-            $iconClosed = $icon;
-            $iconOpen = $icon;
-        }
-    }
-
-    if ($args['symbol-rotation']) {
-        $deg1 = $deg2 = $args['symbol-rotation'];
-        if (str_contains($deg1, ',')) {
-            list($deg1, $deg2) = explodeTrim(',', $deg1);
-        }
-    }
-
-    if ($deg1 !== false) {
-        $css = <<<EOT
-#pfy-reveal-controller-$inx::before {
-  transform: rotate( {$deg1}deg );
-}
-#pfy-reveal-controller-$inx:checked::before {
-  transform: rotate( {$deg2}deg );
-}
+    $jsOptions = json_encode($options, JSON_PRETTY_PRINT);
+    $js = <<<EOT
+new RevealAccordion($jsOptions);
 EOT;
-        Page::addCss($css);
-    }
-    if ($args['shadow']) {
-        $class .= ' pfy-target-shadow';
-    }
-    $class = $class? " $class": '';
-
-    $out .= "\n\t<input id='$id' class='pfy-reveal-controller' type='checkbox' ".
-        "data-reveal-target='{$args['target']}' data-icon-closed='$iconClosed' data-icon-open='$iconOpen'>".
-        "\n\t\t<label for='$id'>{$args['label']}</label>\n";
-
-    $out = "\t<div class='pfy-reveal-controller-wrapper-$inx pfy-reveal-controller-wrapper$class'>$out\t</div>\n";
-
-    return $out;
+//    $js = <<<EOT
+//const myAccordion$inx = new RevealAccordion($jsOptions);
+//EOT;
+    Page::addJsReady($js);
+    return $sourceCode;
 };
 

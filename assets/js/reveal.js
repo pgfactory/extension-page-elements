@@ -1,228 +1,202 @@
-/*
- * reveal.js
- *
+/**
+ * RevealAccordion Class
+ * Handles remote-controlled <details> elements and state syncing.
  */
 
-var pfyReveal = {
-  transitionTime: 300,
+console.log('reveal.js');
 
-  initialize: function() {
-    const revealControllers = document.querySelectorAll('input.pfy-reveal-controller');
-    if (revealControllers) {
-      revealControllers.forEach(function (revealController) {
-        pfyReveal.init(revealController);
-        pfyReveal.setupEventHandler(revealController);
+class RevealAccordion {
+  static defaultOptions = {
+    controller: ".pfy-accordion-controlle",
+    target: ".pfy-accordion-target",
+    label: "",
+    class: '',
+    icon: false,
+    iconRotation: '0deg,90deg',
+    frame: false,
+    shadow: false,
+    inx: 1,
+  };
+
+  constructor(customOptions = {}) {
+    this.options = { ...RevealAccordion.defaultOptions, ...customOptions };
+    this.init();
+  }
+
+  /**
+   * Initialize the accordion elements and linking
+   */
+  init() {
+    const controllers = document.querySelectorAll(this.options.controller);
+    const targetDiv = document.querySelector(this.options.target);
+
+    const uid = `remote-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Create the <details> structure
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const summarySpan = document.createElement('span');
+    const bodyWrapper = document.createElement('div');
+
+    details.id = uid;
+    details.className = 'mdp-accordion';
+    if (this.options.class) {
+      details.classList.add(this.options.class);
+    }
+    if (this.options.frame) {
+      details.classList.add('mdp-border');
+      if (typeof this.options.frame === 'string') {
+        details.setAttribute('style', `--pfy-accordion-details-border-color: ${this.options.frame};`);
+      }
+    }
+    if (this.options.shadow) {
+      details.classList.add('pfy-accordion-shadow');
+    }
+    if (this.options.icon) {
+      if (this.options.icon.includes(',')) {
+        const [open, closed] = this.options.icon.split(",");
+        summary.setAttribute('data-icon-open', open.trim());
+        summary.setAttribute('data-icon-closed', closed.trim());
+
+      } else {
+        summary.setAttribute('data-icon-open', this.options.icon);
+        summary.setAttribute('data-icon-closed', this.options.icon);
+      }
+    }
+
+    if (this.options.iconRotation) {
+      if (this.options.iconRotation.includes(',')) {
+        const [closed, open] = this.options.iconRotation.split(",");
+        summary.setAttribute('style', `--pfy-icon-rotation: ${closed.trim()};--pfy-icon-rotation-open: ${open.trim()};`);
+
+      } else {
+        summary.setAttribute('style', `--pfy-icon-rotation: 0deg;--pfy-icon-rotation-open: ${this.options.iconRotation};`);
+      }
+    }
+
+    bodyWrapper.className = 'mdp-accordion-body';
+    summary.setAttribute('tabindex', '-1');
+
+    summarySpan.textContent = this.options.label;
+    summary.appendChild(summarySpan);
+
+    // DOM Manipulation
+    targetDiv.parentNode.insertBefore(details, targetDiv);
+    details.appendChild(summary);
+    bodyWrapper.appendChild(targetDiv);
+    details.appendChild(bodyWrapper);
+
+    // Link controllers to the new ID
+    if (controllers) {
+      controllers.forEach(ctrl => {
+        ctrl.setAttribute('data-controls-details', uid);
+        if (['A', 'BUTTON'].includes(ctrl.tagName)) {
+          ctrl.setAttribute('aria-expanded', 'false');
+          ctrl.setAttribute('role', 'button');
+        }
       });
     }
-  }, // initialize
 
-  init: function(revealController) {
-        var inx = 0;
-        const revealContainerId = revealController.dataset.revealTarget;
-        if (revealContainerId) {
-          const m = revealContainerId.match(/[\d_]*$/);
-          inx = m[0];
-        } else {
-          const par = revealController.parentNode;
-          if (par) {
-            const className = par.className;
-            const m = className.match(/[\d_]*$/);
-            inx = m[0];
-          }
-          if (!inx) {
-            return;
-          }
+    // Initial state sync
+    RevealAccordion.updateDetailsState(details, uid);
+
+    // Attach global listeners only once per page load
+    RevealAccordion.attachGlobalListeners();
+  } // init
+
+
+  /**
+   * Logic to determine if a form element should trigger an "open" state
+   */
+  static isTriggered(el) {
+    const tag = el.tagName;
+    if (tag === 'INPUT') {
+      if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+      return el.value.trim() !== "";
+    }
+    if (tag === 'SELECT') {
+      return el.multiple
+        ? Array.from(el.selectedOptions).some(o => o.value !== "")
+        : el.value !== "";
+    }
+    if (tag === 'TEXTAREA') return el.value.trim() !== "";
+    return false;
+  } // isTriggered
+
+
+  /**
+   * Syncs the <details> state with its controller(s)
+   */
+  static updateDetailsState(details, targetId, forceState = null) {
+    if (!details) return;
+    const controllers = document.querySelectorAll(`[data-controls-details="${targetId}"]`);
+    if (!controllers.length) return;
+
+    const shouldBeOpen = forceState !== null
+      ? forceState
+      : Array.from(controllers).some(ctrl => this.isTriggered(ctrl));
+
+    if (details.open !== shouldBeOpen) {
+      details.open = shouldBeOpen;
+
+      // Toggle 'required' for hidden/visible fields
+      details.querySelectorAll('[data-required]').forEach(f => f.required = shouldBeOpen);
+
+      // Update ARIA
+      controllers.forEach(el => {
+        if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) {
+          el.setAttribute('aria-expanded', shouldBeOpen);
+        }
+      });
+    }
+  } // updateDetailsState
+
+
+  /**
+   * Static method to handle global event delegation
+   */
+  static attachGlobalListeners() {
+    if (this.listenersAttached) return;
+
+    // Handle Input/Change
+    ['change', 'input'].forEach(eventType => {
+      document.addEventListener(eventType, (e) => {
+        const controller = e.target;
+
+        // Radio Group logic
+        if (controller.type === 'radio' && controller.name) {
+          const group = document.querySelectorAll(`input[type="radio"][name="${controller.name}"]`);
+          group.forEach(radio => {
+            const rId = radio.dataset.controlsDetails;
+            if (rId) this.updateDetailsState(document.getElementById(rId), rId);
+          });
+          return;
         }
 
-        revealController.setAttribute('aria-expanded', 'false');
-        var revealContainer = null;
-        if (typeof revealContainerId !== 'undefined') {
-          revealContainer = document.querySelector(revealContainerId);
-        } else {
-          revealContainer = revealController.parentNode.querySelector('> .pfy-reveal-container');
-        }
-        revealContainer.classList.add('pfy-reveal-container', 'pfy-reveal-container-' + inx);
-        var revealContent = revealContainer.innerHTML;
-
-        if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
-          revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-          revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
-        }
-        revealContainer.style.display = 'block';
-        pfyReveal.disableFocus(revealContainer);
-  }, // initialize
-
-
-  setupEventHandler: function (revealController) {
-    revealController.addEventListener('click', function (event) {
-      var revealController = event.target.closest('.pfy-reveal-controller');
-      if (revealController) {
-        var target = document.querySelector(revealController.getAttribute('data-reveal-target'));
-        if (target) {
-          pfyReveal.toggle(target, revealController);
-        }
-      }
+        const targetId = controller.dataset.controlsDetails;
+        if (targetId) this.updateDetailsState(document.getElementById(targetId), targetId);
+      });
     });
-  }, // setupEventHandler
 
+    // Handle Clicks
+    document.addEventListener('click', (e) => {
+      const ctrl = e.target.closest('[data-controls-details]');
+      if (!ctrl || ['INPUT', 'SELECT', 'TEXTAREA'].includes(ctrl.tagName)) return;
 
-  toggle: function(revealController) {
-    var state = !revealController.checked;
-    if (state) {
-      pfyReveal.unreveal(revealController);
-    } else {
-      pfyReveal.reveal(revealController);
-    }
-  }, // toggle
+      if (ctrl.tagName === 'A') e.preventDefault();
 
+      const targetId = ctrl.dataset.controlsDetails;
+      const details = document.getElementById(targetId);
+      const action = ctrl.dataset.action;
 
-  reveal: function(revealController) {
-    if (revealController.tagName !== 'INPUT') {
-      revealController.querySelector('input');
-      if (revealController.tagName !== 'INPUT') {
-        console.log('Error: revealController not an INPUT element ' + revealController);
-      }
-    }
+      let newState = !details.open;
+      if (action === 'open') newState = true;
+      if (action === 'close') newState = false;
 
-    const revealContainer = document.querySelector(revealController.getAttribute('data-reveal-target'));
-    if (!revealContainer) {
-      return;
-    }
-
-
-    var target = revealContainer.querySelector('.pfy-reveal-container-inner');
-
-    const container = revealContainer.closest('.pfy-reveal-container');
-    container.removeAttribute('aria-hidden');
-
-    target.style.display = 'block';
-
-    const boundingBox = target.getBoundingClientRect();
-    target.style.marginTop = (0 - Math.round(boundingBox.height)) + 'px';
-
-    setTimeout(function () {
-      revealContainer.classList.add('pfy-elem-revealed');
-      pfyReveal.animate(target, 'marginTop', 0, pfyReveal.transitionTime);
-      revealController.setAttribute('aria-expanded', 'true');
-      revealController.checked = true;
-      if (revealController) {
-        revealController.parentNode.classList.add('pfy-target-revealed');
-      }
-    }, 30);
-
-    pfyReveal.enableFocus(revealContainer);
-  }, // reveal
-
-
-  unreveal: function(revealController) {
-    if (revealController.tagName !== 'INPUT') {
-      revealController.querySelector('input');
-      if (revealController.tagName !== 'INPUT') {
-        console.log('Error: unreveal revealController not an INPUT element ' + revealController);
-      }
-    }
-
-    const revealContainer = document.querySelector(revealController.getAttribute('data-reveal-target'));
-    if (!revealContainer) {
-      return;
-    }
-
-    var target = revealContainer.querySelector('.pfy-reveal-container-inner');
-
-    const container = revealContainer.closest('.pfy-reveal-container');
-    container.setAttribute('aria-hidden', 'true');
-
-    var boundingBox = target.getBoundingClientRect();
-    var marginTop = -(Math.round(boundingBox.height));
-
-    pfyReveal.animate(target, 'marginTop', marginTop, pfyReveal.transitionTime);
-
-    setTimeout(function () {
-      revealContainer.classList.remove('pfy-elem-revealed');
-      revealController.setAttribute('aria-expanded', 'false');
-      revealController.parentNode.classList.remove('pfy-target-revealed');
-      target.style.display = 'none';
-      revealController.checked = false;
-    }, pfyReveal.transitionTime);
-
-    pfyReveal.disableFocus(revealContainer);
-  }, // unreveal
-
-
-
-  enableFocus: function(container) {
-    Array.from(container.querySelectorAll('.pfy-focusable')).forEach(function (element) {
-      var tabindex = element.getAttribute('data-tabindex');
-      element.setAttribute('tabindex', tabindex);
+      this.updateDetailsState(details, targetId, newState);
     });
-  }, // enableFocus
 
+    this.listenersAttached = true;
+  } // attachGlobalListeners
 
-  disableFocus: function(container) {
-    Array.from(container.querySelectorAll('.pfy-focusable')).forEach(function (element) {
-      element.setAttribute('tabindex', -1);
-    });
-  }, // disableFocus
-
-
-  animate: function(element, property, value, duration) {
-    var start = null;
-    var initialValue = parseFloat(getComputedStyle(element)[property]);
-    function step(timestamp) {
-      if (!start) start = timestamp;
-      var progress = timestamp - start;
-      if (progress >= duration) progress = duration;
-      var current = initialValue + ((value - initialValue) * (progress / duration));
-      element.style[property] = current + 'px';
-      if (progress < duration) {
-        window.requestAnimationFrame(step);
-      }
-    }
-    window.requestAnimationFrame(step);
-  }, // animate
-}; // pfyReveal
-
-pfyReveal.initialize();
-
-
-function pfyRevealPanel(arg)
-{
-  let controller;
-  if (typeof arg === 'string') {
-    controller = document.querySelector(arg);
-  } else {
-    controller = arg;
-  }
-  if (!controller) {
-    return;
-  }
-  let wrapper = controller.parentNode.closest('.pfy-reveal-controller');
-  if (!wrapper) {
-    return;
-  }
-  pfyReveal.reveal(controller);
-} // pfyRevealPanel
-
-
-function pfyUnrevealPanel(arg)
-{
-  let controller;
-  if (typeof arg === 'string') {
-    controller = document.querySelector(arg);
-  } else {
-    controller = arg;
-  }
-  if (!controller) {
-    return;
-  }
-  let wrapper = controller.parentNode.closest('.pfy-reveal-controller');
-  if (!wrapper) {
-    return;
-  }
-  const revealTargetStr = controller.getAttribute('data-reveal-target');
-  const revealTarget = document.querySelector(revealTargetStr);
-  if (!revealTarget) {
-    return;
-  }
-  pfyReveal.unreveal(revealTarget, controller);
-} // pfyUnrevealPanel
+} // RevealAccordion
