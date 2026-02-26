@@ -7,8 +7,8 @@ console.log('reveal.js');
 
 class RevealAccordion {
   static defaultOptions = {
-    controller: ".pfy-accordion-controlle",
-    target: ".pfy-accordion-target",
+    controller: ".mdp-accordion-controller",
+    target: ".mdp-accordion-target",
     label: "",
     class: '',
     icon: false,
@@ -46,11 +46,11 @@ class RevealAccordion {
     if (this.options.frame) {
       details.classList.add('mdp-border');
       if (typeof this.options.frame === 'string') {
-        details.setAttribute('style', `--pfy-accordion-details-border-color: ${this.options.frame};`);
+        details.setAttribute('style', `--mdp-accordion-details-border-color: ${this.options.frame};`);
       }
     }
     if (this.options.shadow) {
-      details.classList.add('pfy-accordion-shadow');
+      details.classList.add('mdp-accordion-shadow');
     }
     if (this.options.icon) {
       if (this.options.icon.includes(',')) {
@@ -67,10 +67,10 @@ class RevealAccordion {
     if (this.options.iconRotation) {
       if (this.options.iconRotation.includes(',')) {
         const [closed, open] = this.options.iconRotation.split(",");
-        summary.setAttribute('style', `--pfy-icon-rotation: ${closed.trim()};--pfy-icon-rotation-open: ${open.trim()};`);
+        summary.setAttribute('style', `--mdp-icon-rotation: ${closed.trim()};--mdp-icon-rotation-open: ${open.trim()};`);
 
       } else {
-        summary.setAttribute('style', `--pfy-icon-rotation: 0deg;--pfy-icon-rotation-open: ${this.options.iconRotation};`);
+        summary.setAttribute('style', `--mdp-icon-rotation: 0deg;--mdp-icon-rotation-open: ${this.options.iconRotation};`);
       }
     }
 

@@ -977,11 +977,11 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 @supports selector(::details-content) {
   .pfy-default-styling {
     details.pfy-form-rrule-wrapper::details-content {
-      padding: 0 var(--pfy-accordion-details-padding, 0);
+      padding: 0 var(--mdp-accordion-details-padding, 0);
     }
 
     details.pfy-form-rrule-wrapper[open]::details-content {
-      padding: var(--pfy-accordion-details-padding, 0);
+      padding: var(--mdp-accordion-details-padding, 0);
       height: auto;
     }
 
@@ -990,7 +990,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       transition: padding 0.2s ease, height 0.2s ease, content-visibility 0.2s ease allow-discrete;
       height: 0;
       overflow: clip;
-      background: var(--pfy-accordion-details-bg);
+      background: var(--mdp-accordion-details-bg);
     }
   }
 } /* @supports */
