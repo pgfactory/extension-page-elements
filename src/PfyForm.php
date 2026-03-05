@@ -312,7 +312,7 @@ class PfyForm extends Form
                 $this->tableOptions = false;
                 return [false, "$formTopBanner\n$formResponse"];
             }
-            $html .= "$formTopBanner\n$formResponse";;
+            $html .= "$formTopBanner\n$formResponse";
         }
 
         if (!$this->showForm && $this->showFeedbackInpage) {
@@ -979,10 +979,11 @@ class PfyForm extends Form
         }
 
         $menuElems = $rec['options'];
-        $menuElems = parseArgumentStr($menuElems);
+        $menuElems = parseArgumentStr($menuElems, anonIndex:'');
 
         $i = 0;
         foreach ($menuElems as $optName => $optLabel) {
+            $optName = is_numeric($optName) ? translateToIdentifier($optLabel): $optName;
             $menuselectElements[$optName] = [
                 'type' => 'integer',
                 'label' => $optLabel,
@@ -2700,7 +2701,8 @@ EOT;
             $recId = createHash();
         }
 
-        $recId = $this->db->addRec($newRec, recKeyToUse: $recId)->recId();
+        $this->db->addRec($newRec, recKeyToUse: $recId);
+        $recId = $this->db->recId();
         if (is_string($recId)) {
             $this->lastCreatedRecKey = $recId;
         }

@@ -191,8 +191,7 @@ return function ($args = '')
 
 # $funcName()
 
-#### Example:
-
+<> Example {: !open }
     \// Frontmatter:
     variables:
     pfy-form-response-label: 'Event registration'
@@ -230,6 +229,30 @@ return function ($args = '')
         submit:              { },
         ) 
     }}
+
+<> Split Syntax Example
+
+    \{{ form(
+        file:			'~data/db.yaml',
+        editData:       true
+        **output:         false**
+
+        Name:		    {required:true}
+        Phone:		    {type:tel}
+        EMail:		    {type:email}
+    
+        cancel:    		{},
+        submit:    		{}
+        )
+    }}
+    
+    \{{ form(output: head) }}
+    \{{ form(output: **Name**) }}
+    * Text in between...*
+    \{{ form(output: rest) }}
+    \{{ form(output: tail) }}
+
+<>
 
 #### Form Arguments:
 -> any arguments stated below under **Arguments** are interpreted as *form arguments*.\
