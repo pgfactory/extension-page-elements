@@ -65,6 +65,14 @@ class CountVisits
             $doCount = !$dontCount;
             $pgId = page()->id();
         }
+
+        // handle case of page invoked with GET parameters (only first one used):
+        if ($_GET??false) {
+            $a = array_keys($_GET);
+            $a = reset($a);
+            $p = reset($_GET);
+            $pgId .= "&$a=$p";
+        }
         list($since, $counters) = $this->getSinceTime($file, $pgId);
 
         $clientIp = $this->getClientIP(true);
