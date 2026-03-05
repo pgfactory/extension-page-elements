@@ -313,6 +313,8 @@ class PfyForm extends Form
                 return [false, "$formTopBanner\n$formResponse"];
             }
             $html .= "$formTopBanner\n$formResponse";
+        } else {
+            $html .= $this->renderFormTopBanner();
         }
 
         if (!$this->showForm && $this->showFeedbackInpage) {
