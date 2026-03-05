@@ -264,7 +264,7 @@ EOT;
         }
 
         if ($this->minRows && $r < $this->minRows) {
-            for ($r++; $r <= $this->minRows; $r++) {
+            for (; $r <= $this->minRows; $r++) {
                 $out .= "    <tr class='pfy-row-$r $rowClass pfy-empty-row'>\n";
                 foreach ($this->columns as $def) {
                     $cell = $def['cellContent'];
