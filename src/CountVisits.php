@@ -126,7 +126,7 @@ class CountVisits
         }
         $content = file_get_contents($file);
         if (preg_match("|^since: (.*)|", $content, $m)) {
-            $t = strtotime($m[1]);;
+            $t = strtotime($m[1]);
         } else {
             $content = 'since: '.date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
             file_put_contents($file, $content);

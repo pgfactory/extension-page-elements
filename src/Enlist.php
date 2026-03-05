@@ -1051,7 +1051,7 @@ EOT;
         }
 
         $this->title = $options['title'] = $title;
-        $this->widgetKey = $title ?: 'Enlist-' > ($this->widgetInx + 1);
+        $this->widgetKey = $title ?: ('Enlist-' . ($this->widgetInx + 1));
         if ($permissionQuery = $this->admin) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'localhost|loggedin';

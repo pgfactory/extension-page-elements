@@ -231,7 +231,7 @@ EOT;
                                 $description = trim($rec[2], '"\'');
                                 $poiIcon = isset($rec[3]) ? trim($rec[3], '"\'') : $this->customPOIIcon;
                             } else {
-                                $location = $rec['center'] ?? '';;
+                                $location = $rec['center'] ?? '';
                                 if (preg_match('/([\d.]+)\s*,\s*([\d.]+)/', $location, $m)) {
                                     $location = "[$m[1], $m[2]]";
                                 } else {
