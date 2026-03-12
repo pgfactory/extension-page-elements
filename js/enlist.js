@@ -4,7 +4,7 @@
 
 const Enlist = {
   isEnlistAdmin: Boolean(document.querySelector('.pfy-enlist-admin')),
-  isWindows: window.navigator.platform.match(/win/),
+  isWindows: /win/i.test(window.navigator.platform),
   currentlyOpenPopup: null,
 
   init: function() {
@@ -14,20 +14,20 @@ const Enlist = {
   }, // init
 
   initPlaceholders: function () {
-    domForEach('.pfy-enlist-wrapper', function (el) {
+    domForEach('.pfy-enlist-wrapper', el => {
       const placeholder = el.dataset.placeholder;
       if (placeholder) {
-        domForEach(el, '.pfy-enlist-add .pfy-enlist-name div', function (e) {
-          const i = parseInt(e.closest('tr').dataset.reckey??0) + 1;
+        domForEach(el, '.pfy-enlist-add .pfy-enlist-name div', e => {
+          const i = parseInt(e.closest('tr').dataset.reckey ?? 0, 10) + 1;
           e.innerHTML = placeholder.replace(/%%/, i);
           e.classList.add('pfy-placeholder');
-        })
+        });
       }
-    })
+    });
   },
 
   addEventListeners: function() {
-    document.addEventListener('click', function(ev) {
+    document.addEventListener('click', ev => {
       const el = ev.target;
       if (!el.closest('.pfy-enlist-icon, .pfy-enlist-sendmail-button, .pfy-enlist-delete-checkbox, .pfy-enlist-ical-button, .pfy-enlist-collapse-button')) {
         return;
@@ -55,17 +55,15 @@ const Enlist = {
 
 
   handleSendToAll: function (el) {
-    let mailAddresses = '';
     const enlistWrapper = el.closest('.pfy-enlist-wrapper');
-    domForEach(enlistWrapper, '.pfy-enlist-email', el => {
-      mailAddresses += ',' + el.innerText;
+    const addresses = [];
+    domForEach(enlistWrapper, '.pfy-enlist-email', emailEl => {
+      addresses.push(emailEl.innerText);
     });
-
-    mailAddresses = mailAddresses.replace(/^[,;]/, '');
+    const mailAddresses = addresses.join(',');
     console.log('MailTo: ' + mailAddresses);
-    const url = `mailto:${mailAddresses}`;
-    window.open(url,"_blank");
-}, // handleSendToAll
+    window.open(`mailto:${mailAddresses}`, '_blank');
+  }, // handleSendToAll
 
 
   handleToggleModifyDelete: function (el) {
@@ -84,16 +82,11 @@ const Enlist = {
 
   initTooltips: function() {
     const tooltips = document.querySelectorAll('.pfy-enlist-tooltip-anker');
-    if (tooltips) {
+    if (tooltips.length) {
       tippy('.pfy-enlist-tooltip-anker', {
         content: (el) => {
-          const parentEl = el.parentElement;
-          const textEl = parentEl.querySelector('.pfy-enlist-tooltip-content');
-          let text = '';
-          if (textEl) {
-            text = textEl.innerHTML;
-          }
-          return text;
+          const textEl = el.parentElement.querySelector('.pfy-enlist-tooltip-content');
+          return textEl ? textEl.innerHTML : '';
         },
         allowHTML: true,
         delay: 200,
@@ -116,7 +109,7 @@ const Enlist = {
       mode = 'modify';
     }
 
-    if ('del,modify'.includes(mode)) {
+    if (['del', 'modify'].includes(mode)) {
       const hasExpiredClass = elem.closest('.pfy-enlist-expired');
       if (hasExpiredClass && !Enlist.isEnlistAdmin) {
         pfyAlert(`{{ pfy-enlist-deadline-expired-alert }}`);
@@ -125,45 +118,28 @@ const Enlist = {
     }
 
     // check whether page timed out:
-    if (pageLoaded < (Math.floor(Date.now()/1000) - 600)) {
+    if (pageLoaded < (Math.floor(Date.now() / 1000) - 600)) {
       pfyConfirm({text: `{{ pfy-enlist-timed-out }}`})
-        .then(function () {
+        .then(() => {
           reloadAgent();
         });
       return;
     }
+
+    const rowEl = elem.classList.contains('pfy-enlist-field') ? elem : elem.closest('tr');
+    const enlistElemInx = rowEl.dataset.reckey;
+    const widgetEl = elem.closest('.pfy-enlist-wrapper');
+    const widgetKey = widgetEl.dataset.widgetKey;
 
     let options = {
       contentFrom: '#pfy-enlist-form .pfy-form-wrapper',
       header: `<span class="pfy-add">{{ pfy-enlist-add-popup-header }}</span><span class="pfy-modify">{{ pfy-enlist-modify-popup-header }}</span><span class="pfy-del">{{ pfy-enlist-del-popup-header }}</span>`,
       autofocus: false,
       closeOnBgClick: true,
-    };
-    if (typeof elem !== 'undefined') {
-      const rowEl = elem.classList.contains('pfy-enlist-field')? elem: elem.closest('tr');
-      const enlistElemInx = rowEl.dataset.reckey;
-      const widgetEl = elem.closest('.pfy-enlist-wrapper');
-      const widgetKey = widgetEl.dataset.widgetKey;
-      const widgetTitle = widgetEl.querySelector('.pfy-enlist-title-inner').innerText;
-      options.onOpen = function() {
+      onOpen: () => {
         Enlist.preparePopupForm(mode, rowEl, enlistElemInx);
-/*
-        domForOne('.pfy-popup-wrapper .pfy-form-wrapper', popupFormWrapper => {
-          if (mode === 'add' && rowEl.classList.contains('pfy-enlist-reserve')) {
-            popupFormWrapper.classList.add('pfy-hide-direct-reserve');
-          } else {
-            popupFormWrapper.classList.remove('pfy-hide-direct-reserve');
-          }
-          domForOne(popupFormWrapper, 'input[name="widgetTitle"]', el => {
-            el.value = widgetTitle;
-          })
-          domForOne(popupFormWrapper, 'input[name="widgetKey"]', el => {
-            el.value = widgetKey;
-          })
-        });
-*/
-      };
-    }
+      },
+    };
     Enlist.currentlyOpenPopup = pfyPopup(options);
   }, // openPopup
 
@@ -172,22 +148,21 @@ const Enlist = {
     const nameEl = rowEl.querySelector('.pfy-enlist-name span.pfy-enlist-name');
     const name = nameEl ? nameEl.innerText : '';
     const recKey = rowEl.dataset.reckey;
-    const listEl = rowEl.closest('.pfy-enlist-wrapper');
     const widgetEl = rowEl.closest('.pfy-enlist-wrapper');
     const widgetKey = widgetEl.dataset.widgetKey;
-    let   directreserve = listEl.dataset.directreserve;
+    let   directreserve = widgetEl.dataset.directreserve;
     const popupWrapper = document.querySelector('.pfy-popup-wrapper');
 
     const formEl = popupWrapper.querySelector('.pfy-enlist-form-wrapper .pfy-form');
 
     domForOne(formEl, 'input[name="_reckey"]', el => {
       el.value = recKey;
-    })
+    });
     domForOne(formEl, 'input[name="widgetKey"]', el => {
       el.value = widgetKey;
-    })
+    });
 
-    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
+    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop, 10));
 
     const deleteCheckboxEl = formEl.querySelector('input.pfy-enlist-delete-checkbox');
     if (deleteCheckboxEl && (mode !== 'add')) {
@@ -206,9 +181,9 @@ const Enlist = {
     // inhibit submit by enter key while in textarea:
     const textareaFields = formEl.querySelectorAll('textarea');
     if (textareaFields.length) {
-      textareaFields.forEach(function (textareaField) {
-        textareaField.addEventListener('keyup', function (e) {
-          if (e.key === 13) {
+      textareaFields.forEach(textareaField => {
+        textareaField.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
             e.stopPropagation();
           }
         });
@@ -221,12 +196,16 @@ const Enlist = {
     // handle user preset email:
     if (presetUser) {
       const emailField = formEl.querySelector('[name=Email]');
-      emailField.setAttribute('value', userPreset.email);
+      if (emailField) {
+        emailField.setAttribute('value', userPreset.email);
+      }
     }
 
     domForEach(rowEl, '.pfy-enlist-custom', el => {
+      const match = el.classList.value.match(/pfy-elem_\S+/);
+      if (!match) return;
+      const targClass = match[0];
       const val = el.querySelector('div').innerText;
-      const targClass = el.classList.value.match(/pfy-elem_\S+/)[0];
       console.log(`${targClass} => ${val}`);
       domForOne(formEl, `input.${targClass}`, targEl => {
         targEl.value = val;
@@ -235,10 +214,6 @@ const Enlist = {
         targEl.innerText = val;
       });
     });
-
-    const inxEl = formEl.querySelector('[name=widgetKey]');
-
-//    formEl.querySelector('[name=widgetInx]').value = `${widgetInx}/${recKey}`;
 
     // === add mode =========================================
     if (mode === 'add') {
@@ -256,7 +231,7 @@ const Enlist = {
         deleteCheckboxEl.closest('.pfy-elem-wrapper').style.display = 'none';
       }
 
-      setTimeout(function() {
+      setTimeout(() => {
         nameField.focus();
       }, 60);
     } else {
@@ -290,7 +265,7 @@ const Enlist = {
 
         const modeEl = formEl.querySelector('[name=mode]');
         if (deleteCheckboxEl && !deleteCheckboxEl.checked) {
-          if (hasCustomFields) {
+          if (hasCustomFields.length) {
             submitEl.setAttribute('value', `{{ pfy-enlist-modify-btn }}`);
           } else {
             submitEl.setAttribute('value', `{{ pfy-enlist-delete-btn }}`);
@@ -317,14 +292,18 @@ const Enlist = {
 
     domForOne(formEl, '[name=mode]', el => {
       el.value = mode;
-    })
+    });
 
     // hide directreserve elem if not used/required:
     if (!directreserve) {
       const directlyElem = formEl.querySelector('.pfy-enlist-directly');
-      directlyElem.style.display = 'none';
-      const directResInput = directlyElem.querySelector('input');
-      directResInput.disabled = true;
+      if (directlyElem) {
+        directlyElem.style.display = 'none';
+        const directResInput = directlyElem.querySelector('input');
+        if (directResInput) {
+          directResInput.disabled = true;
+        }
+      }
     }
   }, // preparePopupForm
 
@@ -335,47 +314,45 @@ const Enlist = {
     if (this.isEnlistAdmin) {
       const mailEl = rowEl.querySelector('.pfy-enlist-email');
       if (mailEl) {
-        const email = rowEl.querySelector('.pfy-enlist-email').textContent;
-        emailField.setAttribute('value', email);
+        emailField.setAttribute('value', mailEl.textContent);
       }
     } else {
       // set focus to email-field:
-      setTimeout(function () {
+      setTimeout(() => {
         emailField.focus();
       }, 60);
     }
 
     // get custom elements:
     const customFieldsEl = formEl.querySelectorAll('.pfy-elem-wrapper.pfy-enlist-custom');
-    if (customFieldsEl) {
-      customFieldsEl.forEach(function (el) {
+    if (customFieldsEl.length) {
+      customFieldsEl.forEach(el => {
         const classList = el.classList;
         let idy = false;
-        classList.forEach(function(cls) {
+        classList.forEach(cls => {
           const m = cls.match(/pfy-elem_(.*)/);
           if (!idy && m) {
             idy = m[1];
           }
         });
         const inputElems = el.querySelectorAll('input');
-        if (inputElems) {
+        if (inputElems.length) {
           inputElems.forEach(inputEl => {
             const type = inputEl.type;
 
             if (type === 'radio' || type === 'checkbox') {
-              let srcIdy = '.pfy-elem_' + idy;
+              const srcIdy = '.pfy-elem_' + idy;
               let tableEl = rowEl.querySelector(srcIdy.toLowerCase());
               if (tableEl) {
                 // case no splitOutput:
-                const x = tableEl.innerText;
-                inputEl.checked = (tableEl.innerText.includes(optionLabel));
+                inputEl.checked = tableEl.innerText.includes(inputEl.value);
 
               } else {
                 // case splitOutput:
-                srcIdy = '.pfy-elem_' + idy + '-' + inputEl.value;
-                tableEl = rowEl.querySelector(srcIdy.toLowerCase());
+                const splitIdy = '.pfy-elem_' + idy + '-' + inputEl.value;
+                tableEl = rowEl.querySelector(splitIdy.toLowerCase());
                 if (tableEl) {
-                  inputEl.checked = tableEl.innerText.match(/\S/);
+                  inputEl.checked = /\S/.test(tableEl.innerText);
                 }
               }
 
@@ -421,10 +398,9 @@ const Enlist = {
         () => {
           const widgetKey = btnEl.closest('[data-widget-key]').dataset.widgetKey;
           const arg = `?collapse-enlist=${widgetKey}&widgetTitle=${widgetTitle}`;
-//          const arg = `?collapse-enlist=${widgetKey}`;
           reloadAgent(arg);
         },
-        () => { console.log('Enlist collapse not executed.');}
+        () => { console.log('Enlist collapse not executed.'); }
       );
       return true;
     }

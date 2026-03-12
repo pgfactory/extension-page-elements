@@ -94,15 +94,15 @@ class Ical
     {
         $url = $this->targetFileUrl;
         $asButton = $this->options['asButton'] ?? false;
-        $tooltip = $this->options['tooltip']??'';
-        $linkText = ($this->options['linkText']??null);
+        $tooltip = $this->options['tooltip'] ?? '';
+        $linkText = ($this->options['linkText'] ?? null);
         if ($linkText === null) {
             $linkText = '{{ pfy-ical-link-text }}';
         }
         if ($linkText) {
             $linkText = TransVars::translate($linkText);
         }
-        $calIcon = ($this->options['icon']??'') ?: ICAL_CALENDAR_ICON;
+        $calIcon = ($this->options['icon'] ?? '') ?: ICAL_CALENDAR_ICON;
         $linkText = str_replace('%icon%', $calIcon, $linkText);
         $mdp = new MarkdownPlus();
         $linkText = $mdp->compileParagraph($linkText);
@@ -127,44 +127,33 @@ class Ical
             return $this->iCalStr;
         }
 
-        $recs = $this->events;
         $this->icalObj = Calendar::create();
-        foreach ($recs as $rec) {
-            $this->compileICalRec($rec);
+        foreach ($this->events as $rec) {
+            $icalElements = $this->populateICalElements($rec);
+            $this->addICalEvent($icalElements);
         }
-        $this->iCalStr = $isc = $this->icalObj->get();
-        return $isc;
+        $this->iCalStr = $this->icalObj->get();
+        return $this->iCalStr;
     } // renderICalStr
-
-
-    /**
-     * @param array $rec
-     * @return void
-     */
-    private function compileICalRec(array $rec): void
-    {
-        $icalElements = $this->popupateICalElements($rec);
-        $this->addICalEvent($icalElements);
-    } // compileICalRec
 
 
     /**
      * @param array $rec
      * @return array
      */
-    private function popupateICalElements(array $rec): array
+    private function populateICalElements(array $rec): array
     {
-        if ($rec['allday']??false) {
+        if ($rec['allday'] ?? false) {
             $rec['start'] = substr($rec['start'], 0, 10);
-                if (isset($rec['end'])) {
-                        $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['end'])));
-                } else {
-                    $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['start'])));
-                }
+            if (isset($rec['end'])) {
+                $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['end'])));
+            } else {
+                $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['start'])));
+            }
         }
         $icalElements = [
-            'start'         => $rec['start']??'',
-            'end'           => $rec['end']??'',
+            'start'         => $rec['start'] ?? '',
+            'end'           => $rec['end'] ?? '',
             'title'         => $this->compileICalElement('title', $rec),
             'location'      => $this->compileICalElement('location', $rec),
             'description'   => $this->compileICalElement('description', $rec),
@@ -172,12 +161,12 @@ class Ical
             'status'        => $this->compileICalElement('status', $rec),
             'fullDay'       => $this->compileICalElement('allday', $rec),
         ];
-        $uniqueIdentifier = $rec['_reckey']??'';
+        $uniqueIdentifier = $rec['_reckey'] ?? '';
         if ($uniqueIdentifier) {
             $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX.$uniqueIdentifier;
         }
         return $icalElements;
-    } // popupateICalElements
+    } // populateICalElements
 
 
     /**
@@ -194,7 +183,7 @@ class Ical
                 return $rec[$fieldName];
             }
         }
-        $fieldValue = $this->options[$fieldName]??'';
+        $fieldValue = $this->options[$fieldName] ?? '';
         if (!$fieldValue) {
             return '';
         }
@@ -203,7 +192,7 @@ class Ical
         while (preg_match('/%(.{2,20}?)%/', $fieldValue, $m)) {
             // check current rec for matching field:
             if (isset($rec[$m[1]])) {
-                $value = $rec[$m[1]]??'';
+                $value = $rec[$m[1]] ?? '';
             } else {
                 // if not found, check PFY variables:
                 $value = TransVars::getVariable($m[1]);
@@ -228,22 +217,22 @@ class Ical
         $event->startsAt(new DateTime($icalElements['start']));
         $event->endsAt(new DateTime($icalElements['end']));
 
-        if ($description = ($icalElements['description']??false)) {
+        if ($description = ($icalElements['description'] ?? false)) {
             $event->description($description);
         }
-        if ($organiser = ($icalElements['organiser']??false)) {
-            $event->organizer($organiser);
+        if ($organizer = ($icalElements['organizer'] ?? false)) {
+            $event->organizer($organizer);
         }
-        if ($location = ($icalElements['location']??false)) {
+        if ($location = ($icalElements['location'] ?? false)) {
             $event->address($location);
         }
-        if ($icalElements['fullDay']??false) {
+        if ($icalElements['fullDay'] ?? false) {
             $event->fullDay();
         }
-        if ($uniqueIdentifier = ($icalElements['uniqueIdentifier']??false)) {
+        if ($uniqueIdentifier = ($icalElements['uniqueIdentifier'] ?? false)) {
             $event->uniqueIdentifier($uniqueIdentifier);
         }
-        if ($status = ($icalElements['status']??false)) {
+        if ($status = ($icalElements['status'] ?? false)) {
             $event->status($status);
         }
 
@@ -257,12 +246,7 @@ class Ical
      */
     private function parseOptions(array $options): array
     {
-        if (is_array($options)) {
-            $options += ICAL_DEFAULT_OPTIONS;
-        } elseif (is_string($options)) {
-            $options = ICAL_DEFAULT_OPTIONS;
-            $options['title'] = $options;
-        }
+        $options += ICAL_DEFAULT_OPTIONS;
         $this->options = $options;
         $this->determineTargetFile();
         return $options;
@@ -281,13 +265,13 @@ class Ical
             $prefix_ .= '/';
             $prefix .= '_';
         }
-        if ($options['saveAllToFile']??false) {
+        if ($options['saveAllToFile'] ?? false) {
             $file = $options['saveAllToFile'];
             $this->path = dir_name($file);
             $this->filename = base_name($file, false) . '.ics';
             $this->options['saveAllToFile'] = false;
 
-        } elseif ($options['saveToFile']??false) {
+        } elseif ($options['saveToFile'] ?? false) {
             $file = $options['saveToFile'];
             $this->path = dir_name($file);
             $this->filename = base_name($file, false) . '.ics';
@@ -300,7 +284,7 @@ class Ical
             $this->path = '';
             $this->filename = $filename;
         }
-        if (($this->path[0]??'') === '~') {
+        if (($this->path[0] ?? '') === '~') {
             $file = $this->path . $this->filename;
         } else {
             if ($prefix_) {

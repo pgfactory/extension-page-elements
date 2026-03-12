@@ -1,6 +1,7 @@
 class WritableWidget {
   constructor() {
     this.writableInputEl = null;
+    this.boundHandleOutsideClick = this.handleOutsideWriteableClick.bind(this);
     this.init();
   } // constructor
 
@@ -17,7 +18,6 @@ class WritableWidget {
   // Initialize writable input fields and text areas
   initWritable() {
     domForEach('.pfy-writable-widget-wrapper', (wrapperEl) => {
-      // Handle input fields
       domForEach(wrapperEl, 'input,textarea', (inputEl) => {
         this.setupInputListeners(inputEl);
       });
@@ -30,45 +30,38 @@ class WritableWidget {
     let saveToHost = true;
     let prevValue = '';
 
-    // init key listener:
     inputEl.addEventListener('keyup', (ev) => {
-      // handle ESC:
       if (ev.key === 'Escape') {
         saveToHost = false;
-        textareaEl.value = prevValue;
+        inputEl.value = prevValue;
         ev.target.blur();
       }
-      // handle Enter, unless in textarea:
       if ((inputEl.tagName === 'INPUT') && (ev.key === 'Enter')) {
         ev.target.blur();
       }
     });
 
-    // handler when writable field gets focus:
-    inputEl.addEventListener('focus', (ev) => {
+    inputEl.addEventListener('focus', () => {
       prevValue = inputEl.value;
+      saveToHost = true;
       this.writableInputEl = inputEl;
       setTimeout(() => {
-        document.querySelector('body').addEventListener('click', this.handleOutsideWriteableClick.bind(this), { once: true, passive: true, capture: true });
+        document.body.addEventListener('click', this.boundHandleOutsideClick, { once: true, passive: true, capture: true });
       }, 100);
     });
 
-    // handler when writable field is changed -> send to host:
-    inputEl.addEventListener('change', (ev) => {
+    inputEl.addEventListener('change', () => {
       if (!saveToHost) {
-        console.log('writable-widget: not saving to host');
         return;
       }
       const value = encodeURIComponent(inputEl.value);
       const name = inputEl.name;
       const inpWrapper = inputEl.closest('.pfy-writable-widget-wrapper');
       const dataSrcInx = inpWrapper.dataset.writableGroup;
-      console.log(`${name}: ${value} (${dataSrcInx})`);
 
-      let cmd = `?ajax&writable&datasrcinx=${dataSrcInx}&name=${name}&value=${value}`;
+      const cmd = `?ajax&writable&datasrcinx=${dataSrcInx}&name=${name}&value=${value}`;
       execAjaxPromise(cmd).then((data) => {
         if (typeof data === 'object' && data[name] !== undefined) {
-          console.log(`storing writable done: "${data[name]}"`);
           inputEl.value = data[name];
         }
       });
@@ -81,28 +74,22 @@ class WritableWidget {
     if (!this.writableInputEl) {
       return;
     }
-    if (this.writableInputEl === ev.target) {
-      this.writableInputEl = null;
-      return;
+    if (this.writableInputEl !== ev.target) {
+      this.writableInputEl.blur();
     }
-    this.writableInputEl.blur();
     this.writableInputEl = null;
-    document.querySelector('body').removeEventListener('click', this.handleOutsideWriteableClick.bind(this), { passive: true });
   } // handleOutsideWriteableClick
 
 
   // Initialize auto-growing text areas
   initWritableAutoGrow() {
-    const growers = document.querySelectorAll('.pfy-auto-grow');
-    if (growers) {
-      growers.forEach((grower) => {
-        const textarea = grower.querySelector('textarea');
+    document.querySelectorAll('.pfy-auto-grow').forEach((grower) => {
+      const textarea = grower.querySelector('textarea');
+      grower.dataset.replicatedValue = textarea.value;
+      textarea.addEventListener('input', () => {
         grower.dataset.replicatedValue = textarea.value;
-        textarea.addEventListener('input', () => {
-          grower.dataset.replicatedValue = textarea.value;
-        });
       });
-    }
+    });
   } // initWritableAutoGrow
 
 } // WritableWidget

@@ -7,9 +7,9 @@ use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\compileMarkdown;
 
-class Popup
+class Popup extends PageElements
 {
-    public static $inx = 1;
+    public static int $inx = 1;
 
     /**
      * @param string $msg
@@ -21,7 +21,7 @@ class Popup
     {
         $html = '';
         if ($msg) {
-            if (strpos($msg, '{{') !== false) {
+            if (str_contains($msg, '{{')) {
                 $msg = TransVars::translate($msg);
             }
             if ($mdCompile) {
@@ -29,8 +29,9 @@ class Popup
             }
 
             $inx = self::$inx++;
+            $headerJs = json_encode($header);
             $html = "\t\t<div class='pfy-popup-src pfy-popup-src-$inx'><div class='pfy-popup'>$msg</div></div>\n";
-            $jq = "pfyPopup({contentFrom: '.pfy-popup-src-$inx .pfy-popup', header:'$header', draggable: true})";
+            $jq = "pfyPopup({contentFrom: '.pfy-popup-src-$inx .pfy-popup', header:$headerJs, draggable: true})";
             Page::addJsReady($jq);
             Page::addAssets('POPUPS');
         }
@@ -41,13 +42,15 @@ class Popup
     /**
      * @param string $str
      * @param string $header
-     * @param $mdCompile
+     * @param bool $mdCompile
      * @return void
      */
-    public function set(string $str, string $header, $mdCompile = false): void
+    public function set(string $str, string $header, bool $mdCompile = false): void
     {
         $str = $this->render($str, $header, $mdCompile);
-        Page::addBodyEndInjections($str);
+        if ($str) {
+            Page::addBodyEndInjections($str);
+        }
     } // set
 
 } // Popup

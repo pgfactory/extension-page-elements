@@ -40,14 +40,11 @@ class PfyFormSplitSyntax extends PfyForm
             $i = 0; // render elem 0 next
 
         } else {
-            $i = $this->lastRendered + 1;
+            $i = is_int($this->lastRendered) ? $this->lastRendered + 1 : 0;
         }
 
-        $names = array_map(function($e) {
-            return $e['name'];
-        }, $this->formElements);
-        $names = array_values($names);
-        $lastElemInx = sizeof($names) - 1;
+        $names = array_column($this->formElements, 'name');
+        $lastElemInx = count($names) - 1;
 
         // determine which pieces to render next:
         //      from = $i  to = $upTo
@@ -59,14 +56,14 @@ class PfyFormSplitSyntax extends PfyForm
             $upTo = $lastElemInx;
             $this->lastRendered = true;
 
-        } else if ($uptoWhich === 'tail') {
+        } elseif ($uptoWhich === 'tail') {
             $upTo = -1;
             $this->lastRendered = -1;
 
         } else {
             $upTo = array_search($uptoWhich, $names);
             if ($upTo === false) {
-                exit("Split-Form element unknown: '$uptoWhich'");
+                throw new \Exception("Error: split-form element unknown: '$uptoWhich'");
             }
             $this->lastRendered = ($upTo === $lastElemInx)? true: $upTo;
         }
@@ -75,7 +72,7 @@ class PfyFormSplitSyntax extends PfyForm
         if ($this->showForm) {
             for (; $i <= $upTo; $i++) {
                 if (!isset($names[$i])) {
-                    throw new \Exception("Split-Form element unknown: '$uptoWhich'");
+                    throw new \Exception("Error: split-form element unknown: '$uptoWhich'");
                 }
                 $name = $names[$i];
                 $html .= $this->renderFormElement($name, $this->formElements[$name]);
@@ -97,7 +94,7 @@ class PfyFormSplitSyntax extends PfyForm
                 $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
             }
 
-            $html .= $this->injectNoSHowEnd();
+            $html .= $this->injectNoShowEnd();
             $html .= "<!-- === /pfy form widget === -->\n\n";
         }
 

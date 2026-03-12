@@ -20,9 +20,14 @@ EOT;
 
 class HtmlMail
 {
+    private const NBSP_PLACEHOLDER = '##NBSP##';
+    private const CID_IMAGE_PATTERN = '/<img .*? data-srcpath=[\'"](.*?)[\'"] \s* data-url=[\'"](.*?)[\'"] .*? src=["\']cid:([^"\']+)/xms';
+
     /**
      * @param string $markdown
      * @param string $css
+     * @param array $data
+     * @param string $plaintext
      * @param bool $forPreview
      * @return array
      * @throws \Exception
@@ -105,8 +110,9 @@ EOT;
             foreach ($m[1] as $i => $linkText) {
                 $a = explode(',', $linkText);
                 $linkText = $a[0];
-                $text = $a[1]??'';
-                $linkText = preg_replace('/(mailto:|tel:|sms:|)/', '', $linkText);
+                $text = $a[1] ?? '';
+                // FIX: removed empty alternative '|' that matched at every position
+                $linkText = preg_replace('/(mailto:|tel:|sms:)/', '', $linkText);
                 $linkText = preg_replace(['/^["\']/', '/["\']$/'], '', $linkText);
                 if ($text) {
                     $linkText = "$text ($linkText)";
@@ -125,15 +131,16 @@ EOT;
      */
     private static function handleImagesForPreview(string $html): string
     {
-        if (str_contains($html, 'cid:')) {
-            if (preg_match_all('/<img .*? data-srcpath=[\'"](.*?)[\'"] \s* data-url=[\'"](.*?)[\'"] .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
-                foreach ($m[3] as $i => $cid) {
-                    $path = $m[1][$i];
-                    $url = $m[2][$i];
-                    $html = preg_replace("| data-srcpath=['\"]{$path}['\"]|", '', $html);
-                    $html = preg_replace("| data-url=['\"]{$url}['\"]|", '', $html);
-                    $html = preg_replace("|src=['\"]cid:{$cid}['\"]|", "src='$url'", $html);
-                }
+        if (!str_contains($html, 'cid:')) {
+            return $html;
+        }
+        if (preg_match_all(self::CID_IMAGE_PATTERN, $html, $m)) {
+            foreach ($m[3] as $i => $cid) {
+                $path = $m[1][$i];
+                $url = $m[2][$i];
+                $html = preg_replace("| data-srcpath=['\"]{$path}['\"]|", '', $html);
+                $html = preg_replace("| data-url=['\"]{$url}['\"]|", '', $html);
+                $html = preg_replace("|src=['\"]cid:{$cid}['\"]|", "src='$url'", $html);
             }
         }
         return $html;
@@ -147,16 +154,17 @@ EOT;
     private static function handleImagesForMail(string $html): array
     {
         $images = [];
-        if (str_contains($html, 'cid:')) {
-            if (preg_match_all('/<img .*? data-srcpath=[\'"](.*?)[\'"] \s* data-url=[\'"](.*?)[\'"] .*? src=["\']cid:([^"\']+)/xms', $html, $m)) {
-                foreach ($m[3] as $i => $cid) {
-                    $path = $m[1][$i];
-                    $url = $m[2][$i];
-                    $images[$cid]['path'] = $path;
-                    $images[$cid]['url']  = $url;
-                    $html = preg_replace("| data-srcpath=['\"]{$path}['\"]|", '', $html);
-                    $html = preg_replace("| data-url=['\"]{$url}['\"]|", '', $html);
-                }
+        if (!str_contains($html, 'cid:')) {
+            return [$html, $images];
+        }
+        if (preg_match_all(self::CID_IMAGE_PATTERN, $html, $m)) {
+            foreach ($m[3] as $i => $cid) {
+                $path = $m[1][$i];
+                $url = $m[2][$i];
+                $images[$cid]['path'] = $path;
+                $images[$cid]['url']  = $url;
+                $html = preg_replace("| data-srcpath=['\"]{$path}['\"]|", '', $html);
+                $html = preg_replace("| data-url=['\"]{$url}['\"]|", '', $html);
             }
         }
         return [$html, $images];
@@ -188,23 +196,16 @@ EOT;
 
 
     /**
-     * @param $html
-     * @param $css
-     * @return array|string|string[]|null
+     * @param string $html
+     * @param string $css
+     * @return string
      */
-    public static function applyInlineStyles($html, $css) {
+    public static function applyInlineStyles(string $html, string $css): string
+    {
         // Parse CSS rules into an associative array
         $cssRules = self::parseCss($css);
 
-        $html = str_replace('&nbsp;', '##NBSP##', $html); // workaround for &nbsp;
-
-        // Load the HTML content into a DOMDocument object
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        libxml_use_internal_errors(true); // Suppress warnings due to malformed HTML
-        $dom->loadHTML($html);
-        libxml_clear_errors();
-
-        $xpath = new DOMXPath($dom);
+        list($dom, $xpath) = self::loadHtmlDom($html);
 
         // Loop through each CSS rule and apply it to the relevant elements
         foreach ($cssRules as $selector => $declarations) {
@@ -229,39 +230,21 @@ EOT;
             }
         }
 
-        $innerHTML = '';
-        $body = $dom->getElementsByTagName('body')->item(0);
-        if ($body) {
-            foreach ($body->childNodes as $child) {
-                $innerHTML .= $dom->saveHTML($child);
-            }
-        } else {
-            // No body tag found, return entire HTML
-            $innerHTML = $dom->saveHTML();
-        }
-        $innerHTML = mb_convert_encoding($innerHTML, 'ISO-8859-1', 'UTF-8');
-        $innerHTML = str_replace('##NBSP##', '&nbsp;', $innerHTML);
-        return $innerHTML;
+        return self::extractBodyHtml($dom);
     } // applyInlineStyles
 
 
     /**
-     * @param $html
-     * @return array|string|string[]
+     * @param string $html
+     * @return string
      */
-    public static function fixMdpLayoutTables($html) {
+    public static function fixMdpLayoutTables(string $html): string
+    {
         if (!$html) {
             return '';
         }
-        $html = str_replace('&nbsp;', '##NBSP##', $html); // workaround for &nbsp;
 
-        // Load the HTML content into a DOMDocument object
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        libxml_use_internal_errors(true); // Suppress warnings due to malformed HTML
-        $dom->loadHTML($html);
-        libxml_clear_errors();
-
-        $xpath = new DOMXPath($dom);
+        list($dom, $xpath) = self::loadHtmlDom($html);
 
         $theads = $xpath->query('//thead');
 
@@ -290,17 +273,7 @@ EOT;
             }
         }
 
-        $body = $dom->getElementsByTagName('body')->item(0);
-        $innerHTML = '';
-        if ($body) {
-            foreach ($body->childNodes as $child) {
-                $innerHTML .= $dom->saveHTML($child);
-            }
-        }
-
-        $innerHTML = mb_convert_encoding($innerHTML, 'ISO-8859-1', 'UTF-8');
-        $innerHTML = str_replace('##NBSP##', '&nbsp;', $innerHTML);
-        return $innerHTML;
+        return self::extractBodyHtml($dom);
     } // fixMdpLayoutTables
 
 
@@ -311,12 +284,13 @@ EOT;
     private static function handleLinks(string $markdown): string
     {
         if (preg_match_all('/\{\{ \s* link\( (.*?) \)/x', $markdown, $matches)) {
-            foreach ($matches[1] as $i => $linkText) {
-                $linkText1 = $linkText;
+            // FIX: replace full match to avoid duplicating icon:false on repeated link texts
+            foreach ($matches[0] as $i => $fullMatch) {
+                $linkText = $matches[1][$i];
                 if (!str_contains($linkText, 'icon:')) {
-                    $linkText1 .= ', icon:false';
+                    $replacement = str_replace($linkText, $linkText . ', icon:false', $fullMatch);
+                    $markdown = str_replace($fullMatch, $replacement, $markdown);
                 }
-                $markdown = str_replace($linkText, $linkText1, $markdown);
             }
         }
         return $markdown;
@@ -357,10 +331,11 @@ EOT;
 
 
     /**
-     * @param $css
+     * @param string $css
      * @return array
      */
-    private static function parseCss($css) {
+    private static function parseCss(string $css): array
+    {
         $rules = [];
         $css = trim($css);
 
@@ -383,7 +358,7 @@ EOT;
 
     /**
      * @param string $text
-     * @return array
+     * @return array  [plaintext, html/markdown, css]
      */
     public static function parseSections(string $text): array
     {
@@ -396,9 +371,8 @@ EOT;
         $parts = preg_split('/\n====[ \t]*(.+)\n/', "\n$text", -1, PREG_SPLIT_DELIM_CAPTURE);
 
         if (count($parts) === 1) {
-            // No sections found, entire text is the plaintext
-            $result['plaintext'] = trim($parts[0]);
-            return $result;
+            // FIX: return indexed array consistent with the caller's list() destructuring
+            return [trim($parts[0]), '', ''];
         }
 
         // First element is the plaintext
@@ -410,7 +384,12 @@ EOT;
             $content = isset($parts[$i + 1]) ? trim($parts[$i + 1]) : '';
             $result[$title] = $content;
         }
-        return [$result['plaintext']??'', $result['HTML']??''.$result['MARKDOWN']??'', $result['CSS'] ?? ''];
+        // FIX: added parentheses to fix ?? / . operator precedence
+        return [
+            $result['plaintext'] ?? '',
+            ($result['HTML'] ?? '') . ($result['MARKDOWN'] ?? ''),
+            $result['CSS'] ?? '',
+        ];
     } // parseSections
 
 
@@ -429,7 +408,7 @@ EOT;
             'subject' => '',
             'body' => '',
         ];
-        $logComment = $props['logComment']??'';
+        $logComment = $props['logComment'] ?? '';
 
         $subject = $props['subject'];
         $body = $props['body'];
@@ -438,19 +417,20 @@ EOT;
             $subject = TransVars::translate($subject);
         }
 
+        $images = [];
         if (is_string($body)) {
             if (preg_match('/\n==== [A-Z]+\n/s', "\n$body")) {
                 if (str_contains($body, '{{')) {
                     $body = TransVars::translate($body);
                 }
-                $htmlMail = new HtmlMail();
-                list($html, $text, $images) = $htmlMail->compileForMail($body);
+                // FIX: static call instead of unnecessary instantiation
+                list($html, $text, $images) = self::compileForMail($body);
                 $props['body'] = [];
                 $props['body']['text'] = $text;
                 $props['body']['html'] = $html;
             }
         } else {
-            if ($body['html']??false) {
+            if ($body['html'] ?? false) {
                 if ($body['text'] && str_contains($body['text'], '{{')) {
                     $props['body']['text'] = TransVars::translate($body['text']);
                 }
@@ -460,36 +440,38 @@ EOT;
             }
         }
 
-        $mailer             = new phpmailer();
+        // FIX: class name case to match the import (PHPMailer 6.x)
+        $mailer             = new PHPMailer();
         $mailer->From       = $props['from'];
         $mailer->FromName   = $props['fromName'];
-        $mailer->CharSet    = "UTF-8";
+        $mailer->CharSet    = 'UTF-8';
         $mailer->Subject    = $subject;
 
+        // FIX: avoid variable shadowing; trim addresses
         $to                 = $props['to'];
         if (is_string($to) && str_contains($to, ',')) {
-            foreach (explode(',', $to) as $to) {
-                $mailer->AddAddress($to);
+            foreach (explode(',', $to) as $addr) {
+                $mailer->addAddress(trim($addr));
             }
         } elseif (is_array($to)) {
-            foreach ($to as $to1) {
-                $mailer->AddAddress($to1);
+            foreach ($to as $addr) {
+                $mailer->addAddress($addr);
             }
             $props['to'] = implode(', ', $to);
         } else {
-            $mailer->AddAddress($to);
+            $mailer->addAddress($to);
         }
 
         // body:
-        if (is_string($props['body']??false)) {
+        if (is_string($props['body'] ?? false)) {
             $logText = $props['body'];
             $mailer->Body = $logText;
 
-        } elseif ($html = $props['body']['html']??'') {
-            $mailer->IsHTML(true);
-            $html = str_replace(["&lt;", "&gt;"], ["<", ">"], htmlentities($html, ENT_NOQUOTES, 'UTF-8', FALSE));
+        } elseif ($html = $props['body']['html'] ?? '') {
+            $mailer->isHTML(true);
+            $html = str_replace(["&lt;", "&gt;"], ["<", ">"], htmlentities($html, ENT_NOQUOTES, 'UTF-8', false));
             $mailer->Body = $html;
-            if ($props['body']['text']??false) {
+            if ($props['body']['text'] ?? false) {
                 $logText = $props['body']['text'];
             } else {
                 $logText = strip_tags($html);
@@ -504,7 +486,7 @@ EOT;
                 $logText .= "\n--- HTML ---\n$html\n--- END HTML ---";
             }
         } else {
-            if ($props['body']['text']??false) {
+            if ($props['body']['text'] ?? false) {
                 $logText = $props['body']['text'];
             } else {
                 $logText = "-- no text --";
@@ -512,18 +494,23 @@ EOT;
             $mailer->AltBody = $logText;
         }
 
+        // FIX: embed images returned by compileForMail (were previously discarded)
+        foreach ($images as $cid => $imgData) {
+            $mailer->addEmbeddedImage($imgData['path'], $cid, basename($imgData['path']));
+        }
+
         // attachments:
-        if ($props['attachments']??false) {
+        if ($props['attachments'] ?? false) {
             foreach ($props['attachments'] as $rec) {
                 if (is_array($rec)) {
-                    $mailer->AddEmbeddedImage($rec['file'], $rec['cid'], basename($rec['file']));
+                    $mailer->addEmbeddedImage($rec['file'], $rec['cid'], basename($rec['file']));
                 } else {
-                    $mailer->AddAttachment($rec);
+                    $mailer->addAttachment($rec);
                 }
             }
         }
 
-        $mailer->Send();
+        $mailer->send();
 
         $subjectLabel =  TransVars::getVariable('pfy-htmlmail-preview-subject');
 
@@ -534,5 +521,55 @@ EOT;
         }
         mylog($logText, 'mail-log.txt');
     } // sendMail
+
+
+    /**
+     * Loads HTML into a DOMDocument with proper UTF-8 handling.
+     *
+     * @param string $html
+     * @return array  [DOMDocument, DOMXPath]
+     */
+    private static function loadHtmlDom(string $html): array
+    {
+        $html = str_replace('&nbsp;', self::NBSP_PLACEHOLDER, $html);
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        // Prepend XML encoding declaration for proper UTF-8 handling
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+
+        // Remove the XML processing instruction node
+        foreach ($dom->childNodes as $node) {
+            if ($node->nodeType === XML_PI_NODE) {
+                $dom->removeChild($node);
+                break;
+            }
+        }
+
+        return [$dom, new DOMXPath($dom)];
+    } // loadHtmlDom
+
+
+    /**
+     * Extracts the inner HTML of the body element from a DOMDocument.
+     *
+     * @param DOMDocument $dom
+     * @return string
+     */
+    private static function extractBodyHtml(DOMDocument $dom): string
+    {
+        $innerHTML = '';
+        $body = $dom->getElementsByTagName('body')->item(0);
+        if ($body) {
+            foreach ($body->childNodes as $child) {
+                $innerHTML .= $dom->saveHTML($child);
+            }
+        } else {
+            $innerHTML = $dom->saveHTML();
+        }
+        $innerHTML = str_replace(self::NBSP_PLACEHOLDER, '&nbsp;', $innerHTML);
+        return $innerHTML;
+    } // extractBodyHtml
 
 } // HtmlMail

@@ -29,12 +29,9 @@ class ListRenderer
         // Get labels of all user recs:
         $labels = self::getUserRecLabels($users);
 
-        if ($options['table']??false) {
-            $tableOptions = $options['table']??[];
-            if ($tableOptions === true) {
-                $tableOptions = [];
-            }
-            if (!($tableOptions['headers']??false)) {
+        if ($options['table'] ?? false) {
+            $tableOptions = is_array($options['table']) ? $options['table'] : [];
+            if (!($tableOptions['headers'] ?? false)) {
                 $tableOptions['headers'] = $labels;
             }
             $str = self::renderUserTable($users, $tableOptions);
@@ -101,19 +98,18 @@ class ListRenderer
             if (str_starts_with($page, '~/')) {
                 $page = substr($page, 2);
             }
-            if (!$page = page($page)) {
+            $pageObj = page($page);
+            if (!$pageObj) {
                 throw new \Exception("Error: page '$page' not found (by macro list())");
             }
-            $pages = $page->children()->listed();
+            $pages = $pageObj->children()->listed();
         }
 
-        $data = [];
-        if ($options['reversed']??false) {
+        if ($options['reversed'] ?? false) {
             $pages = $pages->flip();
         }
 
-        $out = self::renderSubpagesByTemplate($pages, $data, $template, $templateOptions);
-        return $out;
+        return self::renderSubpagesByTemplate($pages, $template, $templateOptions);
     } // renderSubpages
 
 
@@ -131,18 +127,18 @@ class ListRenderer
         $template = TemplateCompiler::getTemplate($templateOptions);
 
         // set default template if none is defined:
-        if (!($template??false)) {
-            if ($options['asLinks']??false) {
+        if (!$template) {
+            if ($options['asLinks'] ?? false) {
                 $template = DEFAULT_ELEMENT_TEMPLATE;
             } else {
                 $template = '- %filename%';
             }
         }
-        if (!($templateOptions['folderElement']??false)) {
+        if (!($templateOptions['folderElement'] ?? false)) {
             $templateOptions['folderElement'] = DEFAULT_FOLDER_ELEMENT_TEMPLATE;
         }
 
-        $reversed = ($options['reversed']??false);
+        $reversed = $options['reversed'] ?? false;
 
         $path = $options['path'] ?? '';
         $path = Utils::resolvePath($path);
@@ -179,8 +175,7 @@ class ListRenderer
             $data[] = $rec;
         }
 
-        $out = TemplateCompiler::compile($data, $templateOptions);
-        return $out;
+        return TemplateCompiler::compile($data, $templateOptions);
     } // renderFolderContent
 
 
@@ -192,9 +187,7 @@ class ListRenderer
      */
     private static function renderUserTable(array $users, array $options): string
     {
-        $dt = new DataTable($users, $options);
-        $out = $dt->render();
-        return $out;
+        return (new DataTable($users, $options))->render();
     } // renderUserTable
 
 
@@ -245,8 +238,8 @@ class ListRenderer
             'suffix' => '',
         ];
 
-        $templateOptions = $options['options'] ?? false;
-        $tmpl = ($options['template'] ?? false) ?: $templateOptions;
+        $templateOptions = $options['options'] ?? [];
+        $tmpl = ($options['template'] ?? false) ?: ($templateOptions ?: false);
         if (!$tmpl) {
             $template = $defaultTemplate;
 
@@ -265,31 +258,38 @@ class ListRenderer
             $template = ($tmpl['element'] ?? '') ?: $tmpl['file'] ?? '';
             $templateOptions = $tmpl + $emptyTemplate;
         }
+        if (!is_array($templateOptions)) {
+            $templateOptions = [];
+        }
 
         $templateOptions['mode'] = ($templateOptions['mode'] ?? false) ?: ($options['mode'] ?? false) ?: 'simple';
         $templateOptions['compileMarkdown'] = false;
 
-        $wrapperBegin = ($template['wrapperBegin'] ?? false) ?: ($templateOptions['wrapperBegin'] ?? false) ?: $templateOptions['prefix'] ?? '';
+        $wrapperBegin = (is_array($template) ? ($template['wrapperBegin'] ?? false) : false)
+            ?: ($templateOptions['wrapperBegin'] ?? false)
+            ?: ($templateOptions['prefix'] ?? '');
         $wrapperBegin = $wrapperBegin ? "$wrapperBegin\n" : '';
         $wrapperBegin = str_replace(['\\n', '\\t'], ["\n", "\t"], $wrapperBegin);
 
-        $wrapperEnd = ($template['wrapperEnd'] ?? false) ?: ($templateOptions['wrapperEnd'] ?? false) ?: $templateOptions['suffix'] ?? '';
+        $wrapperEnd = (is_array($template) ? ($template['wrapperEnd'] ?? false) : false)
+            ?: ($templateOptions['wrapperEnd'] ?? false)
+            ?: ($templateOptions['suffix'] ?? '');
         $wrapperEnd = $wrapperEnd ? "$wrapperEnd\n" : '';
         $wrapperEnd = str_replace(['\\n', '\\t'], ["\n", "\t"], $wrapperEnd);
-        return array($template, $templateOptions, $wrapperBegin, $wrapperEnd);
+        return [$template, $templateOptions, $wrapperBegin, $wrapperEnd];
     } // parseFolderArgs
 
 
     /**
      * @param \Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages
-     * @param array $data
      * @param array|string $template
      * @param array $templateOptions
      * @return string
      * @throws \Exception
      */
-    private static function renderSubpagesByTemplate(\Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages, array $data, array|string $template, array $templateOptions): string
+    private static function renderSubpagesByTemplate(\Kirby\Toolkit\Collection|\Kirby\Cms\Pages $pages, array|string $template, array $templateOptions): string
     {
+        $data = [];
         foreach ($pages as $page) {
             if (!self::checkVisibility($page)) {
                 continue;

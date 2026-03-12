@@ -37,7 +37,7 @@ class MapSearch
             Assets::addAssets('https://search.ch/map/api/map.js');
         }
 
-        $centerpois = ($options['centerpois']??true) ? "\n    centerpois:true,": '';
+        $centerpois = ($options['centerpois'] ?? true) ? "\n    centerpois:true," : '';
 
         $map = "pfyMaps[{$this->inx}]";
 
@@ -64,13 +64,11 @@ EOT;
     private function renderCss($options): void
     {
         $cssRules = '';
-        $minHight = ($options['minHeight']??false) ?: '200px';
-        if ($minHight) {
-            $cssRules = "min-height: $minHight;";
-        }
-        $hight = $options['height']??false;
-        if ($hight) {
-            $cssRules .= "height: $hight;";
+        $minHeight = ($options['minHeight'] ?? false) ?: '200px';
+        $cssRules = "min-height: $minHeight;";
+        $height = $options['height'] ?? false;
+        if ($height) {
+            $cssRules .= "height: $height;";
         }
         if ($cssRules) {
             Page::addCss("#{$options['id']} { $cssRules }");
@@ -98,14 +96,12 @@ EOT;
 
         $res['zoom'] = ($options['zoom']??false) ?: 6;
 
-        if (($options['mapType']??false) && (strpos(",aerial,street,satellite,", ",{$options['mapType']},") !== false)) {
+        $mapType = '';
+        if (($options['mapType'] ?? false) && in_array($options['mapType'], ['aerial', 'street', 'satellite'])) {
             if ($options['mapType'] === 'satellite') {
                 $options['mapType'] = 'aerial';
             }
             $mapType = "\ttype: '{$options['mapType']}',\n";
-
-        } else {
-            $mapType = '';
         }
 
         $from = ($options['from']??false) ?: '';
@@ -127,14 +123,13 @@ EOT;
         }
 
         // POIgroups:
-        $poigroups = isset($options['poigroups']) ? $options['poigroups'] : null;
+        $poigroups = $options['poigroups'] ?? null;
         if ($poigroups === false) {
             $poigroups = "\tpoigroups: '-',\n"; // show no POIgroups at all
         } elseif ($poigroups !== null) {
             $poigroups = "\tpoigroups: '$poigroups',\n";
-        }
-        if ($poigroups) {
-            $res['poigroups'] = $poigroups;
+        } else {
+            $poigroups = '';
         }
 
         $this->customPOIIcon = ($options['customPOIIcon']??false) ?: '';
@@ -149,18 +144,18 @@ EOT;
             $drawing = "\tdrawing: '$drawing',\n";
         }
 
-        $marker = isset($options['marker']) ? ($options['marker']?'true': 'false') : 'true';
+        $marker = ($options['marker'] ?? true) ? 'true' : 'false';
         $marker = "marker: $marker,\n";
 
         $gestureHandling = ($options['gestureHandling']??false) ?: '';
         if ($gestureHandling) {
             $gestureHandling = "\tgestureHandling: '$gestureHandling',\n";
         }
-        $res['gestureHandling'] = $gestureHandling;
         $res['attributes'] = "$marker$mapType$route$controls$poigroups$drawing$gestureHandling";
 
-        $res['height'] = $options['height']??false;
-        $res['minHeight'] = $options['minHeight']??false;
+        $res['centerpois'] = $options['centerpois'] ?? true;
+        $res['height'] = $options['height'] ?? false;
+        $res['minHeight'] = $options['minHeight'] ?? false;
 
         return $res;
     } // parseOptions
@@ -194,13 +189,13 @@ EOT;
     private function handleCustomPOIs(mixed $customPOIs): string
     {
         $jq = '';
-        $map = "map{$this->inx}";
+        $map = "pfyMaps[{$this->inx}]";
 
         if (is_array($customPOIs)) {
             $location = $customPOIs['center'] ?? '';
             $title = $customPOIs['title'] ?? '';
             $description = $customPOIs['description'] ?? ($customPOIs['html'] ?? '');
-            $poiIcon = isset($customPOIs['icon']) ?: $this->customPOIIcon;
+            $poiIcon = $customPOIs['icon'] ?? $this->customPOIIcon;
             $jq .= <<<EOT
     
         $map.addPOI(new SearchChPOI({ 
@@ -452,7 +447,7 @@ EOT;
             $iconName = basename($icon, '.png');
             $out .= "<li>$iconName: <img src='".MAP_SEARCH_ICON_PATH."$icon' width='21' height='21' alt='$icon' /></li>\n";
         }
-        $out = "<h2>MapSearch Icons</h2>\n</h2><ul class='pfy-mapsearch-icons'>\n$out</ul>\n";
+        $out = "<h2>MapSearch Icons</h2>\n<ul class='pfy-mapsearch-icons'>\n$out</ul>\n";
         Page::$css .= <<<EOT
 .pfy-mapsearch-icons {
     list-style: none;

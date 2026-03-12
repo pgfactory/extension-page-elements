@@ -24,7 +24,7 @@ const ENLIST_DELETE_ICON    = '−';
 const ENLIST_OBFUSCATED_VALUE = '#####';
 const DEFAULT_DATA_PATH     = '~data/enlist/';
 define ('DEFAULT_DATA_FILE', str_replace('/', '_', page()->id()) . '.json');
-const PFY_FREEZETIMIE_UNIT  = 3600; // => hours
+const PFY_FREEZETIME_UNIT  = 3600; // => hours
 const PERSISTENT_OPTIONS = ['nSlots', 'nReserveSlots', 'title', 'freezeTime', 'deadline', 'class',
     'info', 'placeholder', 'ical', 'description', 'editable', 'directlyToReserve',
     'sendConfirmation', 'notifyOwner', 'notifyActivatedReserve', 'obfuscate', 'admin', 'adminEmail',
@@ -144,7 +144,7 @@ class Enlist
 
             $this->initData();
 
-            if ($event['info']??false) {
+            if ($event['info'] ?? false) {
                 $this->info = $event['info'];
             } else {
                 $this->info = $this->info0;
@@ -166,13 +166,13 @@ class Enlist
     {
         $widgetInxCls = translateToClassName($this->widgetKey);
         $id = ($this->options['id'] ?? false) ?: "pfy-enlist-wrapper-$widgetInxCls";
-        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$widgetInxCls " . $this->class??'');
+        $class = rtrim("pfy-enlist-wrapper pfy-enlist-$widgetInxCls " . ($this->class ?? ''));
         if ($this->isEnlistAdmin) {
             $class .= ' pfy-enlist-admin';
         }
 
         // add class to show that list is frozen (even if isEnlistAdmin):
-        if ($this->deadlineExpired || ($this->deadlineExpired === null)) {
+        if ($this->deadlineExpired) {
             $class .= ' pfy-enlist-expired';
         }
 
@@ -229,10 +229,8 @@ EOT;
             'unknownValue' => '&nbsp;',
             'placeholderForUndefined' => '',
         ];
-        if (($this->options['tableOptions']??false) && is_array($this->options['tableOptions'])) {
-            foreach ($this->options['tableOptions'] as $key => $value) {
-                $tableOptions[$key] = $value;
-            }
+        if (($this->options['tableOptions'] ?? false) && is_array($this->options['tableOptions'])) {
+            $tableOptions = array_merge($tableOptions, $this->options['tableOptions']);
         }
         $dt = new DataTable($data, $tableOptions);
 
@@ -307,7 +305,7 @@ EOT;
             // fill custom fields:
             if ($this->hasVisibleCustomFields) {
                 foreach ($row as $k => $v) {
-                    if (str_contains('Name,Email,_time', $k)) {
+                    if (in_array($k, ['Name', 'Email', '_time'])) {
                         continue;
                     }
                     if (($this->customFields[$k] ?? false) && ($this->customFields[$k]['hidden'] ?? false)) {
@@ -331,7 +329,7 @@ EOT;
 
 
     /**
-     * @param string $value
+     * @param array $row
      * @return string
      */
     private function obfuscateSlot(array $row): string
@@ -342,7 +340,7 @@ EOT;
 
         } elseif ($this->obfuscate === 'initials') {
             $ar = array_map(function ($e) {
-                return $e[0]??'';
+                return $e[0] ?? '';
                 }, explode(' ', $value));
             $value = implode(' ', $ar);
 
@@ -399,9 +397,9 @@ EOT;
      */
     private function renderInfoButton(): string
     {
-        $info = $this->info??'';
+        $info = $this->info ?? '';
         if ($info) {
-            if ((str_contains($info, '%')) && ($event = ($this->event??false))) {
+            if ((str_contains($info, '%')) && ($event = ($this->event ?? false))) {
                 foreach ($event as $key => $value) {
                     $info = str_replace("%$key%", $value, $info);
                 }
@@ -492,7 +490,7 @@ EOT;
         $i = 1;
         foreach ($this->customFormFields as $fieldName => $rec) {
             // if type missing but options present -> set to checkbox as default:
-            if (!($rec['type']??false) && ($rec['options']??false)) {
+            if (!($rec['type'] ?? false) && ($rec['options'] ?? false)) {
                 $rec['type'] = 'checkbox';
             }
             $rec['class'] = 'pfy-enlist-custom pfy-enlist-custom-'.$i++;
@@ -573,7 +571,7 @@ EOT;
      */
     private function renderICal(): string
     {
-        if (!($this->event??false)) {
+        if (!($this->event ?? false)) {
             return '';
         }
         $rec    = $this->event;
@@ -589,7 +587,7 @@ EOT;
         }
         $icalOptions['linkText'] = '%icon%';
         $icalOptions['tooltip'] = '{{ pfy-enlist-ical-tooltip }}';
-        $icalOptions['prefix'] = $icalOptions['shortName']??'';
+        $icalOptions['prefix'] = $icalOptions['shortName'] ?? '';
         $icalOptions['asButton'] = true;
         $iCal = new Ical([$rec], $icalOptions);
 
@@ -680,7 +678,7 @@ EOT;
         $slots = $this->widgetSlots;
         $rowClasses = [];
         $addFieldDone = false;
-        $currFreezeTime = $this->freezeTime ? time() - ($this->freezeTime * PFY_FREEZETIMIE_UNIT) : false;
+        $currFreezeTime = $this->freezeTime ? time() - ($this->freezeTime * PFY_FREEZETIME_UNIT) : false;
         for ($i = 0; $i < $this->nTotalSlots; $i++) {
             $slot = ($slots[$i] ?? false) ? $slots[$i] : [];
             $rowClasses[$i] = '';
@@ -701,8 +699,6 @@ EOT;
             if ($this->deadlineExpired) {
                 $rowClasses[$i] .= ' pfy-enlist-expired';
                 if (!$this->isEnlistAdmin) {
-                    // stop here if not admin:
-                    $rowClasses[$i] .= ($i >= $this->nSlots) ? ' pfy-enlist-reserve' : '';
                     continue;
                 }
             }
@@ -721,7 +717,6 @@ EOT;
                     $rowClasses[$i] .= ' pfy-enlist-empty';
                 }
             }
-            $rowClasses[$i] .= ($i >= $this->nSlots) ? ' pfy-enlist-reserve' : '';
         }
         return $rowClasses;
     } // determineRowClasses
@@ -755,7 +750,7 @@ EOT;
             $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
         }
         $addIcon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
-        return array($deleteIcon, $addIcon);
+        return [$deleteIcon, $addIcon];
     } // prepareIcons
 
 
@@ -764,7 +759,7 @@ EOT;
      * @param array $slot
      * @return bool
      */
-    private function checkSlotFreezeTime(int $currFreezeTime, array $slot): bool
+    private function checkSlotFreezeTime(int|false $currFreezeTime, array $slot): bool
     {
         if (!$currFreezeTime) {
             return false;
@@ -821,7 +816,7 @@ EOT;
      */
     private function determineDataFile(): string
     {
-        if ($this->options['file']??false) {
+        if ($this->options['file'] ?? false) {
             $file = $this->options['file'];
             $file .= (!preg_match('/\.\w{1,6}$/', $file)) ? '.json' : '';
             if (!str_contains($file, '~')) {
@@ -851,9 +846,9 @@ EOT;
      */
     private function handlePersistentOptions(array &$options, array &$customFields)
     {
-        if ($options['setDefaults']) {
+        if ($options['setDefaults'] ?? false) {
             foreach (PERSISTENT_OPTIONS as $key) {
-                if (($options[$key]??null) !== null) {
+                if (($options[$key] ?? null) !== null) {
                     self::$persistentOptions[$key] = $options[$key];
                 }
             }
@@ -865,7 +860,7 @@ EOT;
         } else {
             if (self::$persistentOptions) {
                 foreach (self::$persistentOptions as $key => $value) {
-                    if (($options[$key]??null) === null) {
+                    if (($options[$key] ?? null) === null) {
                         $options[$key] = $value;
                     }
                 }
@@ -892,18 +887,18 @@ EOT;
      */
     private function getScheduleEvents(): array|false
     {
-        if (!($eventOptions = $this->options['schedule']??false)) {
+        if (!($eventOptions = $this->options['schedule'] ?? false)) {
             return false;
         }
 
-        if (!($src = ($eventOptions['src']??false))) {
-            $src = $eventOptions['file']??false;
+        if (!($src = ($eventOptions['src'] ?? false))) {
+            $src = $eventOptions['file'] ?? false;
         }
         $eventOptions['file'] = $src;
         $eventOptions['macroName'] = $this->options['macroName'];
 
         $sched = new Events($eventOptions);
-        $count = $eventOptions['count']??false;
+        $count = $eventOptions['count'] ?? false;
         $nextEvents = $sched->getNextEvents(count: $count);
         return $nextEvents;
     } // getScheduleEvents
@@ -917,8 +912,7 @@ EOT;
         // handle ?collapse-enlist
         if (isset($_GET['collapse-enlist'])) {
             $widgetInx = $_GET['collapse-enlist'];
-            $widgetTitle = urldecode($_GET['widgetTitle']??'');
-            $this->db->collapseEmptySlots($widgetInx, $widgetTitle);
+            $this->db->collapseEmptySlots($widgetInx);
             reloadAgent();
         }
     } // checkCollapseRequest
@@ -970,13 +964,12 @@ EOT;
             foreach ($customFields1 as $key => $rec) {
                 $key = str_replace('-', '_', $key);
                 $key = preg_replace('/\W/', '', $key);
-                if (!($rec['hidden']??false)) {
+                if (!($rec['hidden'] ?? false)) {
                     $customFields[$key] = $rec;
                     $hasVisibleCustomFields = true;
                 }
             }
 
-            $nCustFields = sizeof($customFields);
             foreach ($customFields1 as $key => $customField) {
                 // special case 'checkbox options':
                 if ((($customField['type'] ?? 'text') === 'checkbox') ||
@@ -984,9 +977,6 @@ EOT;
                     $customField['type'] = 'checkbox';
                     $customOptions = explodeTrimAssoc(',', $customField['options'] ?? '');
                     $customFields[$key]['options'] = $customOptions;
-                    if ($customField['splitOutput']??false) {
-                        $nCustFields += sizeof($customOptions) - 1;
-                    }
                 }
             }
             $this->hasVisibleCustomFields = $hasVisibleCustomFields;
@@ -1002,7 +992,7 @@ EOT;
                 'isEnlistAdmin' => $this->isEnlistAdmin,
             ] + $options;
 
-        if ($options['emailFromName']??false) {
+        if ($options['emailFromName'] ?? false) {
             EnlistComm::setEmailFromName($options['emailFromName']);
         }
 
@@ -1020,7 +1010,7 @@ EOT;
             // Note: if list is based on scheduled events, widgetInx and title are defined by the event itself
             self::$enlistWidgetIndex++;
             $this->widgetInx = self::$enlistWidgetIndex;
-            $options['title'] = ($options['title']??false) ?: '';
+            $options['title'] = ($options['title'] ?? false) ?: '';
 
             $this->parseWidgetOptions();
             $this->widgetKey = $this->title ?: "Enlist-$this->widgetInx";

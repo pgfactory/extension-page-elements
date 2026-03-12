@@ -1,47 +1,76 @@
 // draggable.js
 
 document.addEventListener("DOMContentLoaded", () => {
-  const draggables = document.querySelectorAll(".pfy-draggable");
-
-  draggables.forEach(el => {
-    let offsetX = 0, offsetY = 0, isDragging = false;
-
-    // Ensure the element is positioned absolutely or relatively to move freely
-    const computedStyle = window.getComputedStyle(el);
-    if (computedStyle.position === "static") {
-      el.style.position = "absolute";
-    }
-
-    el.style.cursor = "grab";
-
-    el.addEventListener("mousedown", (e) => {
-      e.preventDefault(); // Prevent text selection during drag
-      isDragging = true;
-      el.style.cursor = "grabbing";
-      el.style.zIndex = 1000; // bring to front while dragging
-
-      // Calculate offset between mouse and element top-left corner
-      offsetX = e.clientX - el.offsetLeft;
-      offsetY = e.clientY - el.offsetTop;
-
-      // Add listeners to document so dragging still works if cursor leaves the element
-      const onMouseMove = (e) => {
-        if (!isDragging) return;
-        el.style.left = (e.clientX - offsetX) + "px";
-        el.style.top = (e.clientY - offsetY) + "px";
-      };
-
-      const onMouseUp = () => {
-        isDragging = false;
-        el.style.cursor = "grab";
-        el.style.zIndex = "";
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    });
-  });
+  document.querySelectorAll(".pfy-draggable").forEach(el => initDraggable(el));
 });
 
+
+function initDraggable(el) {
+  const computedStyle = window.getComputedStyle(el);
+  if (computedStyle.position === "static") {
+    el.style.position = "absolute";
+  }
+  el.style.cursor = "grab";
+
+  let startX, startY, startLeft, startTop, isDragging = false;
+  let savedZIndex = '';
+
+  function onDragStart(clientX, clientY) {
+    isDragging = true;
+    startX = clientX;
+    startY = clientY;
+    startLeft = el.offsetLeft;
+    startTop = el.offsetTop;
+    savedZIndex = el.style.zIndex;
+    el.style.cursor = "grabbing";
+    el.style.zIndex = "1000";
+    document.body.style.userSelect = "none";
+  }
+
+  function onDragMove(clientX, clientY) {
+    if (!isDragging) return;
+    el.style.left = (startLeft + clientX - startX) + "px";
+    el.style.top = (startTop + clientY - startY) + "px";
+  }
+
+  function onDragEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    el.style.cursor = "grab";
+    el.style.zIndex = savedZIndex;
+    document.body.style.userSelect = "";
+  }
+
+  // Mouse events
+  el.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    onDragStart(e.clientX, e.clientY);
+
+    const onMouseMove = (e) => onDragMove(e.clientX, e.clientY);
+    const onMouseUp = () => {
+      onDragEnd();
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  // Touch events
+  el.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    onDragStart(touch.clientX, touch.clientY);
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+    e.preventDefault(); // prevent scrolling while dragging
+    const touch = e.touches[0];
+    onDragMove(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  el.addEventListener("touchend", () => {
+    onDragEnd();
+  });
+} // initDraggable

@@ -2,54 +2,42 @@
  * login.js
  */
 
-window.addEventListener("load", (event) => {
+// Focus the email input inside the given container
+function focusLoginEmail(container) {
+  if (!container) return;
+  setTimeout(() => {
+    container.querySelector('input[name=pfyLoginEmail]')?.focus();
+  }, 50);
+}
 
-  // setup button 'Login with one-time-code':
-  const btnOtc = document.getElementById('pfy-login-pwless');
-  if (btnOtc) {
-    btnOtc.addEventListener("click", (event) => {
-      event.preventDefault();
-      const wrapper = btnOtc.closest('.pfy-login-wrapper');
-      wrapper.classList.remove('pfy-login-unpw');
-      wrapper.classList.add('pfy-login-otc');
-      const form = event.target.closest('.pfy-form');
-      setTimeout(function () {
-        const input = form.querySelector('input[name=pfyLoginEmail]');
-        input.focus();
-      }, 50);
-    });
-  }
+// Toggle between OTC and password login modes
+function switchLoginMode(el, addClass, removeClass) {
+  const wrapper = el.closest('.pfy-login-wrapper');
+  if (!wrapper) return;
+  wrapper.classList.add(addClass);
+  wrapper.classList.remove(removeClass);
+  focusLoginEmail(el.closest('.pfy-form'));
+}
 
-  // setup button 'Login with password':
-  const btnPw = document.getElementById('pfy-login-pw');
-  if (btnPw) {
-    btnPw.addEventListener("click", (event) => {
-      event.preventDefault();
-      const wrapper = btnPw.closest('.pfy-login-wrapper');
-      wrapper.classList.add('pfy-login-unpw');
-      wrapper.classList.remove('pfy-login-otc');
-      const form = event.target.closest('.pfy-form');
-      setTimeout(function () {
-        const input = form.querySelector('input[name=pfyLoginEmail]');
-        input.focus();
-      }, 50);
-    });
-  }
-
-  // auto-focus on input field:
-  const loginWrapper = document.querySelector('.pfy-login-wrapper');
-  if (loginWrapper) {
-    setTimeout(function () {
-      const input = loginWrapper.querySelector('input[name=pfyLoginEmail]');
-      input.focus();
-    }, 50);
-  }
-
+// Setup button 'Login with one-time-code':
+handleEvent('#pfy-login-pwless', (ev) => {
+  ev.preventDefault();
+  switchLoginMode(ev.target, 'pfy-login-otc', 'pfy-login-unpw');
 });
 
-// register event handler for cancel button in login/logout form:
-handleEvent('.pfy-login-box input.pfy-cancel', ev => {
+// Setup button 'Login with password':
+handleEvent('#pfy-login-pw', (ev) => {
   ev.preventDefault();
-  console.log('cancel');
+  switchLoginMode(ev.target, 'pfy-login-unpw', 'pfy-login-otc');
+});
+
+// Cancel button in login/logout form:
+handleEvent('.pfy-login-box input.pfy-cancel', (ev) => {
+  ev.preventDefault();
   pfyFormsHelper.reloadAgent();
-})
+});
+
+// Auto-focus on email input field:
+document.addEventListener('DOMContentLoaded', () => {
+  focusLoginEmail(document.querySelector('.pfy-login-wrapper'));
+});

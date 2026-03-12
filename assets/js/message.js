@@ -1,47 +1,53 @@
 // === Message Box =================================
 
+"use strict";
 
-var pfyMsgInitialized = null;
+let pfyMsgHideTimer = null;
 
 function setupMessageHandler(delay) {
-    setTimeout(function() {
-        let msgbox = document.querySelector('.pfy-msgbox');
+    const msgbox = document.querySelector('.pfy-msgbox');
+    if (!msgbox) {
+        return;
+    }
+
+    if (pfyMsgHideTimer) {
+        clearTimeout(pfyMsgHideTimer);
+    }
+
+    setTimeout(() => {
         msgbox.classList.add('pfy-msg-show');
+        pfyMsgHideTimer = setTimeout(() => {
+            msgbox.classList.remove('pfy-msg-show');
+        }, 5000);
     }, delay);
 
-    setTimeout(function() {
-        let msgbox = document.querySelector('.pfy-msgbox');
-        msgbox.classList.remove('pfy-msg-show');
-    }, 5000);
-
-    let msgbox = document.querySelector('.pfy-msgbox');
-    msgbox.addEventListener('click', function() {
+    msgbox.addEventListener('click', function () {
         this.classList.toggle('pfy-msg-show');
     });
 
-    msgbox.addEventListener('dblclick', function() {
+    msgbox.addEventListener('dblclick', function () {
         this.style.display = 'none';
     });
-
-    pfyMsgInitialized = true;
 }
 
 function showMessage(txt) {
-    let msgbox = document.querySelector('.pfy-msgbox');
-    if (msgbox) {
-        msgbox.parentNode.removeChild(msgbox);
+    const oldMsgbox = document.querySelector('.pfy-msgbox');
+    if (oldMsgbox) {
+        oldMsgbox.remove();
     }
 
-    let newMsgbox = document.createElement('div');
-    newMsgbox.className = 'pfy-msgbox';
-    newMsgbox.innerHTML = '<p>' + txt + '</p>';
+    const msgbox = document.createElement('div');
+    msgbox.className = 'pfy-msgbox';
+    const p = document.createElement('p');
+    p.textContent = txt;
+    msgbox.appendChild(p);
 
-    document.body.insertBefore(newMsgbox, document.body.firstChild);
+    document.body.insertBefore(msgbox, document.body.firstChild);
     setupMessageHandler(500);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    let msgbox = document.querySelector('.pfy-msgbox');
+domReady(() => {
+    const msgbox = document.querySelector('.pfy-msgbox');
     if (msgbox) {
         setupMessageHandler(500);
     }

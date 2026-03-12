@@ -16,8 +16,6 @@ day view:
 
 */
 
-console.log('calendar.js');
-
 const pfyCalContextMenu =
   `<button class="pfy-cal-edit" role="button">{{ pfy-cal-context-edit-label }}</button><br>`+
   `<button class="pfy-cal-duplicate" role="button">{{ pfy-cal-context-duplicate-label }}</button><br>`+
@@ -40,8 +38,6 @@ function PfyCalendar() {
 
   // Control array: list-view <tr> rows with any of these classes will be removed
   this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
-
-  return this;
 } // PfyCalendar
 
 
@@ -66,14 +62,9 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   this.editPermission = this.options.edit || this.options.admin;
   this.freezePast = options.freezePast;
   this.fullCalendarOptions = options.fullCalendarOptions;
-  this.useDblClick = (typeof this.options.useDblClick !== 'undefined') && this.options.useDblClick;
+  this.useDblClick = !!this.options.useDblClick;
 
-  // Setting default values for 'calDayStart' property
-  if (typeof options.fullCalendarOptions.slotMinTime !== 'undefined') {
-    this.options.calDayStart = options.fullCalendarOptions.slotMinTime;
-  } else {
-    this.options.calDayStart = '08:00';
-  }
+  this.options.calDayStart = options.fullCalendarOptions.slotMinTime ?? '08:00';
 
   const businessHoursFrom = this.options.businessHours.substring(0,5);
   const businessHoursTill = this.options.businessHours.substring(6);
@@ -96,7 +87,6 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
         navLinks:               true, // can click day/week names to navigate views
         height:                 'auto',
         dayMaxEvents:           true, // allow "more" link when too many events
-        //selectable: true,
         weekNumbers:            true,
         weekNumberCalculation:  'ISO',
         slotMinTime:            visibleHoursFrom,
@@ -124,15 +114,11 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
             url: this.ajaxUrl + '&get',
             success: function( data ) {
               if (typeof data === 'object') {
-                console.log('cal events fetched: ' + data.length);
                 parent.removeHiddenElements(data);
-              } else {
-                console.log(data);
               }
             },
             failure: function( events ) {
-                console.log('Error in calendar data:');
-                console.log( events );
+                console.error('Error in calendar data:', events);
             }
         },
 
@@ -149,21 +135,21 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
         eventClick: function (calObj) {
             parent.openExistingEventPopup(calObj);
         },
-         eventDrop: function (calEv) {
-             return parent.calEventChanged(calEv);
-         },
-         eventResize: function (calEv) {
-             parent.calEventChanged(calEv);
-         },
-         windowResize: function() {
+        eventDrop: function (calEv) {
+            return parent.calEventChanged(calEv);
+        },
+        eventResize: function (calEv) {
+            parent.calEventChanged(calEv);
+        },
+        windowResize: function() {
             parent.handleWindowWidth();
-         },
-         datesSet(events) {
+        },
+        datesSet(events) {
             // events are loaded but not placed into the view
             setTimeout(() => {
               parent.onCalendarReady(events);
             }, 300);
-         },
+        },
   };
 
   // Merging default options with provided options
@@ -190,7 +176,6 @@ PfyCalendar.prototype.handleWindowWidth = function() {
     headerWidth += elem.offsetWidth;
   });
 
-  console.log(`headerWidth: ${headerWidth} titleWidth: ${this.titleWidth}`);
   if (headerWidth > this.titleWidth) {
     calendarEl.classList.add('pfy-calendar-narrow');
   } else {
@@ -204,11 +189,10 @@ PfyCalendar.prototype.renderEvent = function( calArgs ) {
   const id = event._def.defId;
   this.calEvs[id] = event;
   let html = event._def.extendedProps.summary;
-  if (typeof event._def.extendedProps.description !== 'undefined') {
+  if (event._def.extendedProps.description) {
     html += event._def.extendedProps.description;
   }
   html = html.replace(/^<span/, `<span data-event-id='${id}'`);
-//  this.updateSelectedCategories();
   return { html: html };
 }; // renderEvent
 
@@ -244,7 +228,9 @@ PfyCalendar.prototype.onCalendarReady = function() {
 
       // for each event in calendar, copy cat-class to event elem:
       domForOne(calEventEl, '[data-reckey]', (el) => {
-        calEventEl.classList.value += ' ' + el.classList.value;
+        el.classList.forEach((cls) => {
+          calEventEl.classList.add(cls);
+        });
       })
 
       // handle description:
@@ -275,25 +261,18 @@ PfyCalendar.prototype.onViewReady = function( calendarObj ) {
 
 
 PfyCalendar.prototype.storeViewMode = function(viewName) {
-  execAjaxPromise('&mode=' + viewName, null, this.ajaxUrl)
-    .then(function (data) {
-      console.log('storeViewMode done: ' + data);
-    });
+  execAjaxPromise('&mode=' + viewName, null, this.ajaxUrl);
 }; // storeViewMode
 
 
 PfyCalendar.prototype.storeCatFilter = function() {
   let catfilter = this.getCatFilterStates();
   catfilter = catfilter.join(',');
-  execAjaxPromise(`&mode=${catfilter}&catfilter`, null, this.ajaxUrl)
-    .then(function (data) {
-      console.log('storeViewMode done: ' + data);
-    });
+  execAjaxPromise(`&mode=${catfilter}&catfilter`, null, this.ajaxUrl);
 }; // storeCatFilter
 
 
 PfyCalendar.prototype.openNewEventPopup = function (dateObj) {
-  const parent = this;
   this.invokeHandler(this._openNewEventPopup, dateObj, null);
 }; // openNewEventPopup
 
@@ -380,7 +359,6 @@ PfyCalendar.prototype.setupTriggers = function (form) {
 
 
 PfyCalendar.prototype.setupAllDayHandler = function(form) {
-  // All-day toggle:
   const parent = this;
   domForOne(form, '[name=allday]', (alldayCheckbox) => {
     alldayCheckbox.addEventListener('change', function () {
@@ -392,19 +370,7 @@ PfyCalendar.prototype.setupAllDayHandler = function(form) {
 
 
 PfyCalendar.prototype.setAlldayMode = function(form, allday) {
-//  // if month view, default to allday, unless there is a preset value:
-//  domForOne(form, '.pfy-elem-wrapper.pfy-cal-allday', el => {
-//    const presetVal = el.dataset.preset;
-//    console.log('preset: ' + presetVal);
-//    if (typeof presetVal !== 'undefined') {
-//      if (presetVal === 'false' || !presetVal) {
-//        allday = false;
-//      }
-//    }
-//  })
-
   if (allday) {
-    console.log('is allday');
     domForOne(form, '[name=start]', (startElem) => {
       const startVal = startElem.value;
       startElem.setAttribute('type', 'date');
@@ -418,7 +384,6 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
       endElem.value = endVal.substring(0,10);
     })
   } else {
-    console.log('not allday');
     domForOne(form, '[name=start]', (startElem) => {
       let startVal = startElem.dataset.orig || startElem.value;
       startElem.setAttribute('type', 'datetime-local');
@@ -431,7 +396,6 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
       let endVal = endElem.dataset.orig || endElem.value;
       endElem.setAttribute('type', 'datetime-local');
       if (endVal && endVal.length < 16) {
-
         endVal += 'T13:00';
       }
       endElem.value = endVal;
@@ -444,7 +408,6 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
 
 
 PfyCalendar.prototype.setupDeleteCheckboxHandler = function(form) {
-  // Delete Entry checkbox:
   domForOne(form, 'input.pfy-cal-delete-entry', (deleteCheckbox) => {
     deleteCheckbox.addEventListener('change', function (ev) {
       ev.preventDefault();
@@ -474,12 +437,14 @@ PfyCalendar.prototype.setupCategoryHandler = function(form) {
 
 
 PfyCalendar.prototype.updateCategoryClass = function(catElem) {
-  const currentCat =  catElem.options[catElem.selectedIndex].value;
+  const currentCat = catElem.options[catElem.selectedIndex].value;
   const wrapper = catElem.closest('.pfy-popup-wrapper');
-  let classes = wrapper.classList.value;
-  classes = classes.replace(/\s*pfy-category-\w*/, '');
-  classes += ' pfy-category-'+currentCat;
-  wrapper.classList.value = classes;
+  wrapper.classList.forEach((cls) => {
+    if (cls.startsWith('pfy-category-')) {
+      wrapper.classList.remove(cls);
+    }
+  });
+  wrapper.classList.add('pfy-category-' + currentCat);
 }; // updateCategoryClass
 
 
@@ -503,14 +468,15 @@ PfyCalendar.prototype.checkPermission = function(event) {
   let modifyPermission = this.options.modifyPermission;
   if (modifyPermission) {
     try {
-      modifyPermission = ',' + modifyPermission.replace(' ', '') + ',';
+      modifyPermission = ',' + modifyPermission.replace(/\s/g, '') + ',';
       let creator = event._def.extendedProps._creator;
       if (!modifyPermission.includes(',' + creator + ',')) {
-        console.log(`Attempt to modify event created by other user "${creator}" -> blocked.`);
         this.fullCal.refetchEvents();
         return `{{ pfy-cal-no-permission-others-event }}`;
       }
-    } catch(e) {}
+    } catch(e) {
+      console.error('checkPermission (modifyPermission):', e);
+    }
   }
 
   let calCatPermission = this.options.calCatPermission;
@@ -518,11 +484,12 @@ PfyCalendar.prototype.checkPermission = function(event) {
     try {
       let category = event._def.extendedProps.category.toLowerCase();
       if (calCatPermission.toLowerCase().indexOf(category) === -1) {
-        console.log(`Attempt to modify event of unauthorized category ${category} -> blocked.`);
         this.fullCal.refetchEvents();
         return `{{ pfy-cal-no-permission-others-category }}`;
       }
-    } catch(e) {}
+    } catch(e) {
+      console.error('checkPermission (calCatPermission):', e);
+    }
   }
   return false;
 }; // checkPermission
@@ -533,10 +500,9 @@ PfyCalendar.prototype.checkFreeze = function(calEv, checkAgainstEnd = false) {
     return true;
   }
   const now = new Date().toLocaleString('sv', { timeZone: this.fullCalendarOptions.timeZone }).replace(' ', 'T');
-  let  d = null;
+  let d = null;
   if (typeof calEv.dateStr !== 'undefined') {
     d = calEv.dateStr;
-
   } else if (typeof calEv._instance.range !== 'undefined') {
     if (checkAgainstEnd) {
       d = calEv._instance.range.end.toISOString();
@@ -544,9 +510,8 @@ PfyCalendar.prototype.checkFreeze = function(calEv, checkAgainstEnd = false) {
       d = calEv._instance.range.start.toISOString();
     }
   } else {
-    console.log("ERROR");
+    console.error('checkFreeze: unable to determine event date');
   }
-  console.log(`now: ${now}  then: ${d}`);
   return now < d;
 }; // checkFreeze
 
@@ -584,12 +549,10 @@ PfyCalendar.prototype.presetForm = function(form1, recKey) {
   }
   const parent = this;
   let cmd = 'getRec='+recKey;
-  console.log('fetching data record '+recKey);
   execAjaxPromise(cmd, {}, this.ajaxUrl)
     .then(function (data) {
       const form = document.querySelector('.pfy-popup-container .pfy-form');
       if (data.allday) {
-        console.log('allday');
         parent.setAlldayMode(form, true);
       }
       pfyFormsHelper.presetForm(form, data, recKey);
@@ -600,18 +563,11 @@ PfyCalendar.prototype.presetForm = function(form1, recKey) {
 
       const popup = document.querySelector('.pfy-popup-wrapper');
       popup.style.opacity = 1;
-
-    })
-    .then(function (msg) {
-      if (msg) {
-        console.log(msg);
-      }
     });
-}; // resetForm
+}; // presetForm
 
 
 PfyCalendar.prototype.modifyEvent = function(event0, start, end) {
-  const parent = this;
   const fullCal = this.fullCal;
   const eventEl = event0.el;
   const span = eventEl.querySelector('.fc-event [data-reckey]');
@@ -627,14 +583,9 @@ PfyCalendar.prototype.modifyEvent = function(event0, start, end) {
 
   let cmd = 'modifyRec='+recKey;
   cmd += `&start=${start}&end=${end}&calendar`;
-  console.log('modifying data record '+recKey);
   execAjaxPromise(cmd, {}, this.ajaxUrl)
-    .then(function (data) {
-      // update calendar:
+    .then(function () {
       fullCal.refetchEvents();
-    })
-    .then(function (msg) {
-      console.log(msg);
     });
 }; // modifyEvent
 
@@ -648,19 +599,15 @@ PfyCalendar.prototype.setupSwipe = function() {
   const parent = this;
   swipedetect(this.calendarEl, function(swipedir){
     if (swipedir === 'left') {
-      console.log('swiped left');
       parent.fullCal.next();
     } else if (swipedir === 'right') {
-      console.log('swiped right');
       parent.fullCal.prev();
     }
   });
 }; // setupSwipe
 
 
-
 PfyCalendar.prototype.setupContextMenu = function() {
-console.log('setupContextMenu');
   const parent = this;
   document.addEventListener('contextmenu', (ev) => {
     if (!ev.target.closest('.fc-event')) {
@@ -683,7 +630,6 @@ PfyCalendar.prototype.openContextMenu = function(ev) {
   ev.preventDefault();
   const calEventEl = ev.target.closest('.fc-event');
 
-  const parentEl = calEventEl.parentElement.parentElement;
   let tippyInstance = parent.tippyInstance = tippy(calEventEl, {
     content: pfyCalContextMenu,
     placement: 'right-end',
@@ -692,7 +638,7 @@ PfyCalendar.prototype.openContextMenu = function(ev) {
     arrow: false,
     allowHTML: true,
     hideOnClick: true,
-    theme: 'light', //???
+    theme: 'light',
     offset: [0, 10],
   });
   tippyInstance.show();
@@ -723,7 +669,7 @@ PfyCalendar.prototype.handleContextMenuDelete = function(ev) {
   domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
     const recKey = el.dataset.reckey;
     execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
-      .then(function (data) {
+      .then(function () {
         parent.fullCal.refetchEvents();
       });
   });
@@ -732,15 +678,13 @@ PfyCalendar.prototype.handleContextMenuDelete = function(ev) {
 
 PfyCalendar.prototype.handleContextMenuDuplicate = function(ev) {
   const parent = this;
-  console.log(ev.target);
-  console.log('duplicate');
   ev.stopPropagation();
   ev.stopImmediatePropagation();
   ev.preventDefault();
   domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
     const recKey = el.dataset.reckey;
     execAjaxPromise('&duplicate=' + recKey, null, parent.ajaxUrl)
-      .then(function (data) {
+      .then(function () {
         parent.fullCal.refetchEvents();
       });
   });
@@ -748,11 +692,8 @@ PfyCalendar.prototype.handleContextMenuDuplicate = function(ev) {
 
 
 PfyCalendar.prototype.handleContextMenuEdit = function(ev) {
-  const parent = this;
-  console.log(ev.target);
-  console.log('edit');
   const calEventEl = this.tippyInstance.reference;
-  parent.closeContextMenu();
+  this.closeContextMenu();
   this.overrideDblClick = true;
   // emulate click on cal event to open edit popup:
   calEventEl.click();
@@ -761,7 +702,7 @@ PfyCalendar.prototype.handleContextMenuEdit = function(ev) {
 
 PfyCalendar.prototype.closeContextMenu = function() {
   if (this.tippyInstance) {
-    this.tippyInstance.destroy(); //ToDo: why not working?
+    this.tippyInstance.destroy();
     this.tippyInstance = false;
   }
 } // closeContextMenu
@@ -769,9 +710,8 @@ PfyCalendar.prototype.closeContextMenu = function() {
 
 PfyCalendar.prototype.performChecks = function(calEv = false) {
   if (!this.editPermission) {
-    console.log('User has insufficient privileges to edit calendar');
     if (this.editPermission === null) {
-      this.pfyPopup(`{{ pfy-warning-insufficient-privileges }}`);
+      this.showAlertPopup(`{{ pfy-warning-insufficient-privileges }}`);
     }
     return false;
   }
@@ -803,9 +743,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
     this.clicks++;
     if (this.clicks === 1) {
       setTimeout(function () {
-        if (parent.clicks === 1) {
-          //console.log('ignoring single click');
-        } else {
+        if (parent.clicks > 1) {
           fun(parent, argObj1, argObj2);
         }
         parent.clicks = 0;
@@ -820,14 +758,13 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
 
 PfyCalendar.prototype.initCatSelectrHandler = function() {
   const parent = this;
-  console.log('initCatSelectrHandler');
   domForEach('.pfy-cal-cat-selector input', (el) => {
     el.addEventListener('change', function () {
       parent.fullCal.refetchEvents();
       parent.storeCatFilter();
     });
   })
-} // closeContextMenu
+} // initCatSelectrHandler
 
 
 PfyCalendar.prototype.getCatFilterStates = function() {
@@ -840,21 +777,22 @@ PfyCalendar.prototype.getCatFilterStates = function() {
   return filteredClasses;
 }
 
+
 PfyCalendar.prototype.removeHiddenElements = function(data) {
-  if (typeof data === 'undefined') {
+  if (!data) {
     return data;
   }
 
   const listView = (this.fullCal.view.type === 'listYear');
   let filteredClasses = this.getCatFilterStates();
-  if (!filteredClasses && !listView) {
+  if (filteredClasses.length === 0 && !listView) {
     return data;
   }
   filteredClasses.forEach((cls) => {
     let i = 0;
-    while (typeof data[i] !== 'undefined') {
+    while (i < data.length) {
       if (data[i].summary.match(cls)) {
-        this.removeAndShift(data, i);
+        data.splice(i, 1);
       } else {
         i++;
       }
@@ -863,32 +801,12 @@ PfyCalendar.prototype.removeHiddenElements = function(data) {
 
   if (listView && this.options.hideAllDayInListView) {
     let i = 0;
-    while (typeof data[i] !== 'undefined') {
+    while (i < data.length) {
       if (data[i].start.length <= 12) {
-        //console.log('removing ', data[i]);
-        this.removeAndShift(data, i);
+        data.splice(i, 1);
+      } else {
+        i++;
       }
-      i++;
     }
   }
 } // removeHiddenElements
-
-
-PfyCalendar.prototype.removeAndShift = (obj, keyToRemove) => {
-  const target = parseInt(keyToRemove);
-
-  // 1. Delete the target property
-  delete obj[target];
-
-  // 2. Find all keys, sort them, and shift higher ones down
-  Object.keys(obj)
-    .map(Number)
-    .filter(key => key > target)
-    .sort((a, b) => a - b) // Sort ascending to move them in order
-    .forEach(key => {
-      obj[key - 1] = obj[key];
-      delete obj[key];
-    });
-  obj.length--;
-} // removeAndShift
-

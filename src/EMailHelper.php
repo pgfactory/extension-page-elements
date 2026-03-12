@@ -24,7 +24,7 @@ class EMailHelper
     private static string $css = '';
     private static string $plaintext = '';
     private static string $to = '';
-    private static string|null $from = '';
+    private static string|null $from = null;
     private static string $fromName = '';
     private static array $iCalOptions = [];
     private static string $icsFile = '';
@@ -32,7 +32,6 @@ class EMailHelper
     private static array $attachments = [];
     private static array|false $schedule = [];
     private static array $events = [];
-
 
     /**
      * @param array $options
@@ -51,10 +50,9 @@ class EMailHelper
 
         self::handleScheduleOption();
 
-
-        if (!self::$markdown && $options['schedule']??false) {
+        if (!self::$markdown && ($options['schedule'] ?? false)) {
             $html = <<<EOT
-<h2>Availabe variables:</h2>
+<h2>Available variables:</h2>
 <pre>{{ _data_ }}
 </pre>
 EOT;
@@ -232,7 +230,7 @@ EOT;
             self::sendMail($dataRec);
             reloadAgent(PFY_PAGE_URL.'?sent');
         }
-        return false; // don't continue saving submitted data by PfyForms
+        return ''; // don't continue saving submitted data by PfyForms
     } // formCallback
 
 
@@ -292,7 +290,7 @@ EOT;
         if (!($src = ($eventOptions['src']??false))) {
             $src = $eventOptions['file']??false;
         }
-        $count = ($eventOptions['ical']['count']??false) ?: 1;
+        $count = $eventOptions['ical']['count'] ?? 1;
         $eventOptions['file'] = $src;
         $eventOptions['macroName'] = self::$macroName;
 
@@ -311,9 +309,8 @@ EOT;
                 }
             }
             TransVars::setTempVariable('_data_', $_data_);
-
-            $fileTime = fileTime($src);
         }
+        $fileTime = fileTime($src);
         foreach ($nextEvents as $dataRec) {
             self::$attachments[] = self::prepareIcsFile($dataRec, $fileTime);
         }
@@ -410,7 +407,7 @@ EOT;
         }
 
         if ($images) {
-            foreach ($images as $cid =>  $image) {
+            foreach ($images as $cid => $image) {
                 $file = $image['path'];
                 $props['attachments'][] = [
                   'file' => $file,
@@ -428,12 +425,12 @@ EOT;
      */
     private static function parseOptions($options)
     {
-        self::$subject          = $options['subject']??false;
-        self::$markdown         = $options['markdown']??false;
-        self::$css              = $options['css']??false;
+        self::$subject          = $options['subject']??'';
+        self::$markdown         = $options['markdown']??'';
+        self::$css              = $options['css']??'';
         self::$plaintext        = ($options['plainText']??false) ?: '-auto-'; // -auto- means: derive plaintext from markdown
         self::$schedule         = $options['schedule']??false;
-        self::$macroName        = $options['macroName']??false;
+        self::$macroName        = $options['macroName']??'';
         self::$to               = ($options['to']??false) ?: PageFactory::$webmasterEmail;
         self::$from             = ($options['from']??false) ?: PageFactory::$webmasterEmail;
         self::$fromName         = ($options['fromName']??false) ?: 'Webmaster';

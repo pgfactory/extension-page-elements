@@ -76,7 +76,6 @@ class TemplateCompiler
             $prefix .= "\n";
         }
 
-        $templateOptions['removeUndefinedPlaceholders'] = false;
         $out = '';
         $inx = 0;
         foreach ($data as $i => $rec) {
@@ -104,7 +103,7 @@ class TemplateCompiler
                 $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
             }
             if (str_contains($s, EVENT_INDEX_PLACEHOLDER)) {
-                $s = str_replace(EVENT_INDEX_PLACEHOLDER, $i+1, $s);
+                $s = str_replace(EVENT_INDEX_PLACEHOLDER, $inx, $s);
             }
             $out .= $s . $sepPlaceholder;
         }
@@ -149,21 +148,21 @@ class TemplateCompiler
         if ($templates) {
             if (is_array($templates)) {
                 if (isset($templates[$categoryField])) {
-                    $tmplateToUse = $templates[$categoryField];
+                    $templateToUse = $templates[$categoryField];
                 } elseif (isset($templates[$elementSelector])) {
-                    $tmplateToUse = $templates[$elementSelector];
+                    $templateToUse = $templates[$elementSelector];
                 } elseif (isset($templates['_'])) {
-                    $tmplateToUse = $templates['_'];
+                    $templateToUse = $templates['_'];
                 } else {
-                    $tmplateToUse = reset($templates);
+                    $templateToUse = reset($templates);
                 }
             } else {
-                $tmplateToUse = (string) $templates;
+                $templateToUse = (string) $templates;
             }
         } else {
-            $tmplateToUse = $templateOptions[$categoryField] ??= $templateOptions[$elementSelector] ?? '';
+            $templateToUse = $templateOptions[$categoryField] ?? $templateOptions[$elementSelector] ?? '';
         }
-        return $tmplateToUse;
+        return $templateToUse;
     } // getTemplate
 
 
@@ -186,7 +185,7 @@ class TemplateCompiler
         }
 
         // special case: for convenience, element may contain file:
-        if ($options['element']??false) {
+        if (is_array($options) && ($options['element']??false)) {
             if ($options['element'][0] === '~') {
                 $templateOptions['file'] = $options['element'];
                 $templateOptions['element'] = '';
@@ -203,7 +202,9 @@ class TemplateCompiler
                         $templ[$key] = str_replace(['\\n', '\\t'], ["\n", "\t"], $templ[$key]);
                     } else {
                         foreach ($value as $k => $v) {
-                            $templ[$key][$k] = str_replace(['\\n', '\\t'], ["\n", "\t"], $templ[$key][$k]);
+                            if (is_string($v)) {
+                                $templ[$key][$k] = str_replace(['\\n', '\\t'], ["\n", "\t"], $v);
+                            }
                         }
                     }
                 }
@@ -255,7 +256,7 @@ class TemplateCompiler
         if (self::$templateOptions['removeUndefinedPlaceholders']??false) {
             self::removeUndefinedPlaceholders($template);
         }
-        $template = TransVars::resolveShortFormVariables($template, keepUnknows: true);
+        $template = TransVars::resolveShortFormVariables($template, keepUnknowns: true);
         return $template;
     } // basicCompileTemplate
 
@@ -333,7 +334,7 @@ class TemplateCompiler
     private static function newlineReplace(mixed &$data, string $replaceNewlineWith): void
     {
         foreach ($data as $key => $value) {
-            if (is_string($value) && str_contains($value, $replaceNewlineWith)) {
+            if (is_string($value) && str_contains($value, "\n")) {
                 $data[$key] = str_replace("\n", $replaceNewlineWith, $value);
             } elseif (is_array($value)) {
                 foreach ($value as $k => $v) {

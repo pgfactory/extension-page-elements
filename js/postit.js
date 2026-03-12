@@ -1,47 +1,35 @@
 // postit.js
 
-window.onload = function() {
-  document.addEventListener("click", function (ev) {
-    const targetEl = ev.target.closest(".pfy-post-it");
-    if (!targetEl) return;
+document.addEventListener('click', function(ev) {
+  const el = ev.target.closest('.pfy-post-it-removable');
+  if (!el) return;
 
-    // Get computed ::before pseudo-element
-    const beforeStyle = getComputedStyle(targetEl, "::before");
-    if (!beforeStyle) return;
+  // Verify the ::before close button actually renders
+  const pseudo = getComputedStyle(el, '::before');
+  if (!pseudo.content || pseudo.content === 'none') return;
 
-    // Create a temporary element to get ::before’s actual rendered box
-    const pseudo = document.createElement("div");
-    const cs = beforeStyle;
-    Object.assign(pseudo.style, {
-      position: "absolute",
-      top: cs.top,
-      left: cs.left,
-      width: cs.width,
-      height: cs.height,
-      transform: cs.transform,
-      transformOrigin: cs.transformOrigin,
-      pointerEvents: "auto",
-      background: "transparent",
-    });
+  // Compute the close button's total box size (content + padding + border)
+  const btnW = parseFloat(pseudo.width)
+    + parseFloat(pseudo.paddingLeft) + parseFloat(pseudo.paddingRight)
+    + parseFloat(pseudo.borderLeftWidth) + parseFloat(pseudo.borderRightWidth);
+  const btnH = parseFloat(pseudo.height)
+    + parseFloat(pseudo.paddingTop) + parseFloat(pseudo.paddingBottom)
+    + parseFloat(pseudo.borderTopWidth) + parseFloat(pseudo.borderBottomWidth);
 
-    // Append inside target element temporarily
-    targetEl.appendChild(pseudo);
+  // The ::before is at top:0, right:0 relative to the element's padding box
+  const rect = el.getBoundingClientRect();
+  const elStyle = getComputedStyle(el);
+  const btnLeft = rect.right - (parseFloat(elStyle.borderRightWidth) || 0) - btnW;
+  const btnTop = rect.top + (parseFloat(elStyle.borderTopWidth) || 0);
 
-    // Get the pseudo-element’s *actual on-screen* rectangle
-    const box = pseudo.getBoundingClientRect();
-    targetEl.removeChild(pseudo);
-
-    // Now compare click coordinates with that box (in viewport space)
-    if (
-      ev.clientX >= box.left &&
-      ev.clientX <= box.right &&
-      ev.clientY >= box.top &&
-      ev.clientY <= box.bottom
-    ) {
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      // Example action:
-       targetEl.style.display = "none";
-    }
-  });
-};
+  if (
+    ev.clientX >= btnLeft &&
+    ev.clientX <= btnLeft + btnW &&
+    ev.clientY >= btnTop &&
+    ev.clientY <= btnTop + btnH
+  ) {
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    el.style.display = 'none';
+  }
+});

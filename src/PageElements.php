@@ -10,18 +10,18 @@ use PgFactory\PageFactory\Scss as Scss;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
-use function \PgFactory\PageFactory\getDir;
+use function PgFactory\PageFactory\getDir;
 use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\isAdmin;
 use function PgFactory\PageFactory\isLocalhost;
 use function PgFactory\PageFactory\mylog;
-use function \PgFactory\PageFactory\rrmdir;
+use function PgFactory\PageFactory\rrmdir;
 
 define('PE_FOLDER_NAME',  basename(dirname(__DIR__)).'/');
 define('PE_PATH', 'site/plugins/'.PE_FOLDER_NAME);
 define('PE_ASSETS_PATH', PE_PATH . 'assets/');
 define('PE_ASSETS_ROOT', PFY_KIRBY_BASE_PATH.PE_ASSETS_PATH);
-define('SYSTEM_PATH',       dirname(__DIR__).'/'); //???
+define('SYSTEM_PATH',       dirname(__DIR__).'/');
 define('SYSTEM_CACHE_PATH', PFY_CACHE_PATH);
 define('PATH_TO_APP_ROOT',  '');
 
@@ -209,7 +209,7 @@ class PageElements
     {
         $dir = getDir($this->extensionPath.'macros/*.php');
         foreach ($dir as $file) {
-            if (basename($file[0] !== '#')) {
+            if (basename($file)[0] !== '#') {
                 require_once $file;
             }
         }
@@ -227,7 +227,7 @@ class PageElements
         }
         if ($file === '') {
             exit("CSS-Refactoring:<br>Please supply path to CSS file(s)<br>You can use wildcards, ".
-                "e.g. '?cssrefactor=site/plugins/pagefactory/assets/css/*.css'"); //???
+                "e.g. '?cssrefactor=site/plugins/pagefactory/assets/css/*.css'");
         }
 
         if (file_exists($file)) {
@@ -240,12 +240,11 @@ class PageElements
             foreach ($files as $file) {
                 $res = CssRefactor::exec($file);
                 if (is_array($res)) {
-                    $scssFile = $res[1];
-                    exit("ERROR occured while compiling file '$file'<br>\n");
+                    exit("ERROR occurred while compiling file '$file'<br>\n");
                 }
                 echo("- $file -> $res<br>\n");
             }
-               }
+        }
         exit("Done <br>\n");
     } // handleCssRefactor
 
@@ -497,16 +496,16 @@ EOT;
 </section>
 
 EOT;
-
         }
         $html = TransVars::compile($str);
-        $html = str_replace('pfy-user-accesslink', $link, $html);
-        $js = <<<EOT
+        if ($link) {
+            $html = str_replace('pfy-user-accesslink', $link, $html);
+            $js = <<<EOT
 history.pushState({}, null, '$link');
 
 EOT;
-
-        Page::addJsReady($js);
+            Page::addJsReady($js);
+        }
         Page::setPopup($html, "", mdCompile: false);
         Page::addCss(".pfy-default-styling .pfy-popup-wrapper { width: 90vw; }");
     } // renderOnboardingAid
@@ -516,19 +515,17 @@ EOT;
      * @param $user
      * @return bool
      */
-    private function getAccessLink($user): string|bool
+    private function getAccessLink($user): string
     {
-        $link = '';
         if ($content = $user->content()) {
             if ($data = $content->data()) {
-                $accessCode = $data['accesscode'];
-                if (!$accessCode) {
-                    return false;
+                $accessCode = $data['accesscode'] ?? '';
+                if ($accessCode) {
+                    return PFY_PAGE_URL."?a=$accessCode";
                 }
-                $link = PFY_PAGE_URL."?a=$accessCode";
             }
         }
-        return $link;
+        return '';
     } // getAccessLink
 
 
@@ -537,7 +534,7 @@ EOT;
      */
     private static function handleCoop(): void
     {
-        $coop = option('pgfactory.pagefactory-elements.enableCoop');
+        $coop = kirby()->option('pgfactory.pagefactory-elements.enableCoop');
         if ($coop !== null) {
             if ($coop === true) {
                 $coop = 'same-origin';
@@ -604,7 +601,7 @@ EOT;
             Assets::addAssets('IFRAME_RESIZER_PARENT');
             $iFrameId = ($iFrameId === true) ? 'pfy-iframe' : ltrim($iFrameId, '#');
             Page::addJsReady("console.log('activating iframeAutoSizing as iframe parent for id \"$iFrameId\"');\n".
-                "iframeResize({ licence: 'GPLv3', log: true }, '#$iFrameId');");
+                "iframeResize({ license: 'GPLv3', log: true }, '#$iFrameId');");
         }
     } // handleIframeOptions
 

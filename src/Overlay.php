@@ -7,14 +7,14 @@ use function PgFactory\PageFactory\compileMarkdown;
 
 class Overlay extends PageElements
 {
-    public static $inx = 1;
+    public static int $inx = 1;
 
     /**
      * @param mixed $content
-     * @param $mdCompile
+     * @param bool $mdCompile
      * @return string
      */
-    public function render(mixed $content, $mdCompile = true)
+    public function render(mixed $content, bool $mdCompile = true): string
     {
         $inx = self::$inx++;
         $jsOptions = '';
@@ -23,14 +23,14 @@ class Overlay extends PageElements
             if ($mdCompile) {
                 $content = compileMarkdown($content);
             }
-            $content = <<<EOT
-    <div id='pfy-overlay-$inx' class='pfy-overlay' style="display: none;">
+            $html = <<<EOT
+    <div id="pfy-overlay-$inx" class="pfy-overlay" style="display: none;">
         <div class="pfy-overlay-inner">
 $content
         </div>
     </div>
 EOT;
-            Page::addBodyEndInjections($content);
+            Page::addBodyEndInjections($html);
             $jsOptions = <<<EOT
     contentFrom: '#pfy-overlay-$inx .pfy-overlay-inner',
     popupClass: 'pfy-overlay',
@@ -39,15 +39,16 @@ EOT;
         } elseif (is_array($content)) {
             foreach ($content as $key => $option) {
                 if (is_bool($option)) {
-                    $option = $option?'true':'false';
+                    $option = $option ? 'true' : 'false';
                 } else {
-                    $option = "\"$option\"";
+                    $option = json_encode($option);
                 }
-                $jsOptions .= "\t$key: $option,\n";
+                $jsOptions .= "    $key: $option,\n";
             }
-            $jsOptions .= "\tpopupClass: 'pfy-overlay',\n";
+            $jsOptions .= "    popupClass: 'pfy-overlay',\n";
         }
-        $jsOptions = "{\n$jsOptions }";
+
+        $jsOptions = "{\n$jsOptions}";
         Page::addJsReady("pfyPopup($jsOptions);");
 
         $this->addAssets('POPUPS');
@@ -58,10 +59,10 @@ EOT;
 
     /**
      * @param mixed $options
-     * @param $mdCompile
+     * @param bool $mdCompile
      * @return void
      */
-    public function set(mixed $options, $mdCompile = false): void
+    public function set(mixed $options, bool $mdCompile = false): void
     {
         $this->render($options, $mdCompile);
     } // set

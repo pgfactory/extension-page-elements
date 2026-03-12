@@ -4,12 +4,10 @@ namespace PgFactory\PageFactoryElements;
 
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
-use PgFactory\PageFactory\Link;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
-use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\isLocalhost;
 use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\shieldStr;
@@ -20,7 +18,7 @@ class Login
     private static $selfLink = './';
     private static $nextPage = './';
     private static $challengePending = false;
-    private static $loginMode;
+    private static string $loginMode;
 
     /**
      * @param array $options
@@ -30,24 +28,28 @@ class Login
     {
         Assets::addAssets('LOGIN');
         $currPageUrl = PFY_PAGE_URL;
-        if ($options['as-popup']??false) {
+        if ($options['as-popup'] ?? false) {
             $options['nextPage'] = $currPageUrl;
             self::$selfLink = "$currPageUrl?login";
-        } elseif (!($options['nextPage']??false)) {
+        } elseif (!($options['nextPage'] ?? false)) {
             $options['nextPage'] = $currPageUrl;
         }
 
         // check url for arg 'next':
         $session = kirby()->session();
-        if ($_GET['next']??false) {
-            $options['nextPage'] = $_GET['next'];
-            $session->set('pfy.loginNextPage', $options['nextPage']);
+        if ($_GET['next'] ?? false) {
+            $next = $_GET['next'];
+            // prevent open redirect: reject absolute and protocol-relative URLs
+            if (!preg_match('#^(?:[a-z][a-z0-9+.-]*://|//)#i', $next)) {
+                $options['nextPage'] = $next;
+                $session->set('pfy.loginNextPage', $options['nextPage']);
+            }
         } elseif ($next = $session->get('pfy.loginNextPage')) {
             $options['nextPage'] = $next;
             $session->remove('pfy.loginNextPage');
         }
 
-        $nextPage = ($options['nextPage']??false) ?: ($options['next']??false);
+        $nextPage = ($options['nextPage'] ?? false) ?: ($options['next'] ?? false);
         if ($nextPage) {
             if (str_starts_with($nextPage, '~/')) {
                 $nextPage = PFY_APP_BASE_URL . substr($nextPage, 2);
@@ -56,7 +58,7 @@ class Login
         }
 
         $defaultLoginMode = kirby()->option('pgfactory.pagefactory-elements.login-mode', 'login');
-        self::$loginMode = ($options['mode']??false) ?: $defaultLoginMode;
+        self::$loginMode = ($options['mode'] ?? false) ?: $defaultLoginMode;
     } // init
 
 
@@ -80,27 +82,18 @@ class Login
                 return '';
             }
 
-            switch (self::$loginMode) {
-                case 'username-password-only':
-                    $html = self::renderLoginForm($message);
-                    $wrapperClass = 'pfy-login-unpw';
-                    break;
-                case 'passwordless':
-                    self::checkCodeLoginEnabled();
-                    $html = self::renderCombinedLoginForm($message);
-                    $wrapperClass = 'pfy-login-otc';
-                    break;
-                default: // 'combined login'
-                    self::checkCodeLoginEnabled();
-                    $html = self::renderCombinedLoginForm($message);
-                    $wrapperClass = 'pfy-login-unpw';
-                    break;
+            if (self::$loginMode === 'username-password-only') {
+                $html = self::renderLoginForm($message);
+                $wrapperClass = 'pfy-login-unpw';
+            } else {
+                self::checkCodeLoginEnabled();
+                $html = self::renderCombinedLoginForm($message);
+                $wrapperClass = (self::$loginMode === 'passwordless') ? 'pfy-login-otc' : 'pfy-login-unpw';
             }
             if (self::$challengePending) {
                 $wrapperClass = 'pfy-login-code';
             }
         }
-
 
         $html = <<<EOT
 <div class='pfy-login-wrapper pfy-h-v-centered $wrapperClass'>
@@ -252,7 +245,7 @@ EOT;
      */
     private static function loginCallback(array $data): string|bool
     {
-        $code = $data['otp']??false;
+        $code = $data['otp'] ?? false;
         if ($code) {
             // 'pfyLoginCode' received -> validate:
             try {
@@ -307,12 +300,15 @@ EOT;
 
     /**
      * @param string $str
+     * @param string $username
      * @return string
      */
-    private static function renderMsg(string $str): string
+    private static function renderMsg(string $str, string $username = ''): string
     {
-        $user = Permission::getLoggedInUser();
-        $username = $user->nameOrEmail()->value();
+        if (!$username) {
+            $user = Permission::getLoggedInUser();
+            $username = $user->nameOrEmail()->value();
+        }
         $str = TransVars::getVariable($str);
         return str_replace('{{ username }}', $username, $str);
     } // renderMsg
@@ -324,7 +320,7 @@ EOT;
      */
     private static function getUsersEmail(array $data): string|false
     {
-        if ($email = ($data['pfyLoginEmail']??false)) {
+        if ($email = ($data['pfyLoginEmail'] ?? false)) {
             return Permission::findUsersEmail($email);
         }
         return false;

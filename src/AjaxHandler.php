@@ -7,7 +7,6 @@
 namespace PgFactory\PageFactoryElements;
 
 
-use Kirby\Http\Url;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
@@ -51,38 +50,32 @@ class AjaxHandler
 
 
         // handle lockRec:
-        if (isset($_GET['lockRec'])) {
-            self::lockRec($_GET['lockRec']);
-            unset($_GET['lockRec']);
+        if ($val = get('lockRec')) {
+            self::lockRec($val);
         }
 
         // handle unlockRec:
-        if (isset($_GET['unlockRec'])) {
-            self::unlockRec($_GET['unlockRec']);
-            unset($_GET['unlockRec']);
+        if ($val = get('unlockRec')) {
+            self::unlockRec($val);
         }
 
-        // handle unlockRec:
-        if (isset($_GET['unlockAll'])) {
+        // handle unlockAll:
+        if (get('unlockAll') !== null) {
             self::unlockAllRecs();
-            unset($_GET['unlockAll']);
         }
 
         // handle getRec:
-        if (isset($_GET['getRec'])) {
-            self::getRec($_GET['getRec']);
-            unset($_GET['getRec']);
+        if ($val = get('getRec')) {
+            self::getRec($val);
         }
 
         // handle calendar requests:
-        if (isset($_GET['calendar'])) {
+        if (get('calendar') !== null) {
             self::handleCalendarRequests();
-            unset($_GET['calendar']);
         }
 
-        if (isset($_GET['writable'])) {
+        if (get('writable') !== null) {
             self::handleWritableWidgetRequests();
-            unset($_GET['writable']);
         }
 
         exit('"not ok: command unknown"');
@@ -133,7 +126,7 @@ class AjaxHandler
 
 
     /**
-     * @param string $recKey
+     * @param string|bool $recKey
      * @return void
      */
     private static function unlockRec(string|bool $recKey): void
@@ -167,8 +160,7 @@ class AjaxHandler
         if (!$rec) {
             exit('"rec not found"');
         }
-        if (isset($_GET['retainData'])) {
-            $formInx = $_GET['retainData'];
+        if ($formInx = get('retainData')) {
             Utils::setSessionVar("form-$formInx", $rec);
         }
 
@@ -191,14 +183,14 @@ class AjaxHandler
         $db = self::openDb();
 
         // lock record, if requested:
-        if (isset($_GET['lock'])) {
+        if (get('lock') !== null) {
             if (!$db->lockRec($recKey)) {
                 // rec is locked -> report back:
                 exit('"locked"');
             }
         }
 
-        $recKey =  $db->find($recKey);
+        $recKey = $db->find($recKey);
         $rec = $db->getRec($recKey, includeMeta: $includeMeta);
         if (!$rec) {
             exit('"rec not found"');
@@ -236,22 +228,22 @@ class AjaxHandler
         self::$sessRec = kirby()->session()->get(self::$sessCalRecKey, []);
         self::$categories = explode(',', self::$sessRec['categories']??'');
 
-        if (isset($_GET['get'])) {
+        if (get('get') !== null) {
             exit(json_encode(self::getCalRecs()));
         }
-        if (isset($_GET['getCalRec'])) {
+        if (get('getCalRec') !== null) {
             exit(json_encode(self::getCalRec()));
         }
-        if (isset($_GET['mode'])) {
+        if (get('mode') !== null) {
             exit(self::saveMode());
         }
-        if (isset($_GET['modifyRec'])) {
+        if (get('modifyRec') !== null) {
             exit(self::modifyCalRec());
         }
-        if (isset($_GET['delete'])) {
+        if (get('delete') !== null) {
             exit(self::deleteRec());
         }
-        if (isset($_GET['duplicate'])) {
+        if (get('duplicate') !== null) {
             exit(self::duplicateRec());
         }
     } // handleCalendarRequests
@@ -318,7 +310,7 @@ class AjaxHandler
         $data['_creator'] = $rec['creator']??'';
         if ($rec['allday']??false) {
             // fix allday event -> add 1 day to end to conform with user logic:
-            $data['end'] = date('Y-m-d', strtotime($data['end']) + 86400);
+            $data['end'] = date('Y-m-d', strtotime('+1 day', strtotime($data['end'])));
         }
 
         $templateOptions = (self::$sessRec['template']??[]);
@@ -413,11 +405,10 @@ class AjaxHandler
      */
     private static function saveMode(): string
     {
-        if (isset($_GET['catfilter'])) {
-            self::$sessRec['catfilter'] = $_GET['mode'];
-
+        if (get('catfilter') !== null) {
+            self::$sessRec['catfilter'] = get('mode');
         } else {
-            self::$sessRec['mode'] = $_GET['mode'];
+            self::$sessRec['mode'] = get('mode');
         }
         kirby()->session()->set(self::$sessCalRecKey, self::$sessRec);
         return '"ok"';
@@ -435,7 +426,7 @@ class AjaxHandler
             return '"no permission"';
         }
 
-        $recKey = $_GET['modifyRec'];
+        $recKey = get('modifyRec');
         $db = self::openDb();
         if ($db->isRecLocked($recKey)) {
             return '"record is locked"';
@@ -443,14 +434,13 @@ class AjaxHandler
 
         $rec = self::getDataRec($recKey);
 
-        if (isset($_GET['start'])) {
-            $rec['start'] = $_GET['start'];
+        if (($start = get('start')) !== null) {
+            $rec['start'] = $start;
         }
-        if (isset($_GET['end'])) {
-            $end = $_GET['end'];
+        if (($end = get('end')) !== null) {
             if (strlen($end) < 16) {
-                // case allday event -> need to fix end date::
-                $end = date('Y-m-d', strtotime($end) - 1);
+                // case allday event -> need to fix end date:
+                $end = date('Y-m-d', strtotime('-1 day', strtotime($end)));
             }
             $rec['end'] = $end;
         }
@@ -465,7 +455,7 @@ class AjaxHandler
      */
     private static function getCalRec(): array
     {
-        $recKey = $_GET['getCalRec'];
+        $recKey = get('getCalRec');
         $rec = self::getDataRec($recKey);
         if (!$rec) {
             exit('"rec not found"');
@@ -478,21 +468,21 @@ class AjaxHandler
      * @return void
      * @throws \Exception
      */
-    private static function handleWritableWidgetRequests()
+    private static function handleWritableWidgetRequests(): void
     {
-        $name = $_GET['name'] ?? null;
-        $value = $_GET['value'] ?? null;
-        $datasrcinx = $_GET['datasrcinx'] ?? null;
+        $name = get('name');
+        $value = get('value');
+        $datasrcinx = get('datasrcinx');
         $datasrcinx = preg_replace('/\W/', '_', $datasrcinx);
 
         if (!defined('PFY_LOGS_PATH')) {
-            define('PFY_LOGS_PATH', URL::index() . '/site/logs/');
+            define('PFY_LOGS_PATH', PFY_KIRBY_BASE_PATH . '/site/logs/');
         }
         mylog("Writable update: '$datasrcinx:$name' <= '$value'", 'writable-log.txt');
         $db = self::openDb();
 
         $data = $db->data();
-        $rec = &$data[$datasrcinx];
+        $rec = $data[$datasrcinx];
         $rec[$name] = $value;
         $db->updateRec($rec, $datasrcinx, flush: true);
         $res = json_encode([$name => $value]);
@@ -520,13 +510,6 @@ class AjaxHandler
         $tillTime = substr($eventRec['end'], -5);
         $timeRange = "<span class='pfy-cal-start-time'>$fromTime</span><span class='pfy-cal-end-time'> – $tillTime</span>";
         $eventRec['time'] = $timeRange;
-
-        // case 'allday' event:
-        if (strlen($eventRec['start']) < 16) {
-            if (self::$templates['allday']??false) {
-                $template = self::$templates['allday'];
-            }
-        }
 
         if (isset($templateOptions['templates'][$category][$elemToUse])) {
             // requested template found:
@@ -571,47 +554,6 @@ EOT;
         return $template;
     } // getDefaultEventTemplate
 
-
-    /**
-     * @param string $template
-     * @param array $variables
-     * @return string
-     */
-    private static function resolveVariables(string $template, array $variables): string
-    {
-        // replace variables:
-        foreach ($variables as $key => $value) {
-            $template = str_replace("%$key%", "$value", $template);
-        }
-        // remove unresolved variables:
-        $template = preg_replace('/(?<!\{)%.{1,15}%/', '', $template);
-        return $template;
-    } // resolveVariables
-
-
-    /**
-     * @param string|array $data
-     * @return string|array
-     */
-    private static function deObfuscateRecKeys(string|array $data): string|array
-    {
-        $pageId = self::$pageId;
-        $sessKey = "obfuscate:$pageId:tableRecKeyTab";
-        $session = kirby()->session();
-        $tableRecKeyTab = $session->get($sessKey);
-        if (is_string($data)) {
-            if ($tableRecKeyTab && ($realKey = array_search($data, $tableRecKeyTab))) {
-                $data = $realKey;
-            }
-        } elseif (is_array($data)) {
-            foreach ($data as $key => $val) {
-                if ($realKey = array_search($val, $tableRecKeyTab)) {
-                    $data[$key] = $realKey;
-                }
-            }
-        }
-        return $data;
-    } // deObfuscateRecKeys
 
 } // AjaxHandler
 

@@ -23,7 +23,6 @@ class EnlistData
     private $db;
     private $dataFile;
     private $deadlineExpired = false;
-    protected static $session;
     private array $enlistWidgets = [];
 
 
@@ -56,7 +55,7 @@ class EnlistData
     public function getWidgetSlots(int|string $widgetKey): array|false  // -> used by EnlistCallbackHandler
     {
         $widgetDescr = $this->getWidgetDescr($widgetKey);
-        return $widgetDescr['slots'];
+        return $widgetDescr ? $widgetDescr['slots'] : false;
     } // getWidgetSlots
 
 
@@ -64,7 +63,7 @@ class EnlistData
      * @param mixed $widgetKey
      * @return void
      */
-    public function collapseEmptySlots(mixed $widgetKey, string $widgetTitle): void
+    public function collapseEmptySlots(mixed $widgetKey): void
     {
         $widgetDescr = $this->enlistWidgets[$widgetKey];
         $widgetSlots = $widgetDescr['slots'];
@@ -98,7 +97,7 @@ class EnlistData
             $nameList = '';
             foreach ($toNotify as $rec) {
                 EnlistComm::sendActivatedConfirmation($rec, $widgetKey);
-                $names .= '<br>- '.$rec['Name']??'';
+                $names .= '<br>- '.($rec['Name']??'');
                 $nameList .= '- '.($rec['Name']??'')."\n";
             }
             if (($to = $this->options['notifyOwner']??false)) {
@@ -119,18 +118,14 @@ class EnlistData
      */
     public function getEnlistSlots(int|string $widgetKey): array
     {
-        if ($widgetDescr = ($this->enlistWidgets[$widgetKey]??false)) {
-            return $widgetDescr['slots'];
-        } else {
-            return [];
-        }
+        return ($this->enlistWidgets[$widgetKey]??false) ? $this->enlistWidgets[$widgetKey]['slots'] : [];
     } // getEnlistSlots
 
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getFile()
+    public function getFile(): string
     {
         return $this->dataFile;
     } // getFile
@@ -143,7 +138,7 @@ class EnlistData
      * @param string $context
      * @return mixed
      */
-    public function fillSlot(int|string $widgetKey, int $slotInx, array $newDataRec, string $context)  // -> used by EnlistCallbackHandler
+    public function fillSlot(int|string $widgetKey, int $slotInx, array $newDataRec, string $context): mixed  // -> used by EnlistCallbackHandler
     {
         $slotInx = $this->selectSlot($widgetKey, $slotInx, $newDataRec, $context);
         unset($newDataRec['directlyToReserve']);
@@ -264,14 +259,14 @@ class EnlistData
         $directlyToReserve  = ($newDataRec['directlyToReserve']??false) && ($widgetDescr['directlyToReserve']??false);
         if (!$directlyToReserve) {
             if ($slotInx > $nTotalSlots) {
-                mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
+                mylog("EnList: fishy data entry: max slots exceeded. $context", 'enlist-log.txt');
                 reloadAgent();
-            } elseif (($widgetDescr[$slotInx]??false) && ($widgetDescr[$slotInx]['Name']??false)) {
+            } elseif (($slots[$slotInx]??false) && ($slots[$slotInx]['Name']??false)) {
                 mylog("EnList: fishy: slots not empty. $context", 'enlist-log.txt');
                 reloadAgent();
             }
         } else {
-            $slotInx = $nTotalSlots - $widgetDescr['nReserveSlots'];
+            $slotInx = $nTotalSlots - $nReserveSlots;
         }
         for ($i = $slotInx; $i < $nTotalSlots; $i++) {
             if (($slots[$i]??false) && ($slots[$i]['Name']??false)) {
@@ -279,10 +274,10 @@ class EnlistData
             }
             return $i;
         }
-        if ($newDataRec['directlyToReserve'] && !($slots[$i]['Name']??false)) {
-            return $slotInx0; //
+        if (($newDataRec['directlyToReserve']??false) && !($slots[$slotInx0]['Name']??false)) {
+            return $slotInx0;
         }
-        mylog("EnList: fishy data entry: max slots exeeded. $context", 'enlist-log.txt');
+        mylog("EnList: fishy data entry: max slots exceeded. $context", 'enlist-log.txt');
         reloadAgent();
         return null;
     } // selectSlot
@@ -292,9 +287,9 @@ class EnlistData
      * @param array $rec
      * @param bool $flush
      * @param $recKeyToUse
-     * @return object|string
+     * @return bool
      */
-    public function updateWidgetDescr(array $rec, bool $flush = true, $recKeyToUse = false): object|string
+    public function updateWidgetDescr(array $rec, bool $flush = true, $recKeyToUse = false): bool
     {
         return $this->db->addRec($rec, $flush, $recKeyToUse);
     } // updateWidgetDescr
@@ -350,7 +345,7 @@ class EnlistData
      * @param $options
      * @return void
      */
-    private function parseOptions($options): void
+    private function parseOptions(array $options): void
     {
         $this->nSlots = $options['nSlots'] ?? 0;
         $this->nReserveSlots = $options['nReserveSlots'] ?? 0;

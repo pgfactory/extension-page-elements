@@ -3,8 +3,6 @@
  * Handles remote-controlled <details> elements and state syncing.
  */
 
-console.log('reveal.js');
-
 class RevealAccordion {
   static defaultOptions = {
     controller: ".mdp-accordion-controller",
@@ -18,6 +16,8 @@ class RevealAccordion {
     inx: 1,
   };
 
+  static listenersAttached = false;
+
   constructor(customOptions = {}) {
     this.options = { ...RevealAccordion.defaultOptions, ...customOptions };
     this.init();
@@ -30,64 +30,24 @@ class RevealAccordion {
     const controllers = document.querySelectorAll(this.options.controller);
     const targetDiv = document.querySelector(this.options.target);
 
+    if (!targetDiv) return;
+
     const uid = `remote-${Math.random().toString(36).substring(2, 9)}`;
 
     // Create the <details> structure
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    const summarySpan = document.createElement('span');
+    const details = this.createDetails(uid);
+    const summary = this.createSummary();
     const bodyWrapper = document.createElement('div');
-
-    details.id = uid;
-    details.className = 'mdp-accordion';
-    if (this.options.class) {
-      details.classList.add(this.options.class);
-    }
-    if (this.options.frame) {
-      details.classList.add('mdp-border');
-      if (typeof this.options.frame === 'string') {
-        details.setAttribute('style', `--mdp-accordion-details-border-color: ${this.options.frame};`);
-      }
-    }
-    if (this.options.shadow) {
-      details.classList.add('mdp-accordion-shadow');
-    }
-    if (this.options.icon) {
-      if (this.options.icon.includes(',')) {
-        const [open, closed] = this.options.icon.split(",");
-        summary.setAttribute('data-icon-open', open.trim());
-        summary.setAttribute('data-icon-closed', closed.trim());
-
-      } else {
-        summary.setAttribute('data-icon-open', this.options.icon);
-        summary.setAttribute('data-icon-closed', this.options.icon);
-      }
-    }
-
-    if (this.options.iconRotation) {
-      if (this.options.iconRotation.includes(',')) {
-        const [closed, open] = this.options.iconRotation.split(",");
-        summary.setAttribute('style', `--mdp-icon-rotation: ${closed.trim()};--mdp-icon-rotation-open: ${open.trim()};`);
-
-      } else {
-        summary.setAttribute('style', `--mdp-icon-rotation: 0deg;--mdp-icon-rotation-open: ${this.options.iconRotation};`);
-      }
-    }
-
     bodyWrapper.className = 'mdp-accordion-body';
-    summary.setAttribute('tabindex', '-1');
 
-    summarySpan.textContent = this.options.label;
-    summary.appendChild(summarySpan);
-
-    // DOM Manipulation
+    // Assemble DOM
     targetDiv.parentNode.insertBefore(details, targetDiv);
     details.appendChild(summary);
     bodyWrapper.appendChild(targetDiv);
     details.appendChild(bodyWrapper);
 
     // Link controllers to the new ID
-    if (controllers) {
+    if (controllers.length) {
       controllers.forEach(ctrl => {
         ctrl.setAttribute('data-controls-details', uid);
         if (['A', 'BUTTON'].includes(ctrl.tagName)) {
@@ -103,6 +63,64 @@ class RevealAccordion {
     // Attach global listeners only once per page load
     RevealAccordion.attachGlobalListeners();
   } // init
+
+
+  /**
+   * Create and configure the <details> element
+   */
+  createDetails(uid) {
+    const details = document.createElement('details');
+    details.id = uid;
+    details.className = 'mdp-accordion';
+
+    if (this.options.class) {
+      details.classList.add(this.options.class);
+    }
+    if (this.options.frame) {
+      details.classList.add('mdp-border');
+      if (typeof this.options.frame === 'string') {
+        details.style.setProperty('--mdp-accordion-details-border-color', this.options.frame);
+      }
+    }
+    if (this.options.shadow) {
+      details.classList.add('mdp-accordion-shadow');
+    }
+
+    return details;
+  } // createDetails
+
+
+  /**
+   * Create and configure the <summary> element
+   */
+  createSummary() {
+    const summary = document.createElement('summary');
+    const summarySpan = document.createElement('span');
+
+    summary.setAttribute('tabindex', '-1');
+    summarySpan.textContent = this.options.label;
+    summary.appendChild(summarySpan);
+
+    if (typeof this.options.icon === 'string') {
+      const [open, closed = open] = this.options.icon.split(',');
+      summary.setAttribute('data-icon-open', open.trim());
+      summary.setAttribute('data-icon-closed', closed.trim());
+    }
+
+    if (this.options.iconRotation) {
+      const rotation = String(this.options.iconRotation);
+      if (rotation.includes(',')) {
+        const [closed, open] = rotation.split(',');
+        summary.style.setProperty('--mdp-icon-rotation', closed.trim());
+        summary.style.setProperty('--mdp-icon-rotation-open', open.trim());
+      } else {
+        summary.style.setProperty('--mdp-icon-rotation', '0deg');
+        summary.style.setProperty('--mdp-icon-rotation-open', rotation);
+      }
+    }
+
+    return summary;
+  } // createSummary
 
 
   /**

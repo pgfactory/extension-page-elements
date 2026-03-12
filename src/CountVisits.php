@@ -6,25 +6,21 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\MarkdownPlus\Permission;
 use function PgFactory\PageFactory\isBot;
 use function PgFactory\PageFactory\preparePath;
-use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\writeFileLocking;
 
 class CountVisits
 {
-    public static $inx = 1;
-
     /**
      * Macro rendering method
      * @param array $args
-     * @param string $argStr
      * @return string
      */
-    public function render($args): string
+    public function render(array $args): string
     {
         list($since, $visits) = $this->countVisits($args);
 
-        $prefix = $args['prefix'].' ';
-        $suffix = ' '.$args['suffix'];
+        $prefix = $args['prefix'] !== '' ? $args['prefix'] . ' ' : '';
+        $suffix = $args['suffix'] !== '' ? ' ' . $args['suffix'] : '';
         $show = $args['show'];
         if (is_string($show)) {
             $show = Permission::evaluate($show);
@@ -49,16 +45,14 @@ class CountVisits
      */
     private function countVisits(array $args): array
     {
-        $ipsToIgnore = PageFactory::$config['visitCounterIgnoreIPs']??'';
-        $file = VISITS_FILE;
-        if (isBot()) {
-            $file = VISITS_BOTS_FILE;
-        }
-        if (($args['pageId']??false)) {
+        $ipsToIgnore = PageFactory::$config['visitCounterIgnoreIPs'] ?? '';
+        $file = isBot() ? VISITS_BOTS_FILE : VISITS_FILE;
+
+        if (!empty($args['pageId'])) {
             $pgId = $args['pageId'];
             $doCount = false;
         } else {
-            $dontCount = ($args['dontCount']??false);
+            $dontCount = $args['dontCount'] ?? false;
             if (is_string($dontCount)) {
                 $dontCount = Permission::evaluate($dontCount);
             }
@@ -67,19 +61,19 @@ class CountVisits
         }
 
         // handle case of page invoked with GET parameters (only first one used):
-        if ($_GET??false) {
-            $a = array_keys($_GET);
-            $a = reset($a);
-            $p = reset($_GET);
-            $pgId .= "&$a=$p";
+        if (!empty($_GET)) {
+            $key = array_key_first($_GET);
+            $val = $_GET[$key];
+            $pgId .= "&$key=$val";
         }
         list($since, $counters) = $this->getSinceTime($file, $pgId);
 
         $clientIp = $this->getClientIP(true);
 
         $count = 1;
-        if ($p = strpos($counters, "\n$pgId: ")) {
-            $p = $p + strlen($pgId) + 3;
+        $p = strpos($counters, "\n$pgId: ");
+        if ($p !== false) {
+            $p += strlen($pgId) + 3;
             $p2 = strpos($counters, "\n", $p);
             $s1 = substr($counters, 0, $p);
             $count = intval(substr($counters, $p, $p2 - $p)) + 1;
@@ -96,26 +90,26 @@ class CountVisits
 
 
     /**
-     * @param $normalize
-     * @return array|false|string
+     * @param bool $normalize
+     * @return string
      */
-    private function getClientIP($normalize = false)
+    private function getClientIP(bool $normalize = false): string
     {
-        $ip = getenv('HTTP_CLIENT_IP')?:
-            getenv('HTTP_X_FORWARDED_FOR')?:
-                getenv('HTTP_X_FORWARDED')?:
-                    getenv('HTTP_FORWARDED_FOR')?:
-                        getenv('HTTP_FORWARDED')?:
+        $ip = getenv('HTTP_CLIENT_IP') ?:
+            getenv('HTTP_X_FORWARDED_FOR') ?:
+                getenv('HTTP_X_FORWARDED') ?:
+                    getenv('HTTP_FORWARDED_FOR') ?:
+                        getenv('HTTP_FORWARDED') ?:
                             getenv('REMOTE_ADDR');
 
-        if ($normalize) {
+        if ($normalize && $ip) {
             $elems = explode('.', $ip);
             foreach ($elems as $i => $e) {
                 $elems[$i] = str_pad($e, 3, "0", STR_PAD_LEFT);
             }
             $ip = implode('.', $elems);
         }
-        return $ip;
+        return $ip ?: '';
     } // getClientIP
 
 
@@ -129,16 +123,16 @@ class CountVisits
     {
         if (!file_exists($file)) {
             preparePath($file);
-            $content = 'since: '.date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
-            file_put_contents($file, $content);
+            $content = 'since: ' . date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
+            writeFileLocking($file, $content);
         }
         $content = file_get_contents($file);
         if (preg_match("|^since: (.*)|", $content, $m)) {
             $t = strtotime($m[1]);
         } else {
-            $content = 'since: '.date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
-            file_put_contents($file, $content);
-            $t = filemtime(VISITS_FILE);
+            $content = 'since: ' . date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
+            writeFileLocking($file, $content);
+            $t = filemtime($file);
         }
         $since = date('d-m-Y', $t);
         return [$since, $content];

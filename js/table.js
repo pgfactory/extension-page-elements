@@ -4,14 +4,14 @@
  */
 
 "use strict";
-console.log('tableHelper');
+
 const tableHelper = {
   downloadButtonInitialized: false,
   tableWidgetWidths: {},
 
   init: function () {
     const tables = document.querySelectorAll('.pfy-table-wrapper');
-    if ((typeof tables !== 'undefined') && tables.length) {
+    if (tables.length) {
       tableHelper.setupEventHandlers();
 
       tables.forEach(function (table) {
@@ -54,10 +54,10 @@ const tableHelper = {
       if (el.closest('.pfy-form-and-table-wrapper, .pfy-table-fill-first-row')) {
         tableHelper.newRecButtonHandler(ev);
       }
-      if (ev.target.closest('tr') && !ev.target.closest('.pfy-service-col')) {
+      if (el.closest('tr') && !el.closest('.pfy-service-col')) {
         tableHelper.rowTriggerHandler(ev);
       }
-      if (ev.target.closest('.pfy-row-view-button')) {
+      if (el.closest('.pfy-row-view-button')) {
         tableHelper.viewButtonsHandler(ev);
       }
     }); // click events
@@ -70,12 +70,12 @@ const tableHelper = {
     }); // change events
 
     document.addEventListener('keydown', function (ev) {
-      tableHelper.rowKeyTriggerhandler(ev);
+      tableHelper.rowKeyTriggerHandler(ev);
     }) // keydown events
 
     window.addEventListener('resize', function (ev) {
       tableHelper.adaptToWidthHandler();
-    }) // keydown events
+    }) // resize events
 
   }, // setupEventHandlers
 
@@ -92,11 +92,10 @@ const tableHelper = {
           if (!tableWrapperEl.querySelector('.dt-container')) {
             goOn = false;
           }
-          counter--;
         });
+        counter--;
         if (counter === 0) {
           clearInterval(t);
-          console.log('Something went wrong, tables not initialized properly...');
           return;
         }
         if (goOn) {
@@ -104,14 +103,10 @@ const tableHelper = {
           dataTables.forEach((tableWrapperEl) => {
             tableHelper.prepareTableWidths(tableWrapperEl);
           });
-          console.log('...done');
-        } else {
-          console.log('waiting for datatable to finish initializing... '+counter);
-       }
+        }
       }, 100);
 
     } else {
-      let tables = document.querySelectorAll('.pfy-table-wrapper');
       domForEach('.pfy-table-wrapper', function (tableWrapperEl) {
         tableHelper.prepareTableWidths(tableWrapperEl);
       })
@@ -154,24 +149,24 @@ const tableHelper = {
       const wrapperElWidth = tableWrapperEl.getBoundingClientRect().width;
 
       const id = tableWrapperEl.getAttribute('id');
-      const widths = tableHelper.tableWidgetWidths[id]??false;
+      const widths = tableHelper.tableWidgetWidths[id] ?? false;
       if (!widths) {
         return;
       }
       const buttonsElWidth    = widths['buttons'];
       const filterElWidth     = widths['dtFilter'];
       const filterInputWidth  = widths['dtFilterInput'];
-        if (wrapperElWidth < (filterElWidth + buttonsElWidth)) { // space for buttons and filter and filter-label?
-          if (wrapperElWidth < (filterInputWidth + buttonsElWidth)) { // space for buttons and filter but no filter-label?
-            tableWrapperEl.classList.add('pfy-table-very-narrow');
-            tableWrapperEl.classList.remove('pfy-table-narrow');
-          } else {
-            tableWrapperEl.classList.remove('pfy-table-very-narrow');
-            tableWrapperEl.classList.add('pfy-table-narrow');
-          }
-        } else { // space for buttons and filter and filter-label
-          tableWrapperEl.classList.remove('pfy-table-narrow,pfy-table-very-narrow');
+      if (wrapperElWidth < (filterElWidth + buttonsElWidth)) { // space for buttons and filter and filter-label?
+        if (wrapperElWidth < (filterInputWidth + buttonsElWidth)) { // space for buttons and filter but no filter-label?
+          tableWrapperEl.classList.add('pfy-table-very-narrow');
+          tableWrapperEl.classList.remove('pfy-table-narrow');
+        } else {
+          tableWrapperEl.classList.remove('pfy-table-very-narrow');
+          tableWrapperEl.classList.add('pfy-table-narrow');
         }
+      } else { // space for buttons and filter and filter-label
+        tableWrapperEl.classList.remove('pfy-table-narrow', 'pfy-table-very-narrow');
+      }
     });
   }, // adaptToWidthHandler
 
@@ -189,7 +184,7 @@ const tableHelper = {
           checkboxEl = checkboxEl.querySelector('input');
           checkboxEl.checked = !checkboxEl.checked;
         }
-        var isChecked = checkboxEl.checked;
+        const isChecked = checkboxEl.checked;
         domForEach(table, 'tbody .pfy-row-selector input[type=checkbox]', rowCheckbox => {
           rowCheckbox.checked = isChecked;
         });
@@ -291,7 +286,7 @@ const tableHelper = {
   }, // openCreateMailDialogHandler
 
 
-  rowKeyTriggerhandler: function (ev) {
+  rowKeyTriggerHandler: function (ev) {
     let el = document.querySelector('tr.pfy-row-selected');
     if (!el) {
       return;
@@ -305,7 +300,6 @@ const tableHelper = {
       return;
     }
     ev.stopImmediatePropagation();
-    ev.stopPropagation();
     ev.preventDefault();
     if (el) {
       tableHelper.rowTriggerHandler(el);
@@ -362,8 +356,7 @@ const tableHelper = {
           }
           data[names[i++]] = el.innerText;
         });
-        const aaa = document.querySelector(popupTemplateSelector);
-        domForEach(popupTemplateSelector + '  td + td', tdEl => {
+        domForEach(popupTemplateSelector + ' td + td', tdEl => {
           const name = tdEl.innerText.replace(/%/g, '');
           tdEl.innerText = data[name];
         });
@@ -412,14 +405,12 @@ const tableHelper = {
     domForAll(tr, 'td:not(.pfy-service-col) div', el => {
       body += `${headers[i++]} ${el.innerText}\n`;
     })
-    console.log(`send: ${body}`);
     initiateMail({body: body});
   }, // sendTableButtonHandler
 
 
   duplicateTableButtonHandler(ev) {
     const el = ev.target;
-    console.log('duplicateTableButtonHandler');
     if (!el.closest('.pfy-form-and-table-wrapper')) {
       alert(`Error: edit button in table not supported without related form.`);
     }
@@ -441,8 +432,7 @@ const tableHelper = {
     const input = document.getElementById('pfy-table-send-rec-input');
     if (input) {
       const email = encodeURI(input.value);
-      console.log(window.location.href + '?sendto='+email+'&recId='+recKey);
-      window.location.href = window.location.href + '?sendto='+email+'&recid='+recKey;
+      window.location.href = window.location.href + '?sendto=' + email + '&recid=' + recKey;
     }
   }, // doSendRec
 
@@ -493,7 +483,7 @@ const tableHelper = {
           // after confirmation:
           this.defaultRowClickHandler(el, tableFormWrapper);
         },
-        () => { console.log('denied');  }
+        () => {}
       );
     } else {
       this.defaultRowClickHandler(el, tableFormWrapper);
@@ -502,7 +492,7 @@ const tableHelper = {
 
 
   defaultRowClickHandler: function(el, tableFormWrapper) {
-    if (typeof tableFormWrapper === 'undefined') {
+    if (!tableFormWrapper) {
       tableFormWrapper = el.closest('.pfy-form-and-table-wrapper');
     }
     const tableEl = el.closest('.pfy-table');
@@ -547,7 +537,7 @@ const tableHelper = {
     // upon clicking one of the edit buttons:
     tableHelper.disableEditButtons(table);
     const tr = el.closest('tr');
-    const recKey = (typeof tr.dataset.reckey !== 'undefined') ? tr.dataset.reckey : '';
+    const recKey = tr.dataset.reckey ?? '';
 
     // get latest data for this record:
     const formInx = outerWrapperEl.querySelector('[name=_form_]').value
@@ -595,7 +585,7 @@ const tableHelper = {
         .then(function (data) {
           tableHelper.enableEditButtons(tableWrapperEl);
         })
-   } else {
+    } else {
       if (recKey) {
         pfyFormsHelper.fetchDataAndFillForm(tableWrapperEl, recKey, true, duplicateMode);
       }
@@ -604,30 +594,26 @@ const tableHelper = {
   }, // prepareForm
 
 
-  disableEditButtons: function (table) {
-    const editButtons = document.querySelectorAll('.pfy-table-wrapper button');
-    if (editButtons) {
-      editButtons.forEach(function (editButton) {
-        editButton.disabled = true;
-      });
-    }
+  disableEditButtons: function (wrapper) {
+    const scope = wrapper || document;
+    scope.querySelectorAll('.pfy-table-wrapper button').forEach(function (btn) {
+      btn.disabled = true;
+    });
   }, // disableEditButtons
 
 
-  enableEditButtons: function (table) {
-    const editButtons = document.querySelectorAll('.pfy-table-wrapper button');
-    if (editButtons) {
-      editButtons.forEach(function (editButton) {
-        editButton.disabled = false;
-      });
-    }
+  enableEditButtons: function (wrapper) {
+    const scope = wrapper || document;
+    scope.querySelectorAll('.pfy-table-wrapper button').forEach(function (btn) {
+      btn.disabled = false;
+    });
   }, // enableEditButtons
 
 
   filter: function (table, filterStr) {
     let tableInx = 1;
     if (typeof table === 'object') {
-      tableInx = table.closest('data-tableinx').dataset.tableinx;
+      tableInx = table.closest('[data-tableinx]').dataset.tableinx;
     } else if (typeof table === 'number') {
       tableInx = table;
     }

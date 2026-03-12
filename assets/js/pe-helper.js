@@ -2,7 +2,7 @@
  * Helper functions for PageElements
  */
 
-window.onload = function() {
+window.addEventListener('DOMContentLoaded', function() {
     // To leave scroll request use:
     //      localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
     // Scroll to position if request was left in localStorage:
@@ -10,10 +10,10 @@ window.onload = function() {
     if (yPos) {
       if (!window.location.hash) { // exec only if no anchor present in url
         document.documentElement.scrollTop = yPos;
-        localStorage.setItem('scrollpos', 0);
+        localStorage.removeItem('scrollpos');
       }
     }
-}
+});
 
 
 /**
@@ -21,32 +21,29 @@ window.onload = function() {
  * options:
  *  {
  *    to:
+ *    cc:
+ *    bcc:
  *    subject:
  *    body:
  *  }
  */
 function initiateMail(options) {
-  let to = '';
-  if (options.to ?? false) {
-    to = options.to;
-  }
+  let to = options.to ?? '';
   let url = `mailto:${to}`;
 
-  if (options.cc??false) {
+  if (options.cc ?? false) {
     url = appendToUrl(url, `cc=${options.cc}`);
   }
-  if (options.bcc??false) {
+  if (options.bcc ?? false) {
     url = appendToUrl(url, `bcc=${options.bcc}`);
   }
 
-  if (options.subject??false) {
-    options.subject = encodeURI(options.subject);
-    url = appendToUrl(url, `subject=${subject}`);
+  if (options.subject ?? false) {
+    url = appendToUrl(url, `subject=${encodeURI(options.subject)}`);
   }
 
-  if (options.body??false) {
-    options.body = encodeURI(options.body);
-    url = appendToUrl(url, `body=${options.body}`);
+  if (options.body ?? false) {
+    url = appendToUrl(url, `body=${encodeURI(options.body)}`);
   }
 
   window.location.href = url;
@@ -57,7 +54,7 @@ function initiatePhoneCall(options) {
   let to = '';
   if (typeof options === 'string') {
     to = options;
-  } else if (options.to??false) {
+  } else if (options.to ?? false) {
     to = options.to;
   }
 
@@ -65,7 +62,7 @@ function initiatePhoneCall(options) {
     to = to.replace(/\s/g, '');
     window.location.href = `tel:${to}`;
   }
-} // initiateMail
+} // initiatePhoneCall
 
 
 /*
@@ -98,20 +95,18 @@ function executeCallbackCode(callbackFun, arg = null) {
 } // executeCallbackCode
 
 
-
 function serverLog(text, logFileName) {
-  let url = appendToUrl(window.location.href, '?ajax&log=' +  encodeURI(text));
-  console.log('url: ' + url);
+  let url = appendToUrl(window.location.href, 'ajax&log=' + encodeURI(text));
   if (typeof logFileName !== 'undefined') {
     url += '&filename=' + encodeURI(logFileName);
   }
-  console.log('url: ' + url);
+  console.log('serverLog url: ' + url);
   fetch(url, { headers: {'Content-Type': 'application/json'} });
 } // serverLog
 
 
 function camelize(str) {
-  return text.replace(/^([A-Z])|[\s-_]+(\w)/g, function(match, p1, p2, offset) {
+  return str.replace(/^([A-Z])|[\s-_]+(\w)/g, function(match, p1, p2) {
     if (p2) return p2.toUpperCase();
     return p1.toLowerCase();
   });
@@ -140,64 +135,49 @@ function reloadAgent( arg, url, confirmMsg ) {
     if (overlay) {
         const img = overlay.querySelector('.pfy-timeout-img');
         if (img) {
-            let url = img.getAttribute('src');
-            url = url.replace('sleeping.png', 'spinner.gif');
-            img.setAttribute('src', url);
+            let src = img.getAttribute('src');
+            src = src.replace('sleeping.png', 'spinner.gif');
+            img.setAttribute('src', src);
             img.setAttribute('style', 'width: 50px;');
         }
-        // overlay.remove();
     }
 
-    if (typeof confirmMsg !== 'undefined') {
-        pfyConfirm(confirmMsg).then(function() {
-            console.log('initiating page reload: "' + newUrl + '"');
-            window.location.replace(newUrl);
-            // force reload if hash is present in URL:
-            if (newUrl.indexOf('#') !== -1) {
-                window.location.reload();
-            }
-        });
-    } else {
+    const doReload = function() {
         console.log('initiating page reload: "' + newUrl + '"');
         window.location.replace(newUrl);
         // force reload if hash is present in URL:
         if (newUrl.indexOf('#') !== -1) {
             window.location.reload();
         }
+    };
+
+    if (typeof confirmMsg !== 'undefined') {
+        pfyConfirm(confirmMsg).then(doReload);
+    } else {
+        doReload();
     }
 } // reloadAgent
 
 
 function execAjaxPromise(cmd, options, url = false) {
-  return new Promise(function(resolve) {
-    if (!url) {
-      url = window.location.href;
+  if (!url) {
+    url = window.location.href;
+  }
+  url = url.replace(/#.*/, '');
+  url = appendToUrl(url, cmd, 'ajax');
+  options = options || {};
+  const payload = JSON.stringify(options);
+  return fetch(url, {
+    method: 'POST',
+    body: payload,
+    headers: {
+      'Content-Type': 'application/json'
     }
-    url = url.replace(/#.*/, '');
-    if (typeof url === 'undefined') {
-      url = pageUrl;
-    }
-    url = appendToUrl(url, cmd, 'ajax');
-    if (typeof options === 'undefined') {
-      options = {};
-    }
-    const payload = JSON.stringify(options);
-    fetch(url, {
-      method: 'POST',
-      body: payload,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(function(response) {
-        return response.json();
-      })
-      .then(function(json) {
-        resolve(json);
-      });
-  });
+  })
+    .then(function(response) {
+      return response.json();
+    });
 } // execAjaxPromise
-
 
 
 function appendToUrl(url, arg, arg2) {
@@ -237,7 +217,6 @@ function beep(duration, frequency, volume){
   }
 
   return new Promise((resolve, reject) => {
-    // Set default duration if not provided
     duration = duration || 200;
     frequency = frequency || 440;
     volume = volume || 100;
@@ -247,21 +226,15 @@ function beep(duration, frequency, volume){
       let gainNode = pfyAudioContext.createGain();
       oscillatorNode.connect(gainNode);
 
-      // Set the oscillator frequency in hertz
       oscillatorNode.frequency.value = frequency;
-
-      // Set the type of oscillator
       oscillatorNode.type= "square";
       gainNode.connect(pfyAudioContext.destination);
 
-      // Set the gain to the volume
       gainNode.gain.value = volume * 0.01;
 
-      // Start audio with the desired duration
       oscillatorNode.start(pfyAudioContext.currentTime);
       oscillatorNode.stop(pfyAudioContext.currentTime + duration * 0.001);
 
-      // Resolve the promise when the sound is finished
       oscillatorNode.onended = () => {
         resolve();
       };
@@ -270,4 +243,3 @@ function beep(duration, frequency, volume){
     }
   });
 } // beep
-

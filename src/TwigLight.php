@@ -20,7 +20,7 @@ class TwigLight
         }
 
         $tokens = self::tokenize($str);
-        list($out) = self::evalTokens($tokens);
+        [$out] = self::evalTokens($tokens);
         if ($data) {
             TransVars::purgeTempVariables();
         }
@@ -49,9 +49,9 @@ class TwigLight
             return !empty($value);
         });
 
-        // unshield {' and '}':
+        // unshield '{' and '}':
         $tokens = array_map(function ($value) {
-            return preg_replace(['/&#123;(?! %)/', '/(?<! %)&#125;/'], ['{', '}'], $value);
+            return str_replace(['&#123;', '&#125;'], ['{', '}'], $value);
         }, $tokens);
 
         return array_values($tokens);
@@ -61,10 +61,9 @@ class TwigLight
     /**
      * @param array $tokens
      * @param int $i
-     * @param $condition
      * @return array
      */
-    static function evalTokens(array $tokens, int $i = -1, $level = 0): array
+    private static function evalTokens(array $tokens, int $i = -1): array
     {
         $output = '';
         $ifTrue = $ifFalse = '';
@@ -81,8 +80,8 @@ class TwigLight
                         // condition contains special characters, so try to evaluate it as a PHP expression:
                         $condition = self::evalExpression($varname);
                     }
-                    // descend into nexted if-else-endif structure:
-                    list($out, $ifTrue, $ifFalse, $i) = self::evalTokens($tokens, $i, $level + 1);
+                    // descend into nested if-else-endif structure:
+                    [$out, $ifTrue, $ifFalse, $i] = self::evalTokens($tokens, $i);
                     $output .= $out;
                     if ($condition) {
                         $output .= $ifTrue;
@@ -91,12 +90,12 @@ class TwigLight
                     }
                     break;
 
-                case preg_match('/\{%\s*else\s*%}/', $token):
+                case preg_match('/^\{%\s*else\s*%}$/', $token):
                     $ifTrue = $output;
-                    list($out, $ifFalse, $dummy, $i) = self::evalTokens($tokens, $i, $level + 1);
+                    [$out, $ifFalse, $_, $i] = self::evalTokens($tokens, $i);
                     return [$out, $ifTrue, $ifFalse, $i];
 
-                case preg_match('/\{%\s*endif\s*%}/', $token):
+                case preg_match('/^\{%\s*endif\s*%}$/', $token):
                     return ['', $output, $ifFalse, $i];
 
                 default:
@@ -109,34 +108,34 @@ class TwigLight
 
 
     /**
-     * @param string $varname
+     * @param string $expression
      * @return mixed
      */
-    private static function evalExpression(string $varname): mixed
+    private static function evalExpression(string $expression): mixed
     {
-        $expr = '';
-        $tok = strtok($varname, ' ');
-        $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
-        if (preg_match('/[a-zA-Z_]/', $tok)) {
-            $tok = "'$tok'";
-        }
-        $expr .= "$tok ";
+        $operators = ['===', '!==', '==', '!=', '<=', '>=', '<', '>', '&&', '||', 'and', 'or', 'xor', '!', '+', '-', '*', '/', '%', '.'];
+        $parts = [];
+        $prevWasValue = false;
+        $tok = strtok($expression, ' ');
         while ($tok !== false) {
-            $tok = strtok(' ');
-            if ($tok !== false) {
-                $tok = TransVars::getVariable($tok, varNameIfNotFound: true);
-                if (preg_match('/[a-zA-Z_]/', $tok)) {
-                    $tok = ".'$tok'";
+            if (in_array($tok, $operators, true)) {
+                $parts[] = $tok;
+                $prevWasValue = false;
+            } else {
+                $resolved = TransVars::getVariable($tok, varNameIfNotFound: true);
+                if (preg_match('/[a-zA-Z_]/', $resolved)) {
+                    $resolved = "'$resolved'";
                 }
-                $expr .= "$tok ";
+                $parts[] = ($prevWasValue ? '.' : '') . $resolved;
+                $prevWasValue = true;
             }
+            $tok = strtok(' ');
         }
         try {
-            $condition1 = eval('return ' . $expr . ';');
-        } catch (\Exception $e) {
-            $condition1 = false;
+            return eval('return ' . implode(' ', $parts) . ';');
+        } catch (\Throwable $e) {
+            return false;
         }
-        return $condition1;
     } // evalExpression
 
 } // TwigLight

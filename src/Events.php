@@ -71,7 +71,7 @@ class Events extends DataStore
             $options = $this->options;
         }
 
-        if ($options['rrule']??false || $options['timePattern']??false) {
+        if (($options['rrule']??false) || ($options['timePattern']??false)) {
             $events = $this->renderTimePattern();
             // special case:
             if (is_string($events)) {
@@ -80,7 +80,7 @@ class Events extends DataStore
         } else {
 
             // get data filtered by category:
-            $sortedData = $this->getData($options['category']);
+            $sortedData = $this->getData($options['category']??'');
 
             // select events according to from, till and count parameters. If from missing, time() is assumed:
             $events = $this->selectEvents($sortedData);
@@ -93,8 +93,8 @@ class Events extends DataStore
         $events = $this->handleExceptions($events);
 
         if (($this->options['iCal']??null) !== null) {
+            $icalLink = $this->getICalLink($events);
             if ($this->options['iCal']['saveAllToFile']??false) {
-                $icalLink = $this->getICalLink($events);
                 TransVars::setVariable('icalLinkToAll', $icalLink);
             }
             $outputOption = $options['output'] ?? '';
@@ -170,7 +170,6 @@ class Events extends DataStore
             $url = Utils::normalizePath($url);
         } else {
             $url = $ical->renderIcsLink();
-
         }
         return $url;
     } // getICalLink
@@ -249,7 +248,7 @@ class Events extends DataStore
                 $events[] = $event;
             }
         } catch (\Exception $e) {
-            throw new \Exception("Error: improple date/time format in Events (".$e->getMessage().")");
+            throw new \Exception("Error: improper date/time format in Events (".$e->getMessage().")");
         }
 
         return $events;
@@ -317,7 +316,7 @@ class Events extends DataStore
                 $evFrom = strtotime($event['start']);
                 $evTill = strtotime($event['end']);
                 foreach ($exceptions as $exception) {
-                    if ($evFrom > $exception[0] && $evTill < $exception[1]) {
+                    if ($evFrom >= $exception[0] && $evTill < $exception[1]) {
                         unset($events[$key]);
                         break;
                     }
@@ -333,7 +332,7 @@ class Events extends DataStore
      * @return array
      * @throws \Exception
      */
-    private function getData(string $category): array
+    private function getData(string|false $category): array
     {
         $data = $this->data(true);
 
@@ -422,14 +421,14 @@ class Events extends DataStore
      * @param $sortedData
      * @return array
      */
-    private function selectEvents($sortedData): array
+    private function selectEvents(array $sortedData): array
     {
         $first = $this->findEvent($sortedData);
         if ($first === false) {
             return [];
         }
 
-        $till = $this->options['till'];
+        $till = $this->options['till']??false;
         if ($till) {
             if (is_string($till)) {
                 $till = resolveTimePlaceholders($till);
@@ -437,7 +436,7 @@ class Events extends DataStore
             $count = 999;
         } else {
             $till = PHP_INT_MAX;
-            $count = $this->options['count'];
+            $count = $this->options['count']??1;
         }
         $events = [];
         for ($i = 0; $i < $count; $i++) {
@@ -478,7 +477,10 @@ class Events extends DataStore
      */
     public function getNextEvent(string|false $category = false, int $offset = 0): array|false
     {
-        $events = self::getNextEvents($category, $offset, 1);
+        $events = $this->getNextEvents($category, $offset, 1);
+        if ($events === false) {
+            return false;
+        }
         return $events[0] ?? [];
     } // getNextEvent
 
@@ -492,8 +494,8 @@ class Events extends DataStore
      */
     public function getNextEvents(string|false $category = false, int $offset = 0, int|false $count = false): array|false
     {
-        $options = ($this->options??false) ?: [];
-        $category = $category?: $this->options['category']??false;
+        $options = $this->options;
+        $category = $category ?: ($this->options['category']??false);
 
         // handle case where rrule is specified, rather than events from DB:
         if (($this->options['rrule']??false) || ($this->options['timePattern']??false)) {
@@ -505,7 +507,6 @@ class Events extends DataStore
             // get events from DB:
             $sortedData = $this->getData($category);
         }
-
 
         // case multiple categories -> extract first for further processing:
         if (is_string($category) && str_contains($category, '|')) {
@@ -530,7 +531,7 @@ class Events extends DataStore
         // template options other than $defaultOptions are considered auxiliary elements:
         $defaultOptions = TemplateCompiler::getTemplateDefaultOptionNames();
         $defaultOptions[] = '_macroName';
-        $auxTemplateELems = array_filter($templOptions, function ($k) use ($defaultOptions) {
+        $auxTemplateElems = array_filter($templOptions, function ($k) use ($defaultOptions) {
             return !in_array($k, $defaultOptions);
         }, ARRAY_FILTER_USE_KEY);
         $templateOptions = TemplateCompiler::sanitizeTemplateOption($templOptions);
@@ -540,7 +541,7 @@ class Events extends DataStore
             $nextEvents[$i]['eventBanner'] = $eventBanner;
 
             // compile auxiliary elements:
-            foreach ($auxTemplateELems as $k => $v) {
+            foreach ($auxTemplateElems as $k => $v) {
                 $nextEvents[$i][$k] = TemplateCompiler::compile($rec, $templateOptions, elementSelector: $k);
             }
         }

@@ -157,8 +157,8 @@ class PfyForm extends Form
     protected bool $showFeedbackInpage;
     protected string $formResponse = '';
     protected bool $formErrorState = false;
-    protected  bool $isFormAdmin = false;
-    protected  bool $showTable = false;
+    protected bool $isFormAdmin = false;
+    protected bool $showTable = false;
     protected bool $showForm = true;
     protected bool $popupMode = false;
     private static bool $initialized = false;
@@ -329,7 +329,7 @@ class PfyForm extends Form
     /**
      * For each element in $this->formElements invokes addElement() which adds elements to NetteForm.
      * Handles composed elements, such as 'event'.
-     * Aditionally adds hidden bookkeeping elements.
+     * Additionally adds hidden bookkeeping elements.
      * @return void
      * @throws InvalidArgumentException
      */
@@ -337,14 +337,14 @@ class PfyForm extends Form
     {
         // build $this->formElements from submitted $formElements:
         foreach ($formElements as $name => $rec) {
-            if ($rec === false) { // if unknow argument is false, just silently drop it
+            if ($rec === false) { // if unknown argument is false, just silently drop it
                 unset($formElements[$name]);
                 continue;
             } elseif (!is_array($rec)) {
                 if (is_bool($rec)) {
                     $rec = $rec ? 'true' : 'false';
                 }
-                throw new \Exception("Error in form declaration: unkown argument '$name: $rec'.");
+                throw new \Exception("Error in form declaration: unknown argument '$name: $rec'.");
             }
 
             $rec['origName'] = trim($name);
@@ -514,7 +514,7 @@ class PfyForm extends Form
         $class = "pfy-$type";
 
         // handle 'required' option:
-        if ($required =($elemOptions['required']??false)) {
+        if ($required = ($elemOptions['required']??false)) {
             if ($required === true) {
                 $this->requiredInputFound['_'] = '{{ pfy-form-required-info }}';
                 $elem->setRequired();
@@ -822,7 +822,7 @@ class PfyForm extends Form
             $pattern = '.*\\.'.$pattern;
             $elem->addRule(self::PatternInsensitive, "File must have extension '$filter'", $pattern);
         }
-        if ($mb = ($elemOptions['maxMegaByte']??false)) {
+        if ($mb = ($this->formElements[$name]['maxMegaByte']??false)) {
             $elem->addRule(self::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
         }
         return $elem;
@@ -1131,7 +1131,7 @@ class PfyForm extends Form
             'required' => $required,
         ];
         if ($labels['city']??false) {
-            $addressElements[$elName]['lebel'] = $labels['city'];
+            $addressElements[$elName]['label'] = $labels['city'];
         }
         if ($infos['city']??false) {
             $addressElements[$elName]['info'] = $infos['city'];
@@ -1219,7 +1219,7 @@ class PfyForm extends Form
 
         $options = '';
         foreach (['MO','TU','WE','TH','FR','SA','SU'] as $i => $wday) {
-            $d = ($i+5) > 9 ? $i+5 : '0'.$i+5;
+            $d = ($i+5) > 9 ? ($i+5) : '0'.($i+5);
             $options .= $wday .':'. intlDateFormat('E', strtotime("1970-01-$d")) .',';
         }
         $eventElements['_byweekday'] = [
@@ -1413,7 +1413,7 @@ class PfyForm extends Form
         } elseif ($type === 'literal') {
             $html .= $rec['html'] ?? '';
 
-        } elseif (str_contains(',cancel,submit,reset,formbutton,newrec', ",$type,")) {
+        } elseif (str_contains(',cancel,submit,reset,formbutton,newrec,', ",$type,")) {
             // 'formbutton' is used to place a button inside the .pfy-form-buttons wrapper:
             $type = ($type === 'formbutton') ? 'button' : $type;
             $cls = $rec['class'] ?? '';
@@ -1814,7 +1814,7 @@ EOT;
              $input = $m[0];
              $name = $m[1];
              $cls = translateToClassName($groupLabel);
-             $radio = "<input type='radio' name='__$cls' class='pfy-radio pfy-choice  pfy-horizontal' value='$name'>";
+             $radio = "<input type='radio' name='__$cls' class='pfy-radio pfy-choice pfy-horizontal' value='$name'>";
              $elemHtml = str_replace($m[0], "$radio$input", $elemHtml);
          }
         return $elemHtml;
@@ -1904,8 +1904,9 @@ EOT;
      */
     private function renderFormTopBanner(): string
     {
-        if ($str = $this->formOptions['formTop']) {
-            $str = $this->compileFormBanner($str);
+        $str = '';
+        if ($this->formOptions['formTop']) {
+            $str = $this->compileFormBanner($this->formOptions['formTop']);
             $str = "\n<div class='pfy-form-top'>$str</div>\n";
             $this->formOptions['formTop'] = '';
         }
@@ -1948,8 +1949,9 @@ EOT;
      */
     private function renderFormBottomBanner(): string
     {
-        if ($str = ($this->formOptions['formBottom']??false)) {
-            $str = $this->compileFormBanner($str);
+        $str = '';
+        if ($this->formOptions['formBottom']??false) {
+            $str = $this->compileFormBanner($this->formOptions['formBottom']);
             $str = "\n<div class='pfy-form-bottom'>$str</div>\n";
         }
         return $str;
@@ -1987,7 +1989,7 @@ EOT;
             return '';
         }
 
-        // to be on the save side: always invoke robots header when displaying form data.
+        // to be on the safe side: always invoke robots header when displaying form data.
         Page::applyRobotsAttrib();
 
         $dt = $this->openDataTable();
@@ -2333,9 +2335,7 @@ EOT;
         $formSuccessResponse .= $this->getContinueLink();
         $formSuccessResponse = "<div class='pfy-form-success'>$formSuccessResponse</div>\n";
 
-        if (isset($_POST)) {
-            unset($_POST);
-        }
+        $_POST = [];
 
         if ($this->showFeedbackInpage) {
             if ($formSuccessResponse) {
@@ -2394,12 +2394,10 @@ EOT;
 
         $path = $this->formElements[$key]['path']??false;
         if (($p = (strpos($path, '$'))) !== false) {
-            // case given path contains patter '$xy', where xy is name of other data element:
+            // case given path contains pattern '$xy', where xy is name of other data element:
             $k = substr($path, $p+1);
             $k = preg_replace('|\W.*|', '', $k); // remove trailing characters
-            if (isset($dataRec[$k])) {
-                $path1 = $dataRec[$k];
-            }
+            $path1 = $dataRec[$k] ?? '';
             $path = fixPath(substr($path, 0, $p).$path1);
         }
         if (!$path) {
@@ -2447,7 +2445,7 @@ EOT;
             return; // skip check
         }
 
-        // perform script injection check on overy data element:
+        // perform script injection check on every data element:
         foreach ($dataRec as $name => $value) {
             if ($value && is_string($value) && preg_match('/<(?!br>)/', $value)) {
                 $dataRec[$name] = str_replace(['<', '>'], ['&lt;', '&gt;'], $value);
@@ -2495,7 +2493,7 @@ EOT;
                     $value = eval("return $saveAs;");
                     $dataRec[$name] = $value;
                 } catch (\Exception $e) {
-                    exit($e);
+                    throw $e;
                 }
             }
         }
@@ -2620,7 +2618,7 @@ EOT;
                 $newEvents[] = $event + $dataRec;
             }
         } catch (\Exception $e) {
-            throw new \Exception("Error: improple date/time format in Events (".$e->getMessage().")");
+            throw new \Exception("Error: improper date/time format in Events (".$e->getMessage().")");
         }
 
         // save newly created events (exclude first as that will be saved later the normal way):
@@ -3135,8 +3133,8 @@ EOT;
             throw new \Exception($errMsg);
         }
 
-        $subject = $this->compileTempate($subject, $dataRec);
-        $message = $this->compileTempate($message, $dataRec);
+        $subject = $this->compileTemplate($subject, $dataRec);
+        $message = $this->compileTemplate($message, $dataRec);
 
         return [$subject, $message];
     } // getEmailComponents
@@ -3604,7 +3602,7 @@ EOT;
      * @param array $dataRec
      * @return string
      */
-    private function compileTempate(string $str, array $dataRec): string
+    private function compileTemplate(string $str, array $dataRec): string
     {
         $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
 
@@ -3633,7 +3631,7 @@ EOT;
             $str = TransVars::translate($str, $dataRec);
         }
         return $str;
-    } // $str
+    } // compileTemplate
 
 
     /**

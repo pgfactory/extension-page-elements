@@ -1,5 +1,7 @@
 
-window.onload = function() {
+"use strict";
+
+document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('click', function (ev) {
     const target = ev.target.closest('[data-url]');
     if (!target) {
@@ -7,19 +9,19 @@ window.onload = function() {
     }
     ev.stopImmediatePropagation();
     ev.preventDefault();
-    let url = target.dataset.url;
-    url = encodeURI(url);
-    console.log(url);
+
+    const url = target.dataset.url;
     const options = {
-      header: `{{ pfy-download-popup-header }}`,
       text: `{{ pfy-download-popup-text }}`,
     };
 
     pfyConfirm(options).then(
-      () => {
-        console.log('Confirmed, continue downloading');
-        document.location.href = url;
-        }
+      function () {
+        window.location.href = url;
+      },
+      function () {
+        // user cancelled download
+      }
     );
   });
-}
+});

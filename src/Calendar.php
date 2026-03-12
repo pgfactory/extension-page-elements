@@ -13,11 +13,11 @@ use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\Page;
-use PgFactory\PageFactory\PageFactory as PageFactory;
+use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\isAdmin;
-use function \PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\mylog;
 use function PgFactory\PageFactory\translateToIdentifier;
 
@@ -41,24 +41,23 @@ class Calendar
     private string $id;
     private array  $fields;
     private string $defaultView;
-    private mixed $defaultEventDuration;
+    private string|false $defaultEventDuration;
     private string $sessDbFileKey;
     private string $sessCalRecKey;
     private array  $sessCalRec;
-    private mixed $categories;
+    private string|false $categories;
     private string $edPermStr;
     private string $adminPermStr;
-    private mixed $modifyPermission;
+    private string $modifyPermission;
     private bool $userCategories;
-    private mixed $headerLeftButtons;
-    private mixed $headerRightButtons;
-    private mixed $freezePast;
-    private $businessHours;
-    private $visibleHours;
+    private string $headerLeftButtons;
+    private string $headerRightButtons;
+    private bool $freezePast;
+    private string $businessHours;
+    private string $visibleHours;
 
     /**
      * @param array $args
-     * @param array $fields
      * @throws \Exception
      */
     public function __construct(array $args)
@@ -66,21 +65,16 @@ class Calendar
         $this->inx =     $args['inx'];
         $this->fields =  $args['form']??[];
         $this->options = $args;
-        $pageId =         PFY_PAGE_ID;
 
         // get persistent data stored in session rec:
-        $this->sessCalRecKey = "pfy.cal.$pageId:$this->inx"; // corresponds to key defined in class Calendar
+        $pageId = PFY_PAGE_ID;
+        $this->sessCalRecKey = "pfy.cal.$pageId:$this->inx";
         $this->sessCalRec    = kirby()->session()->get($this->sessCalRecKey, []);
 
         $this->parseOptions($args);
         Assets::addAssets('CALENDAR');
 
         $this->checkAndFixDB();
-
-        if ($recKey = get('delete')) {
-            mylog($recKey);
-            exit('{}');
-        }
     } // __construct
 
 
@@ -222,14 +216,13 @@ EOT;
             ];
         }
 
-        // with PHP 8.4 available:
-        //        $eventPresent = array_find($formFields, function ($e) {
-        //            return $e['type'] === 'event';
-        //        });
-        // -> in place of:
-        $eventPresent = in_array(true, array_values(array_map(function ($e) {
-            return ($e['type']??false) === 'event';
-        }, $formFields)));
+        $eventPresent = false;
+        foreach ($formFields as $field) {
+            if (($field['type']??false) === 'event') {
+                $eventPresent = true;
+                break;
+            }
+        }
 
         if (!$eventPresent) {
             $formFields['Event']['type'] = 'event';
@@ -307,7 +300,7 @@ EOT;
     {
         $res = true;
         if ($this->adminPermStr !== 'false') {
-            $res = true;
+            // admin: allow all operations
         } elseif ($this->edPermStr !== 'false') {
             $start = strtotime($dataRec['start']??0);
             $end = strtotime($dataRec['end']??0);
@@ -346,17 +339,7 @@ EOT;
             ];
         }
 
-        if ($dataRec['allday']??false) {
-            if (strlen($dataRec['start']) > 10) {
-                $dataRec['start'] = substr($dataRec['start'], 0, 10);
-                $dataRec['end'] = substr($dataRec['end'], 0, 10);
-            }
-        } else {
-            if (strlen($dataRec['start']) < 16) {
-                $dataRec['start'] = substr($dataRec['start'], 0, 10).'T09:00';
-                $dataRec['end'] = substr($dataRec['end'], 0, 10).'T10:00';
-            }
-        }
+        self::normalizeDateTimes($dataRec);
 
         // check end before start:
         if ($dataRec['start'] > $dataRec['end']) {
@@ -368,7 +351,7 @@ EOT;
         }
 
         // prevent creator tampering:
-        if (($res === true || $res['continueEval']) && !$dataRec['_reckey']) {
+        if (($res === true || $res['continueEval']) && !($dataRec['_reckey']??null)) {
             $dataRec['creator'] = $dataRec['_creator'];
             $res = [
                 'html' => '',
@@ -463,7 +446,7 @@ EOT;
         $ical = new Ical($events, $iCalOptions);
         $tTargetFile = $ical->getTargetFileTime();
 
-        $dataFile = Utils::resolvePath($this->options['file']);
+        $dataFile = Utils::resolvePath($this->source);
         $tDataFile = fileTime($dataFile);
         if ($tDataFile > $tTargetFile) {
             $ical->saveToFile();
@@ -489,8 +472,8 @@ EOT;
         $this->businessHours =          $args['businessHours']??'08:00-17:00';
         $this->visibleHours =           $args['visibleHours']??'07:00-21:00';
         $this->userCategories =         $args['userCategories']??false;
-        $this->fullCalendarOptions =    $args['fullCalendarOptions'];
-        $pageId =                       page()->id(); // PFY_PAGE_ID
+        $this->fullCalendarOptions =    $args['fullCalendarOptions']??'';
+        $pageId =                       page()->id();
         $this->sessDbFileKey =              "db:$pageId:$this->inx:file";
 
         $this->headerRightButtons = str_replace(
@@ -531,7 +514,6 @@ EOT;
         } else {
             $this->modifyPermission = 'false';
         }
-        $this->categories =   $args['categories']??false;
         $this->sessCalRec['categories'] = $this->categories;
 
         if (isAdmin()) {
@@ -554,10 +536,10 @@ EOT;
 
 
     /**
-     * @return void
+     * @return bool
      * @throws \Exception
      */
-    private function checkAndFixDB(): mixed
+    private function checkAndFixDB(): bool
     {
         $db = new DataStore($this->source,[
             'masterFileRecKeyType' => 'index',
@@ -568,27 +550,10 @@ EOT;
         $data = $db->data(true);
         $modified = false;
         foreach ($data as $key => $rec) {
-            if ($rec['allday']??false) {
-                if (strlen($rec['start']) > 10) {
-                    $data[$key]['start'] = substr($rec['start'], 0, 10);
-                    $data[$key]['end'] = substr($rec['end'], 0, 10);
-                    $modified = true;
-                }
-            } else {
-                if (strlen($rec['start']) < 16) {
-                    $data[$key]['start'] = substr($rec['start'], 0, 10).'T09:00';
-                    $data[$key]['end'] = substr($rec['end'], 0, 10).'T10:00';
-                    $modified = true;
-                } else {
-                    if ($rec['start'][10] === ' ') {
-                        $data[$key]['start'] = substr($rec['start'], 0, 10).'T'.substr($rec['start'], 11);
-                        $modified = true;
-                    }
-                    if ($rec['end'][10] === ' ') {
-                        $data[$key]['end'] = substr($rec['end'], 0, 10).'T'.substr($rec['end'], 11);
-                        $modified = true;
-                    }
-                }
+            $before = $rec;
+            self::normalizeDateTimes($data[$key]);
+            if ($data[$key] !== $before) {
+                $modified = true;
             }
         }
         if ($modified) {
@@ -596,6 +561,33 @@ EOT;
         }
         return true;
     } // checkAndFixDB
+
+
+    /**
+     * @param array $rec
+     * @return void
+     */
+    private static function normalizeDateTimes(array &$rec): void
+    {
+        if ($rec['allday']??false) {
+            if (strlen($rec['start']) > 10) {
+                $rec['start'] = substr($rec['start'], 0, 10);
+                $rec['end'] = substr($rec['end'], 0, 10);
+            }
+        } else {
+            if (strlen($rec['start']) < 16) {
+                $rec['start'] = substr($rec['start'], 0, 10).'T09:00';
+                $rec['end'] = substr($rec['end'], 0, 10).'T10:00';
+            } else {
+                if ($rec['start'][10] === ' ') {
+                    $rec['start'] = substr($rec['start'], 0, 10).'T'.substr($rec['start'], 11);
+                }
+                if ($rec['end'][10] === ' ') {
+                    $rec['end'] = substr($rec['end'], 0, 10).'T'.substr($rec['end'], 11);
+                }
+            }
+        }
+    } // normalizeDateTimes
 
 } // class Calendar
 

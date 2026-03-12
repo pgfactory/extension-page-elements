@@ -58,18 +58,19 @@ class SitemapManager
      * If either ones differ, returns true.
      * @return bool
      */
-    public static function updateNecessary()
+    public static function updateNecessary(): bool
     {
         // check whether sitemap file differs from actual content folder:
         $tSitemapFile = fileTime(SITEMAP_FILE);
         $tSitemapControlFile = fileTime(SITEMAP_CONTROL_FILE);
         $firstLine = '';
         if (file_exists(SITEMAP_FILE)) {
-            $firstLine = fgets(fopen(SITEMAP_FILE, 'r'));
+            $fp = fopen(SITEMAP_FILE, 'r');
+            $firstLine = fgets($fp);
+            fclose($fp);
         }
-        $contentHash = md5(implode('', getDirDeep(PFY_KIRBY_BASE_PATH . 'content/*', true)));
-        $contentHash = "// hash: $contentHash\n";
-        return (($firstLine !== $contentHash) || ($tSitemapFile !== $tSitemapControlFile));
+        $contentHash = "// hash: " . self::getContentHash() . "\n";
+        return ($firstLine !== $contentHash) || ($tSitemapFile !== $tSitemapControlFile);
     } // updateNecessary
 
 
@@ -84,8 +85,7 @@ class SitemapManager
         if ($zap) {
             $zap = "\n\n$zap";
         }
-        $contentHash = md5(implode('', getDirDeep(PFY_KIRBY_BASE_PATH . 'content/*', true)));
-        $contentHash = "// hash: $contentHash\n";
+        $contentHash = "// hash: " . self::getContentHash() . "\n";
         $siteStructure = self::readSiteStructure();
         file_put_contents(SITEMAP_FILE, "$contentHash$siteStructure$zap");
         touch(SITEMAP_CONTROL_FILE);
@@ -107,7 +107,7 @@ class SitemapManager
         $requiredFolders = [];
 
         $lastLevel = 99;
-        $inx[0] =  $inx[1] =  $inx[2] =  $inx[3] =  $inx[4] =  $inx[5] = 0;
+        $inx = array_fill(0, 6, 0);
         self::$modified = false;
         foreach (explode("\n", $sitemap) as $item) {
             $draft = false;
@@ -120,7 +120,7 @@ class SitemapManager
             } elseif (preg_match('/^(\s*)\^(.*)/', $item, $m)) {
                 $item = $m[1].$m[2];
                 $unlisted = true;
-            } elseif (@substr($item, 0, 2) === '//') {
+            } elseif (substr($item, 0, 2) === '//') {
                 continue;
             }
 
@@ -240,8 +240,8 @@ class SitemapManager
             $depth = $pg->depth();
             $indent = str_repeat('    ', $depth-1);
             $path = substr($pg->root(), $len).'/';
-            $unlisted = (preg_match('/^\d+_/', basename($path)))? '': '^';
-            if ($unlisted !== '^') {
+            $unlistedMark = (preg_match('/^\d+_/', basename($path)))? '': '^';
+            if ($unlistedMark !== '^') {
                 self::updatePageIndexes($pg);
             }
             $title = html_entity_decode($pg->title()->html());
@@ -252,7 +252,7 @@ class SitemapManager
             if (basename(dirname($path)) === '_drafts') {
                 $out .= "#$indent$title: { folder: '$path' }\n";
             } else {
-                $out .= "$unlisted$indent$title: { folder: '$path' }\n";
+                $out .= "$unlistedMark$indent$title: { folder: '$path' }\n";
             }
 
             $listed = $pg->children()->listed();
@@ -332,17 +332,16 @@ class SitemapManager
     private static function removeUnusedFolders(array $requiredFolders): string
     {
         $doDelete = isset($_GET['delete-folders']);
-        $requiredFolders = array_keys($requiredFolders);
         $actualFolders = getDirDeep(PFY_KIRBY_BASE_PATH . 'content/', onlyDir: true);
         $deletedFolders = '';
         foreach ($actualFolders as $folder) {
             if (($folder === PFY_KIRBY_BASE_PATH . 'content/') ||
                 str_starts_with($folder, PFY_KIRBY_BASE_PATH . 'content/assets/') ||
                 str_starts_with($folder, PFY_KIRBY_BASE_PATH . 'content/error/') ||
-                str_ends_with($folder, PFY_KIRBY_BASE_PATH . '_drafts/')) {
+                str_ends_with($folder, '_drafts/')) {
                 continue;
             }
-            if (!in_array($folder, $requiredFolders)) {
+            if (!isset($requiredFolders[$folder])) {
                 $deletedFolders .= "$folder\n";
                 if ($doDelete) {
                     rrmdir($folder);
@@ -353,16 +352,17 @@ class SitemapManager
             if ($doDelete) {
                 $deletedFolders = "Folders deleted:\n$deletedFolders";
             } else {
-                $url = PFY_PAGE_URL.'?delete-folders';
+                $url = htmlspecialchars(PFY_PAGE_URL.'?delete-folders', ENT_QUOTES, 'UTF-8');
+                $escapedFolders = htmlspecialchars($deletedFolders, ENT_QUOTES, 'UTF-8');
                 $msg = <<<EOT
 <h1>Sitemap Manager</h1>
 <p>These folders should be deleted:</p>
 <pre>
-$deletedFolders
+$escapedFolders
 </pre>
 <p>Click <a href="$url">here</a> to delete these folders automatically.</p>
 EOT;
-                exit($msg);
+                throw new \RuntimeException($msg);
             }
         }
         return $deletedFolders;
@@ -373,7 +373,7 @@ EOT;
      * @param $pg
      * @return void
      */
-    private static function updatePageIndexes($pg)
+    private static function updatePageIndexes($pg): void
     {
         self::$pageNr++;
         $path = $pg->root();
@@ -393,7 +393,7 @@ EOT;
      * @param $index
      * @return void
      */
-    private static function updateMetaFile($path, $index)
+    private static function updateMetaFile(string $path, string $index): void
     {
         $txts = glob("$path/".PFY_PAGE_META_FILE_BASENAME."*.txt");
         if (!$txts) {
@@ -408,10 +408,20 @@ EOT;
                 }
             }
             $pageNr = self::$pageNr;
-            $out = implode("\n----\n", $parts)."\n";
+            $out = implode("\n----\n", array_values($parts))."\n";
             $out = "PageIndex: $index\n----\nPageNr: $pageNr\n----\n$out";
             file_put_contents($txtFile, $out);
         }
     } // updateMetaFile
+
+
+    /**
+     * Computes a hash of the content directory structure.
+     * @return string
+     */
+    private static function getContentHash(): string
+    {
+        return md5(implode('', getDirDeep(PFY_KIRBY_BASE_PATH . 'content/*', true)));
+    }
 
 } // SitemapManager

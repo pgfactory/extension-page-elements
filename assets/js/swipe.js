@@ -1,101 +1,81 @@
 
-function swipedetect(el, callback, supportMouseSwipe = false){
-    var touchsurface = el,
-    swipedir = 'none',
-    startX,
-    startY,
-    distX,
-    distY,
-    threshold = 150, //required min distance traveled to be considered swipe
-    restraint = 100, // maximum distance allowed at the same time in perpendicular direction
-    allowedTime = 300, // maximum time allowed to travel that distance
-    wheelThreshold = 60,
-    elapsedTime,
-    startTime,
-    handleswipe = callback || function(swipedir){};
+function swipedetect(el, callback, supportMouseSwipe = false) {
+    const threshold = 150;      // min distance traveled to be considered swipe
+    const restraint = 100;      // max perpendicular distance allowed
+    const allowedTime = 300;    // max time allowed to travel that distance
+    const wheelThreshold = 60;
+    const handleswipe = callback || function() {};
 
-    // wheel action (resp. 2-finger swipe on MacOS):
-    touchsurface.addEventListener('wheel', function(e){
-      if (Math.abs(e.deltaY) < 5 || Math.abs(e.deltaX) > 10) {
-        e.preventDefault();
-      }
-      if ((e.deltaX > wheelThreshold) && swipedir === 'none') {
-          startTime = new Date().getTime(); // record time when finger first makes contact with surface
-          swipedir = 'left';
-          handleswipe(swipedir);
+    let swipedir = 'none';
+    let startX, startY, startTime;
 
-        } else if ((e.deltaX < -wheelThreshold) && swipedir === 'none') {
-          startTime = new Date().getTime(); // record time when finger first makes contact with surface
-          swipedir = 'right';
-          handleswipe(swipedir);
-
-        } else if ((Math.abs(e.deltaX) < wheelThreshold) && (new Date().getTime() - startTime > allowedTime)) {
-          swipedir = 'none';
+    function detectDirection(distX, distY) {
+        if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
+            return distX < 0 ? 'left' : 'right';
         }
-    }, false);
+        if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint) {
+            return distY < 0 ? 'up' : 'down';
+        }
+        return 'none';
+    }
+
+    // wheel action (resp. 2-finger swipe on macOS):
+    el.addEventListener('wheel', function(e) {
+        if (Math.abs(e.deltaX) > 10 && Math.abs(e.deltaY) < 5) {
+            e.preventDefault();
+        }
+        if (e.deltaX > wheelThreshold && swipedir === 'none') {
+            startTime = Date.now();
+            swipedir = 'left';
+            handleswipe(swipedir);
+        } else if (e.deltaX < -wheelThreshold && swipedir === 'none') {
+            startTime = Date.now();
+            swipedir = 'right';
+            handleswipe(swipedir);
+        } else if (Math.abs(e.deltaX) < wheelThreshold && (Date.now() - startTime > allowedTime)) {
+            swipedir = 'none';
+        }
+    }, { passive: false });
 
     // mouse click-move-release gesture:
     if (supportMouseSwipe) {
-      touchsurface.addEventListener('mousedown', function (e) {
-        swipedir = 'none';
-        dist = 0;
-        startX = e.x;
-        startY = e.y;
-        startTime = new Date().getTime();
-        e.preventDefault();
-      }, false);
+        el.addEventListener('mousedown', function(e) {
+            swipedir = 'none';
+            startX = e.pageX;
+            startY = e.pageY;
+            startTime = Date.now();
+            e.preventDefault();
+        });
 
-      touchsurface.addEventListener('mousemove', function (e) {
-        e.preventDefault();
-      }, false);
+        el.addEventListener('mousemove', function(e) {
+            e.preventDefault();
+        });
 
-      touchsurface.addEventListener('mouseup', function (e) {
-        distX = e.x - startX;
-        distY = e.y - startY;
-        elapsedTime = new Date().getTime() - startTime;
-        if (elapsedTime <= allowedTime) {
-          if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
-            swipedir = (distX < 0) ? 'left' : 'right';
-          } else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint) {
-            swipedir = (distY < 0) ? 'up' : 'down';
-          }
-        }
-        handleswipe(swipedir);
-        e.preventDefault();
-      }, false);
-    } // supportMouseSwipe
-
+        el.addEventListener('mouseup', function(e) {
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime <= allowedTime) {
+                swipedir = detectDirection(e.pageX - startX, e.pageY - startY);
+            }
+            handleswipe(swipedir);
+            e.preventDefault();
+        });
+    }
 
     // touch gestures:
-    touchsurface.addEventListener('touchstart', function(e) {
-      var touchobj = e.changedTouches[0];
-      swipedir = 'none';
-      dist = 0;
-      startX = touchobj.pageX;
-      startY = touchobj.pageY;
-      startTime = new Date().getTime();
-//      e.preventDefault();
-    }, false);
+    el.addEventListener('touchstart', function(e) {
+        const touchobj = e.changedTouches[0];
+        swipedir = 'none';
+        startX = touchobj.pageX;
+        startY = touchobj.pageY;
+        startTime = Date.now();
+    });
 
-    touchsurface.addEventListener('touchmove', function(e) {
-//      e.preventDefault();
-    }, false);
-
-    touchsurface.addEventListener('touchend', function(e) {
-      var touchobj = e.changedTouches[0];
-      distX = touchobj.pageX - startX;
-      distY = touchobj.pageY - startY;
-      elapsedTime = new Date().getTime() - startTime;
-      if (elapsedTime <= allowedTime) {
-        if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
-          swipedir = (distX < 0)? 'left' : 'right';
+    el.addEventListener('touchend', function(e) {
+        const touchobj = e.changedTouches[0];
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime <= allowedTime) {
+            swipedir = detectDirection(touchobj.pageX - startX, touchobj.pageY - startY);
         }
-        else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint) {
-          swipedir = (distY < 0)? 'up' : 'down';
-        }
-      }
-      handleswipe(swipedir);
-//      e.preventDefault();
-    }, false);
+        handleswipe(swipedir);
+    });
 } // swipedetect
-

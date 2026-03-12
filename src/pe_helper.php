@@ -3,19 +3,9 @@
 namespace PgFactory\PageFactoryElements;
 
 use IntlDateFormatter;
-use Kirby\Exception\Exception;
 use PgFactory\PageFactory\PageFactory;
-use PgFactory\PageFactory\TransVars as TransVars;
-use PgFactory\PageFactory\Utils;
-use function PgFactory\PageFactory\isLocalhost;
-use function \PgFactory\PageFactory\writeFile;
-use function \PgFactory\PageFactory\translateToIdentifier;
-use function \PgFactory\PageFactory\getDir;
-use function \PgFactory\PageFactory\fileTime;
-use function \PgFactory\PageFactory\getFile;
-use function \PgFactory\PageFactory\mylog;
 
- // Europe centric (and incomplete) presets:
+// Europe centric (and incomplete) presets:
 if (PageFactory::$langCode === 'en') {
     define('FULL_DATE_FORMAT', 'EEEE, d MMMM yyyy, h:mm a');
 } elseif (PageFactory::$langCode === 'de') {
@@ -60,8 +50,6 @@ function intlDate(string $format, mixed $time = false): string
         return date('Y-m-d\TH:i', $time);
     } elseif ($format === 'r') {
         return intlDateFormat('LONG,SHORT', $time);
-    } elseif ($format === '') {
-        return intlDateFormat('LONG,NONE', $time);
     }
 
     $replacements = [
@@ -105,6 +93,26 @@ function intlDate(string $format, mixed $time = false): string
 
 
 /**
+ * Resolves a format name to the corresponding IntlDateFormatter constant.
+ * @param string $format
+ * @return int
+ */
+function resolveIntlFormat(string $format): int
+{
+    return match ($format) {
+        'FULL' => IntlDateFormatter::FULL,
+        'LONG' => IntlDateFormatter::LONG,
+        'MEDIUM' => IntlDateFormatter::MEDIUM,
+        'SHORT' => IntlDateFormatter::SHORT,
+        'RELATIVE_LONG' => IntlDateFormatter::RELATIVE_LONG,
+        'RELATIVE_MEDIUM' => IntlDateFormatter::RELATIVE_MEDIUM,
+        'RELATIVE_SHORT' => IntlDateFormatter::RELATIVE_SHORT,
+        default => IntlDateFormatter::NONE,
+    };
+} // resolveIntlFormat
+
+
+/**
  * Compiles "intlDate()-style" (eg. YYYY-MMM-dd) format and translates to local language.
  *   Alternative format: "XXX,YYY", where XXX resp. YYY are one of FULL|LONG|MEDIUM|SHORT|NONE
  * @param string $format
@@ -118,44 +126,17 @@ function intlDateFormat(string $format, mixed $time = false): string
         $time = strtotime($time);
     }
 
-    $dateFormat = false;
-    $timeFormat = false;
+    $dateFormat = IntlDateFormatter::NONE;
+    $timeFormat = IntlDateFormatter::NONE;
     if (preg_match('/(FULL|LONG|MEDIUM|SHORT|NONE)/', $format)) {
         list($dateFormat, $timeFormat) = explode(',', "$format,NONE");
+        $dateFormat = resolveIntlFormat($dateFormat);
+        $timeFormat = resolveIntlFormat($timeFormat);
         $format = '';
     }
 
-    switch ($dateFormat) {
-        case 'FULL':   $dateFormat = IntlDateFormatter::FULL; break;
-        case 'LONG':   $dateFormat = IntlDateFormatter::LONG; break;
-        case 'MEDIUM': $dateFormat = IntlDateFormatter::MEDIUM; break;
-        case 'SHORT':  $dateFormat = IntlDateFormatter::SHORT; break;
-        case 'RELATIVE_LONG':   $dateFormat = IntlDateFormatter::RELATIVE_LONG; break;
-        case 'RELATIVE_MEDIUM': $dateFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
-        case 'RELATIVE_SHORT':  $dateFormat = IntlDateFormatter::RELATIVE_SHORT; break;
-        case 'NONE':   $dateFormat = IntlDateFormatter::NONE; break;
-    }
-    switch ($timeFormat) {
-        case 'FULL':   $timeFormat = IntlDateFormatter::FULL; break;
-        case 'LONG':   $timeFormat = IntlDateFormatter::LONG; break;
-        case 'MEDIUM': $timeFormat = IntlDateFormatter::MEDIUM; break;
-        case 'SHORT':  $timeFormat = IntlDateFormatter::SHORT; break;
-        case 'RELATIVE_LONG':   $timeFormat = IntlDateFormatter::RELATIVE_LONG; break;
-        case 'RELATIVE_MEDIUM': $timeFormat = IntlDateFormatter::RELATIVE_MEDIUM; break;
-        case 'RELATIVE_SHORT':  $timeFormat = IntlDateFormatter::RELATIVE_SHORT; break;
-        case 'NONE':   $timeFormat = IntlDateFormatter::NONE; break;
-    }
-
-    if (isset(PageFactory::$timezone)) {
-        $systemTimeZone = PageFactory::$timezone;
-    } else {
-        $systemTimeZone = date_default_timezone_get();
-    }
-    if (isset(PageFactory::$locale)) {
-        $currentLocale = PageFactory::$locale;
-    } else {
-        $currentLocale = setlocale(LC_ALL, 0);
-    }
+    $systemTimeZone = PageFactory::$timezone ?? date_default_timezone_get();
+    $currentLocale = PageFactory::$locale ?? setlocale(LC_ALL, 0);
 
     $fmt = datefmt_create(
         $currentLocale,
@@ -165,7 +146,7 @@ function intlDateFormat(string $format, mixed $time = false): string
         IntlDateFormatter::GREGORIAN,
         $format
     );
-    return datefmt_format($fmt , $time);
+    return datefmt_format($fmt, $time);
 } // intlDateFormat
 
 
@@ -174,14 +155,15 @@ function intlDateFormat(string $format, mixed $time = false): string
  * @param string $str
  * @return string
  */
-function resolveYearPlaceholder(string $str,): string
+function resolveYearPlaceholder(string $str): string
 {
     if (preg_match('/Y(\d+)/', $str, $m)) {
         $y = date('Y');
         $d = intval($m[1]);
         if ($d) {
             $dayOfYear = intval(date('z'));
-            if ($dayOfYear > (365 - $d)) {
+            $daysInYear = intval(date('L')) ? 366 : 365;
+            if ($dayOfYear > ($daysInYear - $d)) {
                 $y += 1;
             }
         }
@@ -208,25 +190,25 @@ function urlAppendArg(string $url, string $arg): string
 
 
 /**
- * array_splice_assoc
- * Splice an associative array
+ * Splice an associative array.
  * Removes the elements designated by offset & length and replaces them
- * with the elements of replacement array
- * https://nimblewebdeveloper.com/blog/php-splice-associative-keyed-array
- * @param $input array
- * @param $key string
- * @param $length int
- * @param $replacement array
+ * with the elements of replacement array.
+ * @param array $input
+ * @param string $key
+ * @param int $length
+ * @param array $replacement
+ * @return array
  */
-function array_splice_associative($input, $key, $length, $replacement=array()) {
+function array_splice_associative(array $input, string $key, int $length, array $replacement = []): array
+{
     $index = array_search($key, array_keys($input));
 
-    if($index === false) {
+    if ($index === false) {
         return $input;
     }
 
     $before_slice = array_slice($input, 0, $index);
-    $after_slice = array_slice($input, $index+$length);
+    $after_slice = array_slice($input, $index + $length);
 
     return array_merge($before_slice, $replacement, $after_slice);
 } // array_splice_associative
@@ -262,8 +244,11 @@ function sizetostr(int|string $arg, int $precision = 1): string
  *   Special case: 'Yn' (where n=number) -> flips year to next year when month is greater than 12-n.
  *   Example: Y2 returns next year when called in November or December, otherwise the current year.
  *   Values M (=Jan), F (=January), D (=Mon), l (=Monday) are translated to local language
+ * @param string $str
+ * @param bool $returnUnixTime
+ * @return string|int
  */
-function resolveTimePlaceholders(string $str, $returnUnixTime = true): string|int
+function resolveTimePlaceholders(string $str, bool $returnUnixTime = true): string|int
 {
     if (preg_match('/\( (.*?) \)/xu', $str, $m)) {
         $str = str_replace($m[0], '', $str); // remove modifier
@@ -302,10 +287,7 @@ function resolveTimePlaceholders(string $str, $returnUnixTime = true): string|in
     $str = str_replace(['Y', 'm', 'd'], [date('Y', $tRef), date('m', $tRef), date('d', $tRef)], $str);
 
     if ($returnUnixTime) {
-        $t = strtotime($str);
-        return $t;
-    } else {
-        return $str;
+        return strtotime($str);
     }
+    return $str;
 } // resolveTimePlaceholders
-

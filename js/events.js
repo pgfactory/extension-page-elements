@@ -8,7 +8,7 @@
 const pfyEventsHelper = {
 
   init() {
-    pfyEventsHelper.setupTriggers();
+    this.setupTriggers();
   }, // init
 
 
@@ -16,11 +16,11 @@ const pfyEventsHelper = {
     const catSelect = document.querySelector('#frm-category');
     if (catSelect) {
       catSelect.addEventListener('change', function (e) {
-        console.log(e);
+        // todo: implement category change handler
       });
     }
   }, // setupTriggers
 
-}; // pfyFormsHelper
+}; // pfyEventsHelper
 
 pfyEventsHelper.init();
