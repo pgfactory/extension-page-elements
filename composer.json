@@ -1,9 +1,9 @@
 {
     "require": {
-        "nette/forms": "^3.1",
-        "phpoffice/phpspreadsheet": "^1.28",
-        "rlanvin/php-rrule": "^2.4",
-        "spatie/icalendar-generator": "^2.6",
+        "nette/forms": "^3.2",
+        "phpoffice/phpspreadsheet": "^5.5",
+        "rlanvin/php-rrule": "^2.6",
+        "spatie/icalendar-generator": "^3.2",
         "phpgt/cssxpath": "^1.4"
     }
 }
