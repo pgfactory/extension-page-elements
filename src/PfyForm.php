@@ -28,7 +28,7 @@ const PFY_FORMS_SUPPORTED_TYPES =
     ',text,password,email,textarea,hidden,readonly,'.
     'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
     'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
-    'event,address,menuselect,'.
+    'event,address,countedchoices,'.
     'button,reset,submit,cancel,@import,literal,';
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
@@ -37,7 +37,6 @@ const PFY_CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
 const INFO_ICON = 'ⓘ';
 const MEGABYTE = 1048576;
 const PFY_LOW_SEATS_WARNING_THRESHOLD = 10;
-const DEFAULT_KEEP_OLD_DATA_DURATION = 3; // month
 
 const PFY_FORM_OPTIONS = [
     'file' => false,
@@ -78,7 +77,7 @@ const PFY_FORM_OPTIONS = [
         'scrollHints' => false,
         'markLocked' => false,
         'obfuscateRecKeys' => false,
-//        'obfuscateRecKeys' => true,
+ //        'obfuscateRecKeys' => true,
         'rowCallback' => true,
         'obfuscateCols' => ['passwor*'],
         'dontPrint' => [],
@@ -336,6 +335,7 @@ class PfyForm extends Form
     public function createForm($formElements): void
     {
         // build $this->formElements from submitted $formElements:
+        $elemInx = 1;
         foreach ($formElements as $name => $rec) {
             if ($rec === false) { // if unknown argument is false, just silently drop it
                 unset($formElements[$name]);
@@ -353,7 +353,13 @@ class PfyForm extends Form
             }
             if (!($this->formElements[$name]??false)) {
                 $name = translateToIdentifier($name);
+
+                // make sure each form elem gets unique id:
+                if (!($rec['id']??false)) {
+                    $rec['id'] = "pfy-form-elem-$this->formIndex-$elemInx";
+                }
                 $this->formElements[$name] = $rec;
+                $elemInx++;
             }
         }
 
@@ -503,11 +509,7 @@ class PfyForm extends Form
                 throw new \Exception("PfyForm: field type '$type' not supported");
         }
 
-        // make sure each elem get unique id:
-        if ($id = $elemOptions['id']??false) {
-            $elem->setHtmlId($id);
-        } elseif ($this->formIndex > 1) {
-            $id = "frm-$type-$this->formIndex-$this->elemInx";
+        if ($id = ($elemOptions['id']??false)) {
             $elem->setHtmlId($id);
         }
 
@@ -848,6 +850,7 @@ class PfyForm extends Form
      */
     private function handleComposedFields(): void
     {
+        $inx = 1;
         foreach ($this->formElements as $name => $rec) {
             $type = ($rec['type']??false);
             if ($type === 'event') {
@@ -856,18 +859,19 @@ class PfyForm extends Form
             } elseif ($type === 'address') {
                 $this->composeAddressElement($name, $rec);
 
-            } elseif ($type === 'menuselect') {
-                $this->composeMenuSelectElement($name, $rec);
+            } elseif ($type === 'countedchoices') {
+                $this->composeCountedChoicesElement($inx, $name, $rec);
             }
+            $inx++ ;
         }
     } // handleComposedFields
 
 
     /**
-     * @param int|string $name
+     * @param string $name
      * @return void
      */
-    private function composeEventElement(int|string $name, array $rec): void
+    private function composeEventElement(string $name, array $rec): void
     {
         if (!$this->eventFieldFound) {
             $this->eventFieldFound = true;
@@ -952,27 +956,65 @@ class PfyForm extends Form
 
 
     /**
-     * @param int|string $name
+     * @param int $inx
+     * @param string $name
      * @param array $rec
      * @return void
      * @throws InvalidArgumentException
      */
-    private function composeMenuSelectElement(int|string $name, array $rec): void
+    private function composeCountedChoicesElement(int $inx, string $name, array $rec): void
     {
-        $menuselectElements = [];
+        $countedChoicesElements = [];
         $required = ($rec['required']??false);
         $label = $rec['label']??$name;
 
-        if ($id = ($rec['id']??'')) {
-            unset($rec['id']);
-        }
+        $id = ($rec['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
         $preset = ($rec['preset']??'');
         $max = ($rec['max']??'');
-        $attrib = ($rec['attrib']??'');
-        $controlledBy = '';
-        if (preg_match('/data-controlled-by:([.#][\w-]+)/', $attrib, $m)) {
-            $controlledBy = $m[1];
+        if (preg_match('/^=\$([\w-]+)/', $max, $m)) {
+            $ref = $m[1];
+            if (isset($this->formElements[$ref]['id'])) {
+                $max = '#' . $this->formElements[$ref]['id'];
+            } else {
+                throw new \Error("Source Error: referenced element '$ref' not found in form.");
+            }
         }
+
+        $controlledBy = ($rec['controller']??'');
+        if (!$controlledBy) {
+            throw new \Error("Source Error: 'controller' missing in 'countedchoices' element '$name'.");
+        }
+/*
+        if ($this->formElements[$controlledBy]??false) {
+            // add 'aria-controls' attribute to controller element:
+            if ($this->formElements[$controlledBy]['aria-controls']??false) {
+                $this->formElements[$controlledBy]['aria-controls'] .= " $id";
+            } else {
+                $this->formElements[$controlledBy]['aria-controls'] = $id;
+            }
+
+        // try to find #id in form elements:
+        } elseif ($controlledBy[0] === '#') {
+            $id1 = substr($controlledBy, 1);
+            $found = false;
+            foreach ($this->formElements as $elemName => $elemRec) {
+                if (($elemRec['id']??false) && ($elemRec['id'] === $id1)) {
+                    $this->formElements[$elemName]['aria-controls'] = $id;
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                throw new \Error("Source Error: 'controller' -> element '$id1' not found. ");
+            }
+
+        } else {
+            throw new \Error("Source Error: 'controller' -> element not found. ");
+        }
+*/
+        $attrib = ($rec['attrib']??'');
+        $wrapperClass = ($rec['class'] ?? ($rec['wrapperClass']??''));
+
         if ($infos = ($rec['infos']??($rec['info']??''))) {
             $infos = parseArgumentStr($infos);
         }
@@ -980,43 +1022,65 @@ class PfyForm extends Form
             $descriptions = parseArgumentStr($descriptions);
         }
 
-        $menuElems = $rec['options'];
-        $menuElems = parseArgumentStr($menuElems, anonIndex:'');
+        if ($menuElems = ($rec['options']??false)) {
+            $menuElems = parseArgumentStr($menuElems, anonIndex: '');
+            $wrapperClass .= ' pfy-radio';
+        } else {
+            $menuElems = [$name => $label];
+            $wrapperClass .= ' pfy-checkbox';
+        }
 
         $i = 0;
         foreach ($menuElems as $optName => $optLabel) {
             $optName = is_numeric($optName) ? translateToIdentifier($optLabel): $optName;
-            $menuselectElements[$optName] = [
+            $countedChoicesElements[$optName] = [
+                'groupId' => $id,
+                'id' => $id . '-' . ($i+1),
                 'type' => 'integer',
                 'label' => $optLabel,
                 'menulabel' => $label,
-                'class' => 'pfy-menuselect-elem',
-                'required' => $required,
+                'class' => 'pfy-countedchoices-elem',
+                '_required' => $required, // -> will be applied to radio buttons in handleCountedChoicesGroups()
                 'min' => 0,
             ];
             if ($id) {
-                $menuselectElements[$optName]['groupid'] = $id;
+                $countedChoicesElements[$optName]['groupId'] = $id;
+            }
+            if ($wrapperClass) {
+                $countedChoicesElements[$optName]['wrapperClass'] = $wrapperClass;
             }
             if ($preset !== false) {
-                $menuselectElements[$optName]['preset'] = $preset;
+                $countedChoicesElements[$optName]['preset'] = $preset;
             }
             if ($max) {
-                $menuselectElements[$optName]['max'] = $max;
+                $attrib .= "data-max: $max,";
             }
             if ($controlledBy) {
-                $menuselectElements[$optName]['controlledBy'] = $controlledBy;
+                if (isset($this->formElements[$controlledBy]['id'])) {
+                    $controlledBy = '#' . $this->formElements[$controlledBy]['id'];
+                    $countedChoicesElements[$optName]['controlledBy'] = $controlledBy;
+                } elseif (isset($this->formElements[$controlledBy]['class'])) {
+                    $class = $this->formElements[$controlledBy]['class'];
+                    $class = '.' . preg_replace('/\s+/', '.', $class);
+                    $countedChoicesElements[$optName]['controlledBy'] = $class;
+                } else {
+                    $countedChoicesElements[$optName]['controlledBy'] = $controlledBy;
+                }
             }
             if ($info = ($infos["_anonInx$i"]??($infos[$i]??''))) {
-                $menuselectElements[$optName]['info'] = $info;
+                $countedChoicesElements[$optName]['info'] = $info;
             }
             if ($description = ($descriptions["_anonInx$i"]??($descriptions[$i]??''))) {
-                $menuselectElements[$optName]['description'] = $description;
+                $countedChoicesElements[$optName]['description'] = $description;
+            }
+            if ($attrib) {
+                $countedChoicesElements[$optName]['attrib'] = $attrib;
             }
             $i++;
         }
 
-        $this->formElements = array_splice_associative($this->formElements, $name, 1, $menuselectElements);
-    } // composeMenuSelectElement
+        $this->formElements = array_splice_associative($this->formElements, $name, 1, $countedChoicesElements);
+    } // composeCountedChoicesElement
 
 
     /**
@@ -1025,7 +1089,7 @@ class PfyForm extends Form
      * @return void
      * @throws InvalidArgumentException
      */
-    private function composeAddressElement(int|string $name, array $rec): void
+    private function composeAddressElement(string $name, array $rec): void
     {
         $required = ($rec['required']??false);
 
@@ -1300,8 +1364,17 @@ class PfyForm extends Form
             }
         }
 
+        // handle aria-controls attrib which may have been added by CountedChoices element:
+        if ($rec['aria-controls']??false) {
+            if ($rec['attrib']??false) {
+                $rec['attrib'] .= ",aria-controls:{$rec['aria-controls']}";
+            } else {
+                $rec['attrib'] = "aria-controls:{$rec['aria-controls']}";
+            }
+        }
+
         if ($attribs = ($rec['attribs']??($rec['attrib']??false))) {
-            $attribs = explodeTrim(',', $attribs);
+            $attribs = explodeTrim(',', $attribs, excludeEmptyElems:true);
             foreach ($attribs as $attrib) {
                 list($key, $val) = explodeTrim(':', $attrib);
                 $elem->setHtmlAttribute($key, $val);
@@ -1469,7 +1542,7 @@ EOT;
         }
         $html = <<<EOT
 
-<div class='pfy-elem-wrapper pfy-textarea $class'$dataAttrib><!-- pfy-elem-wrapper -->
+<div class='pfy-elem-wrapper pfy-textarea $class'$dataAttrib>
 	<details class='mdp-accordion'>
 		<summary><span>$controllerLabel</span></summary>
 		<div class='mdp-accordion-body'>
@@ -1498,7 +1571,7 @@ EOT;
     {
         $html = <<<EOT
 
-<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib><!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib>
 $input
 </div>
 <!-- _________________ pfy-elem-wrapper -->
@@ -1537,13 +1610,12 @@ EOT;
 
         $html = <<<EOT
 
-<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib><!-- pfy-elem-wrapper -->
+<div class="pfy-elem-wrapper pfy-$type $class"$dataAttrib>
 
-$label
-$input
-$errors
-</div>
-<!-- _________________ /pfy-elem-wrapper -->
+    $label
+    $input
+    $errors
+</div><!-- /pfy-elem-wrapper -->
 
 
 EOT;
@@ -1762,63 +1834,19 @@ EOT;
         }
 
         $html = '';
-        $inGroup = false;
+        $groupId = '';
+        $cls = '';
         foreach ($this->formElements as $name => $rec) {
             $elemHtml = $this->renderFormElement($name, $rec);
 
-            if (!$inGroup && ($rec['menulabel'] ?? false)) {
-                $groupLabel = $rec['menulabel'];
-                $id = ($rec['groupid']??false) ? " id='{$rec['groupid']}'" : '';
-                if ($max = ($rec['max']??'')) {
-                    $max = ltrim($max, '=$');
-                    $max = " data-max='$max'";
-                }
-                if ($controlledBy = $rec['controlledBy']??false) {
-                    $max .= " data-controlled-by='$controlledBy'";
-                }
-                $inGroup = true;
-                $elemHtml = $this->injectRadioInput($elemHtml, $groupLabel);
-                $cls = translateToClassName($groupLabel);
-                $html .= <<<EOT
-<!-- ====== pfy-form-field-group -->
-
-<div$id class="pfy-form-field-group pfy-form-menuselect-group pfy-form-group-$cls"$max>
-    <div class="pfy-form-field-group-label">$groupLabel</div>
-$elemHtml
-
-EOT;
-
-
-            } elseif ($inGroup && ($rec['menulabel'] ?? false)) {
-                $html .= $this->injectRadioInput($elemHtml, $groupLabel);
-
-            } else {
-                if ($inGroup) {
-                    $inGroup = false;
-                    $html .= <<<EOT
-</div> <!-- ====== /pfy-form-field-group -->
-
-EOT;
-                }
-                $html .= $elemHtml;
+            if ($groupId || ($rec['groupId']??false)) {
+                $elemHtml = $this->handleCountedChoicesGroups($name, $rec, $elemHtml, $groupId, $cls);
             }
+            $html .= $elemHtml;
         } // loop over formElements
 
         return $html;
     } // renderFormFields
-
-
-    private function injectRadioInput(string $elemHtml, string $groupLabel): string
-    {
-         if (preg_match('/<input.*?name="(.*?)"/', $elemHtml, $m)) {
-             $input = $m[0];
-             $name = $m[1];
-             $cls = translateToClassName($groupLabel);
-             $radio = "<input type='radio' name='__$cls' class='pfy-radio pfy-choice pfy-horizontal' value='$name'>";
-             $elemHtml = str_replace($m[0], "$radio$input", $elemHtml);
-         }
-        return $elemHtml;
-    } // injectRadioInput
 
 
     /**
@@ -3579,6 +3607,132 @@ EOT;
 
 
     /**
+     * @param string $name
+     * @param mixed $rec
+     * @param string $html
+     * @param string $groupId0
+     * @param string $cls
+     * @param bool $terminateGroup
+     * @return string
+     * @throws \Exception
+     */
+    protected function handleCountedChoicesGroups(string $name, mixed $rec, string $html, string &$groupId0, string &$cls, bool $terminateGroup = false): string
+    {
+        if (!($rec['menulabel']??false)) {
+            // end of group -> append closing tag:
+            $html = <<<EOT
+    </div><!-- /pfy-form-field-group-wrapper -->
+</div> <!-- ====== /pfy-form-field-group pfy-form-group-$cls -->
+
+$html
+
+EOT;
+            $groupId0 = '';
+            return $html;
+        }
+
+        $html = str_replace('<div class="pfy-elem-wrapper pfy-integer pfy-countedchoices-elem', '<div class="pfy-elem-wrapper pfy-countedchoices-elem', $html);
+        $wrapperClass = ($rec['wrapperClass'] ?? false) ? " {$rec['wrapperClass']}": '';
+        $groupId = $rec['groupId'];
+        $id = translateToIdentifier("$groupId-$name", toLowerCase: true);
+        $groupLabel = $rec['menulabel'] ?? '';
+        $cls = translateToClassName($groupLabel);
+        if ($attr = ($rec['max'] ?? '')) {
+            $attr = ltrim($attr, '=$');
+            $attr = " data-max='$attr'";
+        }
+        if ($controlledBy = $rec['controlledBy'] ?? false) {
+            $attr .= " data-controlled-by='$controlledBy'";
+        }
+
+        if (!preg_match('|<span class=\'pfy-label-wrapper\'>.*?</span>|', $html, $m)) {
+            throw new \Exception("Error: Menu-select group must contain a select-element.");
+        }
+        $label = $m[0];
+        $html = str_replace($label, '', $html);
+        if (!preg_match('|(<input .*?>)(<span class=\'pfy-form-field-description\'>.*?</span>)</span>|', $html, $m)) {
+            throw new \Exception("Error: Menu-select group must contain a select-element.");
+        }
+        $input = $m[1];
+        $description = $m[2];
+        if (preg_match('|name="(.*?)"|', $input, $m2)) {
+            $name = $m2[1];
+        }
+        $grpClass = $groupId;
+        $required = $rec['_required'] ? ' required' : '';
+        if ($required) {
+            $groupLabel .= ' <span class="pfy-form-required-marker">*</span>';
+        }
+        $input = preg_replace('|id="|', 'id="_', $input);
+        $id = $rec['id'] ?? $id;
+        if (str_contains($wrapperClass, 'pfy-checkbox')) {
+            $input = <<<EOT
+
+        <input id='$id' type='checkbox' name='__$grpClass' class='pfy-checkbox pfy-choice' $required>
+        $input
+    </span>
+    $label
+    $description
+EOT;
+        } else {
+            $input = <<<EOT
+
+        <input id='$id' type='radio' name='__$grpClass' class='pfy-radio pfy-choice' value='$name' $required>
+        $input
+    </span>
+    $label
+    $description
+EOT;
+        }
+        $html = str_replace($m[0], $input, $html);
+
+        if (!$groupId0) {
+            // group start:
+            $groupId0 = $groupId;
+            $html = <<<EOT
+
+<!-- ====== pfy-form-field-group pfy-form-group-$cls -->
+
+<div id='$groupId' class="pfy-form-field-group pfy-form-countedchoices-group pfy-form-group-$cls$wrapperClass"$attr>
+    <div class="pfy-form-field-group-label">$groupLabel</div>
+    <div class="pfy-form-field-group-wrapper">
+$html
+EOT;
+
+        } elseif ($terminateGroup) {
+            $cls0 = $groupId0;
+            $html = <<<EOT
+$html
+    </div><!-- /pfy-form-field-group-wrapper -->
+</div> <!-- ====== /pfy-form-field-group pfy-form-group-$cls0 -->
+
+
+EOT;
+            $groupId0 = $groupId;
+
+        } elseif ($groupId0 !== $groupId) {
+            // end of last group AND beginning of new group -> inject:
+            $cls0 = $groupId0;
+            $html = <<<EOT
+    </div><!-- /pfy-form-field-group-wrapper -->
+</div> <!-- ====== /pfy-form-field-group pfy-form-group-$cls0 -->
+
+
+<!-- ====== pfy-form-field-group pfy-form-group-$cls -->
+
+<div id='$groupId' class="pfy-form-field-group pfy-form-countedchoices-group pfy-form-group-$cls$wrapperClass"$attr>
+    <div class="pfy-form-field-group-label">$groupLabel</div>
+    <div class="pfy-form-field-group-wrapper">
+$html
+
+EOT;
+            $groupId0 = $groupId;
+        }
+        return $html;
+    } // handleCountedChoicesGroups
+
+
+    /**
      * @param array $tableOptions
      * @return array
      */
@@ -3602,7 +3756,7 @@ EOT;
      * @param array $dataRec
      * @return string
      */
-    private function compileTemplate(string $str, array $dataRec): string
+    private function compileTempate(string $str, array $dataRec): string
     {
         $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
 

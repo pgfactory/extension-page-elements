@@ -3,6 +3,7 @@
  */
 
 "use strict";
+console.debug('forms.js');
 
 const pfyFormsHelper = {
 
@@ -16,11 +17,14 @@ const pfyFormsHelper = {
     if (forms instanceof Element) {
       this.initForm(forms, setFocus);
 
+    // form undefined:
     } else {
       if (forms == null) {
+        // forms not defined -> apply to all forms in page:
         forms = document.querySelectorAll('.pfy-form');
 
       } else if (typeof forms === 'string') {
+        // forms defined as query string -> get all matching forms:
         forms = document.querySelectorAll(forms);
 
       } else if (!(forms instanceof NodeList)) {
@@ -49,8 +53,9 @@ const pfyFormsHelper = {
     if (!this.formInitialized) {
       this.setupTriggers();
       this.setupRevealHandlers();
-      this.setupMenuSelectWidget(form);
+      this.setupCountedChoicesWidget(form);
       this.formInitialized = true;
+      console.debug('forms initialized');
     }
     this.handleErrorInForm(form);
     this.presetForm(form);
@@ -92,9 +97,10 @@ const pfyFormsHelper = {
       this.categoryChangeMonitorHandler(ev);
       this.revealHandler(ev.target);
       this.repetitionChangeHandler(ev);
-      if (this.menuSelectWrapperEl) {
-        this.menuSelectChangeHandler(ev);
-      }
+      this.countedChoicesChangeHandler(ev);
+//      if (this.menuSelectWrapperEl) {
+//         this.menuSelectChangeHandler(ev);
+//       }
     });
 
     document.addEventListener('keydown', (ev) => {
@@ -177,6 +183,7 @@ const pfyFormsHelper = {
     this.clearModifiedFlag(form);
     this.clearPresetFlag(form);
     this.clearRowSelection(form);
+    this.clearCountedChoices(form);
     this.presetForm(form);
     this.setRecId(form, '');
 
@@ -232,6 +239,7 @@ const pfyFormsHelper = {
 
 
   showPwHandler(ev) {
+    // show/hide password:
     const btn = ev.target.closest('.pfy-form-show-pw');
     if (!btn) {
       return;
@@ -370,12 +378,24 @@ const pfyFormsHelper = {
     }
 
     if (!this.isFormModified(form)) {
+      console.debug('Submit: nothing changed...');
       return;
     }
     if (typeof pfyFormsHelper.submitNow !== 'undefined') {
       return;
     }
     ev.preventDefault();
+
+    // check countedchoices-groups -> sum of choices must not exceed maxcount:
+    console.log('Submit: check countedchoices-groups');
+    let error = false;
+    domForOne(form, '.pfy-countedchoices-group-error', el => {
+      error = true;
+    })
+    if (error) {
+      return;
+    }
+
     const check = pfyFormsHelper.checkHonigtopf(form);
     if (!check) {
       ev.stopPropagation();
@@ -433,11 +453,13 @@ const pfyFormsHelper = {
     if (form.closest('.pfy-retain-data') && retainData) {
       args += '&retainData='+dataSrcinx;
     }
+    console.debug('fetching data record '+recKey);
     form.dataset.loading = true;
     execAjaxPromise(args, {})
       .then((data) => {
         if (data.status === 'error') {
           // handle case where rec locked by somebody else:
+          console.debug('Rec locked.');
           const row = table.querySelector('[data-reckey="'+recKey+'"]');
           row.classList.add('pfy-rec-locked');
           if (formWrapper.closest('.pfy-popup-wrapper')) {
@@ -448,8 +470,9 @@ const pfyFormsHelper = {
         }
 
         // popup is open, now prepare the form, inject obtained data:
+        console.debug(data);
         if (createNewRec) {
-          recKey = '';
+          recKey = ''; // omitting the recKey will create a new record
         }
         pfyFormsHelper.presetForm(form, data, recKey);
         form.removeAttribute('data-loading');
@@ -592,7 +615,7 @@ const pfyFormsHelper = {
         const valPatt = `,${val},`;
         domForEach(fieldWrapperElemEl, 'input', option => {
           const hasNoValue = (option.getAttribute('value') === null);
-          if (hasNoValue) {
+          if (hasNoValue) { // == single checkbox without value set
             option.checked = !!val;
           } else {
             const v = ',' + option.value + ',';
@@ -671,7 +694,10 @@ const pfyFormsHelper = {
 
   setFocus(el) {
     setTimeout(() => {
-      el.focus();
+      const type = el.getAttribute('type');
+      if (type !== 'checkbox' && type !== 'radio') {
+        el.focus();
+      }
     }, 100);
   }, // setFocus
 
@@ -719,7 +745,16 @@ const pfyFormsHelper = {
     domForAll(form, '.pfy-form-elem-has-error', el => {
       el.classList.remove('pfy-form-elem-has-error');
     });
-  }, // clearErrors
+
+    // reset error states:
+    form.reset();
+    domForAll(form, 'input', el => {
+      const type = el.getAttribute('type');
+      if (type === 'checkbox' || type === 'radio') {
+        el.value = '';
+      }
+    });
+  }, // clearModifiedFlag
 
 
   clearModifiedFlag(el) {
@@ -743,7 +778,32 @@ const pfyFormsHelper = {
   }, // clearRowSelection
 
 
-  resetFormInx(form) {
+  clearCountedChoices(form) {
+    const parent = this;
+    domForEach(form, '.pfy-countedchoices-group-error-msg', el => {
+      el.remove();
+    });
+    domForEach(form, '.pfy-countedchoices-group-error', el => {
+      el.classList.remove('pfy-countedchoices-group-error');
+    });
+    domForEach(form, '.pfy-countedchoices-group input.pfy-choice', el => {
+      el.checked = false;
+
+    });
+    domForEach(form, '.pfy-countedchoices-group input.pfy-integer', el => {
+      el.value = 0;
+    });
+    domForEach(form, '.mdp-accordion', el => {
+      el.open = false;
+    });
+    domForEach(form, '.pfy-form-countedchoices-group', el => {
+      parent.switchControlledChildrensMode(el, true);
+    });
+  }, // clearCountedChoices
+
+
+  resetFormInx(form){
+    // reset _dataSrcInx hidden field:
     const formInxField = form.querySelector('input[name=_dataSrcInx]');
     if (formInxField) {
       if (formInxField.dataset.preset !== undefined) {
@@ -853,6 +913,7 @@ const pfyFormsHelper = {
       if (ch1 === '=') {
         val = val.substring(1);
         val = pfyFormsHelper.evalExpr(form, val);
+          console.debug(`computed name: ${name}  type: ${type}  val: ${val}`);
         field.value = val;
       }
 
@@ -1044,18 +1105,19 @@ const pfyFormsHelper = {
       input.value = '******';
     });
 
-    domForAll(form, '.pfy-form-menuselect-group', menuselectEl => {
-      if (menuselectEl.classList.contains('pfy-multiple-enabled')) {
+    domForAll('.pfy-form-countedchoices-group', countedChoicesEl => {
+      // check all countedchoices groups:
+      if (countedChoicesEl.classList.contains('pfy-multiple-enabled')) {
         return;
       }
       // if in radio mode, transfer checked values to integer fields:
-      domForAll(menuselectEl, 'input.pfy-radio', radioEl => {
+      domForAll(countedChoicesEl, 'input.pfy-radio', radioEl => {
         const val = radioEl.checked ? 1 : 0;
         domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
           integerEl.value = val;
         });
       });
-    });
+    })
 
     const data = new FormData(clone);
     const dataStr = JSON.stringify(Array.from(data.entries()));
@@ -1197,15 +1259,24 @@ const pfyFormsHelper = {
   }, // initSpinner
 
 
-  setupMenuSelectWidget(form) {
-    domForOne(form, '.pfy-form-menuselect-group', (el) => {
-      this.menuSelectWrapperEl = el;
-      const maxRefName = el.dataset.max;
-      domForOne(form, `[name=${maxRefName}]`, el => {
-        this.menuSelectRefEl = el;
-      });
-    });
-  }, // setupMenuSelectWidget
+  setupCountedChoicesWidget(form) {
+    domForAll(form, '.pfy-form-countedchoices-group', (groupEl) => {
+      const controlledBySel = groupEl.getAttribute('data-controlled-by');
+      const targetId = groupEl.getAttribute('id');
+      domForAll(controlledBySel, controllerEl => {
+        // mark controller elem with class and aria-controls:
+        controllerEl.classList.add('pfy-countedchoices-controller');
+        let ariaControls = controllerEl.getAttribute('aria-controls');
+        ariaControls = (ariaControls) ? ariaControls + ' ' + targetId : targetId;
+        controllerEl.setAttribute('aria-controls', ariaControls);
+      })
+
+      domForOne(controlledBySel, controllerEl => {
+        const ariaControls = controllerEl.getAttribute('aria-controls');
+        console.debug(`countedchoices-group #${targetId} controller element: #${controllerEl.id} initialized with "${ariaControls}"`);
+      })
+    })
+  }, // setupCountedChoicesWidget
 
 
   setTriggerOnContinueLink() {
@@ -1254,64 +1325,132 @@ const pfyFormsHelper = {
   }, // applyRepetitionFreq
 
 
-  // every time the menuSelect controller or one of the menuselect-group's children changes,
+  // Every time the countedChoices controller or one of the countedChoices-group's children changes,
   // we need to update the max value of each option:
-  menuSelectChangeHandler(ev) {
-    if (ev.target !== this.menuSelectRefEl && !ev.target.closest('.pfy-form-menuselect-group')) {
+  countedChoicesChangeHandler(ev) {
+    const el = ev.target;
+    if (el.classList.contains('pfy-countedchoices-controller')) {  // countedchoices-controller
+      this.updateCountedChoicesTargets(el);
+
+    }
+    if (el.closest('.pfy-form-countedchoices-group')) {  // countedchoices-group member
+      this.updateChangesInControlledChildren(el);
+    }
+  }, // countedChoicesChangeHandler
+
+
+  updateCountedChoicesTargets(el) {
+    const parent = this;
+    domForEach('.pfy-countedchoices-controller', (el) => {
+      let targetIds = el.getAttribute('aria-controls');
+      if (targetIds) {
+        targetIds = targetIds.split(' ');
+        const value = parseInt(el.value);
+        targetIds.forEach(function (targetId) {
+          const groupEl = document.getElementById(targetId);
+          parent.switchControlledChildrensMode(groupEl, (value < 2));
+          parent.updateChangesInControlledChildren(groupEl);
+        })
+      }
+    })
+  }, // updateCountedChoicesTargets
+
+
+
+  switchControlledChildrensMode(groupEl, radioMode) {
+    const controlledBySel = groupEl.getAttribute('data-controlled-by');
+    if (!controlledBySel) {
       return;
     }
-
-    const targetId = ev.target.getAttribute('aria-controls');
-    const groupEl = targetId ? document.querySelector(targetId) : ev.target.closest('.pfy-form-menuselect-group');
-    const maxVal = parseInt(this.menuSelectRefEl.value);
-
-    let currSum = 0;
-    if (!groupEl) {
-      console.error('pfyFormsHelper.menuSelectChangeHandler: groupEl not found!');
-      return;
+    let maxVal = 0;
+    domForOne(controlledBySel, el => {
+      maxVal = parseInt(el.value);
+    })
+    if ( isNaN(maxVal)) {
+      maxVal = 0;
     }
-
-    // switch between radio and integer input:
-    if (maxVal === 1) {
-      // switch to radio:
-      if (groupEl.classList.contains('pfy-multiple-enabled')) {
-        groupEl.classList.remove('pfy-multiple-enabled');
+    console.debug(`Appying maxVal ${maxVal} from ${controlledBySel}`);
+    if (radioMode) {
+      // switch to radio mode:
+      groupEl.classList.remove('pfy-multiple-enabled');
+      domForEach(groupEl, 'input.pfy-integer', (integerEl) => {
+        let value = (integerEl.value) ? parseInt(integerEl.value) : 0;
+        value = Math.min(value, 1, maxVal);
+        integerEl.value = value;
+        const val = !!value;
+        const required = integerEl.required;
+        integerEl.required = false;
+        domForOne(integerEl, '^.pfy-input-wrapper input.pfy-choice', (radioEl) => {
+          radioEl.checked = val;
+          radioEl.required = required;
+        });
+      })
+    } else {
+      if (!groupEl.classList.contains('pfy-multiple-enabled')) {
+        // switch to integer mode -> update integer elems once:
+        groupEl.classList.add('pfy-multiple-enabled');
+        domForEach(groupEl, 'input.pfy-choice', (radioEl) => {
+          const val = !!radioEl.checked;
+          const required = radioEl.required;
+          radioEl.required = false;
+          domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
+            integerEl.value = val ? 1 : 0;
+            integerEl.required = required;
+          });
+        })
+      } else {
+        // keepr radio elem in sync with integer elem while integers change:
         domForEach(groupEl, 'input.pfy-integer', (integerEl) => {
           const val = integerEl.value !== '0';
-          domForOne(integerEl, '^.pfy-input-wrapper input.pfy-radio', (radioEl) => {
+          integerEl.value = Math.min(parseInt(integerEl.value), maxVal);
+          domForOne(integerEl, '^.pfy-input-wrapper input.pfy-choice', (radioEl) => {
             radioEl.checked = val;
           });
-        });
+        })
       }
+    }
+  }, // switchControlledChildrensMode
+
+
+
+  updateChangesInControlledChildren(el) {
+    const groupEl = el.closest('.pfy-form-countedchoices-group');
+    if (!groupEl) {
       return;
     }
-
-    // switch to integer:
-    if (!groupEl.classList.contains('pfy-multiple-enabled')) {
-      // initialize integer inputs after switching from radio:
-      domForEach(groupEl, 'input.pfy-radio', (radioEl) => {
-        const val = radioEl.checked ? 1 : 0;
-        domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
-          integerEl.value = val;
-        });
-      });
-    }
-    groupEl.classList.add('pfy-multiple-enabled');
-
-    // determine sum of existing choices:
-    domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
-      currSum += inputEl.value ? parseInt(inputEl.value) : 0;
-    });
-    groupEl.dataset.max = currSum;
-    const available = maxVal - currSum;
-
     // update all integer inputs:
+    let maxVal = 0;
     domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
-      const currVal = inputEl.value ? parseInt(inputEl.value) : 0;
-      inputEl.value = currVal;
-      inputEl.setAttribute('max', currVal + available);
-    });
-  }, // menuSelectChangeHandler
+      inputEl.value = inputEl.value ? parseInt(inputEl.value) : 0;
+
+      let maxSourceId = inputEl.dataset.max;
+      maxSourceId = maxSourceId.replace('#', '');
+      const maxSourceEl = document.getElementById(maxSourceId);
+      maxVal = parseInt(maxSourceEl.value);
+      inputEl.setAttribute('max', maxVal);
+    })
+
+    console.debug(`Check max for cc-group #${groupEl.id} -> maxVal: ${maxVal}`);
+    let sum = 0;
+    domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
+      sum += parseInt(inputEl.value);
+    })
+
+    console.debug(`Sum of cc-group #${groupEl.id} is ${sum}`);
+    if (groupEl.classList.contains('pfy-countedchoices-group-error')) {
+      groupEl.classList.remove('pfy-countedchoices-group-error');
+      groupEl.querySelector('.pfy-countedchoices-group-error-msg').remove();
+    }
+    if (sum > maxVal) {
+      groupEl.classList.add('pfy-countedchoices-group-error');
+      const div = document.createElement('div');
+      div.classList.add('pfy-countedchoices-group-error-msg');
+      div.innerText = `{{ pfy-form-countedchoices-max-error }}`;
+      groupEl.appendChild(div);
+    }
+  }, // updateChangesInControlledChildren
+
+
 
 
   // used by calendar.js:
@@ -1330,6 +1469,7 @@ const pfyFormsHelper = {
     if (!form.closest('.pfy-form-readonly')) {
       return;
     }
+    console.debug('making entire form readonly');
 
     const typesToSkip = 'submit,cancel,button';
     const namesToSkip = '_csrf,_dataSrcInx,_form_';
@@ -1376,6 +1516,7 @@ const pfyFormsHelper = {
 
 
 if ((typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking) {
+  console.debug('setting up beforeunload handler');
   window.addEventListener("beforeunload", (ev) => {
     pfyFormsHelper.unlockRecs();
   });

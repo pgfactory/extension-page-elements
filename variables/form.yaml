@@ -416,3 +416,9 @@ pfy-form-rrule-bymonth-label:
 pfy-form-rrule-bymonth-info:
   de: Für welche Monate?
   _: For which months?
+
+
+# === CountedChoices ===========================================================
+pfy-form-countedchoices-max-error:
+  de: 'Maximale Anzahl überschritten'
+  _:  'Max number of choices exceeded'

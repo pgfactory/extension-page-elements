@@ -10,7 +10,7 @@ return function ($argStr = '')
     // Definition of arguments and help-text:
     $config =  [
         'options' => [
-            'controller' => ['[css selector] CSS selector of ', false],
+            'controller' => ['[css selector] CSS selector of ', '.mdp-accordion-controller'],
             'target' => ['[css selector] CSS selector of the DIV that shall be revealed, e.g. "#box"', false],
             'label' => ['Text that prepresents the controlling element.', ''],
             'class' => ['(optional) A class that will be applied to the controlling element.', false],
@@ -71,9 +71,6 @@ EOT,
     $js = <<<EOT
 new RevealAccordion($jsOptions);
 EOT;
-//    $js = <<<EOT
-//const myAccordion$inx = new RevealAccordion($jsOptions);
-//EOT;
     Page::addJsReady($js);
     return $sourceCode;
 };

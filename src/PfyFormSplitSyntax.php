@@ -70,12 +70,20 @@ class PfyFormSplitSyntax extends PfyForm
 
         // render elements of specified piece:  from $i to $upTo
         if ($this->showForm) {
+            $groupId = '';
+            $cls = '';
             for (; $i <= $upTo; $i++) {
                 if (!isset($names[$i])) {
                     throw new \Exception("Error: split-form element unknown: '$uptoWhich'");
                 }
                 $name = $names[$i];
-                $html .= $this->renderFormElement($name, $this->formElements[$name]);
+                $elemHtml = $this->renderFormElement($name, $this->formElements[$name]);
+                $rec = $this->formElements[$name];
+                if ($groupId || ($rec['groupId']??false)) {
+                    $terminateGroup = ($i === $upTo);
+                    $elemHtml = $this->handleCountedChoicesGroups($name, $rec, $elemHtml, $groupId, $cls, $terminateGroup);
+                }
+                $html .= $elemHtml;
             }
         }
 

@@ -604,39 +604,47 @@ pfyPopupPromise({
     (data) => { console.log('failed: ' + data);  }
 );
  */
-function pfyPopupPromise(options) {
-  return new Promise(function(resolve) {
-    // affirmative reactions:
-    const onOk = options.onOk;
-    options.onOk = function(popup) {
-      if (onOk) popup.executeCallback(onOk);
-      resolve(true);
-    };
-    const onContinue = options.onContinue;
-    options.onContinue = function(popup) {
-      if (onContinue) popup.executeCallback(onContinue);
-      resolve(true);
-    };
-    const onConfirm = options.onConfirm;
-    options.onConfirm = function(popup) {
-      if (onConfirm) popup.executeCallback(onConfirm);
-      resolve(true);
-    };
+function pfyPopupPromise( options ) {
+    return new Promise(function(resolve, reject) {
+      // affirmative reactions:
+      if (typeof options.onOk !== 'undefined') {
+        options.onOk = function () {
+          this.executeCallback(options.onOk);
+          resolve(true);
+        };
+      }
 
-    // rejecting reactions:
-    const onCancel = options.onCancel;
-    options.onCancel = function(popup) {
-      if (onCancel) popup.executeCallback(onCancel);
-      resolve(false);
-    };
-    const onClose = options.onClose;
-    options.onClose = function(popup) {
-      if (onClose) popup.executeCallback(onClose);
-      resolve(false);
-    };
+      if (typeof options.onContinue !== 'undefined') {
+        options.onContinue = function () {
+          this.executeCallback(options.onContinue);
+          resolve(true);
+        };
+      }
 
-    pfyPopup(options);
-  });
+      if (typeof options.onConfirm !== 'undefined') {
+        options.onConfirm = function () {
+          this.executeCallback(options.onConfirm);
+          resolve(true);
+        };
+      }
+
+      // rejecting reactions:
+      if (typeof options.onCancel !== 'undefined') {
+        options.onCancel = function () {
+          this.executeCallback(options.onCancel);
+          resolve(false);
+        };
+      }
+
+      if (typeof options.onClose !== 'undefined') {
+        options.onClose = function () {
+          this.executeCallback(options.onClose);
+          resolve(false);
+        };
+      }
+
+      new pfyPopup( options );
+    });
 } // pfyPopupPromise
 
 
