@@ -387,12 +387,7 @@ const pfyFormsHelper = {
     ev.preventDefault();
 
     // check countedchoices-groups -> sum of choices must not exceed maxcount:
-    console.log('Submit: check countedchoices-groups');
-    let error = false;
-    domForOne(form, '.pfy-countedchoices-group-error', el => {
-      error = true;
-    })
-    if (error) {
+    if (!this.checkCountedChoicesOnSubmit(form)) {
       return;
     }
 
@@ -428,6 +423,46 @@ const pfyFormsHelper = {
     pfyFormsHelper.disableForm();
     pfyFormsHelper.doSubmitForm(form);
   }, // submitHandler
+
+
+  checkCountedChoicesOnSubmit(form) {
+    console.debug('Submit: checking countedchoices-groups');
+    let error = false;
+    domForOne(form, '.pfy-countedchoices-group-error', () => {
+      error = true;
+      console.debug('Submit: error in countedchoices-group found');
+    })
+
+    domForEach(form, '.pfy-form-countedchoices-group', groupEl => {
+      if (!groupEl.classList.contains('pfy-required') || !groupEl.classList.contains('pfy-multiple-enabled')) {
+        return;
+      }
+      const controllerId = groupEl.dataset.controlledBy;
+      if (!controllerId) {
+        return;
+      }
+      const controllerEl = document.querySelector(controllerId);
+      if (!controllerEl) {
+        return;
+      }
+      const count = parseInt(controllerEl.value);
+      let sum = 0;
+      domForEach(groupEl, 'input.pfy-integer', el => {
+          sum += parseInt(el.value);
+      })
+      if (sum < count) {
+        error = true;
+        console.debug('Error in countedchoices-group: sum of choices < count');
+        groupEl.classList.add('pfy-countedchoices-group-error');
+        const div = document.createElement('div');
+        div.classList.add('pfy-countedchoices-group-error-msg');
+        div.innerText = `{{ pfy-form-countedchoices-required-error }}`;
+        groupEl.appendChild(div);
+      }
+    })
+
+    return !error;
+  }, // checkCountedChoicesOnSubmit
 
 
   fetchDataAndFillForm(el, recKey, retainData = false, createNewRec = false) {
@@ -574,6 +609,9 @@ const pfyFormsHelper = {
     if (val) {
       isPreset = true;
       val = this.fixAttribValue(val);
+    }
+    if (['radio','checkbox'].includes(type)) {
+      val = (val && val !== 'false' && val !== '0');
     }
 
     // get value, next try data-value:
@@ -1260,6 +1298,7 @@ const pfyFormsHelper = {
 
 
   setupCountedChoicesWidget(form) {
+    const parent = this;
     domForAll(form, '.pfy-form-countedchoices-group', (groupEl) => {
       const controlledBySel = groupEl.getAttribute('data-controlled-by');
       const targetId = groupEl.getAttribute('id');
@@ -1275,6 +1314,8 @@ const pfyFormsHelper = {
         const ariaControls = controllerEl.getAttribute('aria-controls');
         console.debug(`countedchoices-group #${targetId} controller element: #${controllerEl.id} initialized with "${ariaControls}"`);
       })
+
+      parent.switchControlledChildrensMode(groupEl, true);
     })
   }, // setupCountedChoicesWidget
 
@@ -1381,6 +1422,7 @@ const pfyFormsHelper = {
         const required = integerEl.required;
         integerEl.required = false;
         domForOne(integerEl, '^.pfy-input-wrapper input.pfy-choice', (radioEl) => {
+          console.debug(`Handling "required" in ${radioEl.name}`);
           radioEl.checked = val;
           radioEl.required = required;
         });

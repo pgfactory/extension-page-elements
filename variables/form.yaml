@@ -422,3 +422,9 @@ pfy-form-rrule-bymonth-info:
 pfy-form-countedchoices-max-error:
   de: 'Maximale Anzahl überschritten'
   _:  'Max number of choices exceeded'
+
+pfy-form-countedchoices-required-error:
+  de: 'Es wurden noch nicht genügend Optionen ausgewählt'
+  _:  'Not enough choices have been selected'
+
+

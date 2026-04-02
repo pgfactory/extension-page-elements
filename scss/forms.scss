@@ -265,99 +265,6 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       }
     }
   }
-  .pfy-form-countedchoices-group.pfy-countedchoices-group-error {
-    border: 1px solid orange;
-    outline: 1px solid orange;
-    outline-offset: 2px;
-    margin: 2px;
-    .pfy-countedchoices-group-error-msg {
-      color: red;
-      font-style: italic;
-    }
-  }
-
-  .pfy-form-countedchoices-group {
-    position: relative;
-
-    &.pfy-checkbox .pfy-form-field-group-label {
-      display: none;
-    }
-
-    .pfy-form-field-group-wrapper {
-      .pfy-elem-wrapper {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-    }
-
-    .pfy-countedchoices-elem {
-      > span {
-        display: inline-block;
-      }
-      span.pfy-input-wrapper {
-        margin-right: 0.3em;
-      }
-      .pfy-form-field-description {
-        display: block;
-      }
-      .pfy-form-field-description:empty {
-        display: none;
-      }
-      margin-left: 0;
-
-      span.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
-        width: calc(100% - 1.6em);
-      }
-      @at-root.pfy-default-styling.pfy-small-screen .pfy-form-countedchoices-group span.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
-        width: calc(100% - 3.6em);
-      }
-
-      .pfy-choice {
-        margin-top: 0.25em;
-      }
-    }
-    &.horizontal {
-      div.pfy-countedchoices-elem {
-        display: inline-block;
-      }
-    }
-
-    span.pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
-      width: 1em;
-      input[type=radio] {
-        margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 4);
-      }
-    }
-    input.pfy-integer {
-        display: none;
-      }
-
-    &.pfy-multiple-enabled {
-      .pfy-label-wrapper {
-        width: calc(100% - 3.6em);
-      }
-
-      .pfy-countedchoices-elem {
-        span.pfy-input-wrapper.pfy-input-wrapper {
-          width: 3em;
-        }
-
-        input.pfy-integer {
-          display: inline-block;
-        }
-
-        input.pfy-radio,
-        input.pfy-checkbox {
-          display: none;
-        }
-      }
-    }
-
-    input.pfy-integer.pfy-countedchoices-elem {
-      margin-top: 0.3em;
-      height: 1.5em;
-    }
-  } // .pfy-form-countedchoices-group
 
   .pfy-elem-wrapper.reversed:not(.pfy-single-checkbox) .pfy-choice-wrapper {
     display: inline-flex;
@@ -414,6 +321,74 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     display: inline-block;
     min-width: 1rem;
   }
+
+
+  // === CountedChoices =========================================
+  .pfy-form-countedchoices-group {
+    .pfy-input-wrapper {
+      width: 1.3em;
+    }
+    .pfy-label-wrapper {
+      width: calc(100% - 1.6em);
+    }
+
+    .pfy-input-wrapper .pfy-choice {
+      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.5em) / 2);
+    }
+    input.pfy-integer {
+      width: 3em;
+      margin-top: 0.3em;
+      height: 1.5em;
+      display: none;
+    }
+
+    &.pfy-multiple-enabled {
+      .pfy-label-wrapper {
+        width: calc(100% - 3.4em);
+      }
+      .pfy-input-wrapper {
+        width: 3em;
+      }
+
+      input.pfy-integer {
+        display: inline-block;
+      }
+      input.pfy-choice {
+        display: none;
+      }
+    }
+
+    // pfy-form-field-description
+    .pfy-form-field-description:empty {
+      display: none;
+    }
+
+    // Error state:
+    .pfy-countedchoices-group-error-msg {
+      color: red;
+      font-style: italic;
+    }
+  } // pfy-form-countedchoices-group
+
+  // small screen:
+  &.pfy-small-screen .pfy-form-countedchoices-group {
+    .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
+      width: 1.3em;
+    }
+    .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
+      width: calc(100% - 1.6em);
+    }
+    &.pfy-multiple-enabled {
+      .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
+        width: calc(100% - 3.4em);
+      }
+      .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
+        width: 3em;
+      }
+    }
+  }
+
+
 
   // === side-by-side ============================================
   .pfy-side-by-side-buttons {

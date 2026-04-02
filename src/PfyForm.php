@@ -967,6 +967,7 @@ class PfyForm extends Form
         $countedChoicesElements = [];
         $required = ($rec['required']??false);
         $label = $rec['label']??$name;
+        $grouplabel = $rec['grouplabel']??'';
 
         $id = ($rec['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
         $preset = ($rec['preset']??'');
@@ -1038,7 +1039,7 @@ class PfyForm extends Form
                 'id' => $id . '-' . ($i+1),
                 'type' => 'integer',
                 'label' => $optLabel,
-                'menulabel' => $label,
+                'ccGroupLabel' => $grouplabel,
                 'class' => 'pfy-countedchoices-elem',
                 '_required' => $required, // -> will be applied to radio buttons in handleCountedChoicesGroups()
                 'min' => 0,
@@ -3618,7 +3619,7 @@ EOT;
      */
     protected function handleCountedChoicesGroups(string $name, mixed $rec, string $html, string &$groupId0, string &$cls, bool $terminateGroup = false): string
     {
-        if (!($rec['menulabel']??false)) {
+        if (!isset($rec['ccGroupLabel'])) {
             // end of group -> append closing tag:
             $html = <<<EOT
     </div><!-- /pfy-form-field-group-wrapper -->
@@ -3635,8 +3636,8 @@ EOT;
         $wrapperClass = ($rec['wrapperClass'] ?? false) ? " {$rec['wrapperClass']}": '';
         $groupId = $rec['groupId'];
         $id = translateToIdentifier("$groupId-$name", toLowerCase: true);
-        $groupLabel = $rec['menulabel'] ?? '';
-        $cls = translateToClassName($groupLabel);
+        $groupLabel = $rec['ccGroupLabel'] ?? '';
+        $cls = $id;
         if ($attr = ($rec['max'] ?? '')) {
             $attr = ltrim($attr, '=$');
             $attr = " data-max='$attr'";
@@ -3660,15 +3661,21 @@ EOT;
         }
         $grpClass = $groupId;
         $required = $rec['_required'] ? ' required' : '';
+        if ($groupLabel) {
+            if ($required) {
+                $groupLabel .= ' <span class="pfy-form-required-marker">*</span>';
+            }
+            $groupLabel = "    <div class='pfy-form-field-group-label'>$groupLabel</div>\n";
+        }
         if ($required) {
-            $groupLabel .= ' <span class="pfy-form-required-marker">*</span>';
+            $wrapperClass .= ' pfy-required';
         }
         $input = preg_replace('|id="|', 'id="_', $input);
         $id = $rec['id'] ?? $id;
         if (str_contains($wrapperClass, 'pfy-checkbox')) {
             $input = <<<EOT
 
-        <input id='$id' type='checkbox' name='__$grpClass' class='pfy-checkbox pfy-choice' $required>
+        <input type='checkbox' name='__$grpClass' id='$id' class='pfy-checkbox pfy-choice' $required>
         $input
     </span>
     $label
@@ -3677,7 +3684,7 @@ EOT;
         } else {
             $input = <<<EOT
 
-        <input id='$id' type='radio' name='__$grpClass' class='pfy-radio pfy-choice' value='$name' $required>
+        <input type='radio' name='__$grpClass' id='$id' class='pfy-radio pfy-choice' value='$name' $required>
         $input
     </span>
     $label
@@ -3694,8 +3701,7 @@ EOT;
 <!-- ====== pfy-form-field-group pfy-form-group-$cls -->
 
 <div id='$groupId' class="pfy-form-field-group pfy-form-countedchoices-group pfy-form-group-$cls$wrapperClass"$attr>
-    <div class="pfy-form-field-group-label">$groupLabel</div>
-    <div class="pfy-form-field-group-wrapper">
+$groupLabel    <div class="pfy-form-field-group-wrapper">
 $html
 EOT;
 
@@ -3721,8 +3727,7 @@ EOT;
 <!-- ====== pfy-form-field-group pfy-form-group-$cls -->
 
 <div id='$groupId' class="pfy-form-field-group pfy-form-countedchoices-group pfy-form-group-$cls$wrapperClass"$attr>
-    <div class="pfy-form-field-group-label">$groupLabel</div>
-    <div class="pfy-form-field-group-wrapper">
+$groupLabel    <div class="pfy-form-field-group-wrapper">
 $html
 
 EOT;
