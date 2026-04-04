@@ -130,8 +130,6 @@ class PageElements
         $this->loadVariables();
         $this->init();
 
-        $this->handleAdminRequests();
-
         $this->extensionPath = dirname(dirname(__FILE__)).'/';
         $this->initMacros();
         $this->handleCssRefactor();
@@ -322,7 +320,7 @@ EOT;
      * @return void
      * @throws \Exception
      */
-    private function handleAdminRequests(): void
+    public function handleAdminRequests(): void
     {
         $this->handleCreateHashRequest();
         $this->handleCleanupRequest();
@@ -353,7 +351,7 @@ EOT;
         }
 
         if (isset($_GET['purge-old'])) {
-            $this->purgeOldVersionFolders();
+            self::purgeOldVersionFolders();
         }
     } // handleCleanupRequest
 
@@ -398,9 +396,9 @@ EOT;
     /**
      * @return void
      */
-    private function purgeOldVersionFolders()
+    public static function purgeOldVersionFolders($checkAdmin = true)
     {
-        if (!isAdmin()) {
+        if ($checkAdmin && !isAdmin()) {
             exit('You need admin privileges to perform "?purge-old".');
         }
         echo 'Deleting old versions:<br>';
