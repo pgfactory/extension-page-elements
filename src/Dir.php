@@ -386,7 +386,8 @@ EOT;
             $type       = 'file';
             $url        = $this->parseUrlFile($file);
             if (!$url) {
-                $url = str_replace(PFY_DOCROOT, PFY_HOST_URL, $file);
+                $file1 = dirname($file) . '/' . urlencode(basename($file));
+                $url = str_replace(PFY_DOCROOT, PFY_HOST_URL, $file1);
             }
 
             $basename   = base_name($filename, false);
