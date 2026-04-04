@@ -19,7 +19,10 @@ return function ($args = '')
             'id' => ['Synonyme for "wrapperClass"', null],
             'class' => ['Synonyme for "wrapperId".', null],
             'title' => ['Title attribute to apply to the widget.', null],
-            'autoplay' => ['If true, speech will start automatically when clicken the open button.', true],
+            'soundfile' => ['Specifies an mp3 file to be played instead of reading the text. '.
+                'By default, the first mp3 file in the page folder is used, if found. '.
+                'Set to "false" if you want to force TTS.', null],
+            'autoplay' => ['If true, speech will start automatically when clicking the open button.', true],
             'speedset' => ['If true, .', true],
             'callback' => ['[functionName] Name of a js function which will be called upon activating the open button. '.
                 'The function is expected to return a string to be read aloud. ', null],
@@ -87,6 +90,24 @@ EOT;
     }
     // assemble output:
 
+    // handle soundfile option:
+    if (($soundfile = $options['soundfile']) === true || $soundfile === null) {
+        $files = getDir('~page/*.mp3', associative: true);
+        $files = array_keys($files);
+        $soundfile = $files[0]??false;
+    }
+    if ($soundfile) {
+        if ($soundfile[0] !== '~') {
+            $soundfile = "~page/$soundfile";
+        }
+        $soundfile = Utils::resolveUrl($soundfile, true);
+        $soundfile = <<<EOT
+<audio controls src="$soundfile" class="pfy-invisible"></audio>
+EOT;
+    }
+
+    $soundfile = (string)$soundfile;
+
     $str .= <<<EOT
 
 <div$wrapperId class="pfy-tts-widget$wrapperClass" data-say-target="$textSelector"$callback>
@@ -96,7 +117,7 @@ EOT;
         <button id="pfy-button-pause-$inx" class="pfy-button pfy-tts-pause" aria-pressed="false" title="{{ pfy-tts-pause-title }}">{{ pfy-tts-pause }}</button>
         <button id="pfy-button-stop-$inx" class="pfy-button pfy-tts-stop" aria-pressed="false" title="{{ pfy-tts-stop-title }}">{{ pfy-tts-stop }}</button>
     </div><!--/.pfy-tts-buttons-->
-$speedset
+$speedset$soundfile
 </div><!--/.pfy-tts-widget-->
 
 EOT;
@@ -122,8 +143,6 @@ EOT;
 EOT;
         Page::addBodyEndInjections($html);
     }
-
-
 
     $str = TransVars::translate($str);
     $str = shieldStr($str);
