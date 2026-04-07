@@ -3761,7 +3761,7 @@ EOT;
      * @param array $dataRec
      * @return string
      */
-    private function compileTempate(string $str, array $dataRec): string
+    private function compileTemplate(string $str, array $dataRec): string
     {
         $str = TemplateCompiler::basicCompileTemplate($str, $dataRec);
 
