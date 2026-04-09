@@ -482,7 +482,7 @@ class AjaxHandler
         $db = self::openDb();
 
         $data = $db->data();
-        $rec = $data[$datasrcinx];
+        $rec = $data[$datasrcinx] ?? [];
         $rec[$name] = $value;
         $db->updateRec($rec, $datasrcinx, flush: true);
         $res = json_encode([$name => $value]);
