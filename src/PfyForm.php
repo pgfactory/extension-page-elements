@@ -92,6 +92,7 @@ const PFY_FORM_OPTIONS = [
     'showFeedbackInpage' => true,
     'retainData' => false,
     'formDataId' => false,
+    'enableLocalFormCache' => false,
     'recLocking' => false,
     'sideBySide' => null,
     'readonly' => false,
@@ -166,7 +167,6 @@ class PfyForm extends Form
     private bool $recLocking = false;
     private bool|null $sideBySide = false;
     protected bool|null $keepSubmittedDataInForm = false;
-    private array $presetDataRec = [];
     private string $lastCreatedRecKey = '';
     protected string $requestedRecKey = '';
     protected array $formDataRec = [];
@@ -2653,8 +2653,7 @@ EOT;
         // save newly created events (exclude first as that will be saved later the normal way):
         array_shift($newEvents);
         foreach ($newEvents as $newRec) {
-            $res = $this->saveRec($newRec, $recKey);
- //ToDo: eval $res, report errors
+            $this->saveRec($newRec, $recKey);
         }
     } // executeRRule
 
@@ -3227,6 +3226,10 @@ EOT;
         $this->readonly                     = $formOptions['readonly'];
         $this->keepSubmittedDataInForm      = $formOptions['retainData'];
         $this->formDataId                   = ($formOptions['formDataId'] !== null) ? $formOptions['formDataId'] : false;
+
+        if ($formOptions['enableLocalFormCache']) {
+            $this->formWrapperClass .= ' pfy-cache-form-data';
+        }
 
         $this->sideBySide                   = $formOptions['sideBySide'];
         if ($this->sideBySide !== null) {

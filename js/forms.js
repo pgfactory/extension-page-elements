@@ -12,6 +12,7 @@ const pfyFormsHelper = {
   formRecLocking: (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking,
   recLocked: false,
   menuSelectWrapperEl: false,
+  formCache: false,
 
   init(forms, setFocus, windowFreezeTime) {
     if (forms instanceof Element) {
@@ -71,6 +72,10 @@ const pfyFormsHelper = {
     }
 
     this.initReadonlyForm(form);
+
+    if (form.closest('.pfy-cache-form-data')) {
+      this.formCache = this.enableLocalFormCache(form);
+    }
   }, // initForm
 
 
@@ -201,6 +206,7 @@ const pfyFormsHelper = {
       }
     }
     form.classList.add('pfy-form-cleared');
+    this.formCache.clear();
   }, // cancelButtonHandler
 
 
@@ -1553,6 +1559,55 @@ const pfyFormsHelper = {
     }
     reloadAgent(arg);
   }, // reloadAgent
+
+
+  enableLocalFormCache(form, ttl = 3600000) {
+    const key = "formBackup_" + (form.id || "default");
+
+    // Restore on load (if not expired)
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const { timestamp, data } = JSON.parse(saved);
+      if (Date.now() - timestamp > ttl) {
+        localStorage.removeItem(key);
+      } else {
+        this.presetFields(form, data);
+      }
+    }
+
+    // Save when the user leaves the page
+    document.addEventListener("visibilitychange", () => {
+      if (!form.closest('.pfy-form-is-modified')) {
+        return;
+      }
+      if (document.visibilityState === "hidden") {
+        const data = {};
+        for (const el of form.elements) {
+          if (!el.name) continue;
+
+          if (el.type === "checkbox") {
+            data[el.name] = data[el.name] || [];
+            if (el.checked) data[el.name].push(el.value);
+          } else if (el.type === "radio") {
+            if (el.checked) data[el.name] = el.value;
+          } else if (el.tagName === "SELECT" && el.multiple) {
+            data[el.name] = [...el.selectedOptions].map((o) => o.value);
+          } else {
+            data[el.name] = el.value;
+          }
+        }
+        localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+      }
+    });
+
+    // Clear on submit
+    form.addEventListener("submit", () => localStorage.removeItem(key));
+
+    // Return a handle to clear from the outside
+    return {
+      clear: () => localStorage.removeItem(key),
+    };
+  }, // enableLocalFormCache
 
 }; // pfyFormsHelper
 
