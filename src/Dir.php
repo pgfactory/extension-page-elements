@@ -5,6 +5,7 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\MarkdownPlus;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\Download;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\explodeTrim;
 use function PgFactory\PageFactory\base_name;
@@ -16,7 +17,7 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\shieldStr;
 
-const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
+const DEFAULT_ELEMENT_TEMPLATE = "- (link: %download% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
@@ -50,6 +51,7 @@ class Dir
 {
     public static $inx = 1;
     private $path;
+    private static string $rootPath;
     private $url;
     private string $absPath;
     private int $absPathLen;
@@ -100,6 +102,15 @@ class Dir
         if (!$this->permission) {
             return '{{ pfy-insufficient-access-permissions }}';
         }
+
+        self::$rootPath = $path;
+
+        // handle download requests:
+        if ($_GET['download']??false) {
+            $file = $path . $_GET['download'];
+            Download::initiateDownload($file);
+        }
+
         $this->origPathLen = strlen($path);
         $dirOffset = get('dir');
         if ($dirOffset === '.') {
@@ -351,7 +362,7 @@ EOT;
      */
     private function extractFileDescriptorVars(string $filename, string $file): array
     {
-        $url = $path = $type = $date = $subPath = $label = $slug = $pageId = $pageIndex = $pageIndex2 = $title = $decription = $basename = '';
+        $url = $download = $path = $type = $date = $subPath = $label = $slug = $pageId = $pageIndex = $pageIndex2 = $title = $decription = $basename = '';
 
         // folder:
         if (is_dir($file)) {
@@ -389,7 +400,8 @@ EOT;
                 $file1 = dirname($file) . '/' . urlencode(basename($file));
                 $url = str_replace(PFY_DOCROOT, PFY_HOST_URL, $file1);
             }
-
+            $download = str_replace(self::$rootPath, '', $file);
+            $download =  PFY_PAGE_URL . "?download=$download";
             $basename   = base_name($filename, false);
             $label      = str_replace('_', ' ', $basename);
             $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);
@@ -416,6 +428,7 @@ EOT;
             'name'          => $basename,
             'ext'           => fileExt($filename),
             'url'           => $url,
+            'download'      => $download,
             'path'          => $path,
             'subpath'       => $subPath,
             'type'          => $type,
