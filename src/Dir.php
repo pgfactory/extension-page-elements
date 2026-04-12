@@ -17,7 +17,7 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\shieldStr;
 
-const DEFAULT_ELEMENT_TEMPLATE = "- (link: %download% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
+const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
@@ -107,8 +107,12 @@ class Dir
 
         // handle download requests:
         if ($_GET['download']??false) {
-            $file = $path . $_GET['download'];
-            Download::initiateDownload($file);
+            $file = $_GET['download'];
+            $files = array_keys(getDirDeep($path, assoc:true));
+            if (in_array(basename($file), $files)) {
+                $file = $path . $file;
+                Download::initiateDownload($file);
+            }
         }
 
         $this->origPathLen = strlen($path);
