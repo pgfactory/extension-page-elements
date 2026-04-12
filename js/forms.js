@@ -74,7 +74,7 @@ const pfyFormsHelper = {
     this.initReadonlyForm(form);
 
     if (form.closest('.pfy-cache-form-data')) {
-      this.formCache = this.enableLocalFormCache(form);
+      this.formCache = this.setupLocalFormCache(form);
     }
   }, // initForm
 
@@ -103,9 +103,6 @@ const pfyFormsHelper = {
       this.revealHandler(ev.target);
       this.repetitionChangeHandler(ev);
       this.countedChoicesChangeHandler(ev);
-//      if (this.menuSelectWrapperEl) {
-//         this.menuSelectChangeHandler(ev);
-//       }
     });
 
     document.addEventListener('keydown', (ev) => {
@@ -206,7 +203,9 @@ const pfyFormsHelper = {
       }
     }
     form.classList.add('pfy-form-cleared');
-    this.formCache.clear();
+    if (this.formCache??false) {
+      this.formCache.clear();
+    }
   }, // cancelButtonHandler
 
 
@@ -639,6 +638,8 @@ const pfyFormsHelper = {
     // next try given data-rec (if present):
     if (data[name]) {
       val = data[name];
+    } else if (data[name + '[]']) { // data name may have the form 'name[]' -> try that
+      val = data[name + '[]'];
     }
     if (typeof val === 'undefined') {
       val = '';
@@ -656,24 +657,27 @@ const pfyFormsHelper = {
     } else if ('radio,checkbox'.includes(type)) {
       // --- radio, checkbox
       if (typeof val === 'string') {
-        const valPatt = `,${val},`;
-        domForEach(fieldWrapperElemEl, 'input', option => {
-          const hasNoValue = (option.getAttribute('value') === null);
-          if (hasNoValue) { // == single checkbox without value set
-            option.checked = !!val;
-          } else {
-            const v = ',' + option.value + ',';
-            option.checked = valPatt.includes(v);
-          }
-        });
+        if (val) {
+          const valPatt = `,${val},`;
+          domForEach(fieldWrapperElemEl, 'input', option => {
+            const hasNoValue = (option.getAttribute('value') === null);
+            if (hasNoValue) { // == single checkbox without value set
+              option.checked = !!val;
+            } else {
+              const v = ',' + option.value + ',';
+              option.checked = valPatt.includes(v);
+            }
+          });
+        }
       } else if (typeof val === 'boolean') {
         domForEach(fieldWrapperElemEl, 'input', option => {
           option.checked = val;
         });
       } else {
         domForEach(fieldWrapperElemEl, 'input', option => {
-          const v = option.value;
-          option.checked = val[v];
+          let v = option.value;
+          v = v && (val.includes(v) || (val[v]??false));
+          option.checked = v;
         });
       }
 
@@ -1561,7 +1565,7 @@ const pfyFormsHelper = {
   }, // reloadAgent
 
 
-  enableLocalFormCache(form, ttl = 3600000) {
+  setupLocalFormCache(form, ttl = 3600000) {
     const key = "formBackup_" + (form.id || "default");
 
     // Restore on load (if not expired)
@@ -1569,8 +1573,11 @@ const pfyFormsHelper = {
     if (saved) {
       const { timestamp, data } = JSON.parse(saved);
       if (Date.now() - timestamp > ttl) {
+        console.debug('Purging form state from local storage');
         localStorage.removeItem(key);
       } else {
+        console.debug('Restoring form state from local storage');
+        console.debug(data);
         this.presetFields(form, data);
       }
     }
@@ -1583,12 +1590,16 @@ const pfyFormsHelper = {
       if (document.visibilityState === "hidden") {
         const data = {};
         for (const el of form.elements) {
-          if (!el.name) continue;
+          if (!el.name)
+          {
+            continue;
+          }
 
-          if (el.type === "checkbox") {
+          const type = el.type;
+          if (type === "checkbox") {
             data[el.name] = data[el.name] || [];
             if (el.checked) data[el.name].push(el.value);
-          } else if (el.type === "radio") {
+          } else if (type === "radio") {
             if (el.checked) data[el.name] = el.value;
           } else if (el.tagName === "SELECT" && el.multiple) {
             data[el.name] = [...el.selectedOptions].map((o) => o.value);
@@ -1596,6 +1607,16 @@ const pfyFormsHelper = {
             data[el.name] = el.value;
           }
         }
+        for (const [key, value] of Object.entries(data)) {
+          if (key.charAt(0) === '_') {
+            delete data[key];
+          }
+        }
+        const timestamp = Date.now();
+        const dataStr = JSON.stringify({ timestamp, data });
+        localStorage.setItem(key, dataStr);
+        console.debug('Saving form state to local storage');
+        console.debug(data);
         localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
       }
     });
@@ -1607,7 +1628,7 @@ const pfyFormsHelper = {
     return {
       clear: () => localStorage.removeItem(key),
     };
-  }, // enableLocalFormCache
+  }, // setupLocalFormCache
 
 }; // pfyFormsHelper
 
