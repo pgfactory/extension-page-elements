@@ -606,24 +606,24 @@ pfyPopupPromise({
  */
 function pfyPopupPromise( options ) {
     return new Promise(function(resolve, reject) {
-      // affirmative reactions:
+      let popupInstance;      // affirmative reactions:
       if (typeof options.onOk !== 'undefined') {
         options.onOk = function () {
-          this.executeCallback(options.onOk);
+          popupInstance.executeCallback(options.onOk);
           resolve(true);
         };
       }
 
       if (typeof options.onContinue !== 'undefined') {
         options.onContinue = function () {
-          this.executeCallback(options.onContinue);
+          popupInstance.executeCallback(options.onContinue);
           resolve(true);
         };
       }
 
       if (typeof options.onConfirm !== 'undefined') {
         options.onConfirm = function () {
-          this.executeCallback(options.onConfirm);
+          popupInstance.executeCallback(options.onConfirm);
           resolve(true);
         };
       }
@@ -631,19 +631,20 @@ function pfyPopupPromise( options ) {
       // rejecting reactions:
       if (typeof options.onCancel !== 'undefined') {
         options.onCancel = function () {
-          this.executeCallback(options.onCancel);
+          popupInstance.executeCallback(options.onCancel);
           resolve(false);
         };
       }
 
-      if (typeof options.onClose !== 'undefined') {
-        options.onClose = function () {
-          this.executeCallback(options.onClose);
-          resolve(false);
-        };
-      }
+      const originalOnClose = options.onClose;
+      options.onClose = function () {
+        if (typeof originalOnClose === 'function') {
+          popupInstance.executeCallback(originalOnClose);
+        }
+        resolve(false);
+      };
 
-      new pfyPopup( options );
+      popupInstance = new PfyPopup(options);
     });
 } // pfyPopupPromise
 
