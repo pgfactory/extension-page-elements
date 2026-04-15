@@ -10,8 +10,8 @@ pfy-enlist-email:
   _:  E-mail
 
 pfy-enlist-email-info:
-  de: '<span class"pfy-add">Geben Sie Ihre E-Mail Adresse ein</span><span class"pfy-del pfy-modify">Geben Sie Ihre E-Mail Adresse genau wie beim ersten Mal ein.</span>'
-  de2: '<span class"pfy-add">Gib deine E-Mail Adresse ein</span><span class"pfy-del pfy-modify">Gib deine E-Mail Adresse genau wie beim ersten Mal ein.</span>'
+  de: '<span class="pfy-add">Geben Sie Ihre E-Mail Adresse ein.</span><span class="pfy-del pfy-modify">Geben Sie Ihre E-Mail Adresse genau wie beim ersten Mal ein.</span>'
+  de2: '<span class="pfy-add">Gib deine E-Mail Adresse ein.</span><span class="pfy-del pfy-modify">Gib deine E-Mail Adresse genau wie beim ersten Mal ein.</span>'
   _:  '<span class="pfy-info-add">Enter your e-mail address.</span><span class="pfy-info-modify">Provide your e-mail address exactly as previously entered.</span>'
 
 pfy-enlist-directly-to-reserve:
