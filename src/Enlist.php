@@ -404,7 +404,7 @@ EOT;
                     $info = str_replace("%$key%", $value, $info);
                 }
             }
-            $info = "<div tabindex='0' class='pfy-enlist-tooltip-anker'>" . ENLIST_INFO_ICON .
+            $info = "<div tabindex='0' class='pfy-enlist-tooltip-anchor'>" . ENLIST_INFO_ICON .
                 "</div><div class='pfy-enlist-tooltip-content'>$info</div>";
         }
         return $info;

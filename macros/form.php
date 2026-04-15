@@ -199,7 +199,7 @@ where *Name* is the field-name of another field in your form. This will insert a
 - `-\-pfy-form-readonly-field-bg`		(#f8f8f8)
 
 - `-\-pfy-form-required-marker-color`		(orange)
-- `-\-pfy-form-tooltip-anker-color`		(inherit)
+- `-\-pfy-form-tooltip-anchor-color`		(inherit)
 - `-\-pfy-form-field-description-color`		(inherit)
 - `-\-pfy-form-tooltip-color`		(#222)
 - `-\-pfy-form-tooltip-bg`		(#fef5e0)

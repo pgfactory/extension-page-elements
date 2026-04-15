@@ -58,7 +58,7 @@ return function ($argStr = '')
             'buttonClasses'		=> ['[Comma-separated-list of classes] Will be applied to corresponding '.
                 'buttons defined by "buttons" argument.', false],
 
-            'anker'		=> ['[string] If defined, popup will be placed inside elemented selected by "anker" '.
+            'anchor'		=> ['[string] If defined, popup will be placed inside elemented selected by "anchor" '.
                 '(e.g. ".box"). Default: "body".', false],
         ],
         'summary' => <<<EOT

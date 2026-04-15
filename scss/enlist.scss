@@ -119,7 +119,7 @@
       height: 1.5em;
     }
 
-    .pfy-enlist-tooltip-anker {
+    .pfy-enlist-tooltip-anchor {
       font-size: 120%;
       padding: 0.3em 0.3em 0 0;
       flex: 0 0 1.5em;
@@ -219,7 +219,9 @@
     }
   }
   .pfy-popup-wrapper.pfy-enlist-add-mode {
-    .pfy-add { display: block; }
+    .pfy-add {
+      display: block;
+    }
     .pfy-enlist-delete-checkbox {
       display: none;
     }

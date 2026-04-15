@@ -56,7 +56,7 @@ class PfyPopup {
 
     this.trigger = options.triggerSource || options.trigger || true;
     this.triggerEvent = options.triggerEvent || 'click';
-    this.anker = options.anker || 'body';
+    this.anchor = options.anchor || 'body';
     this.closeOnBgClick = options.closeOnBgClick ?? true;
     this.closeButton = options.closeButton ?? true;
 
@@ -263,14 +263,14 @@ class PfyPopup {
               </dialog>
           `;
 
-    const ankerElement = document.querySelector(this.anker);
+    const anchorElement = document.querySelector(this.anchor);
     const pElement = document.createElement('div');
 
     wrapperClass = this.id + ' ' + wrapperClass;
     pElement.setAttribute('class', wrapperClass);
     pElement.innerHTML = html;
     pElement._pfyPopupInstance = this;
-    ankerElement.appendChild(pElement);
+    anchorElement.appendChild(pElement);
 
     const dialog = document.querySelector(`.${this.id} > dialog`);
     dialog.show();

@@ -73,7 +73,7 @@ EOT,
     }
 
     $args['popupClass'] = 'pfy-overlay';
-    $args['anker'] = 'body';
+    $args['anchor'] = 'body';
     $jsArgs = '';
     foreach ($args as $key => $value) {
         if (is_string(($key))) {

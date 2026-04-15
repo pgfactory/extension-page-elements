@@ -81,9 +81,9 @@ const Enlist = {
 
 
   initTooltips: function() {
-    const tooltips = document.querySelectorAll('.pfy-enlist-tooltip-anker');
+    const tooltips = document.querySelectorAll('.pfy-enlist-tooltip-anchor');
     if (tooltips.length) {
-      tippy('.pfy-enlist-tooltip-anker', {
+      tippy('.pfy-enlist-tooltip-anchor', {
         content: (el) => {
           const textEl = el.parentElement.querySelector('.pfy-enlist-tooltip-content');
           return textEl ? textEl.innerHTML : '';
