@@ -20,19 +20,19 @@ function switchLoginMode(el, addClass, removeClass) {
 }
 
 // Setup button 'Login with one-time-code':
-handleEvent('#pfy-login-pwless', (ev) => {
+pfyHandleEvent('#pfy-login-pwless', (ev) => {
   ev.preventDefault();
   switchLoginMode(ev.target, 'pfy-login-otc', 'pfy-login-unpw');
 });
 
 // Setup button 'Login with password':
-handleEvent('#pfy-login-pw', (ev) => {
+pfyHandleEvent('#pfy-login-pw', (ev) => {
   ev.preventDefault();
   switchLoginMode(ev.target, 'pfy-login-unpw', 'pfy-login-otc');
 });
 
 // Cancel button in login/logout form:
-handleEvent('.pfy-login-box input.pfy-cancel', (ev) => {
+pfyHandleEvent('.pfy-login-box input.pfy-cancel', (ev) => {
   ev.preventDefault();
   pfyFormsHelper.reloadAgent();
 });
