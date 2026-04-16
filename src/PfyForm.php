@@ -220,6 +220,7 @@ class PfyForm extends Form
             Assets::addAssets('POPUPS');
             Assets::addAssets('REVEAL');
             Assets::addAssets('FORMS');
+            Assets::addAssets('TOOLTIPS');
 
             if ($formOptions['init']) {
                 $setFocus = ($formOptions['tableOptions']['mode']??false) ? 'null, false' : '';
@@ -298,8 +299,7 @@ class PfyForm extends Form
             if ($this->formResponse) {
                 $this->injectNoShowCssRule();
             }
-            $formTopBanner = $this->injectScrollToFormJs();
-            $formTopBanner .= $this->renderFormTopBanner();
+            $formTopBanner = $this->renderFormTopBanner();
 
             if (!$this->isFormAdmin) {
                 return [false, "$formTopBanner\n$formResponse"];
@@ -1133,7 +1133,7 @@ class PfyForm extends Form
             'type' => 'text',
             'label' => '{{ pfy-form-address-street-label }}',
             'class' => 'pfy-address-elem pfy-address-street',
-            'autocomplete' => 'street-address',
+            'autocomplete' => 'address-line1',
             'required' => $required,
         ];
         if ($labels['street']??false) {
@@ -1387,8 +1387,8 @@ class PfyForm extends Form
         }
         $label = (string)$elem->getLabel();
         $label = str_replace(['&lt;','&gt;'], ['<','>'], $label);
-
-        $label = "<span class='pfy-label-wrapper'>$label</span>";
+        $info = $this->formElements[$name]['info'] ?? '';
+        $label = "<span class='pfy-label-wrapper'>$label$info</span>";
         $input = (string)$elem->getControl();
         $input = str_replace(['&lt;','&gt;'], ['<','>'], $input);
 
@@ -1695,9 +1695,9 @@ EOT;
 
         // handle case where url-arg requested presetting given record:
         if ($this->requestedRecKey) {
-            $rec = $this->db->find($this->requestedRecKey);
-            if ($rec) {
-                $this->formDataRec = $rec->data();
+            $key = $this->db->find($this->requestedRecKey);
+            if ($key) {
+                $this->formDataRec = $this->db->getRec($key);
                 $this->formDataRec['_reckey'] = $this->requestedRecKey;
                 if (isset($_GET['asmodified'])) {
                     $this->formDataRec['_isModified'] = true;
@@ -1774,6 +1774,7 @@ EOT;
                 $this->setAction($this->formOptions['action']);
             } else {
                 $action = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
+                $action .= "#pfy-form-response";
                 $this->setAction($action); // this page's URL, poss. including ?xy
                 $this->formOptions['next'] = $action;
             }
@@ -2284,8 +2285,6 @@ EOT;
         }
 
         $dataRec = $this->normalizeData($dataRec);
-        $this->formDataRec = $dataRec;
-
         if (is_string($dataRec)) {
             // string means spam detected:
             $this->showForm = false;
@@ -2293,6 +2292,8 @@ EOT;
             $this->formResponse .= $this->getContinueLink();
             return;
         }
+
+        $this->formDataRec = $dataRec;
 
         // handle required groups:
         if ($this->applyRequiredGroupCheck($dataRec)) {
@@ -2368,7 +2369,7 @@ EOT;
 
         if ($this->showFeedbackInpage) {
             if ($formSuccessResponse) {
-                $formSuccessResponse = "<div class='pfy-form-response'>\n$formSuccessResponse\n</div><!-- /pfy-form-response -->\n";
+                $formSuccessResponse = "<div id='pfy-form-response' class='pfy-form-response'>\n$formSuccessResponse\n</div><!-- /pfy-form-response -->\n";
             }
 
             // in case there are multiple forms in the page, hide all others:
@@ -2811,8 +2812,8 @@ EOT;
         }
 
         $this->openDB();
-        if ($rec = $this->db->find($recKey)) {
-            $rec->delete(true);
+        if ($key = $this->db->find($recKey)) {
+            $this->db->deleteRec($key, true);
         }
         return true;
     } // handleDeleteRequest
@@ -3284,9 +3285,6 @@ EOT;
             unset($tableOptions['tableHeaders']);
         }
 
-        if ($tableOptions['scrollHints']) {
-            $tableOptions['tdClass']            = 'pfy-scroll-hints';
-        }
         $tableOptions['mailFrom']               = ($this->formOptions['mailFrom']) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']          = ($this->formOptions['confirmationEmail']) ?: $this->formOptions['emailFieldName'];
         if (!filter_var($tableOptions['mailFrom'], FILTER_VALIDATE_EMAIL)) {
@@ -3344,8 +3342,7 @@ EOT;
 
         // handle 'info' option:
         if ($info = $elemOptions['info']) {
-            $label .= "<span tabindex='0' class='pfy-form-tooltip-anker'>".INFO_ICON.
-                "</span><span class='pfy-form-tooltip'>$info</span>";
+            $elemOptions['info'] = $this->renderTooltip($info);
         }
 
         // if label contains HTML, we need to transform it:
@@ -3442,8 +3439,27 @@ EOT;
             }
         }
 
-        return array($label, $name, $type);
+        return [$label, $name, $type];
     } // parseElementOptions
+
+
+    /**
+     * @param string $info
+     * @return string
+     */
+    private function renderTooltip(string $info): string
+    {
+        $id = "{$this->formIndex}-{$this->elemInx}";
+        $info = "<div>$info</div>";
+        $info = "<button type='button' class='pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . INFO_ICON .
+            "</button><div id='pfy-popover-$id' class='pfy-popover-content pos-below-right' popover style='position-anchor: --pfy-popover-$id'>$info</div>";
+        $info = <<<EOT
+<div  class="pfy-popover-wrapper">
+$info
+</div><!-- /pfy-popover-wrapper -->
+EOT;
+        return $info;
+    } // renderTooltip
 
 
     /**

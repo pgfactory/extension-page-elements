@@ -538,7 +538,6 @@ const pfyFormsHelper = {
       this.prefillComputedFields(form);
       this.executeOnPresetCallback(form);
       this.handleMarkAsModifiedRequest(form);
-      this.setTriggerOnContinueLink();
     };
 
     if (Object.keys(data).length && this.isFormModified(form)) {
@@ -676,7 +675,7 @@ const pfyFormsHelper = {
       } else {
         domForEach(fieldWrapperElemEl, 'input', option => {
           let v = option.value;
-          v = v && (val.includes(v) || (val[v]??false));
+          v = v && (val[v]??false);
           option.checked = v;
         });
       }
@@ -721,7 +720,7 @@ const pfyFormsHelper = {
       fieldWrapperElemEl.querySelector('input').value = val;
     }
 
-    if (isPreset) {
+    if (isPreset && type !== 'hidden') {
       this.setPresetFlag(form);
     }
   }, // presetField
@@ -1171,9 +1170,6 @@ const pfyFormsHelper = {
     const dataStr = JSON.stringify(Array.from(data.entries()));
     serverLog('Browser submits: ' + dataStr, 'form-log.txt');
 
-    // leave scroll-request in localStorage:
-    localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
-
     pfyFormsHelper.submitNow = true;
     this.clearModifiedFlag(form);
     form.submit();
@@ -1328,16 +1324,6 @@ const pfyFormsHelper = {
       parent.switchControlledChildrensMode(groupEl, true);
     })
   }, // setupCountedChoicesWidget
-
-
-  setTriggerOnContinueLink() {
-    const continueLinks = document.querySelectorAll('.pfy-form-continue-same');
-    continueLinks.forEach(function (link) {
-      link.addEventListener('click', function () {
-        localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
-      });
-    });
-  }, // setTriggerOnContinueLink
 
 
   // handle case where form wrapper is marked with class 'pfy-form-mark-as-modified':
@@ -1566,21 +1552,24 @@ const pfyFormsHelper = {
 
 
   setupLocalFormCache(form, ttl = 3600000) {
-    const key = "formBackup_" + (form.id || "default");
-
+    let cacheKey = `pfyForm_${pageId}_${form.id}`;
+    cacheKey = cacheKey.replace(/[^a-zA-Z0-9]/g, '_');
     // Restore on load (if not expired)
-    const saved = localStorage.getItem(key);
+    const saved = localStorage.getItem(cacheKey);
     if (saved) {
       const { timestamp, data } = JSON.parse(saved);
       if (Date.now() - timestamp > ttl) {
         console.debug('Purging form state from local storage');
-        localStorage.removeItem(key);
+        localStorage.removeItem(cacheKey);
       } else {
         console.debug('Restoring form state from local storage');
         console.debug(data);
         this.presetFields(form, data);
+        this.setModifiedFlag(form, true);
       }
     }
+
+    const parent = this;
 
     // Save when the user leaves the page
     document.addEventListener("visibilitychange", () => {
@@ -1588,47 +1577,59 @@ const pfyFormsHelper = {
         return;
       }
       if (document.visibilityState === "hidden") {
-        const data = {};
-        for (const el of form.elements) {
-          if (!el.name)
-          {
-            continue;
-          }
-
-          const type = el.type;
-          if (type === "checkbox") {
-            data[el.name] = data[el.name] || [];
-            if (el.checked) data[el.name].push(el.value);
-          } else if (type === "radio") {
-            if (el.checked) data[el.name] = el.value;
-          } else if (el.tagName === "SELECT" && el.multiple) {
-            data[el.name] = [...el.selectedOptions].map((o) => o.value);
-          } else {
-            data[el.name] = el.value;
-          }
-        }
-        for (const [key, value] of Object.entries(data)) {
-          if (key.charAt(0) === '_') {
-            delete data[key];
-          }
-        }
-        const timestamp = Date.now();
-        const dataStr = JSON.stringify({ timestamp, data });
-        localStorage.setItem(key, dataStr);
-        console.debug('Saving form state to local storage');
-        console.debug(data);
-        localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+        parent.saveToLocalCache(form, cacheKey);
       }
     });
 
     // Clear on submit
-    form.addEventListener("submit", () => localStorage.removeItem(key));
+    form.addEventListener("submit", () => localStorage.removeItem(cacheKey));
 
     // Return a handle to clear from the outside
     return {
-      clear: () => localStorage.removeItem(key),
+      clear: () => localStorage.removeItem(cacheKey),
     };
   }, // setupLocalFormCache
+
+
+  saveToLocalCache(form, cacheKey) {
+    const data = {};
+    let isEmpty = true;
+    for (const el of form.elements) {
+      if (!el.name) {
+        continue;
+      }
+
+      const type = el.type;
+      if (type === "checkbox") {
+        data[el.name] = data[el.name] || [];
+        if (el.checked) {
+          data[el.name].push(el.value);
+          isEmpty = false;
+        }
+      } else if (type === "radio") {
+        if (el.checked) {
+          data[el.name] = el.value;
+          isEmpty = false;
+        }
+      } else if (el.tagName === "SELECT" && el.multiple) {
+        data[el.name] = [...el.selectedOptions].map((o) => o.value);
+        isEmpty = isEmpty && !data[el.name];
+      } else if (!['submit', 'button', 'cancel', 'hidden'].includes(type)) {
+        data[el.name] = el.value;
+        isEmpty = isEmpty && !el.value;
+      }
+    }
+    if (isEmpty) {
+      console.debug('Noting to save, all fields empty');
+      return;
+    }
+    const timestamp = Date.now();
+    const dataStr = JSON.stringify({ timestamp, data });
+    localStorage.setItem(cacheKey, dataStr);
+    console.debug('Saving form state to local storage');
+    console.debug(data);
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+  }, // saveToLocalCache
 
 }; // pfyFormsHelper
 

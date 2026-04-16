@@ -16,7 +16,7 @@
 --pfy-form-readonly-field-bg		(--pfy-form-readonly-field-bg-default)
 
 --pfy-form-required-marker-color		(--pfy-form-required-marker-color-default)
---pfy-form-tooltip-anker-color		(inherit)
+--pfy-form-tooltip-anchor-color		(inherit)
 --pfy-form-field-description-color		(inherit)
 --pfy-form-tooltip-color		(--pfy-form-tooltip-color-default)
 --pfy-form-tooltip-bg		(--pfy-form-tooltip-bg-default)
@@ -53,7 +53,7 @@ $inputBorder:           var(--pfy-form-field-border, var(--pfy-form-field-border
 $readonlyBg:            var(--pfy-form-readonly-field-bg, var(--pfy-form-readonly-field-bg-default));
 
 $requiredMarkerColor:   var(--pfy-form-required-marker-color, var(--pfy-form-required-marker-color-default));
-$tooltipAnkerColor:     var(--pfy-form-tooltip-anker-color, inherit);
+$tooltipAnchorColor:    var(--pfy-form-tooltip-anchor-color, inherit);
 $fieldDescriptorColor:  var(--pfy-form-field-description-color, inherit);
 $tooltipColor:          var(--pfy-form-tooltip-color, var(--pfy-form-tooltip-color-default));
 $tooltipBg:             var(--pfy-form-tooltip-bg, var(--pfy-form-tooltip-bg-default));
@@ -472,29 +472,34 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     margin-top: 1em;
   }
 
-  .pfy-form-tooltip-anker {
+  .pfy-form-tooltip-anchor {
+    anchor-name: --pfy-info;
     border: none;
     background: none;
     padding: 0;
     margin-left: 0.5em;
-    color: $tooltipAnkerColor;
+    color: $tooltipAnchorColor;
     font-size: 80%;
     font-family: "Times New Roman", serif;
-    opacity: 0.8;
+    opacity: 0.5;
   }
 
-  .pfy-form-tooltip-anker:hover,
-  .pfy-form-tooltip-anker:hover {
+  .pfy-form-tooltip-anchor:hover,
+  .pfy-form-tooltip-anchor:focus {
     opacity: 1;
+    + .pfy-form-tooltip {
+      display: block;
+    }
   }
 
   .pfy-form-tooltip {
     display: none;
     position: absolute;
-    top: 0;
-    left: 0;
-    transform: translate(2em, 2em);
+    position-anchor: --pfy-info;
+    top: anchor(bottom);
+    left: anchor(right);
     max-width: min(33em, 80vw);
+    width: calc(var(--pfy-form-width, 28em) * 0.6);
     background: $tooltipBg;
     color: $tooltipColor;
     z-index: 1;
@@ -502,10 +507,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     padding: 0.5em;
     box-shadow: 0 0 5px #888;
   }
-
-  .pfy-form-tooltip-anker:focus + .pfy-form-tooltip,
-  .pfy-form-tooltip-anker:hover + .pfy-form-tooltip {
-    display: block;
+  @at-root .pfy-small-screen {
+    .pfy-form-tooltip {
+      left: unset;
+    }
   }
 
   .pfy-form {
@@ -948,9 +953,10 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       display: none;
     }
   }
-  .pfy-form-tooltip span {
-      display: none;
-  }
+//???
+//  .pfy-form-tooltip span {
+//      display: none;
+//  }
   .pfy-form-rrule-daily .daily,
   .pfy-form-rrule-weekly .weekly,
   .pfy-form-rrule-monthly .monthly,
