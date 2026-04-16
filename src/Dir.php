@@ -111,7 +111,7 @@ class Dir
             $files = array_keys(getDirDeep($path, assoc:true));
             if (in_array(basename($file), $files)) {
                 $file = $path . $file;
-                Download::initiateDownload($file);
+                Download::initiateDownload($file, $this->permission);
             }
         }
 
