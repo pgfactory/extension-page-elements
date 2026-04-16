@@ -1,6 +1,6 @@
 
 
-.pfy-tooltip-wrapper {
+.pfy-popover-wrapper {
   position: relative;
   display: inline-block;
 }
@@ -10,10 +10,13 @@
   background: none;
   anchor-name: --pfy-popover;
   &:focus-visible,
-  &:hover {
+  &.pfy-hover-open:hover {
     + .pfy-popover-content {
-      display: grid;
+      display: block;
       pointer-events: auto;
+      > div {
+        white-space: nowrap;
+      }
     }
   }
 }
@@ -31,18 +34,16 @@
   color: var(--pfy-tooltip-txt, inherit);
   font-size: 0.85em;
   pointer-events: none;
-  width: fit-content;
-  height: fit-content;
   z-index: 1000;
-
+  > div {
+    display: grid;
+    max-width: 80vw;
+    max-height: 80vh;
+  }
   filter:
     drop-shadow(
       1px 2px 3px hsl(0 0% 0% / 0.3)
     );
-
-  &:popover-open {
-    display: grid;
-  }
 
   &.pos-left {
     right: calc(anchor(left) + 4px);
@@ -59,8 +60,11 @@
     left: anchor(center);
     translate: -50% 0;
   }
+  &.pos-below-right {
+    top: calc(anchor(bottom) + 4px);
+  }
   &.pos-above,
-  &:not(.pos-left, .pos-right, .pos-below) {
+  &:not(.pos-left, .pos-right, .pos-below, .pos-below-right) {
     bottom: calc(anchor(top) + 4px);
     left: anchor(center);
     translate: -50% 0;
