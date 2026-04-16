@@ -17,7 +17,7 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\shieldStr;
 
-const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%basename%.%ext% type:%ext% target:_blank) %description%\n";
+const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
@@ -148,7 +148,7 @@ class Dir
             $str = <<<EOT
 
 <div{$this->id}{$this->wrapperClass}>$header$goBack
-$str   
+$str
 </div>
 EOT;
         }
@@ -404,8 +404,14 @@ EOT;
                 $file1 = dirname($file) . '/' . urlencode(basename($file));
                 $url = str_replace(PFY_DOCROOT, PFY_HOST_URL, $file1);
             }
-            $download = str_replace(self::$rootPath, '', $file);
-            $download =  PFY_PAGE_URL . "?download=$download";
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if ($ext === 'url' || $ext === 'webloc') {
+                $download = $url;
+                $filename = substr($filename,0, - (strlen($ext) + 1));
+            } else {
+                $download = str_replace(self::$rootPath, '', $file);
+                $download = PFY_PAGE_URL . "?download=$download";
+            }
             $basename   = base_name($filename, false);
             $label      = str_replace('_', ' ', $basename);
             $basename   = str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $basename);

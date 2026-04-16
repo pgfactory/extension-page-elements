@@ -51,7 +51,7 @@ EOT,
 
     if (!$options['template'] ?? false) {
         $options['template'] = [
-            'element'=>"- (link: %download% text:%basename%.%ext% type:%ext% target:_blank) %description%\n",
+            'element'=>"- (link: %download% text:%filename% type:%ext% target:_blank) %description%\n",
             'folderElement'=> '<> <strong>%label%</strong>',
             'markdown'=> true,
         ];
