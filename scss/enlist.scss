@@ -118,16 +118,6 @@
       width: 1.5em;
       height: 1.5em;
     }
-
-    .pfy-enlist-tooltip-anchor {
-      font-size: 120%;
-      padding: 0.3em 0.3em 0 0;
-      flex: 0 0 1.5em;
-      height: 1.5em;
-      text-align: center;
-      user-select: none;
-      cursor: pointer;
-    }
   }
 
   .pfy-enlist-head-buttons-wrapper {
@@ -143,9 +133,6 @@
       font-size: 120%;
       padding: 0;
 
-    }
-    .pfy-enlist-tooltip-content {
-      display: none;
     }
   }
   button.pfy-enlist-ical-button {

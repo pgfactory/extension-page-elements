@@ -404,8 +404,14 @@ EOT;
                     $info = str_replace("%$key%", $value, $info);
                 }
             }
-            $info = "<div tabindex='0' class='pfy-enlist-tooltip-anchor'>" . ENLIST_INFO_ICON .
-                "</div><div class='pfy-enlist-tooltip-content'>$info</div>";
+            $info = "<button tabindex='0' class='pfy-popover-anchor' popovertarget='pfy-popover-{$this->widgetInx}' style='anchor-name: --pfy-popover-$this->widgetInx'>" . ENLIST_INFO_ICON .
+                "</button><div id='pfy-popover-{$this->widgetInx}' class='pfy-popover-content pos-left' popover style='position-anchor: --pfy-popover-$this->widgetInx'>$info</div>";
+            $info = <<<EOT
+<div  class="pfy-popover-wrapper">
+$info
+</div><!-- /pfy-popover-wrapper -->
+EOT;
+
         }
         return $info;
     } // renderInfoButton

@@ -75,9 +75,7 @@ const PE_PATH_DEFINITIONS = [
         PE_ASSETS_PATH.'css/-login.css',
     ],
     'TOOLTIPS' => [
-        PE_ASSETS_PATH.'css/tippy.min.css',
-        PE_ASSETS_PATH.'js/popper.min.js',
-        PE_ASSETS_PATH.'js/tippy-bundle.umd.min.js',
+        PE_ASSETS_PATH.'css/-tooltips.css',
     ],
     'CALENDAR' => [
         PE_ASSETS_PATH.'js/swipe.js',
