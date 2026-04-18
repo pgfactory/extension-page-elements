@@ -1157,10 +1157,10 @@ const pfyFormsHelper = {
       if (countedChoicesEl.classList.contains('pfy-multiple-enabled')) {
         return;
       }
-      // if in radio mode, transfer checked values to integer fields:
-      domForAll(countedChoicesEl, 'input.pfy-radio', radioEl => {
-        const val = radioEl.checked ? 1 : 0;
-        domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
+      // if in radio or checkbox mode, transfer checked values to integer fields:
+      domForAll(countedChoicesEl, 'input.pfy-radio, input.pfy-checkbox', choiceEl => {
+        const val = choiceEl.checked ? 1 : 0;
+        domForOne(choiceEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
           integerEl.value = val;
         });
       });
