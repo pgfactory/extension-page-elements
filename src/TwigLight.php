@@ -19,6 +19,9 @@ class TwigLight
             TransVars::setTempVariables($data);
         }
 
+        // handle \ at end of line -> remove newline:
+        $str = str_replace("\\\n", '', $str);
+
         $tokens = self::tokenize($str);
         [$out] = self::evalTokens($tokens);
         if ($data) {
