@@ -30,7 +30,7 @@ return function ($args = '')
 
 # $funcName()
 
-<> Example {: !open }
+<> Simple Example {: !open }
     \// Frontmatter:
     variables:
     pfy-form-response-label: 'Event registration'
@@ -69,6 +69,8 @@ return function ($args = '')
         ) 
     }}
 
+### Split Syntax
+
 <> Split Syntax Example
 
     \{{ form(
@@ -87,7 +89,7 @@ return function ($args = '')
     
     \{{ form(output: head) }}
     \{{ form(output: **Name**) }}
-    * Text in between...*
+    * Text in between.\..*
     \{{ form(output: rest) }}
     \{{ form(output: tail) }}
 
