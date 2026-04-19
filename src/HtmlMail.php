@@ -318,7 +318,7 @@ EOT;
             '/!\[(.*?)]\((.*?)\)/', // Images ![alt](url)
         ], "$1 ($2)", $mdStr);
 
-        $mdStr = str_replace(["\r\n","\n\r",'<br>'], "\n", $mdStr);
+        $mdStr = str_replace(["\r\n","\n\r"], "\n", $mdStr);
         $mdStr = preg_replace(["/\|---.*/","/\|===.*/",'/\|\s/', '/\\\ /'], '', $mdStr);
         $mdStr = preg_replace(["/\n@@@.*?\n/ms", '/\{:.*?}/'], ["\n", ''], $mdStr);
         $mdStr = str_replace(' BR ', "\n", $mdStr);

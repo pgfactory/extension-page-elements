@@ -2033,9 +2033,10 @@ EOT;
         } else {
             $header = "<div class='pfy-table-data-output-header'>$this->tableTitle</div>";
         }
+        $fullWidth = ($this->tableOptions['fullWidth'] ?? true) ? ' pfy-full-width': '';
         if ($html) {
             $html = <<<EOT
-<div class='pfy-table-data-output-wrapper'>
+<div class='pfy-table-data-output-wrapper$fullWidth'>
 $header
 $html
 </div><!-- /pfy-table-data-output-wrapper -->
@@ -3801,7 +3802,7 @@ EOT;
             }
         }
 
-        $str = str_replace([' BR ', '\\n', '<br>'], "\n", $str);
+        $str = str_replace([' BR ', '\\n'], "\n", $str);
         if (str_contains($str, "'{=={'")) {
             $str = str_replace("'{=={'", '{{', $str);
         }

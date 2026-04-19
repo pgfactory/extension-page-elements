@@ -30,7 +30,7 @@ return function ($args = '')
 
 # $funcName()
 
-<> Simple Example {: !open }
+<> Simple Example 
     \// Frontmatter:
     variables:
     pfy-form-response-label: 'Event registration'
@@ -50,7 +50,7 @@ return function ($args = '')
     \{{ form(
         file:                '\~data/db.json',
         editData:            true
-        tableOptions:        { interactive:true, paging:true }
+        tableOptions:        { interactive:true, paging:true, fullWidth:true }
         responseLabel:       'Event registration' \// used in notification and confirmation emails
         ownerNotificationTo: true  \// 'true' for webmaster-email or explicit e-mail address 
         confirmationEmailTo: true  \// 'true' selects the first e-mail field below
@@ -69,7 +69,7 @@ return function ($args = '')
         ) 
     }}
 
-### Split Syntax
+<>
 
 <> Split Syntax Example
 
