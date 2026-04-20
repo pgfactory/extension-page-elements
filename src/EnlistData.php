@@ -204,10 +204,28 @@ class EnlistData
      */
     public function prepareWidgetDescr(int|string $widgetKey, array $widgetOptions): array
     {
-        $widgetDescr = $this->db->getRec($widgetKey);
+        $widgetDescr = $widgetDescr0 = $this->db->getRec($widgetKey);
         if ($widgetDescr) {
+            // make sure slots are initiated:
             if (!isset($widgetDescr['slots'])) {
                 $widgetDescr['slots'] = [];
+            }
+            // make sure option values are updated in case they have changed:
+            $widgetDescr = [
+                    'nSlots' => $this->nSlots,
+                    'nReserveSlots' => $this->nReserveSlots,
+                    'nTotalSlots' => $this->nTotalSlots,
+                    'title' => $this->options['title'],
+                    'freezeTime' => $this->options['freezeTime'],
+                    'directlyToReserve' => $this->options['directlyToReserve'],
+                    'widgetKey' => $widgetKey,
+                ] + $widgetDescr;
+            if ($this->deadlineExpired) {
+                $widgetDescr['deadlineExpired'] = true;
+            }
+            // update only if anything has changed:
+            if ($widgetDescr !== $widgetDescr0) {
+                $this->updateWidgetDescr($widgetDescr, recKeyToUse:$widgetKey);
             }
             $this->enlistWidgets[$widgetKey] = $widgetDescr;
         } else {
@@ -331,10 +349,7 @@ class EnlistData
         $file = $this->options['file'];
         $this->dataFile = $file;
         $this->db = new DataStore($file, [
-            'masterFileRecKeyType' => 'origKey',
             'masterFileRecKeySort' => true,
-            'masterFileRecKeySortOnElement' => '_origRecKey',//???
-            'recKeyType' => '_reckey',
         ]);
 
         $this->enlistWidgets = $this->db->data();

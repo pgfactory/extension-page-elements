@@ -22,6 +22,8 @@ return function ($args = '')
             'nSlots' =>	['[integer] Number of slots to show in the enlistment table. (default: 1)', 1],
             'nReserveSlots' =>	['[integer] Number of reserve slots to show in the enlistment table. (default: 0)', 0],
             'title' =>	['[string] Title of enlistment table. (default: false)', null],
+            'listId' =>	['[string] Key that identifies data in the dB. Can be used in case the title or position of '.
+                'this list needs to be modified while in use. (default: false)', null],
 
             'freezeTime' =>	['[integer] The time (hours) within which a user can delete the entry. (default: false)', null],
             'deadline' =>	['[ISO-datetime|relative] The time until when people can enlist. (default: false)', null],

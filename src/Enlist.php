@@ -1019,7 +1019,7 @@ EOT;
             $options['title'] = ($options['title'] ?? false) ?: '';
 
             $this->parseWidgetOptions();
-            $this->widgetKey = $this->title ?: "Enlist-$this->widgetInx";
+            $this->widgetKey = ($options['listId'] ?? false) ?: ($this->title ?: "Enlist-$this->widgetInx");
             $this->initData();
             $this->directlyReservePossible = $this->directlyToReserve;
         }
