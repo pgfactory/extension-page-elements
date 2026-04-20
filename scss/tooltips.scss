@@ -22,10 +22,12 @@
 }
 
 .pfy-popover-content {
-  position: absolute;
+  position: fixed;
   position-anchor: --pfy-popover;
-  margin: 0;
   inset: auto;
+  left: anchor(right);
+  align-self: anchor-center;
+  margin: 0;
   padding: 0.8em;
   border-width: 1px;
   border-color: color-mix(in oklab, var(--pfy-tooltip-bg, #ffffd6), black 15%);

@@ -14,6 +14,7 @@
 
 "use strict";
 
+console.debug('popup.js');
 
 class PfyPopup {
   static instanceCounter = 0;
@@ -309,6 +310,23 @@ class PfyPopup {
       const regex = new RegExp(m[0], 'm');
       html = html.replace(regex, ' FOR="pfy-popped-' + m[2] + '"');
     }
+    // fix "popovertarget='id'" in element:
+    while (m = html.match(/ popovertarget=(['"])(.*?)['"]/)) {
+      const regex = new RegExp(m[0], 'm');
+      html = html.replace(regex, ' POPOVERTARGET="pfy-popped-' + m[2] + '"');
+    }
+    // fix "anchor-name: id" in element:
+    while (m = html.match(/anchor-name:\s*(.*?)['"]/)) {
+      const regex = new RegExp(m[0], 'm');
+      html = html.replace(regex, ' ANCHOR-NAME: --pfy-popped-' + m[1] + '"');
+    }
+    html = html.replace('ANCHOR-NAME', 'anchor-name');
+    // fix "position-anchor: id" in element:
+    while (m = html.match(/position-anchor:\s*(.*?)['"]/)) {
+      const regex = new RegExp(m[0], 'm');
+        html = html.replace(regex, ' POSITION-ANCHOR: --pfy-popped-' + m[1] + '"');
+    }
+    html = html.replace('POSITION-ANCHOR', 'position-anchor');
     // fix "id='xy'", apply a prefix:
     while (m = html.match(/ id=(['"])(.*?)['"]/)) {
       const regex = new RegExp(m[0], 'm');
