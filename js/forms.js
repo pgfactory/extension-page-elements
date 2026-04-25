@@ -425,6 +425,37 @@ const pfyFormsHelper = {
       }
     }
 
+    // handle onSubmitCallback:
+    const callback = form.dataset.onSubmitCallback;
+    if (callback) {
+      let errMsg = executeCallbackCode(callback, form);
+      if (errMsg) {
+        if (typeof errMsg === 'string') {
+          pfyAlert({text: errMsg});
+        } else if (typeof errMsg === 'object') {
+          const targSel = errMsg[1];
+          errMsg = errMsg[0];
+          if (errMsg) {
+            // if callback returned array, mark offending element and inject error msg:
+            domForEach(form, targSel, targEl => {
+              targEl.classList.add('pfy-form-elem-has-error');
+              const errEl =document.createElement('div');
+              errEl.className = 'pfy-form-elem-error-msg';
+              errEl.innerHTML = errMsg;
+              targEl.appendChild(errEl);
+              domForOne(targEl, 'input', inputEl => {
+                inputEl.focus();
+              })
+            })
+          }
+        }
+        if (errMsg) {
+          ev.stopPropagation();
+          return;
+        }
+      }
+    }
+
     pfyFormsHelper.disableForm();
     pfyFormsHelper.doSubmitForm(form);
   }, // submitHandler

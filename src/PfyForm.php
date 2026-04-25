@@ -62,6 +62,7 @@ const PFY_FORM_OPTIONS = [
     'next' => '~page/',
     'dataReceivedCallback' => false,
     'presetCallbackJs' => false,
+    'onSubmitCallbackJs' => false,
     'scriptInjectionFilter' => true,
     'tableOptions' => [
         'tableButtons' => '',
@@ -1779,9 +1780,12 @@ EOT;
                 $this->formOptions['next'] = $action;
             }
         }
-        $presetCallback = '';
+        $callbacks = '';
         if ($pc = ($this->formOptions['presetCallbackJs'] ?? false)) {
-            $presetCallback = " data-preset-callback='$pc'";
+            $callbacks = " data-preset-callback='$pc'";
+        }
+        if ($pc = ($this->formOptions['onSubmitCallbackJs'] ?? false)) {
+            $callbacks .= " data-onsubmit-callback='$pc'";
         }
 
         if ($this->sideBySide !== null) {
@@ -1805,7 +1809,7 @@ EOT;
 
         $htmlForm = $this->getRenderer()->render($this, 'begin');
         $htmlForm = preg_replace('/\s*id=".*?"/', '', $htmlForm);
-        $htmlForm = "\n<form$id class='$formClass'$presetCallback $dataFormInx" . substr($htmlForm, 5);
+        $htmlForm = "\n<form$id class='$formClass'$callbacks $dataFormInx" . substr($htmlForm, 5);
         $html .= $htmlForm;
         $html .= $this->getRenderer()->render($this, 'errors');
         $html .= $this->renderFormTopBanner();

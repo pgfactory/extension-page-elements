@@ -132,6 +132,8 @@ return  [
         'presetCallbackJs' =>	['Defines a callback JS function to be invoked when the form is preset. '.
             'The JS function must be defined elsewhere.', false],
 
+        'onSubmitCallbackJs' =>	['Defines a callback JS function to be invoked before the form is submitted.', false],
+
         'scriptInjectionFilter' =>	['Activates a filter against script injection attacks. '.
             'Example: "`<script>alert(\'malicious code\')</script>`".<br>Caution: only disable in justified cases!', true],
 
