@@ -3290,6 +3290,11 @@ EOT;
             unset($tableOptions['tableHeaders']);
         }
 
+        $this->formOptions['dbOptions']['keepDataDuration'] = ($tableOptions['keepDataThreshold'] ?? ($tableOptions['keepDataDuration'] ?? false));
+        $this->formOptions['dbOptions']['order'] = ($tableOptions['order'] ?? ($tableOptions['sort'] ?? false));
+        $this->formOptions['dbOptions']['masterFileRecKeySort'] = ($tableOptions['masterFileRecKeySort'] ?? $this->formOptions['dbOptions']['order']);
+        $this->formOptions['dbOptions']['masterFileRecKeySortOnElement'] = $this->formOptions['dbOptions']['masterFileRecKeySort'];
+
         $tableOptions['mailFrom']               = ($this->formOptions['mailFrom']) ?: PageFactory::$webmasterEmail;
         $tableOptions['mailFieldName']          = ($this->formOptions['confirmationEmail']) ?: $this->formOptions['emailFieldName'];
         if (!filter_var($tableOptions['mailFrom'], FILTER_VALIDATE_EMAIL)) {
