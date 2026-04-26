@@ -132,7 +132,9 @@ return  [
         'presetCallbackJs' =>	['Defines a callback JS function to be invoked when the form is preset. '.
             'The JS function must be defined elsewhere.', false],
 
-        'onSubmitCallbackJs' =>	['Defines a callback JS function to be invoked before the form is submitted.', false],
+        'onSubmitCallbackJs' =>	['Defines a callback JS function to be invoked before the form is submitted.'.
+            'The callback function must return an error-value: false => Ok; string => show alert; '.
+            '[errMsg, field-selector] => show error msg next to input field.', false],
 
         'scriptInjectionFilter' =>	['Activates a filter against script injection attacks. '.
             'Example: "`<script>alert(\'malicious code\')</script>`".<br>Caution: only disable in justified cases!', true],

@@ -574,7 +574,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       width: fit-content;
       margin-right: 0.3em;
       font-size: inherit;
-      &.pfy-submit.button {
+      &.pfy-submit {
         border: 1px solid black;
       }
     }
@@ -678,8 +678,14 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
         }
       }
 
-      .pfy-form-buttons input {
-        margin: 0.5em 0;
+      .pfy-form-buttons {
+        .pfy-input-wrapper {
+          display: flex;
+          flex-direction: column-reverse;
+        }
+        input {
+          margin: 0.5em 0;
+        }
       }
 
       .pfy-address-elem .pfy-form-field-description {

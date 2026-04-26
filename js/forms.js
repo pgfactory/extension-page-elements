@@ -426,7 +426,7 @@ const pfyFormsHelper = {
     }
 
     // handle onSubmitCallback:
-    const callback = form.dataset.onSubmitCallback;
+    const callback = form.dataset.onsubmitCallback;
     if (callback) {
       let errMsg = executeCallbackCode(callback, form);
       if (errMsg) {
@@ -439,7 +439,7 @@ const pfyFormsHelper = {
             // if callback returned array, mark offending element and inject error msg:
             domForEach(form, targSel, targEl => {
               targEl.classList.add('pfy-form-elem-has-error');
-              const errEl =document.createElement('div');
+              const errEl= document.createElement('div');
               errEl.className = 'pfy-form-elem-error-msg';
               errEl.innerHTML = errMsg;
               targEl.appendChild(errEl);
