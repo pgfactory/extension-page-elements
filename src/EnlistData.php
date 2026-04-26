@@ -348,9 +348,9 @@ class EnlistData
     {
         $file = $this->options['file'];
         $this->dataFile = $file;
-        $this->db = new DataStore($file, [
-            'masterFileRecKeySort' => true,
-        ]);
+        $tableOptions = $this->options['tableOptions'] ?? [];
+        $tableOptions['masterFileRecKeySort'] = ($tableOptions['masterFileRecKeySort']??true);
+        $this->db = new DataStore($file, $tableOptions);
 
         $this->enlistWidgets = $this->db->data();
     } // openDb
