@@ -14,7 +14,7 @@ use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToFilename;
 
-const ICAL_DOWNLOAD_PATH = PFY_TEMP_PATH.'ical/';
+const ICAL_DOWNLOAD_PATH = PFY_PUBLIC_DOWNLOAD_PATH.'ical/';
 const ICAL_DEFAULT_OPTIONS = [
     'title' => '',
     'location' => '',

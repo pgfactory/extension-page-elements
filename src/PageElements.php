@@ -250,7 +250,7 @@ class PageElements
      */
     private function cleanDownloadFolder()
     {
-        $dir = glob(PFY_TEMP_DOWNLOAD_PATH.'*');
+        $dir = glob(PFY_PROTECTED_DOWNLOAD_PATH.'*');
         if ($dir) {
             foreach ($dir as $folder) {
                 if (@filemtime($folder) < (time() - 600)) { // max file age: 10 min
