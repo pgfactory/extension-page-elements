@@ -43,8 +43,8 @@ const PFY_DIR_OPTIONS = [
     'enableFolderDownload'=> false,
 ];
 
-if (!defined('PFY_DOWNLOAD_PATH')) {
-    define('PFY_DOWNLOAD_PATH', '~/download/');
+if (!defined('PFY_TEMP_DOWNLOAD_PATH')) {
+    define('PFY_TEMP_DOWNLOAD_PATH', '~/tmp/download/');
 }
 
 class Dir
@@ -480,7 +480,7 @@ EOT;
         $this->path = $options['path'];
         $this->absPath = Utils::resolvePath($options['path']);
         $this->absPathLen = strlen($this->absPath);
-        $this->url = Utils::resolveUrls(PFY_DOWNLOAD_PATH);
+        $this->url = Utils::resolveUrls(PFY_TEMP_DOWNLOAD_PATH);
         $this->id = $options['id'];
         $this->wrapperClass = $options['class'];
         $this->includeFiles = str_contains(strtolower($options['include']), 'files');
