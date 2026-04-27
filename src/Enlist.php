@@ -192,7 +192,7 @@ class Enlist
         if ($this->nTotalSlots === 1) {
             $class .= ' pfy-enlist-hide-num';
         }
-        $title = $this->widgetDescr['title'];
+        $title = $this->title ?: $this->widgetDescr['title'];
         if ($this->deadlineExpired) {
             $title .= ' {{ pfy-enlist-dealine-past }}';
         }
