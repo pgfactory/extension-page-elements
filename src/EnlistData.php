@@ -215,7 +215,7 @@ class EnlistData
                     'nSlots' => $this->nSlots,
                     'nReserveSlots' => $this->nReserveSlots,
                     'nTotalSlots' => $this->nTotalSlots,
-                    'title' => $this->options['title'],
+                    'title' => $widgetOptions['title'] ?: $this->options['title'],
                     'freezeTime' => $this->options['freezeTime'],
                     'directlyToReserve' => $this->options['directlyToReserve'],
                     'widgetKey' => $widgetKey,
