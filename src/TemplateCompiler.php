@@ -227,6 +227,7 @@ class TemplateCompiler
     {
         $template = str_replace(['\\n', '\\t'], ["\n", "\t"], $template);
         $template = str_replace('%%', $index, $template);
+        $vars['_data'] = json_encode($vars); // make all given variables available as array '_data'
         $template = self::basicCompileTemplate($template, $vars);
         TransVars::setTempVariables($vars);
         $template = TwigLight::compile($template);
