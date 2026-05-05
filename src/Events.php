@@ -157,13 +157,10 @@ class Events extends DataStore
             'linkText' => '{{ pfy-ical-link-text }}',
         ];
         $ical = new Ical($events, $iCalOptions);
-        $tTargetFile = $ical->getTargetFileTime();
 
         $dataFile = Utils::resolvePath($this->options['file']);
         $tDataFile = fileTime($dataFile);
-        if ($tDataFile > $tTargetFile) {
-            $ical->saveToFile();
-        }
+        $ical->saveToFile($tDataFile);
 
         if ($iCalOptions['saveAllToFile']??false) {
             $url = Utils::resolveUrls($iCalOptions['saveAllToFile'], forResoucres: true);
