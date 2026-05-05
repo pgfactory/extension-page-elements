@@ -2,11 +2,15 @@
 
 document.addEventListener('click', function(ev) {
   const el = ev.target.closest('.pfy-post-it-removable');
-  if (!el) return;
+  if (!el) {
+    return;
+  }
 
   // Verify the ::before close button actually renders
   const pseudo = getComputedStyle(el, '::before');
-  if (!pseudo.content || pseudo.content === 'none') return;
+  if (!pseudo.content || pseudo.content === 'none') {
+    return;
+  }
 
   // Compute the close button's total box size (content + padding + border)
   const btnW = parseFloat(pseudo.width)
@@ -16,17 +20,19 @@ document.addEventListener('click', function(ev) {
     + parseFloat(pseudo.paddingTop) + parseFloat(pseudo.paddingBottom)
     + parseFloat(pseudo.borderTopWidth) + parseFloat(pseudo.borderBottomWidth);
 
-  // The ::before is at top:0, right:0 relative to the element's padding box
-  const rect = el.getBoundingClientRect();
-  const elStyle = getComputedStyle(el);
-  const btnLeft = rect.right - (parseFloat(elStyle.borderRightWidth) || 0) - btnW;
-  const btnTop = rect.top + (parseFloat(elStyle.borderTopWidth) || 0);
+  // The ::before is positioned at top: 0; right: 0 inside the element's padding box.
+  // Use local element coordinates, because clientX/clientY + getBoundingClientRect()
+  // can be wrong when the element is transformed/rotated.
+  const localX = ev.offsetX;
+  const localY = ev.offsetY;
+  const btnLeft = el.clientWidth - btnW;
+  const btnTop = 0;
 
   if (
-    ev.clientX >= btnLeft &&
-    ev.clientX <= btnLeft + btnW &&
-    ev.clientY >= btnTop &&
-    ev.clientY <= btnTop + btnH
+    localX >= btnLeft &&
+    localX <= btnLeft + btnW &&
+    localY >= btnTop &&
+    localY <= btnTop + btnH
   ) {
     ev.stopImmediatePropagation();
     ev.preventDefault();
