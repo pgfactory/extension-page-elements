@@ -229,8 +229,8 @@ pfy-ical-link-tooltip:
   '_': Add to your calendar
 
 pfy-ical-link-text:
-  'de': '%icon% Herunterladen und in meine Agenda eintragen...'
-  '_': '%icon% Download and add to my calendar...'
+  'de': '%icon% <span class="visually-hidden">Herunterladen und in meine Agenda eintragen...</span>'
+  '_': '%icon% <span class="visually-hidden">Download and add to my calendar...</span>'
 
 
 

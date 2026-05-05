@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * Doc: https://packagist.org/packages/spatie/icalendar-generator
+ */
+
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\MarkdownPlus;
 use Spatie\IcalendarGenerator\Components\Calendar;
@@ -7,25 +11,30 @@ use Spatie\IcalendarGenerator\Components\Event;
 use DateTime;
 use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\TransVars;
-use function PgFactory\PageFactory\base_name;
-use function PgFactory\PageFactory\dir_name;
+use Spatie\IcalendarGenerator\Enums\EventStatus;
+use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\fileTime;
+use function PgFactory\PageFactory\isValidEmail;
 use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToFilename;
 
 const ICAL_DOWNLOAD_PATH = PFY_PUBLIC_DOWNLOAD_PATH.'ical/';
-const ICAL_DEFAULT_OPTIONS = [
-    'title' => '',
-    'location' => '',
-    'description' => '',
-    'organizer' => '',
-    'status' => '',
-    'fullDay' => false,
+const ICAL_CALENDAR_ICON  = ':calendar_move:';
+const PFY_ICAL_DEFAULT_FIELDTEMPLATES = [
+    'allday'       => false,
     'uniqueIdentifier' => '',
 ];
-const ICAL_CALENDAR_ICON  = ':calendar_date:';
 const ICAL_UNIQUE_IDENTIFIER_PREFIX = 'pgfactory_';
+
+const PFY_ICAL_DEFAULT_OPTIONS = [
+    'linkText' =>   '%icon%',
+    'tooltip' =>    '{{ pfy-ical-link-tooltip }}',
+    'prefix' =>     '',
+    'asButton' =>   false,
+    'selector' => '',
+    'fieldTemplates' => [],
+];
 
 
 class Ical
@@ -35,15 +44,17 @@ class Ical
     private Calendar $icalObj;
     private string $path;
     private string $filename;
-    private string $targetFilePath;
+    private string $targetFilePath = '';
     private string $targetFileUrl;
-    private string|null $iCalStr = null;
+    private array $fieldTemplates;
+    private array $selectedFieldTemplates;
+    private static array $persistentOptions = [];
 
     /**
      * @param array $events
      * @param array $options
      */
-    public function __construct(array $events, array $options)
+    public function __construct(array $events, array $options = [])
     {
         $this->events = $events;
         $this->options = $this->parseOptions($options);
@@ -51,11 +62,21 @@ class Ical
 
 
     /**
+     * @param array $options
+     * @return void
+     */
+    public static function preset(array $options): void
+    {
+        self::$persistentOptions = $options + PFY_ICAL_DEFAULT_OPTIONS;
+    } // preset
+
+
+    /**
      * @return int
      */
     public function getTargetFileTime(): int
     {
-        return fileTime($this->targetFilePath);
+        return fileTime($this->determineTargetFile());
     } // getTargetFileTime
 
 
@@ -64,10 +85,13 @@ class Ical
      */
     public function getTargetFile(): string
     {
-        return $this->targetFilePath;
+        return $this->determineTargetFile();
     } // getTargetFile
 
 
+    /**
+     * @return string
+     */
     public function getTargetUrl(): string
     {
         return $this->targetFileUrl;
@@ -78,13 +102,44 @@ class Ical
      * @return void
      * @throws \Exception
      */
-    public function saveToFile(): void
+    public function saveToFile(int $referenceTime = 0): void
     {
-        $icsStr = $this->renderICalStr();
-        $filePath = $this->targetFilePath;
+        $this->selectFieldTemplates();
+
+        $icsStr = $this->renderAllICalStr();
+        $filePath = $this->determineTargetFile();
+
+        $icalFileTime = $this->getTargetFileTime();
+        if ($referenceTime < $icalFileTime) {
+            return; // skip creating file if it's newer that reference time
+        }
+
         preparePath($filePath, 0755);
         writeFile($filePath, $icsStr, permissions: 0644);
+
+        if (sizeof($this->events) > 1) {
+            foreach ($this->events as $key => $rec) {
+                $icsStr = $this->renderICalStr($key, $rec);
+                $targFile = $this->determineTargetFile($rec);
+                writeFile($targFile, $icsStr, permissions: 0644);
+            }
+        }
     } // saveToFile
+
+
+    /**
+     * @return void
+     */
+    private function selectFieldTemplates(): void
+    {
+        $fieldTemplates = $this->fieldTemplates;
+        $selector = $this->options['selector'];
+        if (isset($fieldTemplates[$selector])) {
+            $this->selectedFieldTemplates = $fieldTemplates[$selector];
+        } else {
+            $this->selectedFieldTemplates = $fieldTemplates['_'];
+        }
+    } // selectFieldTemplates
 
 
     /**
@@ -94,7 +149,10 @@ class Ical
     {
         $url = $this->targetFileUrl;
         $asButton = $this->options['asButton'] ?? false;
-        $tooltip = $this->options['tooltip'] ?? '';
+        $tooltip = ($this->options['tooltip'] ?? null);
+        if ($tooltip === null) {
+            $tooltip = '{{ pfy-ical-link-tooltip }}';
+        }
         $linkText = ($this->options['linkText'] ?? null);
         if ($linkText === null) {
             $linkText = '{{ pfy-ical-link-text }}';
@@ -110,7 +168,7 @@ class Ical
             $link = "<button class='pfy-enlist-ical-button pfy-button pfy-button-lean' title='$tooltip' type='button'>$linkText</button>";
             $link .= "<a href='$url' download='$this->filename' class='pfy-dispno'>$linkText</a>";
         } else {
-            $link = "<a href='$url' download='$this->filename' title='$tooltip'>$linkText</a>";
+            $link = "<a href='$url' download='$this->filename' title='$tooltip'>\n$linkText\n</a>";
         }
         return $link;
     } // renderIcsLink
@@ -121,49 +179,76 @@ class Ical
      * @return string
      * @throws \Exception
      */
-    private function renderICalStr(): string
+    private function renderICalStr(string $key, array $rec): string
     {
-        if ($this->iCalStr) {
-            return $this->iCalStr;
+        if (!($rec['start'] ?? false)) {
+            if ((array_keys($rec))[0] !== 0) {
+                throw new \Exception("Error in Ical: renderICalStr() received unexpected data record");
+            }
+            $rec = reset($rec);
         }
-
         $this->icalObj = Calendar::create();
-        foreach ($this->events as $rec) {
-            $icalElements = $this->populateICalElements($rec);
+        $icalElements = $this->populateICalElements($key, $rec);
+        $this->addICalEvent($icalElements);
+        return $this->icalObj->get();
+    } // renderICalStr
+
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    private function renderAllICalStr(): string
+    {
+        $this->icalObj = Calendar::create();
+        foreach ($this->events as $k => $rec) {
+            $icalElements = $this->populateICalElements($k, $rec);
             $this->addICalEvent($icalElements);
         }
-        $this->iCalStr = $this->icalObj->get();
-        return $this->iCalStr;
-    } // renderICalStr
+        return $this->icalObj->get();
+    } // renderAllICalStr
 
 
     /**
      * @param array $rec
      * @return array
      */
-    private function populateICalElements(array $rec): array
+    private function populateICalElements(string $key, array $rec): array
     {
-        if ($rec['allday'] ?? false) {
-            $rec['start'] = substr($rec['start'], 0, 10);
-            if (isset($rec['end'])) {
-                $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['end'])));
-            } else {
-                $rec['end'] = date('Y-m-d', strtotime('+1 day', strtotime($rec['start'])));
-            }
-        }
         $icalElements = [
-            'start'         => $rec['start'] ?? '',
-            'end'           => $rec['end'] ?? '',
+            'start'         => $this->compileICalElement('start', $rec),
+            'end'           => $this->compileICalElement('end', $rec),
             'title'         => $this->compileICalElement('title', $rec),
             'location'      => $this->compileICalElement('location', $rec),
             'description'   => $this->compileICalElement('description', $rec),
             'organizer'     => $this->compileICalElement('organizer', $rec),
-            'status'        => $this->compileICalElement('status', $rec),
-            'fullDay'       => $this->compileICalElement('allday', $rec),
         ];
-        $uniqueIdentifier = $rec['_reckey'] ?? '';
+        if ($organizer = ($rec['organizer'] ?? false)) {
+            if (!isValidEmail($organizer)) {
+                throw new \Exception("Source Error: iCal organizer field must be an e-mail address (given '$organizer')");
+            }
+        }
+        if ($rec['allday'] ?? false) {
+            // check and fix start:
+            $icalElements['start'] = substr($icalElements['start'], 0, 10);
+            $this->events[$key]['start'] = $icalElements['start'];
+            // check and fix end:
+            if ($icalElements['end']) {
+                $icalElements['end'] = date('Y-m-d', strtotime('+1 day', strtotime($icalElements['end'])));
+            } else {
+                $icalElements['end'] = date('Y-m-d', strtotime('+1 day', strtotime($icalElements['start'])));
+            }
+            $this->events[$key]['end'] = $icalElements['end'];
+        }
+        $uniqueIdentifier = ($icalElements['uniqueIdentifier'] ?? false) ?: ($rec['_reckey'] ?? '');
         if ($uniqueIdentifier) {
-            $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX.$uniqueIdentifier;
+            $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX . $uniqueIdentifier;
+        } else {
+            $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX . createHash();
+        }
+        $icalElements['allday'] = $rec['allday'] ?? false;
+        if (($rec['cancelled'] ?? false) || ($this->options['cancelled'] ?? false)) {
+            $icalElements['cancelled'] = true;
         }
         return $icalElements;
     } // populateICalElements
@@ -176,31 +261,35 @@ class Ical
      */
     private function compileICalElement(string $fieldName, array $rec): string|bool
     {
-        if (isset($rec[$fieldName])) {
-            if ($fieldName === 'allday') {
-                return ($rec[$fieldName] !== 'false');
-            } else {
-                return $rec[$fieldName];
-            }
-        }
-        $fieldValue = $this->options[$fieldName] ?? '';
-        if (!$fieldValue) {
-            return '';
-        }
+        $fieldValue = '';
+        // check whether field template is available:
+        $fieldTemplates = $this->selectedFieldTemplates;
+        if ($fieldTemplates[$fieldName] ?? false) {
+            // field template found -> evaluate it:
+            $fieldValue = $fieldName = $fieldTemplates[$fieldName];
+            if (isset($rec[$fieldValue])) {
+                // field template contained name of a data element -> use it:
+                $fieldValue =  $rec[$fieldValue];
 
-        // replace %placeholders% with values from current rec:
-        while (preg_match('/%(.{2,20}?)%/', $fieldValue, $m)) {
-            // check current rec for matching field:
-            if (isset($rec[$m[1]])) {
-                $value = $rec[$m[1]] ?? '';
             } else {
-                // if not found, check PFY variables:
-                $value = TransVars::getVariable($m[1]);
+                // evaluate field template for replacement patters %var% that correspond to data elements or transvars:
+                while (preg_match('/%(.{2,20}?)%/', $fieldValue, $m)) {
+                    $fname = $m[1];
+                    if (isset($rec[$fname])) {
+                        $fieldValue = str_replace("%$fname%", $rec[$fname], $fieldValue);
+                    } else {
+                        if ($value = TransVars::getVariable($fname)) {
+                            $fieldValue = str_replace("%$fname%", $value, $fieldValue);
+                        } else {
+                            $fieldValue = str_replace("%$fname%", '', $fieldValue);
+                        }
+                    }
+                }
             }
-            if (!is_string($value)) {
-                $value = '';
-            }
-            $fieldValue = str_replace($m[0], $value, $fieldValue);
+
+        // no field template available -> check direkt match in data:
+        } elseif (isset($rec[$fieldName])) {
+            $fieldValue =  $rec[$fieldName];
         }
         return $fieldValue;
     } // compileICalElement
@@ -214,6 +303,9 @@ class Ical
     private function addICalEvent(array $icalElements): void
     {
         $event = Event::create($icalElements['title']);
+        if ($icalElements['start'] === 'start') {
+            return; // error -> no value defined for 'start'
+        }
         $event->startsAt(new DateTime($icalElements['start']));
         $event->endsAt(new DateTime($icalElements['end']));
 
@@ -226,14 +318,14 @@ class Ical
         if ($location = ($icalElements['location'] ?? false)) {
             $event->address($location);
         }
-        if ($icalElements['fullDay'] ?? false) {
+        if ($icalElements['allday'] ?? false) {
             $event->fullDay();
         }
         if ($uniqueIdentifier = ($icalElements['uniqueIdentifier'] ?? false)) {
             $event->uniqueIdentifier($uniqueIdentifier);
         }
-        if ($status = ($icalElements['status'] ?? false)) {
-            $event->status($status);
+        if ($icalElements['cancelled'] ?? false) {
+            $event->status(EventStatus::Cancelled);
         }
 
         $this->icalObj->event($event);
@@ -246,9 +338,103 @@ class Ical
      */
     private function parseOptions(array $options): array
     {
-        $options += ICAL_DEFAULT_OPTIONS;
-        $this->options = $options;
-        $this->determineTargetFile();
+        if (self::$persistentOptions) {
+            $defaultOptions = self::$persistentOptions;
+        } else {
+            $defaultOptions = PFY_ICAL_DEFAULT_OPTIONS;
+        }
+        foreach ($defaultOptions as $key => $value) {
+            if (!isset($options[$key]) || ($options[$key] === null)) {
+                $options[$key] = $value;
+            }
+        }
+
+        // === handle option fieldTemplates:
+        if (!($options['fieldTemplates'] ?? false)) {
+            // no fieldTemplates available, create default element:
+            $options['fieldTemplates'] = [
+                '_' => PFY_ICAL_DEFAULT_FIELDTEMPLATES
+            ];
+            $fieldTemplates = &$options['fieldTemplates'];
+        } else {
+            // fieldTemplates supplied:
+            $fieldTemplates = &$options['fieldTemplates'];
+            $k0 = array_keys($fieldTemplates);
+            $k0 = $k0[0] ?? false;
+            if (!($k0 === '_' || is_numeric($k0))) {
+                // case where only one template supplied => save it as default template '_':
+                $ft = $fieldTemplates;
+                $fieldTemplates = [];
+                $fieldTemplates['_'] = $ft;
+            }
+        }
+        foreach ($fieldTemplates as $key => $value) {
+            $fieldTemplates[$key] += PFY_ICAL_DEFAULT_FIELDTEMPLATES;
+        }
+
+
+        // === check for options that apply to field templates:
+        if ($options['title'] ?? false) {
+            $fieldTemplates['_']['title'] = $options['title'];
+        }
+        if ($options['description'] ?? false) {
+            $fieldTemplates['_']['description'] = $options['description'];
+        }
+        if ($options['organizer'] ?? false) {
+            $fieldTemplates['_']['organizer'] = $options['organizer'];
+        }
+        if ($options['location'] ?? false) {
+            $fieldTemplates['_']['location'] = $options['location'];
+        }
+        if ($options['allday'] ?? false) {
+            $fieldTemplates['_']['allday'] = $options['allday'];
+        }
+
+        $this->fieldTemplates = $fieldTemplates;
+
+        // === case where event is supplied directly in options:
+        if (!isset($this->events[0]['start'])) {
+            if (($options['events'] ?? false) && is_array($options['events'])) {
+                $this->events = $options['events'];
+                if (isset($this->events['start'])) {
+                    $event = $this->events;
+                    $this->events = [];
+                    $this->events[0] = $event;
+                }
+            } else {
+                $this->events = [];
+                $this->events[0] = [];
+                $event0 = &$this->events[0];
+                if ($options['start'] ?? false) {
+                    $event0['start'] = $options['start'];
+                    unset($options['start']);
+                }
+                if ($options['end'] ?? false) {
+                    $event0['end'] = $options['end'];
+                    unset($options['end']);
+                }
+                if ($options['title'] ?? false) {
+                    $event0['title'] = $options['title'];
+                    unset($options['title']);
+                }
+                if ($options['description'] ?? false) {
+                    $event0['description'] = $options['description'];
+                    unset($options['description']);
+                }
+                if ($options['organizer'] ?? false) {
+                    $event0['organizer'] = $options['organizer'];
+                    unset($options['organizer']);
+                }
+                if ($options['location'] ?? false) {
+                    $event0['location'] = $options['location'];
+                    unset($options['location']);
+                }
+                if ($options['allday'] ?? false) {
+                    $event0['allday'] = $options['allday'];
+                    unset($options['allday']);
+                }
+            }
+        }
         return $options;
     } // parseOptions
 
@@ -257,7 +443,7 @@ class Ical
      * @return void
      * @throws \Exception
      */
-    private function determineTargetFile(): void
+    private function determineTargetFile(array|false $rec = false): string
     {
         $options = $this->options;
         $prefix = $prefix_ = translateToFilename($options['prefix'] ?? '', false);
@@ -265,25 +451,23 @@ class Ical
             $prefix_ .= '/';
             $prefix .= '_';
         }
-        if ($options['saveAllToFile'] ?? false) {
-            $file = $options['saveAllToFile'];
-            $this->path = dir_name($file);
-            $this->filename = base_name($file, false) . '.ics';
-            $this->options['saveAllToFile'] = false;
 
-        } elseif ($options['saveToFile'] ?? false) {
-            $file = $options['saveToFile'];
-            $this->path = dir_name($file);
-            $this->filename = base_name($file, false) . '.ics';
-
-        } else {
+        if (!$rec) {
+            $prefix .= '_';
             $rec = reset($this->events);
-            $start = $rec['start'] ?? '';
-            $date = date('Y-m-d\THi', strtotime($start));
-            $filename = $prefix . $date . '.ics';
-            $this->path = '';
-            $this->filename = $filename;
         }
+        $startKey = ($this->selectedFieldTemplates['start'] ?? false) ?: 'start';
+        $startKey = trim($startKey,'%');
+        $start = $rec[$startKey] ?? '';
+        if ($rec['allday'] ?? false) {
+            $date = date('Y-m-d', strtotime($start));
+        } else {
+            $date = date('Y-m-d\THi', strtotime($start));
+        }
+        $filename = $prefix . $date . '.ics';
+        $this->path = '';
+        $this->filename = $filename;
+
         if (($this->path[0] ?? '') === '~') {
             $file = $this->path . $this->filename;
         } else {
@@ -294,6 +478,7 @@ class Ical
         }
         $this->targetFilePath = Utils::resolvePath($file);
         $this->targetFileUrl  = Utils::resolveUrls($file, forResoucres:true);
+        return $this->targetFilePath;
     } // determineTargetFile
 
 } // Ical
