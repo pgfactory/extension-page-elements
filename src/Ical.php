@@ -6,6 +6,7 @@
 
 namespace PgFactory\PageFactoryElements;
 use PgFactory\MarkdownPlus\MarkdownPlus;
+use PgFactory\MarkdownPlus\MdPlusHelper;
 use Spatie\IcalendarGenerator\Components\Calendar;
 use Spatie\IcalendarGenerator\Components\Event;
 use DateTime;
@@ -19,26 +20,28 @@ use function PgFactory\PageFactory\writeFile;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToFilename;
 
-const ICAL_DOWNLOAD_PATH = PFY_PUBLIC_DOWNLOAD_PATH.'ical/';
-const ICAL_CALENDAR_ICON  = ':calendar_move:';
-const PFY_ICAL_DEFAULT_FIELDTEMPLATES = [
-    'allday'       => false,
-    'uniqueIdentifier' => '',
-];
-const ICAL_UNIQUE_IDENTIFIER_PREFIX = 'pgfactory_';
-
-const PFY_ICAL_DEFAULT_OPTIONS = [
-    'linkText' =>   '%icon%',
-    'tooltip' =>    '{{ pfy-ical-link-tooltip }}',
-    'prefix' =>     '',
-    'asButton' =>   false,
-    'selector' => '',
-    'fieldTemplates' => [],
-];
-
 
 class Ical
 {
+    const DOWNLOAD_PATH = PFY_PUBLIC_DOWNLOAD_PATH.'ical/';
+    const CALENDAR_ICON  = ':calendar_move:';
+    const DEFAULT_FIELDTEMPLATES = [
+        'allday'       => false,
+        'uniqueIdentifier' => '',
+    ];
+    const UNIQUE_IDENTIFIER_PREFIX = 'pgfactory_';
+
+    const DEFAULT_OPTIONS = [
+        'linkText' =>   '%icon%',
+        'tooltip' =>    '{{ pfy-ical-link-tooltip }}',
+        'path' =>       '',
+        'filePrefix' => '',
+        'asButton' =>   false,
+        'eventSelector' => '',
+        'templateSelector' => '',
+        'fieldTemplates' => [],
+    ];
+
     private array $events;
     private array $options;
     private Calendar $icalObj;
@@ -49,6 +52,7 @@ class Ical
     private array $fieldTemplates;
     private array $selectedFieldTemplates;
     private static array $persistentOptions = [];
+    private static string $lastIcalFile = '';
 
     /**
      * @param array $events
@@ -67,7 +71,7 @@ class Ical
      */
     public static function preset(array $options): void
     {
-        self::$persistentOptions = $options + PFY_ICAL_DEFAULT_OPTIONS;
+        self::$persistentOptions = $options + self::DEFAULT_OPTIONS;
     } // preset
 
 
@@ -133,9 +137,9 @@ class Ical
     private function selectFieldTemplates(): void
     {
         $fieldTemplates = $this->fieldTemplates;
-        $selector = $this->options['selector'];
-        if (isset($fieldTemplates[$selector])) {
-            $this->selectedFieldTemplates = $fieldTemplates[$selector];
+        $templateSelector = $this->options['templateSelector'];
+        if (isset($fieldTemplates[$templateSelector])) {
+            $this->selectedFieldTemplates = $fieldTemplates[$templateSelector];
         } else {
             $this->selectedFieldTemplates = $fieldTemplates['_'];
         }
@@ -145,22 +149,43 @@ class Ical
     /**
      * @return string
      */
-    public function renderIcsLink(): string
+    public function renderIcalIcon(): string
     {
         $url = $this->targetFileUrl;
-        $asButton = $this->options['asButton'] ?? false;
         $tooltip = ($this->options['tooltip'] ?? null);
         if ($tooltip === null) {
             $tooltip = '{{ pfy-ical-link-tooltip }}';
         }
-        $linkText = ($this->options['linkText'] ?? null);
-        if ($linkText === null) {
-            $linkText = '{{ pfy-ical-link-text }}';
-        }
-        if ($linkText) {
+        $calIcon = ($this->options['icon'] ?? '') ?: self::CALENDAR_ICON;
+        $calIcon = MdPlusHelper::renderIcon($calIcon);
+        $link = "<a href='$url' download='$this->filename' title='$tooltip'>\n$calIcon\n</a>";
+
+        return $link;
+    } // renderIcalIcon
+
+
+    /**
+     * @param bool $asButton
+     * @return string
+     * @throws \Exception
+     */
+    public function renderIcsLink(bool $asButton = false): string
+    {
+        $url = $this->targetFileUrl;
+        $asButton = $asButton ?: ($this->options['asButton'] ?? false);
+        $tooltip = $this->options['tooltip'] ?? '';
+        $linkText = ($this->options['linkText'] ?? '');
+        if ($linkText === '\\{{ pfy-ical-link-text }}') {
+            if ($asButton) {
+                $linkText = TransVars::getVariable('pfy-ical-button-text');
+                $tooltip = $tooltip ?: TransVars::getVariable('pfy-ical-link-tooltip');
+            } else {
+                $linkText = TransVars::getVariable('pfy-ical-link-text');
+            }
+        } elseif ($linkText) {
             $linkText = TransVars::translate($linkText);
         }
-        $calIcon = ($this->options['icon'] ?? '') ?: ICAL_CALENDAR_ICON;
+        $calIcon = ($this->options['icon'] ?? '') ?: self::CALENDAR_ICON;
         $linkText = str_replace('%icon%', $calIcon, $linkText);
         $mdp = new MarkdownPlus();
         $linkText = $mdp->compileParagraph($linkText);
@@ -168,7 +193,7 @@ class Ical
             $link = "<button class='pfy-enlist-ical-button pfy-button pfy-button-lean' title='$tooltip' type='button'>$linkText</button>";
             $link .= "<a href='$url' download='$this->filename' class='pfy-dispno'>$linkText</a>";
         } else {
-            $link = "<a href='$url' download='$this->filename' title='$tooltip'>\n$linkText\n</a>";
+            $link = "<a href='$url' download='$this->filename' title='$tooltip'>$linkText</a>";
         }
         return $link;
     } // renderIcsLink
@@ -242,9 +267,9 @@ class Ical
         }
         $uniqueIdentifier = ($icalElements['uniqueIdentifier'] ?? false) ?: ($rec['_reckey'] ?? '');
         if ($uniqueIdentifier) {
-            $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX . $uniqueIdentifier;
+            $icalElements['uniqueIdentifier'] = self::UNIQUE_IDENTIFIER_PREFIX . $uniqueIdentifier;
         } else {
-            $icalElements['uniqueIdentifier'] = ICAL_UNIQUE_IDENTIFIER_PREFIX . createHash();
+            $icalElements['uniqueIdentifier'] = self::UNIQUE_IDENTIFIER_PREFIX . createHash();
         }
         $icalElements['allday'] = $rec['allday'] ?? false;
         if (($rec['cancelled'] ?? false) || ($this->options['cancelled'] ?? false)) {
@@ -341,7 +366,7 @@ class Ical
         if (self::$persistentOptions) {
             $defaultOptions = self::$persistentOptions;
         } else {
-            $defaultOptions = PFY_ICAL_DEFAULT_OPTIONS;
+            $defaultOptions = self::DEFAULT_OPTIONS;
         }
         foreach ($defaultOptions as $key => $value) {
             if (!isset($options[$key]) || ($options[$key] === null)) {
@@ -353,7 +378,7 @@ class Ical
         if (!($options['fieldTemplates'] ?? false)) {
             // no fieldTemplates available, create default element:
             $options['fieldTemplates'] = [
-                '_' => PFY_ICAL_DEFAULT_FIELDTEMPLATES
+                '_' => self::DEFAULT_FIELDTEMPLATES
             ];
             $fieldTemplates = &$options['fieldTemplates'];
         } else {
@@ -369,7 +394,7 @@ class Ical
             }
         }
         foreach ($fieldTemplates as $key => $value) {
-            $fieldTemplates[$key] += PFY_ICAL_DEFAULT_FIELDTEMPLATES;
+            $fieldTemplates[$key] += self::DEFAULT_FIELDTEMPLATES;
         }
 
 
@@ -391,6 +416,16 @@ class Ical
         }
 
         $this->fieldTemplates = $fieldTemplates;
+
+        // events:
+        if ($options['events'] ?? false) {
+            // check for file option -> get events from Events class:
+            if ($options['events']['file'] ?? false) {
+                $ev = new Events($options['events']);
+                $events = $ev->getNextEvents();
+                $options['events'] = $events;
+            }
+        }
 
         // === case where event is supplied directly in options:
         if (!isset($this->events[0]['start'])) {
@@ -446,15 +481,17 @@ class Ical
     private function determineTargetFile(array|false $rec = false): string
     {
         $options = $this->options;
-        $prefix = $prefix_ = translateToFilename($options['prefix'] ?? '', false);
-        if ($prefix) {
-            $prefix_ .= '/';
-            $prefix .= '_';
+        if ($path = ($options['path'] ?? '')) {
+            $path = rtrim($path, '/') . '/';
         }
+        $filePrefix = translateToFilename($options['filePrefix'] ?? '', false);
 
+        $suffix = '';
         if (!$rec) {
-            $prefix .= '_';
             $rec = reset($this->events);
+            if (sizeof($this->events) > 1) {
+                $suffix = '..';
+            }
         }
         $startKey = ($this->selectedFieldTemplates['start'] ?? false) ?: 'start';
         $startKey = trim($startKey,'%');
@@ -464,21 +501,28 @@ class Ical
         } else {
             $date = date('Y-m-d\THi', strtotime($start));
         }
-        $filename = $prefix . $date . '.ics';
+        $filename = "$path$filePrefix$date$suffix.ics";
         $this->path = '';
         $this->filename = $filename;
 
         if (($this->path[0] ?? '') === '~') {
             $file = $this->path . $this->filename;
         } else {
-            if ($prefix_) {
-                $this->path = $prefix_ . $this->path;
-            }
-            $file = ICAL_DOWNLOAD_PATH . $this->path . $this->filename;
+            $file = self::DOWNLOAD_PATH . $this->path . $this->filename;
         }
+        self::$lastIcalFile   = $file;
         $this->targetFilePath = Utils::resolvePath($file);
         $this->targetFileUrl  = Utils::resolveUrls($file, forResoucres:true);
         return $this->targetFilePath;
     } // determineTargetFile
+
+
+    /**
+     * @return string
+     */
+    public static function getLastFilepath(): string
+    {
+        return self::$lastIcalFile;
+    }
 
 } // Ical

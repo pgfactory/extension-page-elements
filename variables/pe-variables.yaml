@@ -223,14 +223,19 @@ pfy-enlist-collapse-button-title:
 
 
 #--- iCal ------------------------------
+pfy-ical-link-text:
+  'de': In Ihre Agenda eintragen
+  'de2': In deine Agenda eintragen
+  '_': Add this event to your calendar
+
+pfy-ical-button-text:
+  'de': Kalendereintrag
+  '_':  Calendar entry
+
 pfy-ical-link-tooltip:
   'de': In Ihre Agenda eintragen
   'de2': In deine Agenda eintragen
   '_': Add to your calendar
-
-pfy-ical-link-text:
-  'de': '%icon% <span class="visually-hidden">Herunterladen und in meine Agenda eintragen...</span>'
-  '_': '%icon% <span class="visually-hidden">Download and add to my calendar...</span>'
 
 
 
