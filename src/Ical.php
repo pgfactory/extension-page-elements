@@ -111,7 +111,8 @@ class Ical
         $this->selectFieldTemplates();
 
         $icsStr = $this->renderAllICalStr();
-        $filePath = $this->determineTargetFile();
+        $filename = $this->options['filename'] ?? false;
+        $filePath = $this->determineTargetFile(filename: $filename);
 
         $icalFileTime = $this->getTargetFileTime();
         if ($referenceTime < $icalFileTime) {
@@ -478,7 +479,7 @@ class Ical
      * @return void
      * @throws \Exception
      */
-    private function determineTargetFile(array|false $rec = false): string
+    private function determineTargetFile(array|false $rec = false, string|false $filename = false): string
     {
         $options = $this->options;
         if ($path = ($options['path'] ?? '')) {
@@ -496,12 +497,17 @@ class Ical
         $startKey = ($this->selectedFieldTemplates['start'] ?? false) ?: 'start';
         $startKey = trim($startKey,'%');
         $start = $rec[$startKey] ?? '';
-        if ($rec['allday'] ?? false) {
-            $date = date('Y-m-d', strtotime($start));
+        if ($filename) {
+            $filePrefix = '';
+            $suffix = '';
         } else {
-            $date = date('Y-m-d\THi', strtotime($start));
+            if ($rec['allday'] ?? false) {
+                $filename = date('Y-m-d', strtotime($start));
+            } else {
+                $filename = date('Y-m-d\THi', strtotime($start));
+            }
         }
-        $filename = "$path$filePrefix$date$suffix.ics";
+        $filename = "$path$filePrefix$filename$suffix.ics";
         $this->path = '';
         $this->filename = $filename;
 
