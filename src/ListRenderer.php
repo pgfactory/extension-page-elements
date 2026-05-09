@@ -2,6 +2,7 @@
 
 namespace PgFactory\PageFactoryElements;
 
+use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
@@ -197,19 +198,19 @@ class ListRenderer
      */
     private static function checkVisibility(object $page): bool
     {
+        // check visibility variable in meta-file:
         if ($visibility = $page->visible()->value()) {
             $visible = Permission::evaluate($visibility);
             if (!$visible) {
                 return false;
             }
         }
-        if ($showFrom = $page->showfrom()->value()) {
-            if (strtotime($showFrom) > time()) {
-                return false;
-            }
-        }
-        if ($showTill = $page->showtill()->value()) {
-            if (strtotime($showTill) < time()) {
+
+        // check and evaluate time constraints (showFrom,showTill) from variables in meta-file:
+        $showFrom = $page->showfrom()->value();
+        $showTill = $page->showtill()->value();
+        if ($showFrom || $showTill) {
+            if (!MdPlusHelper::isNowVisible($showFrom, $showTill)) {
                 return false;
             }
         }
