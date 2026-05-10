@@ -32,7 +32,7 @@ class HtmlMail
      * @return array
      * @throws \Exception
      */
-    public static function compileForMail(string $markdown, string $css = '', array $data = [], string $plaintext = '', bool $forPreview = false): array
+    public static function compileForMail(string $markdown, string $css = '', array $data = [], string $plaintext = '', bool $forPreview = false, bool $prettyWrapper = true): array
     {
         $css = $css ?: PFY_HTMLMAIL_DEFAULT_STYLES;
 
@@ -59,9 +59,10 @@ class HtmlMail
         $html = TemplateCompiler::compile($data, $templateOptions);
         $html = preg_replace('/<!--.*?-->/', '', $html); // remove comments
 
-        $html = self::fixMdpLayoutTables($html);
+        if ($prettyWrapper) {
+            $html = self::fixMdpLayoutTables($html);
 
-        $html = <<<EOT
+            $html = <<<EOT
 <div lang='$lang'>
     <table class='pfy-htmlmail-outer-wrapper' role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4;">
         <tr>
@@ -80,6 +81,7 @@ $html
     </table>
 </div>
 EOT;
+        }
 
         $html = self::applyInlineStyles($html, $css);
 
@@ -88,7 +90,9 @@ EOT;
 
         } else {
             list($html, $images) = self::handleImagesForMail($html);
-            $html = self::wrapForMail($html, $lang);
+            if ($prettyWrapper) {
+                $html = self::wrapForMail($html, $lang);
+            }
         }
 
         return [$html, $plaintext, $images];
@@ -103,7 +107,7 @@ EOT;
     {
         $plaintext = unshieldStr($plaintext);
         $plaintext = strip_tags($plaintext);
-        $plaintext = str_replace(['&nbsp;', "\r\n", "\n\r", '\\', '→', '⇒'], [' ', "\n", "\n", '', '->', '=>'], $plaintext);
+        $plaintext = str_replace(['&nbsp;', '&nbg;', "\r\n", "\n\r", '\\', '→', '⇒'], [' ', ' ', "\n", "\n", '', '->', '=>'], $plaintext);
         $plaintext = preg_replace("/\n{2,}/", "\n\n", $plaintext);
         $plaintext = preg_replace(['/\{\{\s*(img|vgap).*?}}/'], [''], $plaintext);
         if (preg_match_all('/\{\{\s* link\( (.*?) \).*?}}/x', $plaintext, $m)) {

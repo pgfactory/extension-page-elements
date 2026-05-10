@@ -4,6 +4,10 @@ pfy-htmlmail-submit-button:
   de: 'Vorschau aktualisieren'
   _: 'Refresh preview'
 
+pfy-htmlmail-cancel-button:
+  de: 'Zurück setzen'
+  _: 'Reset'
+
 
 pfy-htmlmail-send-button:
   de: 'Senden'

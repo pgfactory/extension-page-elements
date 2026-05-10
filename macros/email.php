@@ -31,6 +31,7 @@ return function ($args = '')
             'schedule' => ['{options} If defined, the Events module is invoked to determine the next event and '.
                 'based on that, make values defined in the event available as variables (%key%). '.
                 '(For ref see macro *events()*).', false],
+            'output' => ['(all|content) .', 'all'],
         ],
         'summary' => <<<EOT
 
@@ -47,6 +48,50 @@ Finally, a button allows to send the mail.
 **Hint:**  
 When using a schedule, you can omit the template. 
 Then the macro will present available data elements as optained from scheduled events.
+
+## Example
+
+    **variables**:
+    **css-rules**: |
+        .right {float:right; width: 15em; margin:0 0 1em 1em;}
+        .pfy-htmlmail-outer-wrapper { font-family: Verdana, sans-serif; font-size:12pt;}
+        .mdp-table { border-collapse: collapse;}
+        .mdp-table td { padding: 0.5em 2em 0.5em 0; border:none;vertical-align:top;}
+    **subjectVar**: My Subject Line
+    -\--\-
+
+    \{{ email(
+        subjectVar:     'subjectVar'  \// -\> refers to the variables above
+        markdownFile:   'mail-template.txt'  \// -\> contains the mail body
+        cssVar:         'css-rules'
+        edit:           true
+        output:         content
+        to:             'me@domain.net'
+    ) }}
+
+## Example 2: Schedule Based
+This will render an announcement for the next event.
+    \{{ email(
+        subjectVar:     'subjectVar'
+        markdownFile:   'mail-template.txt' \// -\> may reference event variables, e.g. ""\{{ start|date(l, j. M Y, G.i) }}"
+        cssVar:         'css-rules'
+        edit:           true
+        output:         content
+        to:             'me@domain.net'
+        **schedule**:  { 
+            src:'~config/events.json',
+            category: 'Concerts'
+            ical: {              \// -\> automatically adds an ics file as attachment
+                title: 'Concert'
+                shortName: '[XY]'
+                location:  '%venue%'  \// -\> assuming that event records contain a variable 'venue'
+                organizer: 'info@domain.net'
+            }
+        }
+    ) }}
+
+**Note:**  
+To include images, use `\{{ img(url) }}`, where url points to the image file on a web server.
 
 EOT,
     ];

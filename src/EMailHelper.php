@@ -29,6 +29,7 @@ class EMailHelper
     private static array $iCalOptions = [];
     private static string $icsFile = '';
     private static string $macroName = '';
+    private static string $output = 'all';
     private static array $attachments = [];
     private static array|false $schedule = [];
     private static array $events = [];
@@ -134,6 +135,7 @@ EOT;
             'class'                 => 'pfy-form-colored',
             'wrapperClass'          => 'pfy-htmlmail-wrapper',
             'permission'            => true,
+            'retainData'            => true,
             'tableOptions'          => false,
             'dataReceivedCallback'  => function($dataRec) {
                 return self::formCallback($dataRec);
@@ -159,6 +161,7 @@ EOT;
                 'callback' => 'sendMailCallback',
             ],
 
+            'cancel'    => ['label' => '{{ pfy-htmlmail-cancel-button }}'],
             'submit'    => ['label' => '{{ pfy-htmlmail-submit-button }}'],
             '_sendmail' => ['type' => 'hidden', 'value' => false],
         ];
@@ -241,7 +244,11 @@ EOT;
     {
         $html       = self::compileForPreview();
 
-        $sourceCode = self::compileForMail();
+        if (self::$output === 'all') {
+            $sourceCode = self::compileForMail();
+        } else {
+            $sourceCode = self::compileForMail(prettyWrapper: false);
+        }
         $sourceCode = htmlentities($sourceCode);
         $sourceCode = <<<EOT
 
@@ -255,25 +262,27 @@ EOT;
 
 
     /**
+     * @param bool $prettyWrapper
      * @return string
      * @throws \Exception
      */
-    private static function compileForMail(): string
+    private static function compileForMail(bool $prettyWrapper = true): string
     {
         $data = reset(self::$events) ?: [];
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data);
+        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, prettyWrapper: $prettyWrapper);
         return $html;
     } // compileForMail
 
 
     /**
+     * @param bool $prettyWrapper
      * @return string
      * @throws \Exception
      */
-    private static function compileForPreview(): string
+    private static function compileForPreview(bool $prettyWrapper = true): string
     {
         $data = reset(self::$events) ?: [];
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, forPreview: true);
+        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, forPreview: true, prettyWrapper: $prettyWrapper);
         if (self::$plaintext === '-auto-') {
             self::$plaintext = $plaintext;
         }
@@ -281,6 +290,10 @@ EOT;
     } // compileForPreview
 
 
+    /**
+     * @return void
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
     private static function handleScheduleOption(): void
     {
         if (!($eventOptions = self::$schedule)) {
@@ -318,6 +331,12 @@ EOT;
     } // handleScheduleOption
 
 
+    /**
+     * @param array $dataRec
+     * @param int $filetime
+     * @return string
+     * @throws \Exception
+     */
     private static function prepareIcsFile(array $dataRec, int $filetime): string
     {
         $icalOptions = self::$iCalOptions;
@@ -341,6 +360,9 @@ EOT;
     } // prepareIcsFile
 
 
+    /**
+     * @return string
+     */
     private static function showAttachments(): string
     {
         $html = '';
@@ -427,6 +449,7 @@ EOT;
     {
         self::$subject          = $options['subject']??'';
         self::$markdown         = $options['markdown']??'';
+        self::$output           = $options['output']??'';
         self::$css              = $options['css']??'';
         self::$plaintext        = ($options['plainText']??false) ?: '-auto-'; // -auto- means: derive plaintext from markdown
         self::$schedule         = $options['schedule']??false;
