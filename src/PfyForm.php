@@ -599,7 +599,7 @@ class PfyForm extends Form
         }
 
         // handle 'antiSpam' option:
-        if ($antiSpam = ($elemOptions['antiSpam']??false)) {
+        if (!$this->inhibitAntiSpam && $antiSpam = ($elemOptions['antiSpam']??false)) {
             $elem->setHtmlAttribute('data-check', $antiSpam);
             $elem->setHtmlAttribute('aria-hidden', 'true');
             $elem->setHtmlAttribute('tabindex', '-1');
@@ -3380,9 +3380,11 @@ EOT;
 
         // handle 'antiSpam' option:
         if (($elemOptions['antiSpam'] !== null) && $elemOptions['antiSpam']) {
+            if ($exception = ($elemOptions['exception'] ?? false)) {
+                $this->inhibitAntiSpam |= Permission::evaluate($exception);
+            }
             if ($this->inhibitAntiSpam) {
                 $elemOptions['antiSpam'] = false;
-                return [null, null, null];
             } else {
                 $elemOptions['class'] .= ' pfy-obfuscate';
             }
