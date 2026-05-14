@@ -2506,7 +2506,7 @@ EOT;
             }
 
             // handle anti-spam field:
-            if ($this->formElements[$name]['antiSpam'] ?? false) {
+            if (!$this->inhibitAntiSpam && $this->formElements[$name]['antiSpam'] ?? false) {
                 if ($value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
                     return TransVars::getVariable('pfy-anti-spam-warning');
@@ -2765,6 +2765,12 @@ EOT;
         }
         foreach ($fieldNames as $key => $fieldLabel) {
             if (!$fieldLabel || !is_string($fieldLabel)) {
+                continue;
+            }
+
+            // remove antiSpam field from table output:
+            if ($this->formElements[$key]['antiSpam']??false) {
+                unset($fieldNames[$key]);
                 continue;
             }
             if (str_contains($fieldLabel, '{{')) {
@@ -3380,14 +3386,10 @@ EOT;
 
         // handle 'antiSpam' option:
         if (($elemOptions['antiSpam'] !== null) && $elemOptions['antiSpam']) {
-            if ($exception = ($elemOptions['exception'] ?? false)) {
+            if ($exception = ($elemOptions['exception'] ?? 'localhost|loggedin')) {
                 $this->inhibitAntiSpam |= Permission::evaluate($exception);
             }
-            if ($this->inhibitAntiSpam) {
-                $elemOptions['antiSpam'] = false;
-            } else {
-                $elemOptions['class'] .= ' pfy-obfuscate';
-            }
+            $elemOptions['class'] .= ' pfy-obfuscate';
         }
 
         // handle autocomplete:
