@@ -426,7 +426,8 @@ EOT;
         require_once __DIR__ . '/pe_helper.php';
         $out = [
             'file'          => $file,
-            'filename'      => $filename,
+            'filename'      => str_replace(['(', ')', '_', '~'], ['&#40;', '&#41;', '&#95;', '&#126;'], $filename),
+            'filename_raw'  => $filename,
             'basename'      => $basename,
             'slug'          => $slug,
             'pageIndex'     => $pageIndex,
