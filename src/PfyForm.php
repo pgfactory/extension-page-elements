@@ -2501,7 +2501,7 @@ EOT;
             }
 
             // handle anti-spam field:
-            if (!$this->inhibitAntiSpam && $this->formElements[$name]['antiSpam'] ?? false) {
+            if (!$this->inhibitAntiSpam && isset($this->formElements[$name]['antiSpam']) && $this->formElements[$name]['antiSpam']) {
                 if ($value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
                     return TransVars::getVariable('pfy-anti-spam-warning');

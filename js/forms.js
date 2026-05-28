@@ -1026,6 +1026,11 @@ const pfyFormsHelper = {
     // handle changes in startDate -> adapt endDate:
     $startDate.addEventListener('change', (e) => {
       const start = new Date($startDate.value);
+      const end = new Date(field.value);
+      if (!this.isValidDate(start) || !this.isValidDate(end)) {
+        return;
+      }
+      field.value = this.fixDatetimeFormat(field, this.addMinutes(start, end.getTime() - start.getTime()));
       const dur = field.dataset.eventDuration ? parseInt(field.dataset.eventDuration) : 0;
       let newVal = this.addMinutes(start, dur);
       newVal = this.fixDatetimeFormat(field, newVal);
@@ -1042,6 +1047,9 @@ const pfyFormsHelper = {
     field.addEventListener('change', (e) => {
       const start = new Date($startDate.value);
       const end = new Date(field.value);
+      if (!this.isValidDate(start) || !this.isValidDate(end)) {
+        return;
+      }
       field.dataset.eventDuration = (end.getTime() - start.getTime()) / 60000;
     });
   }, // handleEventFields
@@ -1632,6 +1640,12 @@ const pfyFormsHelper = {
     console.debug(data);
     localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
   }, // saveToLocalCache
+
+
+  isValidDate(d) {
+    return d instanceof Date && !isNaN(d);
+  }, // isValidDate
+
 
 }; // pfyFormsHelper
 
