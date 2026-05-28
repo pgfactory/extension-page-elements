@@ -429,11 +429,7 @@ EOT;
             }
         }
 
-        // handle ?onboardingaid:
-        //   => request later handled by Login::loginCallback()
-        if (isset($_GET['onboardingaid'])) {
-            $this->renderOnboardingAid();
-        }
+        // handle ?onboardingaid => executed via _finalCode.php
     } // handleUrlRequests
 
 
@@ -463,7 +459,7 @@ EOT;
      * @return void
      * @throws \Exception
      */
-    private function renderOnboardingAid(): void
+    public static function renderOnboardingAid(): void
     {
         if (!kirby()->option('pgfactory.pagefactory-elements.enableOnboardingAid')) {
             return; // not enabled in config.php
@@ -472,28 +468,20 @@ EOT;
             return; // no logged in user
         }
 
-        if ($link = $this->getAccessLink($user)) {
-            $str = <<<EOT
-
-<section class="pfy-section-wrapper">
-<div class="pfy-onboardingaid">
-{{ pfy-onboardingaid-text }}
-</div>
-</section>
-
-EOT;
+        if ($link = self::getAccessLink($user)) {
+            $str = TransVars::compile('{{ pfy-onboardingaid-text }}');
         } else {
-            $str = <<<EOT
+            $str = TransVars::compile('{{ pfy-onboardingaid-accesscode-missing }}');
+        }
+        $html = <<<EOT
 
 <section class="pfy-section-wrapper">
 <div class="pfy-onboardingaid">
-{{ pfy-onboardingaid-accesscode-missing }}
-</div>
+$str</div>
 </section>
 
 EOT;
-        }
-        $html = TransVars::compile($str);
+
         if ($link) {
             $html = str_replace('pfy-user-accesslink', $link, $html);
             $js = <<<EOT
@@ -511,7 +499,7 @@ EOT;
      * @param $user
      * @return bool
      */
-    private function getAccessLink($user): string
+    private static function getAccessLink($user): string
     {
         if ($content = $user->content()) {
             if ($data = $content->data()) {
