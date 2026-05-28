@@ -526,6 +526,11 @@ class PfyForm extends Form
             }
         }
 
+        if ($elemOptions['revealTarget']??false) {
+            Assets::addAssets('REVEAL');
+            $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
+        }
+
         // handle 'disabled' option:
         if (($elemOptions['disabled']??false) !== false) {
             $elem->setDisabled();
@@ -621,7 +626,7 @@ class PfyForm extends Form
     {
         $elemOptions = &$this->formElements[$name];
 
-        // textarea option 'reveal':
+        // textarea option 'autoGrow':
         $elem = $this->addTextarea($name, $label);
         if ($elemOptions['autoGrow']) {
             $elemOptions['class'] .= ' pfy-auto-grow';
@@ -656,11 +661,6 @@ class PfyForm extends Form
 
         if ($elemOptions['splitOutput']??false) {
             $this->addFieldNames($name, $radioElems);
-        }
-
-        if ($elemOptions['revealTarget']??false) {
-            Assets::addAssets('REVEAL');
-            $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
         }
 
         return $elem;
@@ -716,11 +716,6 @@ class PfyForm extends Form
         $elemOptions['class'] = 'pfy-choice '.$elemOptions['class'];
 
         $elem->setHtmlAttribute('class', "pfy-form-checkbox");
-
-        if ($elemOptions['revealTarget']??false) {
-            Assets::addAssets('REVEAL');
-            $elem->setHtmlAttribute('data-reveal-target', $elemOptions['revealTarget']);
-        }
 
         return $elem;
     } // addCheckboxElem

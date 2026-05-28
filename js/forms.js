@@ -322,46 +322,17 @@ const pfyFormsHelper = {
 
   setupRevealHandlers() {
     domForEach('.pfy-form [data-reveal-target]', (el) => {
-      this.revealHandler(el);
+      const revealTargetSel = el.dataset.revealTarget;
+      let controllerId = el.id;
+      if (controllerId) {
+        controllerId = '#' + controllerId;
+      }
+      new RevealAccordion({
+        'controller': controllerId,
+        'target': revealTargetSel,
+      });
     });
   }, // setupRevealHandlers
-
-
-  revealHandler(el) {
-    const revealController = el.closest('[data-reveal-target]');
-    if (!revealController || !revealController.dataset || !revealController.dataset.revealTarget) {
-      return;
-    }
-    const targetSel = revealController.dataset.revealTarget;
-    const revealContainer = document.querySelector(targetSel);
-
-    // check whether target contains 'pfy-reveal-container-inner' wrapper, inject if not:
-    if (!revealContainer.querySelector('.pfy-reveal-container-inner')) {
-      const revealContent = revealContainer.innerHTML;
-      revealContainer.innerHTML = '<div class="pfy-reveal-container-inner" style="display: none;"></div>';
-      revealContainer.querySelector('.pfy-reveal-container-inner').innerHTML = revealContent;
-    }
-
-    let open = el.checked;
-
-    // case radio: option with value == 'true' opens reveal target:
-    if (el.type === 'radio' && el.value !== 'true') {
-      open = false;
-    }
-
-    if (!this.formInitialized) {
-      const textareaEl = revealContainer.querySelector('textarea');
-      if (textareaEl) {
-        open = !!textareaEl.innerHTML;
-      }
-    }
-
-    if (open) {
-      pfyReveal.reveal(revealController);
-    } else {
-      pfyReveal.unreveal(revealController);
-    }
-  }, // revealHandler
 
 
   handleErrorInForm(form) {
@@ -829,8 +800,9 @@ const pfyFormsHelper = {
     domForAll(form, 'input', el => {
       const type = el.getAttribute('type');
       if (type === 'checkbox' || type === 'radio') {
-        el.value = '';
+        el.checked = false;
       }
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     });
   }, // clearModifiedFlag
 
