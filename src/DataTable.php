@@ -905,9 +905,7 @@ EOT;
      */
     private function exportDownloadDocs(): string
     {
-        $includeMeta = $this->includeTimestamp ? 'timestamp' : '';
         return $this->data2Dset->export(fileType: 'office');
-//        return $this->data2Dset->export(fileType: 'office', includeMeta:$includeMeta);
     } // exportDownloadDocs
 
 
