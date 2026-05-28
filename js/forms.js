@@ -100,7 +100,6 @@ const pfyFormsHelper = {
     document.body.addEventListener('change', (ev) => {
       this.modifyMonitorHandler(ev);
       this.categoryChangeMonitorHandler(ev);
-      this.revealHandler(ev.target);
       this.repetitionChangeHandler(ev);
       this.countedChoicesChangeHandler(ev);
     });
