@@ -351,7 +351,7 @@ class Ical
             $event->uniqueIdentifier($uniqueIdentifier);
         }
         if ($icalElements['cancelled'] ?? false) {
-            $event->status(EventStatus::Cancelled);
+            $event->status(EventStatus::cancelled());
         }
 
         $this->icalObj->event($event);
