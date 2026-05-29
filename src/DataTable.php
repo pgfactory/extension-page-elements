@@ -1074,7 +1074,9 @@ EOT;
                     }
                 }
                 $this->data2Dset->flush();
-                reloadAgent(message: $msg);
+                $url = PFY_HOST_URL . ltrim($_SERVER['REQUEST_URI'], '/');
+                $url = preg_replace('/[?&](delete|archive)/', '', $url);
+                reloadAgent(target: $url, message: $msg);
             } else {
                 throw new \Exception("Error: DataTable operating in array-, not file-mode");
             }

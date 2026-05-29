@@ -5,6 +5,8 @@
 
 "use strict";
 
+console.debug('table.js');
+
 const tableHelper = {
   downloadButtonInitialized: false,
   tableWidgetWidths: {},
@@ -217,7 +219,8 @@ const tableHelper = {
         callbackArg: form,
         onConfirm: function (that, form) {
           localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
-          form.setAttribute('action', pageUrl + '?delete');
+          const url = appendToUrl(pageUrl, 'delete')
+          form.setAttribute('action', url);
           form.submit();
         }
       };
