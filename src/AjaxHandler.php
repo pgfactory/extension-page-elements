@@ -7,12 +7,15 @@
 namespace PgFactory\PageFactoryElements;
 
 
+use Kirby\Data\Yaml;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\Utils;
 use function PgFactory\PageFactory\createHash;
 use PgFactory\PageFactory\DataStore;
+use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\mylog;
+use function PgFactory\PageFactory\writeFile;
 
 
 require_once __DIR__ . "/../../pagefactory/src/helper.php";
@@ -36,6 +39,10 @@ class AjaxHandler
      */
     public static function exec(object $result): void
     {
+        if ($val = get('count')) {
+            self::handleCountRequests($val);
+        }
+
         $pageId = self::$pageId = $result->id();
         $dataSrcInx = self::$dataSrcInx = get('datasrcinx', null);
         if (!$dataSrcInx || ($dataSrcInx === 'undefined')) {
@@ -112,6 +119,44 @@ class AjaxHandler
 
 
     /**
+     * @return void
+     * @throws \Kirby\Exception\InvalidArgumentException
+     */
+    private static function handleCountRequests(string $countRequest): void
+    {
+        $counterFile = 'clicks/click-counter.txt';
+        if (!defined('PFY_LOGS_PATH')) {
+            define('PFY_LOGS_PATH', PFY_KIRBY_BASE_PATH . '/site/logs/');
+        }
+        $file = PFY_LOGS_PATH . $counterFile;
+
+        if ($countRequest === 'true') {
+            $key = PFY_PAGE_ID;
+        } else {
+            $key = $countRequest;
+        }
+
+        require_once PFY_KIRBY_BASE_PATH . 'site/plugins/pagefactory/src/helper.php';
+        if (!is_file($file)) {
+            preparePath($file);
+            $header = 'since: ' . date('Y-m-d H:i:s') . "\n";
+            file_put_contents($file, $header);
+        }
+
+        $yaml = file_get_contents($file);
+        $data = Yaml::decode($yaml);
+        if (isset($data[$key])) {
+            $data[$key] = intval($data[$key]) + 1;
+        } else {
+            $data[$key] = 1;
+        }
+        $yaml = Yaml::encode($data);
+        file_put_contents($file, $yaml);
+        exit('"ok"');
+    } // handleCountRequests
+
+
+    /**
      * @param string $recKey
      * @return void
      */
@@ -174,6 +219,12 @@ class AjaxHandler
     } // getRec
 
 
+    /**
+     * @param string $recKey
+     * @param $includeMeta
+     * @return mixed
+     * @throws \Exception
+     */
     private static function getDataRec(string $recKey, $includeMeta = true): mixed
     {
         if (!$recKey) {

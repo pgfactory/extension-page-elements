@@ -2,6 +2,8 @@
  * Helper functions for PageElements
  */
 
+console.debug('pe-helper.js');
+
 window.addEventListener('DOMContentLoaded', function() {
     // To leave scroll request use:
     //      localStorage.setItem('scrollpos', parseInt(document.documentElement.scrollTop));
