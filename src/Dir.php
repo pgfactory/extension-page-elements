@@ -17,7 +17,8 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\shieldStr;
 
-const DEFAULT_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
+const DEFAULT_LINK_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
+const DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE = "- (link: %download% text:%filename% type:%ext% target:_blank download:true) %description%\n";
 
 const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
 const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
@@ -25,7 +26,7 @@ const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tool
 const PFY_DIR_OPTIONS = [
     'inx'=> 0,
     'template'=> [
-        'element'=> DEFAULT_ELEMENT_TEMPLATE,
+        'element'=> DEFAULT_LINK_ELEMENT_TEMPLATE,
         'folderElement'=> DEFAULT_FOLDER_ELEMENT_TEMPLATE,
         'markdown'=> true,
     ],
@@ -67,11 +68,9 @@ class Dir
     private $reverseFolders;
     private $deep;
     private $hierarchical;
-    private $download;
     private $replacePattern = '';
     private $replace = '';
     private $templateOptions = [];
-    private array $realLocations = [];
     private bool $permission;
     private bool $enableFolderDownload;
 
@@ -101,16 +100,6 @@ class Dir
         }
 
         self::$rootPath = $path;
-
-        // handle download requests:
-        if ($_GET['download']??false) {
-            $file = $_GET['download'];
-            $files = array_keys(getDirDeep($path, assoc:true));
-            if (in_array(basename($file), $files)) {
-                $file = $path . $file;
-                Download::initiateDownload($file, $this->permission);
-            }
-        }
 
         $this->origPathLen = strlen($path);
         $dirOffset = get('dir');
@@ -149,14 +138,6 @@ $str
 </div>
 EOT;
         }
-        if (($inx === 1)) {
-            $realLocations = $this->realLocations;
-
-        } else {
-            $realLocations = kirby()->session()->get('pfy.realLocations', []);
-            $realLocations = $realLocations + $this->realLocations;
-        }
-        kirby()->session()->set('pfy.realLocations', $realLocations);
         kirby()->session()->set('pfy.downloadPermission', $this->permission);
 
         return $str;
@@ -207,6 +188,11 @@ EOT;
         } else {
             $str .= $currLevelFiles;
         }
+
+        $realLocations = kirby()->session()->get('pfy.realLocations', []);
+        $realLocations += $dir;
+        kirby()->session()->set('pfy.realLocations', $realLocations);
+
         return $str;
     } // renderDir
 
@@ -389,7 +375,6 @@ EOT;
                 $name = $basename;
                 $subPath = substr($file, $this->absPathLen);
                 $url = $this->url . $subPath;
-                $this->realLocations[$subPath] = $file;
             }
             $subPath = str_replace('/', '%2F', substr($file, $this->origPathLen));
 
@@ -458,12 +443,20 @@ EOT;
     private function parseOptions($args, int $inx): array
     {
         $options = $args + PFY_DIR_OPTIONS;
+        $this->modifiers = strtoupper($options['modifiers']??'');
+
         if (is_string($options['template'])) {
             $options['template'] = [];
             $options['template']['element'] = $options['template'];
         }
         $this->enableFolderDownload = $args['enableFolderDownload'];
-        $options['template']['element'] ??= DEFAULT_ELEMENT_TEMPLATE;
+
+        if (str_contains($this->modifiers, 'DOWNLOAD')) {
+            $options['template']['element'] ??= DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE;
+        } else {
+            $options['template']['element'] ??= DEFAULT_LINK_ELEMENT_TEMPLATE;
+        }
+
         $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
         if ($this->enableFolderDownload) {
             $options['template']['folderElement'] .= DEFAULT_FOLDER_DOWNLOAD_ICON;
@@ -487,7 +480,7 @@ EOT;
         $this->markdown = $options['markdown']??false;
         $this->maxAge = $options['maxAge'];
         $this->replaceOnElem = $options['replaceOnElem'];
-        $this->modifiers = strtoupper($options['modifiers']??'');
+
         $this->modifiers = preg_replace('/\W+/', ',', $this->modifiers);
         $this->modifiers = ','.str_replace(' ','', $this->modifiers).',';
 
@@ -498,7 +491,6 @@ EOT;
             $this->deep = false;
         }
 
-        $this->download = str_contains($this->modifiers, 'DOWNLOAD');
         $this->reverse = str_contains($this->modifiers, ',REVERSE,');
         $this->reverseFolders = str_contains($this->modifiers, ',REVERSE_FOLDERS,');
 
@@ -517,9 +509,6 @@ EOT;
             }
         }
 
-        if ($this->download) {
-            $this->download = ' download';
-        }
         if ($filename = base_name($this->path)) {
             $pattern = $filename;
         } else {
