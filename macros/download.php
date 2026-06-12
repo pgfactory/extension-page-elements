@@ -52,21 +52,8 @@ EOT,
     }
 
     if ($file = $options['file']) {
-        $filename = basename($file);
-        $text = $options['text'] ?: $filename;
-        $str .= "<a href='~page/?download=$filename' class='pfy-download-link'>$text</a>";
-        if ($_GET['download']??false) {
-            $requestedFile = $_GET['download'];
-            $requestedFilename = basename($requestedFile);
-            if (basename($file) === $requestedFilename) {
-                $path = dir_name($file);
-                $files = array_keys(getDirDeep($path, assoc:true));
-                if (in_array(basename($file), $files)) {
-                    Download::initiateDownload($file, $options['permission']);
-                }
-                return '';
-            }
-        }
+        $text = $options['text'] ?: basename($file);
+        $str .= Download::renderFileDownload($file, $text, $options['permission']);
 
     } else {
 
