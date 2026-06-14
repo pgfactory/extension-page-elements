@@ -640,6 +640,27 @@ const tableHelper = {
   } ,// activateDataTablesFilter
 
 
+
+  // tableHelper.hasSelectedRows(ev)
+  hasSelectedRows: function(ev) {
+    ev.stopPropagation();
+    const wrapper = ev.target.closest('.pfy-table-wrapper');
+    const form = wrapper.querySelector('form');
+    const table = wrapper.querySelector('table');
+    const selected = table.querySelectorAll('tbody .pfy-row-selector input[type=checkbox]:checked');
+    if (selected.length) {
+      return true;
+    }
+    const options = {
+      text: `{{ pfy-table-nothing-selected }}`,
+      header: `{{ pfy-table-nothing-selected-header }}`,
+      closeOnBgClick: true,
+      buttons: 'Ok'
+    };
+    pfyPopup(options);
+    return false;
+  }, // hasSelectedRows
+
 }; // tableHelper
 
 

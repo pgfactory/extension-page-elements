@@ -220,6 +220,14 @@ pfy-enlist-collapse-button-title:
   _:  Eliminate gaps in list by moving up reserve slots.
 
 
+pfy-table-nothing-selected-header:
+  de: Nichts ausgewählt
+  _:  Nothing selected
+
+pfy-table-nothing-selected:
+  de: Bitte zuerst Datensätze auswählen.
+  _:  You need to select records first.
+
 
 
 #--- iCal ------------------------------
