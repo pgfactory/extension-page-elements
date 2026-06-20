@@ -95,6 +95,49 @@ return function ($args = '')
 
 <>
 
+<> Schedule Controlled Forms
+
+    \{{ form(
+        file:			'~data/registrations.json',
+        editData:       { permission:'localhost|loggedin'}
+        tableOptions:   {
+            tableButtons: 'delete,download,mail'
+            tableTitle:     '## Registrations for %start%'
+            tableFooters: 	{ Number: %sum% }
+            includeTimestamp: true
+            order:          Lastname
+        }
+    
+        confirmationEmailTo: true
+        
+        mailFrom:       'stamm@sfs-meilen.ch'
+        mailFromName:   'SfS Meilen'
+    
+        schedule:       { 
+            src:'~config/events.json', 
+            category: Stamm, 
+            template: {
+                file:~page/template.txt
+            }
+            \// modifiers: 'FILENAME_INCL_TIME' \*)
+        },
+        formTop:        '<div>%eventBanner%</div>'
+        maxCount:        25
+    
+        Firstname:      {required:true},
+        Lastname:       {required:true},
+        Name:           {antiSpam: Lastname}
+        Number:         {type: integer, value:1, min:1, max:4, class:short, required:true }
+        E-Mail:         {label: 'E-Mail:', type: email, required:true}
+    
+        cancel:    		{},
+        submit:    		{}
+        )
+    }}
+    
+*) allows multiple events per day -> uses long form of timestamp in filename.
+<>
+
 #### Form Arguments:
 -> any arguments stated below under **Arguments** are interpreted as *form arguments*.\
 All other arguments are interpreted as field definitions/buttons.

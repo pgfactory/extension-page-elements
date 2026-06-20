@@ -3470,8 +3470,12 @@ EOT;
         if (!$nextEvent) { // changed from $nextEvent===false
             return;
         }
-
-        $nextT = date('_Y-m-d_H.i', strtotime($nextEvent['start']));
+        $modifers = $eventOptions['modifiers'] ?? '';
+        if (str_contains($modifers, 'FILENAME_INCL_TIME')) {
+            $nextT = date('_Y-m-d_H.i', strtotime($nextEvent['start']));
+        } else {
+            $nextT = date('_Y-m-d', strtotime($nextEvent['start']));
+        }
         $file = $this->file;
         $file = fileExt($file, true).$nextT.'.'.fileExt($file);
         $this->file = $file;
