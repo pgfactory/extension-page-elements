@@ -132,14 +132,18 @@ const pfyFormsHelper = {
       btn.setAttribute('aria-pressed', true);
       otherBtn.setAttribute('aria-pressed', false);
       const wrapper = btnWrapper.closest('.pfy-form-and-table-wrapper');
-      wrapper.classList.add('pfy-side-by-side');
+      if (wrapper) {
+        wrapper.classList.add('pfy-side-by-side');
+      }
 
     } else {
       const otherBtn = btnWrapper.querySelector('.pfy-two-windows');
       btn.setAttribute('aria-pressed', true);
       otherBtn.setAttribute('aria-pressed', false);
       const wrapper = btnWrapper.closest('.pfy-form-and-table-wrapper');
-      wrapper.classList.remove('pfy-side-by-side');
+      if (wrapper) {
+        wrapper.classList.remove('pfy-side-by-side');
+      }
     }
   }, // handleSideBySideButtons
 
@@ -1471,11 +1475,14 @@ const pfyFormsHelper = {
     domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
       inputEl.value = inputEl.value ? parseInt(inputEl.value) : 0;
 
-      let maxSourceId = inputEl.dataset.max;
-      maxSourceId = maxSourceId.replace('#', '');
-      const maxSourceEl = document.getElementById(maxSourceId);
-      maxVal = parseInt(maxSourceEl.value);
-      inputEl.setAttribute('max', maxVal);
+      const maxSourceSel = inputEl.dataset.max;
+      if (!maxSourceSel) {
+        return;
+      }
+      domForOne(groupEl, '^form ' + maxSourceSel, maxSourceEl => {
+        maxVal = parseInt(maxSourceEl.value);
+        inputEl.setAttribute('max', maxVal);
+      })
     })
 
     console.debug(`Check max for cc-group #${groupEl.id} -> maxVal: ${maxVal}`);

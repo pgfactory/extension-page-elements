@@ -960,6 +960,11 @@ class PfyForm extends Form
      */
     private function composeCountedChoicesElement(int $inx, string $name, array $rec): void
     {
+        $controlledBy = ($rec['controller']??'');
+        if (!$controlledBy) {
+            throw new \Error("Source Error: 'controller' missing in 'countedchoices' element '$name'.");
+        }
+
         $countedChoicesElements = [];
         $required = ($rec['required']??false);
         $label = $rec['label']??$name;
@@ -968,47 +973,17 @@ class PfyForm extends Form
         $id = ($rec['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
         $preset = ($rec['preset']??'');
         $max = ($rec['max']??'');
-        if (preg_match('/^=\$([\w-]+)/', $max, $m)) {
+        if ($max && preg_match('/^=\$([\w-]+)/', $max, $m)) {
             $ref = $m[1];
             if (isset($this->formElements[$ref]['id'])) {
                 $max = '#' . $this->formElements[$ref]['id'];
             } else {
                 throw new \Error("Source Error: referenced element '$ref' not found in form.");
             }
-        }
-
-        $controlledBy = ($rec['controller']??'');
-        if (!$controlledBy) {
-            throw new \Error("Source Error: 'controller' missing in 'countedchoices' element '$name'.");
-        }
-/*
-        if ($this->formElements[$controlledBy]??false) {
-            // add 'aria-controls' attribute to controller element:
-            if ($this->formElements[$controlledBy]['aria-controls']??false) {
-                $this->formElements[$controlledBy]['aria-controls'] .= " $id";
-            } else {
-                $this->formElements[$controlledBy]['aria-controls'] = $id;
-            }
-
-        // try to find #id in form elements:
-        } elseif ($controlledBy[0] === '#') {
-            $id1 = substr($controlledBy, 1);
-            $found = false;
-            foreach ($this->formElements as $elemName => $elemRec) {
-                if (($elemRec['id']??false) && ($elemRec['id'] === $id1)) {
-                    $this->formElements[$elemName]['aria-controls'] = $id;
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                throw new \Error("Source Error: 'controller' -> element '$id1' not found. ");
-            }
-
         } else {
-            throw new \Error("Source Error: 'controller' -> element not found. ");
+            $max = "[name=$controlledBy]";
         }
-*/
+
         $attrib = ($rec['attrib']??'');
         $wrapperClass = ($rec['class'] ?? ($rec['wrapperClass']??''));
 
@@ -3665,7 +3640,7 @@ EOT;
         $groupId = $rec['groupId'];
         $id = translateToIdentifier("$groupId-$name", toLowerCase: true);
         $groupLabel = $rec['ccGroupLabel'] ?? '';
-        $cls = $id;
+        $cls = translateToClassName($id);
         if ($attr = ($rec['max'] ?? '')) {
             $attr = ltrim($attr, '=$');
             $attr = " data-max='$attr'";
