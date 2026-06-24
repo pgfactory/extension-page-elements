@@ -184,21 +184,21 @@ pfy-form-rec-deleted-confirmation:
 
 
 # Deadline:
-pfy-form-deadline-expired:
+pfy-form-deadline-elapsed:
   de: 'Die Anmeldefrist ist vorbei.'
   _:  'Sorry, registration is closed.'
 
-pfy-form-deadline-expired-warning:
+pfy-form-deadline-elapsed-warning:
   de: |
     <div>
       <strong>Achtung</strong>: Die Anmeldefrist ist vorbei. Normale Besucher erhalten folgende Mitteilung:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-elapsed}}</div>
     </div>
 
   _:  |
     <div>
       <strong>Notice</strong>: Deadline expired. Response to regular visitors:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-expired}}</div>
+      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-elapsed}}</div>
     </div>
 
 # MaxCount:

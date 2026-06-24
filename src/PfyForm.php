@@ -2838,29 +2838,43 @@ EOT;
      */
     private function checkDeadline(): void
     {
-        if ($deadlineStr = $this->formOptions['deadline']??false) {
+        if ($deadlineStr = trim($this->formOptions['deadline']??'')) {
+            $stretchDeadline = false;
 
+            // check for deadline modifier '|' -> stretch deadline to beginning or end of day:
+            if (str_contains($deadlineStr, '|')) {
+                if ($deadlineStr[0] === '|') {
+                    $stretchDeadline = 'dayStart';
+                } elseif ($deadlineStr[strlen($deadlineStr)-1] === '|') {
+                    $stretchDeadline = 'dayEnd';
+                }
+                $deadlineStr = str_replace('|', '', $deadlineStr);
+            }
             if (isset(self::$scheduleRecs[self::$formCounter]['start'])) {
                 $t = strtotime(self::$scheduleRecs[self::$formCounter]['start']);
             } else {
                 $t = time();
             }
             $deadline = strtotime($deadlineStr, $t);
-            // if no time is defined, extend the deadline till midnight:
-            if (!str_contains($deadlineStr, 'T')) {
-                $deadline += 86400;
+
+            if ($stretchDeadline === 'dayStart') {
+                $deadline = strtotime('midnight', $deadline);
+            } elseif ($stretchDeadline === 'dayEnd') {
+                $deadline = strtotime('tomorrow midnight', $deadline);
             }
+            // $deadlineStr = date('Y-m-d H:i', $deadline);
+
             // now check deadline:
-            if ($deadline < time()) { // deadline expired:
+            if ($deadline < time()) { // deadline elapsed:
                 // deadline is overridden if visitor is logged in:
                 if (!$this->isFormAdmin) {
                     if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
                         $this->deadlinePassed .= $deadlineNotice;
                     } else {
-                        $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-expired">{{ pfy-form-deadline-expired }}</div>';
+                        $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-elapsed">{{ pfy-form-deadline-elapsed }}</div>';
                     }
                 } else {
-                    $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-expired-warning');
+                    $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-elapsed-warning');
                 }
             }
         }

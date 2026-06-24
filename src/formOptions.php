@@ -48,7 +48,9 @@ return  [
         'formBottom' =>	['Text rendered below the form buttons.', false],
 
         'deadline' =>	['(ISO-date) If set, the form will be disabled after deadline has passed. '.
-            'Then ``\{\{ pfy-form-deadline-expired }}`` is shown.', false],
+            'Then ``\{\{ pfy-form-deadline-elapsed }}`` is shown. '.
+            'Modifiers in case of scheduled form: "|-2 days" (=midnight 2 days before event) or '.
+            '"-1 day|" (=midnight before event)', false],
 
         'deadlineNotice' =>	['(string) Defines the response displayed when deadline has passed.', false],
 
