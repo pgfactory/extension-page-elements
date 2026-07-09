@@ -42,7 +42,7 @@ return function ($args = '')
 
             // ics file options:
             'path' => ['(string) Lets you override the location of ics files. '.
-                '(default: "\~/media/pgfactory/ical/".', null],
+                '(default: "' . PFY_PUBLIC_DOWNLOAD_PATH.'ical/' . '".', null],
             'filename' => ['(string) Defines the ics file name.', null],
             'filePrefix' => ['(string) Defines an optional string to be prepended to ics file names.', null],
         ],
