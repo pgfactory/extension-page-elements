@@ -37,8 +37,8 @@ return function ($args = '')
             // output options:
             'output' => ['[false|icon|buttom|link|file|filepath|true] Defines what is rendered.<br>'.
                 '("file" renders the ICS file for debugging.)', 'icon'],
-            'linkText' => ['(string) If rendered as a link, this text is used.', '\\{{ pfy-ical-link-text }}'],
-            'tooltip' => ['(string) If rendered as a button, this tooltip is added.', '\\{{ pfy-ical-link-tooltip }}'],
+            'linkText' => ['(string) If rendered as a link, this text is used.', '{{ pfy-ical-link-text }}'],
+            'tooltip' => ['(string) If rendered as a button, this tooltip is added.', '{{ pfy-ical-link-tooltip }}'],
 
             // ics file options:
             'path' => ['(string) Lets you override the location of ics files. '.
