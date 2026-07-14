@@ -130,14 +130,19 @@ class RevealAccordion {
     summarySpan.textContent = this.options.label;
     summary.appendChild(summarySpan);
 
-    targetEl.parentNode.insertBefore(details, targetEl);
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('mdp-accordion-group');
+    wrapper.appendChild(details);
+
+    targetEl.parentNode.insertBefore(wrapper, targetEl);
+
     details.appendChild(summary);
     bodyWrapper.appendChild(targetEl);
     details.appendChild(bodyWrapper);
 
     return details;
   } // wrapIntoDetailsElement
-
+  
 
   // === setup triggers =========================================================
     setupGlobalListeners() {
