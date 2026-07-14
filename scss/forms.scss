@@ -551,6 +551,9 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
       color: $errorColor;
     }
   }
+  .pfy-form .pfy-input-wrapper .pfy-form-field-postfix {
+    display: inline-block;
+  }
   .pfy-form-field-description {
     padding: 0.4em 0 0.2em 0.5em;
     display: inline-block;

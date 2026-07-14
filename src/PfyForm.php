@@ -1381,15 +1381,25 @@ class PfyForm extends Form
             $input .= "<button type='button' class='pfy-form-show-pw' aria-pressed='false'>$icon</button>";
         }
 
-        $description = $rec['description'] ?? '';
-        if (preg_match('/(:\w{2,20}:)/', $description, $m)) {
-            $icon = MdPlusHelper::renderIcon($m[1]);
-            $description = str_replace($m[0], $icon, $description);
-        }
         if ($type !== 'hidden') {
-            $input .= "<span class='pfy-form-field-description'>$description</span>";
-        }
+            // handle postfix:
+            if ($postfix = $rec['postfix'] ?? '') {
+                if (preg_match('/(:\w{2,20}:)/', $postfix, $m)) {
+                    $icon = MdPlusHelper::renderIcon($m[1]);
+                    $postfix = str_replace($m[0], $icon, $postfix);
+                }
+                $input .= "<span class='pfy-form-field-postfix'>$postfix</span>";
+            }
 
+            // handle description:
+            if ($description = $rec['description'] ?? '') {
+                if (preg_match('/(:\w{2,20}:)/', $description, $m)) {
+                    $icon = MdPlusHelper::renderIcon($m[1]);
+                    $description = str_replace($m[0], $icon, $description);
+                }
+                $input .= "<span class='pfy-form-field-description'>$description</span>";
+            }
+        }
         $class = $rec['class'];
         if ($rec['required'] ?? false) {
             if (($rec['required'] === true)) {
@@ -1515,6 +1525,7 @@ EOT;
         $html = <<<EOT
 
 <div class='pfy-elem-wrapper pfy-textarea $class'$dataAttrib>
+  <div class="mdp-accordion-group">
 	<details class='mdp-accordion'>
 		<summary><span>$controllerLabel</span></summary>
 		<div class='mdp-accordion-body'>
@@ -1523,6 +1534,7 @@ EOT;
             </span>
 		</div>
 	</details>
+  </div>
 </div>
 <!-- _________________ pfy-elem-wrapper -->
 

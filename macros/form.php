@@ -164,19 +164,20 @@ Types automatically derived from field *field-names*: `email`, `passwor*`, `subm
 @@@ --tt1-width: 8.5em
 
 All:
-: - id   >> [string] 
-: - class   >> [string] (-> e.g. class:short )
-: - label   >> [string] 
-: - placeholder   >> [string] 
-: - preset   >> [any] initial value (also: 'default' or 'value')
-: - required    >> [bool,identifier]
-: - autocomplete   >> [string|bool]
-: - disabled    >> [bool]
-: - readonly    >> [bool]
-: - info        >> [string] info icon showing info text as tooltip
-: - description     >> [string] text next/below input field
-: - antiSpam        >> [string] -> see below
-: - columnHeader    >> [string] -> if set, replaces 'label' as column header for the output table
+: - id   8em>> [string] 
+: - class   8em>> [string] (-> e.g. class:short )
+: - label   8em>> [string] 
+: - placeholder   8em>> [string] 
+: - preset   8em>> [any] initial value (also: 'default' or 'value')
+: - required    8em>> [bool,identifier]
+: - autocomplete   8em>> [string|bool]
+: - disabled    8em>> [bool]
+: - readonly    8em>> [bool]
+: - info        8em>> [string] info icon showing info text as tooltip
+: - postfix     8em>> [string] text just behind input field
+: - description     8em>> [string] text next/below input field
+: - antiSpam        8em>> [string] -> see below
+: - columnHeader    8em>> [string] -> if set, replaces 'label' as column header for the output table
 
 textarea:
 : - reveal      >> [string|true] If set, textarea is hidden until label is clicked
