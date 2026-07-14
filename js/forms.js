@@ -619,9 +619,10 @@ const pfyFormsHelper = {
       isPreset = true;
       val = this.fixAttribValue(val);
     }
-    if (['radio','checkbox'].includes(type)) {
-      val = (val && val !== 'false' && val !== '0');
-    }
+//??? where required?
+//    if (['radio','checkbox'].includes(type)) {
+//      val = (val && val !== 'false' && val !== '0');
+//    }
 
     // get value, next try data-value:
     if (fieldWrapperElemEl.dataset.value) {
