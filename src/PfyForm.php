@@ -604,7 +604,7 @@ class PfyForm extends Form
         }
 
         // handle 'antiSpam' option:
-        if (!$this->inhibitAntiSpam && $antiSpam = ($elemOptions['antiSpam']??false)) {
+        if ($antiSpam = ($elemOptions['antiSpam']??false)) {
             $elem->setHtmlAttribute('data-check', $antiSpam);
             $elem->setHtmlAttribute('aria-hidden', 'true');
             $elem->setHtmlAttribute('tabindex', '-1');
@@ -969,6 +969,10 @@ class PfyForm extends Form
         $required = ($rec['required']??false);
         $label = $rec['label']??$name;
         $grouplabel = $rec['grouplabel']??'';
+        if ($info = $rec['info'] ?? '') {
+            $rec['info'] = '';
+            $grouplabel .= $this->renderTooltip($info);
+        }
 
         $id = ($rec['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
         $preset = ($rec['preset']??'');
@@ -1397,8 +1401,8 @@ class PfyForm extends Form
                     $icon = MdPlusHelper::renderIcon($m[1]);
                     $description = str_replace($m[0], $icon, $description);
                 }
-                $input .= "<span class='pfy-form-field-description'>$description</span>";
             }
+            $input .= "<span class='pfy-form-field-description'>$description</span>";
         }
         $class = $rec['class'];
         if ($rec['required'] ?? false) {
@@ -2488,8 +2492,8 @@ EOT;
             }
 
             // handle anti-spam field:
-            if (!$this->inhibitAntiSpam && isset($this->formElements[$name]['antiSpam']) && $this->formElements[$name]['antiSpam']) {
-                if ($value !== '') {
+            if ($this->formElements[$name]['antiSpam'] ?? false) {
+                if (!$this->inhibitAntiSpam && $value !== '') {
                     mylog("Spam detected: field '$name' was not empty: '$value'.", 'form-log.txt');
                     return TransVars::getVariable('pfy-anti-spam-warning');
                 }
@@ -3461,7 +3465,7 @@ EOT;
     {
         $id = "{$this->formIndex}-{$this->elemInx}";
         $info = "<div>$info</div>";
-        $info = "<button type='button' class='pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . INFO_ICON .
+        $info = "<button type='button' class='pfy-form-info-button pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . INFO_ICON .
             "</button><div id='pfy-popover-$id' class='pfy-popover-content pos-below-right' popover style='position-anchor: --pfy-popover-$id'>$info</div>";
         $info = <<<EOT
 <div  class="pfy-popover-wrapper">
@@ -3656,6 +3660,10 @@ EOT;
             // end of group -> append closing tag:
             $html = <<<EOT
     </div><!-- /pfy-form-field-group-wrapper -->
+    <div class="pfy-form-cc-messages">
+      <div class='pfy-form-countedchoices-group-error-msg'>{{ pfy-form-countedchoices-required-error }}</div>
+      <div class='pfy-form-countedchoices-max-error'>{{ pfy-form-countedchoices-max-error }}</div>
+    </div><!-- /pfy-form-cc-messages -->
 </div> <!-- ====== /pfy-form-field-group pfy-form-group-$cls -->
 
 $html
@@ -3680,7 +3688,7 @@ EOT;
         }
 
         if (!preg_match('|<span class=\'pfy-label-wrapper\'>.*?</span>|', $html, $m)) {
-            throw new \Exception("Error: Menu-select group must contain a select-element.");
+            throw new \Exception("Error: CountedChoices group must contain a select-element.");
         }
         $label = $m[0];
         $html = str_replace($label, '', $html);
@@ -3725,7 +3733,6 @@ EOT;
 EOT;
         }
         $html = str_replace($m[0], $input, $html);
-
         if (!$groupId0) {
             // group start:
             $groupId0 = $groupId;

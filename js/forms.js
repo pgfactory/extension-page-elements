@@ -225,8 +225,8 @@ const pfyFormsHelper = {
     }
     const form = ev.target.closest('.pfy-form');
 
-    const check = pfyFormsHelper.checkHonigtopf(form);
-    if (!check) {
+    const abort = pfyFormsHelper.checkHonigtopf(form);
+    if (abort) {
       ev.stopPropagation();
       return;
     }
@@ -370,8 +370,8 @@ const pfyFormsHelper = {
       return;
     }
 
-    const check = pfyFormsHelper.checkHonigtopf(form);
-    if (!check) {
+    const abort = pfyFormsHelper.checkHonigtopf(form);
+    if (abort) {
       ev.stopPropagation();
       return;
     }
@@ -438,13 +438,9 @@ const pfyFormsHelper = {
   checkCountedChoicesOnSubmit(form) {
     console.debug('Submit: checking countedchoices-groups');
     let error = false;
-    domForOne(form, '.pfy-countedchoices-group-error', () => {
-      error = true;
-      console.debug('Submit: error in countedchoices-group found');
-    })
 
     domForEach(form, '.pfy-form-countedchoices-group', groupEl => {
-      if (!groupEl.classList.contains('pfy-required') || !groupEl.classList.contains('pfy-multiple-enabled')) {
+      if (!groupEl.classList.contains('pfy-required')) {
         return;
       }
       const controllerId = groupEl.dataset.controlledBy;
@@ -457,17 +453,26 @@ const pfyFormsHelper = {
       }
       const count = parseInt(controllerEl.value);
       let sum = 0;
-      domForEach(groupEl, 'input.pfy-integer', el => {
+      if (groupEl.classList.contains('pfy-multiple-enabled')) {
+        domForEach(groupEl, 'input.pfy-integer', el => {
           sum += parseInt(el.value);
-      })
+        })
+      } else {
+        domForEach(groupEl, 'input.pfy-choice', el => {
+          sum += el.checked ? 1 : 0;
+        })
+      }
       if (sum < count) {
         error = true;
         console.debug('Error in countedchoices-group: sum of choices < count');
         groupEl.classList.add('pfy-countedchoices-group-error');
-        const div = document.createElement('div');
-        div.classList.add('pfy-countedchoices-group-error-msg');
-        div.innerText = `{{ pfy-form-countedchoices-required-error }}`;
-        groupEl.appendChild(div);
+        domForOne(groupEl, '.pfy-form-countedchoices-group-error-msg', el => {
+          el.style.display = 'block';
+        });
+      } else if (sum > count) {
+        error = true;
+        groupEl.classList.add('pfy-countedchoices-group-error');
+        console.debug('Error in countedchoices-group: sum of choices > count');
       }
     })
 
@@ -1095,7 +1100,7 @@ const pfyFormsHelper = {
 
 
   checkHonigtopf(form) {
-    let check = true;
+    let abort = false;
     const checkElement = form.querySelector('[data-check]');
     if (checkElement) {
       const name = checkElement.dataset.check;
@@ -1104,12 +1109,13 @@ const pfyFormsHelper = {
       const value = checkElement.value;
       const referenceElement = form.querySelector('[name="' + name + '"]');
       const referenceValue = referenceElement.value;
-      check = !value;
-      if (!check) {
+      const localhost = document.body.classList.contains('localhost');
+      if (value && !localhost) {
         pfyFormsHelper.openAntiSpamPopup(form, referenceValue, label);
+        abort = true;
       }
     }
-    return check;
+    return abort;
   }, // checkHonigtopf
 
 
@@ -1421,30 +1427,31 @@ const pfyFormsHelper = {
     if ( isNaN(maxVal)) {
       maxVal = 0;
     }
+    const required = groupEl.classList.contains('pfy-required');
     console.debug(`Appying maxVal ${maxVal} from ${controlledBySel}`);
     if (radioMode) {
       // switch to radio mode:
       groupEl.classList.remove('pfy-multiple-enabled');
       domForEach(groupEl, 'input.pfy-integer', (integerEl) => {
         let value = (integerEl.value) ? parseInt(integerEl.value) : 0;
-        value = Math.min(value, 1, maxVal);
-        integerEl.value = value;
+        integerEl.value = 0;
         const val = !!value;
-        const required = integerEl.required;
         integerEl.required = false;
         domForOne(integerEl, '^.pfy-input-wrapper input.pfy-choice', (radioEl) => {
-          console.debug(`Handling "required" in ${radioEl.name}`);
           radioEl.checked = val;
           radioEl.required = required;
         });
       })
+      domForAll(groupEl, '.pfy-form-cc-messages > div', el => {
+        el.style.display = 'none';
+      });
+
     } else {
       if (!groupEl.classList.contains('pfy-multiple-enabled')) {
         // switch to integer mode -> update integer elems once:
         groupEl.classList.add('pfy-multiple-enabled');
         domForEach(groupEl, 'input.pfy-choice', (radioEl) => {
           const val = !!radioEl.checked;
-          const required = radioEl.required;
           radioEl.required = false;
           domForOne(radioEl, '^.pfy-input-wrapper input.pfy-integer', (integerEl) => {
             integerEl.value = val ? 1 : 0;
@@ -1452,7 +1459,7 @@ const pfyFormsHelper = {
           });
         })
       } else {
-        // keepr radio elem in sync with integer elem while integers change:
+        // keep radio elem in sync with integer elem while integers change:
         domForEach(groupEl, 'input.pfy-integer', (integerEl) => {
           const val = integerEl.value !== '0';
           integerEl.value = Math.min(parseInt(integerEl.value), maxVal);
@@ -1486,23 +1493,21 @@ const pfyFormsHelper = {
       })
     })
 
-    console.debug(`Check max for cc-group #${groupEl.id} -> maxVal: ${maxVal}`);
+    // console.debug(`Check max for cc-group #${groupEl.id} -> maxVal: ${maxVal}`);
     let sum = 0;
     domForEach(groupEl, 'input.pfy-integer', (inputEl) => {
       sum += parseInt(inputEl.value);
     })
 
-    console.debug(`Sum of cc-group #${groupEl.id} is ${sum}`);
-    if (groupEl.classList.contains('pfy-countedchoices-group-error')) {
-      groupEl.classList.remove('pfy-countedchoices-group-error');
-      groupEl.querySelector('.pfy-countedchoices-group-error-msg').remove();
-    }
+    // console.debug(`Sum of cc-group #${groupEl.id} is ${sum}`);
     if (sum > maxVal) {
-      groupEl.classList.add('pfy-countedchoices-group-error');
-      const div = document.createElement('div');
-      div.classList.add('pfy-countedchoices-group-error-msg');
-      div.innerText = `{{ pfy-form-countedchoices-max-error }}`;
-      groupEl.appendChild(div);
+      domForOne(groupEl, '.pfy-form-countedchoices-max-error', el => {
+        el.style.display = 'block';
+      });
+    } else {
+      domForAll(groupEl, '.pfy-form-cc-messages > div', el => {
+        el.style.display = 'none';
+      });
     }
   }, // updateChangesInControlledChildren
 

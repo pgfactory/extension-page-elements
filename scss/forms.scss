@@ -364,9 +364,13 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     }
 
     // Error state:
-    .pfy-countedchoices-group-error-msg {
-      color: red;
-      font-style: italic;
+    .pfy-form-cc-messages {
+      grid-column: 1/-1;
+      > div {
+        display: none;
+        color: red;
+        font-style: italic;
+      }
     }
   } // pfy-form-countedchoices-group
 
@@ -989,7 +993,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 } // .pfy-default-styling
 
 
-// fix for safari quirk:
+ // fix for safari quirk:
 #pfy.pfy-default-styling.pfy-small-screen {
 	[type="date"],
 	[type="time"],

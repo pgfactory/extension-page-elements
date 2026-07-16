@@ -424,7 +424,7 @@ pfy-form-countedchoices-max-error:
   _:  'Max number of choices exceeded'
 
 pfy-form-countedchoices-required-error:
-  de: 'Es wurden noch nicht genügend Optionen ausgewählt'
+  de: 'Es sind noch nicht genügend Optionen ausgewählt'
   _:  'Not enough choices have been selected'
 
 
