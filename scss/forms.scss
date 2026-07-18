@@ -934,6 +934,7 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 
 
   .pfy-form-and-table-wrapper {
+    margin: 1.5em 0;
     .pfy-empty-row td:not(.pfy-row-number).pfy-service-col * {
       display: none;
     }

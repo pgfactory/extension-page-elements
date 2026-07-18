@@ -179,10 +179,12 @@ const pfyFormsHelper = {
     const changed = this.isFormModified(form);
 
     // reset form:
-    const formInx = form.querySelector('[name=_form_]').value;
-    if (form.closest('.pfy-form-wrapper') && form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
-      pfyFormsHelper.reloadAgent(`clearform=${formInx}`);
-    }
+    domForAll(form, '[name=_form_]', formInxEl => {
+      const formInx = formInxEl.value;
+      if (form.closest('.pfy-form-wrapper') && form.closest('.pfy-form-wrapper').classList.contains('pfy-retain-data')) {
+        pfyFormsHelper.reloadAgent(`clearform=${formInx}`);
+      }
+    })
 
     this.clearErrors(form);
     this.clearModifiedFlag(form);
