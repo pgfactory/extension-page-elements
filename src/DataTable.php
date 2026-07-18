@@ -1055,7 +1055,7 @@ EOT;
         $msg = '{{ pfy-form-rec-deleted }}';
         $mode = isset($_GET['delete']) ? 'delete' : 'archive';
 
-        $archiveMode = ($mode === 'archive');
+        $archiveMode = ($mode === 'archive'); // ?archive
         if ($archiveMode) {
             $archiveFile = $this->file;
             $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
