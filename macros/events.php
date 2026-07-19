@@ -4,7 +4,7 @@ namespace PgFactory\PageFactory;
 use PgFactory\PageFactoryElements\Events as Events;
 
 /*
- * PageFactory Macro (and Twig Function)
+ * PageFactory Macro
  */
 
 return function ($args = '')

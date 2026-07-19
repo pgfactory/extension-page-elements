@@ -3,7 +3,7 @@ namespace PgFactory\PageFactory;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 
 /*
- * Twig function
+ * Macro
  */
 
 return function ($argStr = '')

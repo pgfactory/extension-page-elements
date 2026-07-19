@@ -9,7 +9,7 @@ require_once __DIR__ . '/../src/PfyForm.php';
 
 
 /*
- * PageFactory Macro (and Twig Function)
+ * PageFactory Macro
  */
 
 

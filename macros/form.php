@@ -13,7 +13,7 @@ if (!isset($GLOBALS['pfy.form'])) {
     $GLOBALS['pfy.form'] = false;
 }
 /*
- * PageFactory Macro (and Twig Function)
+ * PageFactory Macro
  */
 
 

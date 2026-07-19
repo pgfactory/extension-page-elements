@@ -20,9 +20,6 @@ class ListRenderer
      * @param $options
      * @return string
      * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     public static function renderUserList($options): string
     {
@@ -72,9 +69,6 @@ class ListRenderer
      * @param array $options
      * @return string
      * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     public static function renderSubpages(array $options): string
     {
@@ -118,9 +112,6 @@ class ListRenderer
      * @param array $options
      * @return string
      * @throws \Kirby\Exception\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
-     * @throws \Twig\Error\RuntimeError
-     * @throws \Twig\Error\SyntaxError
      */
     public static function renderFolderContent(array $options): string
     {

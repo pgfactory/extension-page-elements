@@ -2,7 +2,7 @@
 namespace PgFactory\PageFactory;
 
 /*
- * Twig function
+ * Macros
  */
 
 use PgFactory\PageFactoryElements\ListRenderer;

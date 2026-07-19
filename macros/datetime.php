@@ -4,7 +4,7 @@ namespace PgFactory\PageFactory;
 use function PgFactory\PageFactoryElements\intlDate;
 
 /*
- * PageFactory Macro (and Twig Function)
+ * PageFactory Macro
  */
 
 return function ($args = '')
