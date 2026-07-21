@@ -1761,7 +1761,9 @@ EOT;
                 $this->setAction($this->formOptions['action']);
             } else {
                 $action = rtrim(PFY_HOST_URL, '/') . $_SERVER['REQUEST_URI'];
-                $action .= "#pfy-form-response";
+                if (!($this->formOptions['tableOptions']['mode']??false) === 'popup') {
+                    $action .= "#pfy-form-response";
+                }
                 $this->setAction($action); // this page's URL, poss. including ?xy
                 $this->formOptions['next'] = $action;
             }
@@ -3464,13 +3466,13 @@ EOT;
     private function renderTooltip(string $info): string
     {
         $id = "{$this->formIndex}-{$this->elemInx}";
-        $info = "<div>$info</div>";
+        $info = "<span>$info</span>";
         $info = "<button type='button' class='pfy-form-info-button pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . INFO_ICON .
-            "</button><div id='pfy-popover-$id' class='pfy-popover-content pos-below-right' popover style='position-anchor: --pfy-popover-$id'>$info</div>";
+            "</button><span id='pfy-popover-$id' class='pfy-popover-content pos-below-right' popover style='position-anchor: --pfy-popover-$id'>$info</span>";
         $info = <<<EOT
-<div  class="pfy-popover-wrapper">
+<span class="pfy-popover-wrapper pfy-info-body">
 $info
-</div><!-- /pfy-popover-wrapper -->
+</span><!-- /pfy-popover-wrapper pfy-info-body -->
 EOT;
         return $info;
     } // renderTooltip
