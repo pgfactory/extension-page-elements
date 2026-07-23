@@ -493,6 +493,9 @@ class PfyForm extends Form
             case 'button':
                 $elem = $this->addButton('_'.$name, $label);
                 $elem->setHtmlAttribute('class', "pfy-$type");
+                if ($elemOptions['title']??false) {
+                    $elem->setHtmlAttribute('title', $elemOptions['title']);
+                }
                 break;
             case 'literal':
                 return; // nothing to do
