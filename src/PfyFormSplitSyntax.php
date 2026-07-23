@@ -97,7 +97,7 @@ class PfyFormSplitSyntax extends PfyForm
                 $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
                                                                 //      /form
                                                                 //    /pfy-form-wrapper
-                $html .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+                $html .= $this->tableHtml;                      //    pfy-table-data-output-wrapper/
                 $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
                 $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
             }

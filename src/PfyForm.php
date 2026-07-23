@@ -148,6 +148,7 @@ class PfyForm extends Form
     private $addFormTableWrapper = false;
     private $eventFieldFound = false;
     private $tableTitle;
+    protected string $tableHtml;
     private string $formButtons = '';
     private bool $noShowOpened = false;
 
@@ -253,8 +254,6 @@ class PfyForm extends Form
             return $html;
         }
 
-        $tableHtml = $this->renderDataTable();              //    pfy-table-data-output-wrapper/
-
         // assemble form:
         $html .= $this->renderFormWrapperHead();        // pfy-form-and-table-wrapper
                                                         //    pfy-form-wrapper
@@ -267,7 +266,7 @@ class PfyForm extends Form
         $html .= $this->renderFormTail();               //        /pfy-elems-wrapper
                                                         //      /form
                                                         //    /pfy-form-wrapper
-        $html .= $tableHtml;                                //
+        $html .= $this->tableHtml;                      //   pfy-table-data-output-wrapper/
 
         $html .= $this->renderFormTableWrapperTail();   // /pfy-form-and-table-wrapper
         $html .= $this->renderProblemWithFormBanner();  // pfy-problem-with-form-hint/
@@ -296,6 +295,8 @@ class PfyForm extends Form
             reloadAgent(message: strip_tags($formResponse));
         }
 
+        $this->tableHtml = $this->renderDataTable();              //    pfy-table-data-output-wrapper/
+
         if ($formResponse) {
             if ($this->formResponse) {
                 $this->injectNoShowCssRule();
@@ -306,7 +307,6 @@ class PfyForm extends Form
                 return [false, "$formTopBanner\n$formResponse"];
             }
             if ($this->formResponse) {
-                $formResponse .= $this->renderDataTable();              //    pfy-table-data-output-wrapper/
                 $formResponse .= "<!-- === /pfy form widget === -->\n";
                 // in case of split syntax: need to signal renderFormPieces(tail) to skip table output again:
                 $this->tableOptions = false;
@@ -3909,7 +3909,7 @@ EOT;
                 $html = ($res['html'] ?? ($res[0] ?? ''));
                 $continueEval = $res['continueEval'] ?? ($res[1] ?? true);
                 $this->showForm = $res['showForm'] ?? ($res[2] ?? true);
-                $this->showFeedbackInpage = $res['showFeedbackInpage'] ?? ($res[3] ?? true);
+                $this->showFeedbackInpage = $res['showFeedbackInpage'] ?? ($res[3] ?? $this->showFeedbackInpage);
                 if (isset($res[4]) || isset($res['dataRec'])) {
                     $dataRec = $res['dataRec'] ?? $res[4];
                 }
