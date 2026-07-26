@@ -97,7 +97,7 @@ EOT;
         $soundfile = $files[0]??false;
     }
     if ($soundfile) {
-        if ($soundfile[0] !== '~') {
+        if (!str_starts_with($soundfile, '~')) {
             $soundfile = "~page/$soundfile";
         }
         $soundfile = Utils::resolveUrl($soundfile, true);

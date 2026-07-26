@@ -825,7 +825,7 @@ EOT;
         if ($this->options['file'] ?? false) {
             $file = $this->options['file'];
             $file .= (!preg_match('/\.\w{1,6}$/', $file)) ? '.json' : '';
-            if (!str_contains($file, '~')) {
+            if (!str_starts_with($file, '~')) {
                 $file = "~data/$file";
             }
             $file = Utils::resolvePath($file);

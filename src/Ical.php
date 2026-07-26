@@ -511,7 +511,7 @@ class Ical
         $this->path = '';
         $this->filename = $filename;
 
-        if (($this->path[0] ?? '') === '~') {
+        if (str_starts_with($this->path, '~')) {
             $file = $this->path . $this->filename;
         } else {
             $file = self::DOWNLOAD_PATH . $this->path . $this->filename;

@@ -176,7 +176,7 @@ class TemplateCompiler
         if (is_string($options)) {
             $templateOptions['element'] = $options;
             // shortcut: "template: ~page/file.txt":
-            if (($templateOptions['element'][0]??'') === '~') {
+            if (str_starts_with($templateOptions['element'], '~')) {
                 $templateOptions['file'] = $templateOptions['element'];
                 $templateOptions['element'] = '';
             }
@@ -186,7 +186,7 @@ class TemplateCompiler
 
         // special case: for convenience, element may contain file:
         if (is_array($options) && ($options['element']??false)) {
-            if ($options['element'][0] === '~') {
+            if (str_starts_with(($options['element']??''), '~')) {
                 $templateOptions['file'] = $options['element'];
                 $templateOptions['element'] = '';
             } else {

@@ -105,7 +105,7 @@ EOT,
     }
     if ($options['markdownFile']??false) {
         $file = $options['markdownFile'];
-        if ($file[0] !== '~') {
+        if (!str_starts_with($file, '~')) {
             $file = "~page/$file";
         }
         $options['markdown'] = loadFile($file);

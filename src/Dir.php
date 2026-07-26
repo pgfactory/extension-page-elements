@@ -517,7 +517,7 @@ EOT;
         $this->path = dir_name($this->path);
         if ($this->path) {
             $this->path = fixPath($this->path);
-            if ($this->path[0] !== '~') {
+            if (!str_starts_with($this->path, '~')) {
                 $this->path = '~page/' . $this->path;
             }
         } else {

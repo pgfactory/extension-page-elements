@@ -236,7 +236,7 @@ class ListRenderer
             $template = $defaultTemplate;
 
         } elseif (is_string($tmpl)) {
-            if ($tmpl[0] === '~') {
+            if (str_starts_with($tmpl, '~')) {
                 $templateFile = Utils::resolvePath($tmpl);
                 if (file_exists($templateFile)) {
                     $template = loadFile($templateFile);

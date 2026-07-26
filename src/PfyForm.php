@@ -3892,7 +3892,7 @@ EOT;
         $callbacks = explodeTrim(',', $this->formOptions['dataReceivedCallback']);
 
         foreach ($callbacks as $callback) {
-            if ($callback[0] === '~') {
+            if (str_starts_with($callback, '~')) {
                 $res = $this->handlePhpCallback($callback, $dataRec);
             } else {
                 $callback = rtrim($callback, '();');
@@ -3956,9 +3956,7 @@ EOT;
         foreach ($this->formElements as $name => $rec) {
             $file = $rec;
             if ($name === '@import') {
-                if ($file[0] === '~') {
-                    $file = Utils::resolvePath($file);
-                }
+                $file = Utils::resolvePath($file);
                 $newFields = loadFile($file, useCaching: true);
                 if (!is_array($newFields)) {
                     throw new \Exception("Syntax error in '$rec'.");
