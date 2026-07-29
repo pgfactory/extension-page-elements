@@ -448,7 +448,7 @@ EOT;
             $out .= "<li>$iconName: <img src='".MAP_SEARCH_ICON_PATH."$icon' width='21' height='21' alt='$icon' /></li>\n";
         }
         $out = "<h2>MapSearch Icons</h2>\n<ul class='pfy-mapsearch-icons'>\n$out</ul>\n";
-        Page::$css .= <<<EOT
+        $css = <<<EOT
 .pfy-mapsearch-icons {
     list-style: none;
 }
@@ -457,6 +457,7 @@ EOT;
     width: 12em;
 }
 EOT;
+        Page::addCss($css);
 
         return $out;
     } // listIcons
