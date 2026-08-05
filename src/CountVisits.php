@@ -124,14 +124,14 @@ class CountVisits
         if (!file_exists($file)) {
             preparePath($file);
             $content = 'since: ' . date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
-            writeFileLocking($file, $content);
+            writeFile($file, $content);
         }
         $content = file_get_contents($file);
         if (preg_match("|^since: (.*)|", $content, $m)) {
             $t = strtotime($m[1]);
         } else {
             $content = 'since: ' . date('Y-m-d H:i:s') . "\n\n$pgId: 0\n";
-            writeFileLocking($file, $content);
+            writeFile($file, $content);
             $t = filemtime($file);
         }
         $since = date('d-m-Y', $t);
