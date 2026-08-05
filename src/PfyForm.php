@@ -1102,6 +1102,11 @@ class PfyForm extends Form
             if (array_keys($names)[0] === '_anonInx0') {
                 $names = array_combine(['street', 'zip', 'city'], $names);
             }
+
+            // publish address names as js constants -> used by table/map feature:
+            $tmpNames = ','.implode(',', $names) . ',';
+            $js = "const pfyAddressNames = '$tmpNames';";
+            Page::addJs($js);
         }
 
         $addressElements = [];
@@ -2686,20 +2691,23 @@ EOT;
      * @return false|string // no error | error msg
      * @throws \Exception
      */
-    private function storeSubmittedData(array $newRec, string|false $recId = false): bool|string
+    private function storeSubmittedData(array $dataRec, string|false $recId = false): bool|string
     {
-        foreach ($newRec as $key => $rec) {
-            if (is_array($rec)) {
-                foreach ($rec as $k => $r) {
+        $newRec = [];
+        foreach ($dataRec as $key => $val) {
+            $name = $this->fieldNames[$key] ?? $key;
+            if (is_array($val)) {
+                foreach ($val as $k => $r) {
                     if (is_a($r, 'Nette\Http\FileUpload')) {
-                        unset($newRec[$key][$k]);
+                        continue 2;
                     }
                 }
             } else {
-                if (is_a($rec, 'Nette\Http\FileUpload')) {
-                    unset($newRec[$key]);
+                if (is_a($val, 'Nette\Http\FileUpload')) {
+                    continue;
                 }
             }
+            $newRec[$name] = $val;
         }
         if (!$newRec) {
             return false;
@@ -3419,6 +3427,9 @@ EOT;
 
         // register found $name with global list of field-names (used for table-output):
         if (!str_contains('submit,cancel,newrec', $_name)) {
+            if (str_contains($label0, '{{')) {
+                $label0 = trim(TransVars::translate($label0), ': ');
+            }
             $this->fieldNames[$name] = ($elemOptions['columnHeader']??false) ?: $label0;
         }
         $elemOptions['isArray'] = false;
