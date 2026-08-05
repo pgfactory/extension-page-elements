@@ -109,6 +109,10 @@ const PE_PATH_DEFINITIONS = [
     'IFRAME_RESIZER_PARENT' => [
         PE_ASSETS_PATH.'js/iframe-resizer.parent.js',
     ],
+    'MAP_SEARCH' => [
+        PE_ASSETS_PATH.'css/map.search/fonts.css',
+        PE_ASSETS_PATH.'js/map.search.js',
+    ],
 ];
 
 

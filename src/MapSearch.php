@@ -34,7 +34,7 @@ class MapSearch
 
         if ($this->inx === 1) {
             Page::addJs('const pfyMaps = [];');
-            Assets::addAssets('https://search.ch/map/api/map.js');
+            Assets::addAssets('MAP_SEARCH');
         }
 
         $centerpois = ($options['centerpois'] ?? true) ? "\n    centerpois:true," : '';
