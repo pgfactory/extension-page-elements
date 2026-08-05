@@ -238,7 +238,7 @@ class PfyPopup {
       wrapperClass += ' pfy-close-on-bg-click';
     }
 
-    let containerClass = 'pfy-popup-container';
+    let containerClass = 'pfy-popup-container ' + this.containerClass;
     if (this.scrollHints) {
       containerClass += ' pfy-scroll-hints';
     }
