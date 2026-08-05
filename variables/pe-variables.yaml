@@ -52,6 +52,10 @@ pfy-table-view-rec-title:
   de: 'Diesen Datensatz anzeigen'
   _:  'Show this data record'
 
+pfy-table-map-rec-title:
+  de: 'Adresse auf Karte anzeigen'
+  _:  'Show address on map'
+
 pfy-table-send-rec-title:
   de: 'Diesen Datensatz per E-Mail versenden'
   _:  'Send this data record by e-mail'
@@ -113,6 +117,8 @@ pfy-row-edit-header: ':edit:'
 
 pfy-row-view-header: ':eye:'
 
+pfy-row-map-header: ':map:'
+
 pfy-table-edit-rec-popup-header:
   de: 'Datensatz bearbeiten'
   _:  'Edit Data Record'
@@ -162,6 +168,10 @@ pfy-table-entries-per-page-label:
 pfy-table-rec-preview-popup-header:
   de: 'Vorschau'
   _:  'Preview'
+
+pfy-table-rec-map-popup-header:
+  de: 'Karte'
+  _:  'Map'
 
 
 #pfy-table-send-rec:

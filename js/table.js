@@ -62,6 +62,9 @@ const tableHelper = {
       if (el.closest('.pfy-row-view-button')) {
         tableHelper.viewButtonsHandler(ev);
       }
+      if (el.closest('.pfy-row-map-button')) {
+        tableHelper.mapButtonsHandler(ev);
+      }
     }); // click events
 
     document.addEventListener('change', function (ev) {
@@ -368,6 +371,53 @@ const tableHelper = {
     });
 
   }, // viewButtonsHandler
+
+
+  mapButtonsHandler: function (ev) {
+    const el = ev.target;
+    const tableInx = el.closest('[data-tableinx]').dataset.tableinx;
+    const templateClass = '.pfy-table-map-template-' + tableInx;
+    ev.stopImmediatePropagation();
+    const row = el.closest('tr');
+    let names = [];
+    let i = 0;
+    domForEach(`.pfy-table-${tableInx} th`, el => {
+      names[i++] = el.dataset.elemname ?? '';
+    });
+
+    let address = '';
+    i = 0;
+    domForEach(row, 'td', tdEl => {
+      const name = names[i++];
+      if (name && pfyAddressNames.includes(`,${name},`)) {
+        address += ' ' + tdEl.innerText;
+      }
+    })
+    const options = {
+      container: 'pfy-popup-map', //'pfy-swissmap-container-1',
+      center: address,
+    };
+
+    pfyPopup({
+      content: '<div id="pfy-popup-map" class="map">Here comes the map...</div>',
+      modal: false,
+      header: `{{ pfy-table-rec-map-popup-header }}`,
+      scrollHints: false,
+      closeOnBgClick: true,
+      containerClass: 'pfy-table-map-popup',
+      onOpen: () => {
+        const pfyMap = new SearchChMap({
+          container: options.container,
+          center: options.center,
+          zoomlevel: options.zoomlevel ?? 15,
+          marker: options.marker ?? true,
+          type: options.type ?? 'street',
+          controls: options.controls ?? 'all',
+        });
+      },
+    });
+
+  }, // mapButtonsHandler
 
 
   // === Table Button Handlers:

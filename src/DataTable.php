@@ -90,7 +90,7 @@ class DataTable
 {
     private array $options;
     private $file = false;
-    private array|null$tableData = null;
+    private array|null $tableData = null;
     private $tableHeaders;
     private bool $translateHeaders;
     private $tableClass;
@@ -169,11 +169,11 @@ class DataTable
         $this->prepareColumnDefs();
 
         if (isset($_GET['sendto']) && isLoggedIn()) {
-            $this->sendRec($_GET['sendto']??false, $_GET['recid']??false);
+            $this->sendRec($_GET['sendto'] ?? false, $_GET['recid'] ?? false);
         }
 
         if (sizeof($this->tableData) === 0) {
-            if ($this->options['mode']??false) {
+            if ($this->options['mode'] ?? false) {
                 return <<<EOT
 <div class="pfy-table-wrapper">{{ pfy-no-data-available }}</div>
 
@@ -233,7 +233,7 @@ EOT;
         $out = "<table id='$this->tableId' class='$this->tableClass'>\n";
         // caption:
         if ($this->caption) {
-            $style = $this->captionAbove? '': ' style="caption-side: bottom;"'; // use style to push caption below table
+            $style = $this->captionAbove ? '' : ' style="caption-side: bottom;"'; // use style to push caption below table
             $caption = str_replace('%#', $this->inx, $this->caption);
             $out .= "  <caption$style>$caption</caption>\n";
         }
@@ -289,7 +289,7 @@ EOT;
      */
     private function renderTableRow(int $r, int|string $recKey): string
     {
-        $rowClass = $this->rowClasses[$r-1] ?? '';
+        $rowClass = $this->rowClasses[$r - 1] ?? '';
         $locked = $this->data2Dset->isLocked($recKey);
         $rowClass .= $locked ? ' pfy-rec-locked' : '';
         $out = "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
@@ -341,7 +341,6 @@ EOT;
     } // renderTableCell
 
 
-
     /**
      * @param mixed $k
      * @param mixed $rec
@@ -350,7 +349,7 @@ EOT;
      * @param mixed $key
      * @return array|void
      */
-    private function renderComputedCells(string  $recKey, int $r, int $c, string $cell): string
+    private function renderComputedCells(string $recKey, int $r, int $c, string $cell): string
     {
         $cell0 = $cell;
         $rec = $this->tableData[$recKey];
@@ -381,7 +380,7 @@ EOT;
         if ($this->footers) {
             $dataKeys = [];
             foreach ($this->columns as $rec) {
-                $dataKeys[] = $rec['key']??'';
+                $dataKeys[] = $rec['key'] ?? '';
             }
             $footer = $this->footers;
             $nCols = sizeof($dataKeys);
@@ -393,7 +392,7 @@ EOT;
                         continue;
                     }
                     if (isset($footer[$key])) {
-                        if (str_contains($footer[$key],TABLE_SUM_SYMBOL) && is_numeric($value)) {
+                        if (str_contains($footer[$key], TABLE_SUM_SYMBOL) && is_numeric($value)) {
                             $sums[$key] += $value;
                         } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL) && $value) {
                             $counts[$key]++;
@@ -417,7 +416,7 @@ EOT;
                     }
                     if ($val[0] === '=') {
                         try {
-                            $val = substr($val,1);
+                            $val = substr($val, 1);
                             $val = eval("return $val;");
                         } catch (\Exception $e) {
                             exit($e);
@@ -426,7 +425,7 @@ EOT;
                 } else {
                     $val = '&nbsp;';
                 }
-                $colClass = $this->colClasses[$c]??'';
+                $colClass = $this->colClasses[$c] ?? '';
                 $out .= "      <td class='$colClass'><div>$val</div></td>\n";
                 $c++;
             }
@@ -435,8 +434,6 @@ EOT;
         }
         return $out;
     } // renderTableFooter
-
-
 
 
     // === Aux Methods ================================================================================
@@ -469,7 +466,7 @@ EOT;
         // inject service rows: select(delete), row-numbers, edit-buttons
         $c = $this->prepareServiceColumns();
 
-        $tdClass = $this->tdClass? " $this->tdClass": '';
+        $tdClass = $this->tdClass ? " $this->tdClass" : '';
         if (!$this->tableHeaders || $this->tableHeaders === true) {
             $colHeaders = $this->data2Dset->getColHeaders();
         } else {
@@ -494,18 +491,18 @@ EOT;
                 }
             }
             $dataElemName = "data-elemname='$key'";
-            $class = 'pfy-col-'.translateToClassName($value);
+            $class = 'pfy-col-' . translateToClassName($value);
             if ($value !== $key) {
-                $class = 'pfy-col-'.translateToClassName(ltrim($key, '_'));
+                $class = 'pfy-col-' . translateToClassName(ltrim($key, '_'));
             }
-            if ($this->colClasses[$c]??'') {
+            if ($this->colClasses[$c] ?? '') {
                 $class .= ' ' . $this->colClasses[$c];
             }
             $class = "pfy-col-$i $class$tdClass";
 
             $cell = "\$$key";
-            if ($this->computedCells[$key]?? false) {
-                $cell = '='.$this->computedCells[$key];
+            if ($this->computedCells[$key] ?? false) {
+                $cell = '=' . $this->computedCells[$key];
             }
 
             $this->columns[] = [
@@ -531,7 +528,7 @@ EOT;
         if (!$this->serviceColumns) {
             return 0;
         }
-        $tdClass = $this->tdClass? " $this->tdClass": '';
+        $tdClass = $this->tdClass ? " $this->tdClass" : '';
         $servCols = explodeTrim(',', $this->serviceColumns, true);
         $serviceColumns = [];
         $i = 1;
@@ -549,7 +546,7 @@ EOT;
             } elseif (str_starts_with($elem, 'edit')) {
                 $icon = MdPlusHelper::renderIcon('edit');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-edit-header', varNameIfNotFound:true);
+                $hdrCell = TransVars::getVariable('pfy-row-edit-header', varNameIfNotFound: true);
                 if (preg_match('/:\w{3,20}:/', $hdrCell)) {
                     $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
                 }
@@ -559,13 +556,23 @@ EOT;
             } elseif (str_starts_with($elem, 'view')) {
                 $icon = MdPlusHelper::renderIcon('eye');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-view-button' type='button' title='{{ pfy-table-view-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-view-header', varNameIfNotFound:true);
+                $hdrCell = TransVars::getVariable('pfy-row-view-header', varNameIfNotFound: true);
                 if (preg_match('/:\w{3,20}:/', $hdrCell)) {
                     $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-view-rec-title }}');
                 }
                 $hdr = $hdrCell;
                 $class = 'pfy-row-view';
                 $this->renderViewTemplate();
+
+            } elseif (str_starts_with($elem, 'map')) {
+                $icon = MdPlusHelper::renderIcon('map');
+                $cell = "<button class='pfy-button pfy-row-button pfy-row-map-button' type='button' title='{{ pfy-table-map-rec-title }}'>$icon</button>";
+                $hdrCell = TransVars::getVariable('pfy-row-map-header', varNameIfNotFound: true);
+                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-map-rec-title }}');
+                }
+                $hdr = $hdrCell;
+                $class = 'pfy-row-map';
 
             } elseif (str_starts_with($elem, 'send')) {
                 $icon = MdPlusHelper::renderIcon('mail_send');
@@ -593,18 +600,18 @@ EOT;
                 } else {
                     $hdrCell = $elem;
                     $cell = $elem;
-                    $class = 'pfy-row-'.translateToClassName($elem);
+                    $class = 'pfy-row-' . translateToClassName($elem);
                 }
                 if (!str_contains($cell, '<')) {
                     $title = $title1 = $this->parseForIcon($cell);
                     if ($title1) {
                         $title1 = " title='$title1'";
                     }
-                    $class = 'pfy-col-'.translateToClassName($cell);
+                    $class = 'pfy-col-' . translateToClassName($cell);
                     $cell = "<button class='pfy-button pfy-row-button $class' type='button'$title1>$cell</button>";
                 }
                 if ($hdrCell) {
-                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, $title);
+                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, $title) ?: "<span class='dt-column-title'>$hdrCell</span>";
                 }
                 $hdr = $hdrCell;
             }
@@ -667,13 +674,13 @@ EOT;
                 $type = $tableButton;
                 $label = $tableButton;
             } elseif (is_array($tableButton)) {
-                $type = ($tableButton['type']??false) ? $tableButton['type'] : $key;
-                $label = ($tableButton['label']??false) ? $tableButton['label'] : $key;
+                $type = ($tableButton['type'] ?? false) ? $tableButton['type'] : $key;
+                $label = ($tableButton['label'] ?? false) ? $tableButton['label'] : $key;
             }
             switch ($type) {
                 case 'archive':
                     $icon = renderIcon('database');
-                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' ".
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-archive-recs-open-dialog' " .
                         "type='button' title='{{ pfy-table-archive-recs-title }}'>$icon</button>\n";
                     Assets::addAssets('POPUPS');
                     break;
@@ -681,13 +688,13 @@ EOT;
                 case 'new':
                 case 'add':
                     $icon = renderIcon('plus');
-                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' ".
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-new-rec' " .
                         "type='button' title='{{ pfy-opens-new-rec }}'>$icon</button>\n";
                     break;
 
                 case 'delete':
                     $icon = renderIcon('trash');
-                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' ".
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-delete-recs-open-dialog' " .
                         "type='button' title='{{ pfy-table-delete-recs-title }}'>$icon</button>\n";
                     Assets::addAssets('POPUPS');
                     break;
@@ -695,10 +702,10 @@ EOT;
                 case 'email':
                 case 'mail':
                     $icon = renderIcon('mail');
-                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-mail-open-dialog' ".
+                    $button = "  <button class='pfy-button pfy-button-lean pfy-table-mail-open-dialog' " .
                         "type='button' title='{{ pfy-table-create-mail-title }}'>$icon</button>\n";
                     Assets::addAssets('POPUPS');
-                    $mailFieldSelector = 'td-'.translateToClassName($this->mailFieldName);
+                    $mailFieldSelector = 'td-' . translateToClassName($this->mailFieldName);
                     Page::addJs("const formOwnerEmail = '$this->mailFrom';\nconst mailFieldSelector = '$mailFieldSelector';");
                     break;
 
@@ -715,11 +722,11 @@ EOT;
                         $button = $label;
                     } else {
                         $class = translateToClassName($label);
-                        $callback = ($tableButton['callback']??false) ? " data-callback='{$tableButton['callback']}'" : '';
+                        $callback = ($tableButton['callback'] ?? false) ? " data-callback='{$tableButton['callback']}'" : '';
                         $button = "<button id='pfy-table-button-$this->inx-$i' class='pfy-button pfy-button-lean $class' type='button'$callback>$label</button>";
                     }
             }
-            $buttons .= $button."\n";
+            $buttons .= $button . "\n";
         }
 
         if ($buttons) {
@@ -863,10 +870,10 @@ EOT;
     private function renderTableDropdownButton(array $tableButton, string $label): string
     {
         $dropdown = '';
-        $callback = ($tableButton['callback']??false) ? " data-callback='{$tableButton['callback']}'" : '';
-        $options = ($tableButton['options']??false) ? $tableButton['options'] : [];
-        $title = ($tableButton['title']??false) ? " title='{$tableButton['title']}'" : '';
-        $id = ($tableButton['id']??false) ? " id='{$tableButton['id']}'" : '';
+        $callback = ($tableButton['callback'] ?? false) ? " data-callback='{$tableButton['callback']}'" : '';
+        $options = ($tableButton['options'] ?? false) ? $tableButton['options'] : [];
+        $title = ($tableButton['title'] ?? false) ? " title='{$tableButton['title']}'" : '';
+        $id = ($tableButton['id'] ?? false) ? " id='{$tableButton['id']}'" : '';
         if (is_string($options)) {
             $options = explodeTrim(',', $options);
         }
@@ -1012,7 +1019,7 @@ EOT;
      */
     private function sendRec(string $email, string $recKey): void
     {
-        if (!($this->tableData[$recKey]??false) || !isLoggedIn()) {
+        if (!($this->tableData[$recKey] ?? false) || !isLoggedIn()) {
             return;
         }
 
@@ -1058,7 +1065,7 @@ EOT;
         $archiveMode = ($mode === 'archive'); // ?archive
         if ($archiveMode) {
             $archiveFile = $this->file;
-            $archiveFile = fileExt($archiveFile, true).'.archive.'.fileExt($archiveFile);
+            $archiveFile = fileExt($archiveFile, true) . '.archive.' . fileExt($archiveFile);
             $this->archiveDb = new DataStore($archiveFile);
             $msg = '{{ pfy-form-rec-archived }}';
         }
@@ -1284,6 +1291,11 @@ EOT;
 
         $this->serviceColumns = $serviceColumns;
         $this->tableButtons = $tableButtons;
+
+        // if service col 'map' is active, we need to load asset:
+        if (str_contains($serviceColumns, 'map')) {
+            Page::addAssets('MAP_SEARCH');
+        }
 
         // table headers:
         if ($this->tableHeaders && ($this->tableHeaders !== true)) {
