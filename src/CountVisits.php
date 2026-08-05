@@ -6,7 +6,7 @@ use PgFactory\PageFactory\PageFactory;
 use PgFactory\MarkdownPlus\Permission;
 use function PgFactory\PageFactory\isBot;
 use function PgFactory\PageFactory\preparePath;
-use function PgFactory\PageFactory\writeFileLocking;
+use function PgFactory\PageFactory\writeFile;
 
 class CountVisits
 {
@@ -83,7 +83,7 @@ class CountVisits
             $counters .= "$pgId: 1\n";
         }
         if (!str_contains($ipsToIgnore, $clientIp) && $doCount) {
-            writeFileLocking($file, $counters);
+            writeFile($file, $counters);
         }
         return [$since, $count];
     } // countVisits
