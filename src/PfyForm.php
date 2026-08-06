@@ -1139,6 +1139,9 @@ class PfyForm extends Form
         if ($values['street']??false) {
             $addressElements[$elName]['value'] = $values['street'];
         }
+        if ($names['street']??false) {
+            $addressElements[$elName]['name'] = $names['street'];
+        }
 
         $combinedLabel = TransVars::getVariable('pfy-form-address-combined-label');
         if ($required) {
@@ -1193,7 +1196,6 @@ class PfyForm extends Form
         if ($names['city']??false) {
             $addressElements[$elName]['name'] = $names['city'];
         }
-
 
         $this->formElements = array_splice_associative($this->formElements, $name, 1, $addressElements);
 
@@ -2695,7 +2697,6 @@ EOT;
     {
         $newRec = [];
         foreach ($dataRec as $key => $val) {
-            $name = $this->fieldNames[$key] ?? $key;
             if (is_array($val)) {
                 foreach ($val as $k => $r) {
                     if (is_a($r, 'Nette\Http\FileUpload')) {
@@ -2707,7 +2708,7 @@ EOT;
                     continue;
                 }
             }
-            $newRec[$name] = $val;
+            $newRec[$key] = $val;
         }
         if (!$newRec) {
             return false;
