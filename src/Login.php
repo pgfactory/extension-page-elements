@@ -277,6 +277,9 @@ EOT;
                     reloadAgent(self::$nextPage, $str);
 
                 } catch (\Exception $e) {
+                    if (kirby()->option('pgfactory.pagefactory.permitAccessCodeAsPassword', true)) {
+                        Permission::checkPageAccessCode($password);
+                    }
                     mylog("$email login failed", PFY_LOGIN_LOG_FILE);
                     reloadAgent(self::$nextPage, '{{ pfy-login-failed }}');
                 }

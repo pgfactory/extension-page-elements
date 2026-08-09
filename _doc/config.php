@@ -27,6 +27,7 @@
 //        ],
 //        'templateCompilerDefaultMode' => 'twig', // default mode for TemplateCompiler, e.g. used by macro form()
 //        'allowChangePassword'         => true,
+//        'permitAccessCodeAsPassword'  => false,   // if not disabled, access-Code works as login password
 //        'enableOnboardingAid'         => true, // enables the '?onboardingaid' feature
 //        'initCode'                    => 'init.php', // run init code in site/custom/code/
 //        'login-mode'                  => 'passwordless',   // 'username-password-only' or 'passwordless' or 'login'
