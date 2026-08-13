@@ -165,12 +165,6 @@ class PageElements
             }
         }
 
-        // activate site-manager if requested:
-        if (kirby()->option('pgfactory.pagefactory-elements.activateSitemapManager')) {
-            require_once __DIR__ . '/SitemapManager.php';
-            SitemapManager::updateSitemap();
-        }
-
         Assets::addAssets(PE_ASSETS_PATH.'js/pe-helper.js');
 
         Assets::addAssetGroups(PE_PATH_DEFINITIONS);
