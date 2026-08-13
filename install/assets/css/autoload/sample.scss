@@ -1,0 +1,39 @@
+// === PE Sample styles - remove or modify as you like ========================================
+
+
+// Onboarding Aid
+.pfy-onboardingaid-button * {
+	color: orange;
+	margin: 0 0.3em 0 0.2em;
+}
+.pfy-popup .pfy-onboardingaid {
+	margin: 2em 0;
+	padding: 2em;
+	border: 1px solid orange;
+	background: rgb(255, 242, 218);
+}
+#pfy .pfy-onboarding-link {
+	display: block;
+	margin: 1em 0 0 0;
+	color: red;
+	border: 1px solid red;
+	padding: 0.5em;
+}
+
+
+// for dev on localhost only:
+.dev-footer {
+	margin-bottom: 1em;
+	display: flex;
+	justify-content: space-between;
+	background: #a537ff;
+	background: repeating-linear-gradient(-55deg, #9f29ff, #9f29ff 10px, #9310fe 10px, #9310fe 15px);
+}
+
+
+// === form tables =================================
+.pfy-default-styling .pfy-table tbody td:not(.pfy-service-col) > div {
+  max-height: 3.5em;
+  overflow-y: auto;
+}
+
