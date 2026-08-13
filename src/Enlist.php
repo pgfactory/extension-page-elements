@@ -15,25 +15,25 @@ use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 
-const ENLIST_INFO_ICON      = 'ⓘ';
-const ENLIST_COLLAPSE_ICON  = '⇪';
-const ENLIST_MAIL_ICON      = '✉';
-const ENLIST_ADD_ICON       = '+';
-const ENLIST_MODIFY_ICON    = '✎';
-const ENLIST_DELETE_ICON    = '−';
-const ENLIST_OBFUSCATED_VALUE = '#####';
-const DEFAULT_DATA_PATH     = '~data/enlist/';
-define ('DEFAULT_DATA_FILE', str_replace('/', '_', page()->id()) . '.json');
-const PFY_FREEZETIME_UNIT  = 3600; // => hours
-const PERSISTENT_OPTIONS = ['nSlots', 'nReserveSlots', 'title', 'freezeTime', 'deadline', 'class',
-    'info', 'placeholder', 'ical', 'description', 'editable', 'directlyToReserve',
-    'sendConfirmation', 'notifyOwner', 'notifyActivatedReserve', 'obfuscate', 'admin', 'adminEmail',
-    'adminMail', 'schedule', 'rejectRobots'];
-    // -> thus excluded: 'file', 'id'
-
+define ('PE_DEFAULT_ENLIST_DATA_FILE', str_replace('/', '_', page()->id()) . '.json');
 
 class Enlist
 {
+    private const INFO_ICON      = 'ⓘ';
+    private const COLLAPSE_ICON  = '⇪';
+    private const MAIL_ICON      = '✉';
+    private const ADD_ICON       = '+';
+    private const MODIFY_ICON    = '✎';
+    private const DELETE_ICON    = '−';
+    private const OBFUSCATED_VALUE = '#####';
+    private const DEFAULT_DATA_PATH     = '~data/enlist/';
+    private const FREEZETIME_UNIT  = 3600; // => hours
+    private const PERSISTENT_OPTIONS = ['nSlots', 'nReserveSlots', 'title', 'freezeTime', 'deadline', 'class',
+        'info', 'placeholder', 'ical', 'description', 'editable', 'directlyToReserve',
+        'sendConfirmation', 'notifyOwner', 'notifyActivatedReserve', 'obfuscate', 'admin', 'adminEmail',
+        'adminMail', 'schedule', 'rejectRobots'];
+    // -> thus excluded: 'file', 'id'
+
     private static $initialized = false;
     private static int $enlistWidgetIndex = 0;
     private int|string $widgetInx;
@@ -71,7 +71,6 @@ class Enlist
     private array $tableHeaders = [];
     private array $colClasses = [];
     private array $rowClasses = [];
-    private array $rowIds = [];
     private static string $enlistFormHtml = '';
     private mixed $event;
 
@@ -225,7 +224,6 @@ EOT;
             'dataReference' => true,
             'colClasses' => $this->colClasses,
             'rowClasses' => $this->rowClasses,
-            'rowIds' => $this->rowIds,
             'unknownValue' => '&nbsp;',
             'placeholderForUndefined' => '',
         ];
@@ -336,7 +334,7 @@ EOT;
     {
         $value = $row['Name'];
         if ($this->obfuscate === true) {
-            $value = ENLIST_OBFUSCATED_VALUE;
+            $value = self::OBFUSCATED_VALUE;
 
         } elseif ($this->obfuscate === 'initials') {
             $ar = array_map(function ($e) {
@@ -384,7 +382,7 @@ EOT;
      */
     private function renderSendMailToAllButton(): string
     {
-        $mailIcon = ENLIST_MAIL_ICON;
+        $mailIcon = self::MAIL_ICON;
         $headButtons = <<<EOT
         <button class="pfy-enlist-sendmail-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-sendmail-button-title }}"><span>$mailIcon</span></button>
 EOT;
@@ -404,7 +402,7 @@ EOT;
                     $info = str_replace("%$key%", $value, $info);
                 }
             }
-            $info = "<button class='pfy-popover-anchor' popovertarget='pfy-popover-{$this->widgetInx}' style='anchor-name: --pfy-popover-$this->widgetInx'>" . ENLIST_INFO_ICON .
+            $info = "<button class='pfy-popover-anchor' popovertarget='pfy-popover-{$this->widgetInx}' style='anchor-name: --pfy-popover-$this->widgetInx'>" . self::INFO_ICON .
                 "</button><div id='pfy-popover-{$this->widgetInx}' class='pfy-popover-content pos-left' popover style='position-anchor: --pfy-popover-$this->widgetInx'>$info</div>";
             $info = <<<EOT
 <div  class="pfy-popover-wrapper">
@@ -425,7 +423,7 @@ EOT;
         if (!$this->hasCollapsableSlots()) {
             return '';
         }
-        $icon = ENLIST_COLLAPSE_ICON;
+        $icon = self::COLLAPSE_ICON;
         $html = <<<EOT
         <button class="pfy-enlist-collapse-button pfy-button pfy-button-lean" type="button" title="{{ pfy-enlist-collapse-button-title }}"><span>$icon</span></button>
 EOT;
@@ -684,7 +682,7 @@ EOT;
         $slots = $this->widgetSlots;
         $rowClasses = [];
         $addFieldDone = false;
-        $currFreezeTime = $this->freezeTime ? time() - ($this->freezeTime * PFY_FREEZETIME_UNIT) : false;
+        $currFreezeTime = $this->freezeTime ? time() - ($this->freezeTime * self::FREEZETIME_UNIT) : false;
         for ($i = 0; $i < $this->nTotalSlots; $i++) {
             $slot = ($slots[$i] ?? false) ? $slots[$i] : [];
             $rowClasses[$i] = '';
@@ -750,12 +748,12 @@ EOT;
             $deleteIcon = '';
 
         } elseif ($this->editable && $this->hasVisibleCustomFields && !$this->obfuscate) {
-            $deleteIcon = '<button type="button" title="{{ pfy-enlist-modify-title }}">' . ENLIST_MODIFY_ICON . '</button>';
+            $deleteIcon = '<button type="button" title="{{ pfy-enlist-modify-title }}">' . self::MODIFY_ICON . '</button>';
 
         } else {
-            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . ENLIST_DELETE_ICON . '</button>';
+            $deleteIcon = '<button type="button" title="{{ pfy-enlist-delete-title }}">' . self::DELETE_ICON . '</button>';
         }
-        $addIcon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . ENLIST_ADD_ICON . '</button>';
+        $addIcon = '<button type="button" title="{{ pfy-enlist-add-title }}">' . self::ADD_ICON . '</button>';
         return [$deleteIcon, $addIcon];
     } // prepareIcons
 
@@ -837,9 +835,9 @@ EOT;
                 self::$_file = $file;
             }
         } elseif (!self::$_file) {
-            self::$_file = Utils::resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
+            self::$_file = Utils::resolvePath(self::DEFAULT_DATA_PATH . PE_DEFAULT_ENLIST_DATA_FILE);
         } else {
-            return Utils::resolvePath(DEFAULT_DATA_PATH . DEFAULT_DATA_FILE);
+            return Utils::resolvePath(self::DEFAULT_DATA_PATH . PE_DEFAULT_ENLIST_DATA_FILE);
         }
         return self::$_file;
     } // determineDataFile
@@ -853,7 +851,7 @@ EOT;
     private function handlePersistentOptions(array &$options, array &$customFields)
     {
         if ($options['setDefaults'] ?? false) {
-            foreach (PERSISTENT_OPTIONS as $key) {
+            foreach (self::PERSISTENT_OPTIONS as $key) {
                 if (($options[$key] ?? null) !== null) {
                     self::$persistentOptions[$key] = $options[$key];
                 }
@@ -879,7 +877,7 @@ EOT;
                 }
             }
         }
-        foreach (PERSISTENT_OPTIONS as $key) {
+        foreach (self::PERSISTENT_OPTIONS as $key) {
             if (!isset($options[$key])) {
                 $options[$key] = null;
             }

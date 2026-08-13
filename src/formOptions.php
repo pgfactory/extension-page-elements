@@ -1,5 +1,5 @@
 <?php
-// Definition of arguments and help-text for form() and forms() macros:
+ // Definition of arguments and help-text for form() and forms() macros:
 return  [
         'file' =>	['File where to store data submitted by users. E.g. "&#126;data/form.json"', false],
 
@@ -111,9 +111,6 @@ return  [
         'edit' =>	['Synonym for "editData".', null],
 
         'recLocking' =>	['[bool] Defines, whether record-locking shall be activated while editing a record.', false],
-
-        'includeSystemFields' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
-            'in output table.', false],
 
         'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', []],
 

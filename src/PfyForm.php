@@ -23,109 +23,112 @@ use function PgFactory\PageFactory\var_r as var_r;
 use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
 use function PgFactory\PageFactoryElements\intlDateFormat as intlDateFormat;
 
-define('ARRAY_SUMMARY_NAME', '_');
-const PFY_FORMS_SUPPORTED_TYPES =
-    ',text,password,email,textarea,hidden,readonly,'.
-    'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
-    'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
-    'event,address,countedchoices,'.
-    'button,reset,submit,cancel,@import,literal,';
-    // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
-
-const PFY_NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
-const PFY_CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
-const INFO_ICON = 'ⓘ';
-const MEGABYTE = 1048576;
-const PFY_LOW_SEATS_WARNING_THRESHOLD = 10;
-
-const PFY_FORM_OPTIONS = [
-    'file' => false,
-    'confirmationText' => false,
-    'ownerNotificationTo' => false,
-    'maxCount' => false,
-    'maxCountOn' => false,
-    'labelWidth' => false,
-    'formTop' => false,
-    'formHint' => false,
-    'formBottom' => false,
-    'confirmationEmail' => '',
-    'confirmationEmailTo' => '',
-    'emailFieldName' => '',
-    'mailFrom' => false,
-    'mailFromName' => false,
-    'deadline' => false,
-    'id' => false,
-    'class' => false,
-    'wrapperClass' => false,
-    'outerWrapperClass' => '',
-    'action' => '~page/',
-    'next' => '~page/',
-    'dataReceivedCallback' => false,
-    'presetCallbackJs' => false,
-    'onSubmitCallbackJs' => false,
-    'scriptInjectionFilter' => true,
-    'tableOptions' => [
-        'tableButtons' => '',
-        'serviceColumns' => '',
-        'editMode' => 'inpage', // inpage, popup, save
-        'minRows' => false,
-        'announceEmptyTable' => true,
-        'permission' => 'loggedin|localhost',
-        'showAllFields' => false,
-        'headers' => '',
-        'tableTitle' => false,
-        'masterFileRecKeyType' => 'index',
-        'scrollHints' => false,
-        'markLocked' => false,
-        'obfuscateRecKeys' => false,
- //        'obfuscateRecKeys' => true,
-        'rowCallback' => true,
-        'obfuscateCols' => ['passwor*'],
-        'dontPrint' => [],
-    ],
-    'dbOptions' => [
-        'keepDataDuration' => false, // -> use DataStore default
-        'keepDataOnField' => false,
-        'masterFileRecKeyType' => 'index',
-        'includeMeta' => true,
-    ],
-    'feedback' => 'inpage',
-    'showFeedbackInpage' => true,
-    'retainData' => false,
-    'formDataId' => false,
-    'enableLocalFormCache' => false,
-    'recLocking' => false,
-    'sideBySide' => null,
-    'readonly' => false,
-    'recId' => '',
-    'init' => true,
-    'showData' => null,
-    'editData' => null,
-    'warnBeforeLeavingPage' => false,
-    'keepSubmittedDataInForm' => false,
-];
-
-const PFY_ELEMENT_OPTIONS = [
-    'type' => false,
-    'label' => null,
-    'name' => '',
-    'required' => '',
-    'info' => '',
-    'class' => null,
-    'antiSpam' => null,
-    'autocomplete' => null,
-    'disabled' => false,
-    'options' => false, // choice options
-    'optionWidth' => '',
-    'false' => '',
-    'autoGrow' => true,
-    'origName' => '',
-];
 mb_internal_encoding("utf-8");
 
 
 class PfyForm extends Form
 {
+    private const SUPPORTED_FIELD_TYPES =
+        ',text,password,email,textarea,hidden,readonly,'.
+        'url,date,datetime-local,time,datetime,month,integer,number,float,range,tel,'.
+        'radio,checkbox,dropdown,select,multiselect,upload,multiupload,bypassed,'.
+        'event,address,countedchoices,'.
+        'button,reset,submit,cancel,@import,literal,';
+    // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
+
+    private const NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
+    private const CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
+    private const INFO_ICON = 'ⓘ';
+    private const MEGABYTE = 1048576;
+    private const LOW_SEATS_WARNING_THRESHOLD = 10;
+
+    private const DEFAULT_FORM_OPTIONS = [
+        'file' => false,
+        'confirmationText' => false,
+        'ownerNotificationTo' => false,
+        'maxCount' => false,
+        'maxCountOn' => false,
+        'labelWidth' => false,
+        'formTop' => false,
+        'formHint' => false,
+        'formBottom' => false,
+        'confirmationEmail' => '',
+        'confirmationEmailTo' => '',
+        'emailFieldName' => '',
+        'mailFrom' => false,
+        'mailFromName' => false,
+        'deadline' => false,
+        'id' => false,
+        'class' => false,
+        'wrapperClass' => false,
+        'outerWrapperClass' => '',
+        'action' => '~page/',
+        'next' => '~page/',
+        'dataReceivedCallback' => false,
+        'presetCallbackJs' => false,
+        'onSubmitCallbackJs' => false,
+        'scriptInjectionFilter' => true,
+        'tableOptions' => [
+            'tableButtons' => '',
+            'serviceColumns' => '',
+            'editMode' => 'inpage', // inpage, popup, save
+            'minRows' => false,
+            'announceEmptyTable' => true,
+            'permission' => 'loggedin|localhost',
+            'showAllFields' => false,
+            'headers' => '',
+            'tableTitle' => false,
+            'masterFileRecKeyType' => 'index',
+            'scrollHints' => false,
+            'markLocked' => false,
+            'obfuscateRecKeys' => false,
+            //        'obfuscateRecKeys' => true,
+            'rowCallback' => true,
+            'obfuscateCols' => ['passwor*'],
+            'dontPrint' => [],
+        ],
+        'dbOptions' => [
+            'keepDataDuration' => false, // -> use DataStore default
+            'keepDataOnField' => false,
+            'masterFileRecKeyType' => 'index',
+            'includeMeta' => true,
+        ],
+        'feedback' => 'inpage',
+        'showFeedbackInpage' => true,
+        'retainData' => false,
+        'formDataId' => false,
+        'enableLocalFormCache' => false,
+        'recLocking' => false,
+        'sideBySide' => null,
+        'readonly' => false,
+        'recId' => '',
+        'init' => true,
+        'showData' => null,
+        'editData' => null,
+        'warnBeforeLeavingPage' => false,
+        'keepSubmittedDataInForm' => false,
+    ];
+
+    private const DEFAULT_ELEMENT_OPTIONS = [
+        'type' => false,
+        'label' => null,
+        'name' => '',
+        'required' => '',
+        'info' => '',
+        'class' => null,
+        'antiSpam' => null,
+        'autocomplete' => null,
+        'disabled' => false,
+        'options' => false, // choice options
+        'optionWidth' => '',
+        'false' => '',
+        'autoGrow' => true,
+        'origName' => '',
+    ];
+
+    private const ARRAY_SUMMARY_NAME = '_';
+
+
     private array $formOptions;
     private string|bool $file;
     private array $origReceivedData;
@@ -824,7 +827,7 @@ class PfyForm extends Form
             $elem->addRule(self::PatternInsensitive, "File must have extension '$filter'", $pattern);
         }
         if ($mb = ($this->formElements[$name]['maxMegaByte']??false)) {
-            $elem->addRule(self::MaxFileSize, "Maximum size is $mb MB", MEGABYTE * $mb);
+            $elem->addRule(self::MaxFileSize, "Maximum size is $mb MB", self::MEGABYTE * $mb);
         }
         return $elem;
     } // addUploadElem
@@ -2146,7 +2149,7 @@ EOT;
             $available = $maxCount - $currCount;
             if ($this->formOptions['lowSeatsWarning']) {
                 if ($this->formOptions['lowSeatsWarning'] === true) {
-                    $lowSeatsThreshold = PFY_LOW_SEATS_WARNING_THRESHOLD;
+                    $lowSeatsThreshold = self::LOW_SEATS_WARNING_THRESHOLD;
                 } else {
                     $lowSeatsThreshold = $this->formOptions['lowSeatsWarning'];
                 }
@@ -2543,14 +2546,14 @@ EOT;
             } elseif (is_array($value) && isset($this->choiceOptions[$name])) {
                 $template = $this->choiceOptions[$name];
                 $value1 = [];
-                $value1[ARRAY_SUMMARY_NAME] = '';
+                $value1[self::ARRAY_SUMMARY_NAME] = '';
                 foreach ($template as $key => $name1) {
                     $value1[$key] = in_array($key, $value);
                     if ($value1[$key]) {
-                        $value1[ARRAY_SUMMARY_NAME] .= $key.',';
+                        $value1[self::ARRAY_SUMMARY_NAME] .= $key.',';
                     }
                 }
-                $value1[ARRAY_SUMMARY_NAME] = rtrim($value1[ARRAY_SUMMARY_NAME], ',');
+                $value1[self::ARRAY_SUMMARY_NAME] = rtrim($value1[self::ARRAY_SUMMARY_NAME], ',');
                 $dataRec[$name] = $value1;
 
             // handle comment's reveal-controller: if unchecked, we erase the textarea entry:
@@ -2756,9 +2759,41 @@ EOT;
 
         $tableOptions = $this->tableOptions;
 
-        $showAllFields = $tableOptions['showAllFields'];
+        if (isset($tableOptions['tableHeaders'])) {
+            $tableOptions['headers'] = $tableOptions['tableHeaders'];
+            unset($tableOptions['tableHeaders']);
+        }
+
+        $tableHeaders = $tableOptions['headers']??false;
+        if (!$tableHeaders || ($tableHeaders === true)) {
+            $tableOptions['headers'] = $this->prepareTableHeaders();
+        }
+        if (is_array($tableOptions['headers'])) {
+            $th = &$tableOptions['headers'];
+            if (is_numeric(reset($th))) {
+                $th = array_combine($th, $th);
+            }
+            Data2DSet::fixSystemElements($th, $tableOptions['includeSystemElements']??false, $tableOptions['includeTimestamp']??false);
+        }
+        // $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames; //??? compatibility?
+
+        $file = $this->file;
+        if ($tableOptions['file']??false) {
+            // special case: formOptions[file] != tableOption[file] ==> used where using client cache for large tables
+            $file = $tableOptions['file'];
+        }
+        $this->dataTable = new DataTable($file, $tableOptions);
+        return $this->dataTable;
+    } // openDataTable
+
+
+    private function prepareTableHeaders(): array
+    {
+        $fieldNamesForHeaders = $this->tableOptions['fieldNamesForHeaders']??false;
+
         $fieldNames = $this->fieldNames;
-        foreach (['_reckey', '_dataSrcInx', '_csrf'] as $k) {
+        foreach ([PFY_TIMESTAMP, PFY_RECKEY, '_dataSrcInx', '_csrf'] as $k) {
+//        foreach (['_timestamp', '_reckey', '_dataSrcInx', '_csrf'] as $k) {
             if (isset($fieldNames[$k])) {
                 unset($fieldNames[$k]);
             }
@@ -2777,33 +2812,15 @@ EOT;
                 $fieldLabel = TransVars::getVariable(trim($fieldLabel, '{ }'), varNameIfNotFound:true);
             }
             $fieldLabel = rtrim($fieldLabel, ':');
-            if (!$showAllFields && ($key[0] === '_')) {
-                unset($fieldNames[$key]);
-                continue;
-            }
             $elem = $this->formElements[$fieldLabel]??[];
-            if ($elem['name']??false) {
+            if ($fieldNamesForHeaders && $elem['name']??false) {
                 $fieldNames[$key] =  $elem['name'];
             } else {
                 $fieldNames[$key] =  $fieldLabel;
             }
         }
-
-        if (isset($tableOptions['tableHeaders'])) {
-            $tableOptions['headers'] = $tableOptions['tableHeaders'];
-            unset($tableOptions['tableHeaders']);
-        }
-        $tableOptions['headers'] = $tableOptions['headers'] ?: array_keys($fieldNames);
-        // $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames; //??? compatibility?
-
-        $file = $this->file;
-        if ($tableOptions['file']??false) {
-            // special case: formOptions[file] != tableOption[file] ==> used where using client cache for large tables
-            $file = $tableOptions['file'];
-        }
-        $this->dataTable = new DataTable($file, $tableOptions);
-        return $this->dataTable;
-    } // openDataTable
+        return $fieldNames;
+    } // prepareTableHeaders
 
 
     /**
@@ -3040,7 +3057,7 @@ EOT;
         $dataRecInclEvent['_md_data_'] = $mdStr;
         $dataRecInclEvent['_data_'] = $out;
 
-        list($subject, $message) = $this->getEmailComponents($dataRecInclEvent, PFY_NOTIFICATION_VAR_NAME);
+        list($subject, $message) = $this->getEmailComponents($dataRecInclEvent, self::NOTIFICATION_VAR_NAME);
 
         if ($this->formOptions['ownerNotificationTo'] === true) {
             if (!PageFactory::$webmasterEmail) {
@@ -3084,7 +3101,7 @@ EOT;
             return '';
         }
 
-        list($subject, $message) = $this->getEmailComponents($dataRec, PFY_CONFIRMATION_VAR_NAME);
+        list($subject, $message) = $this->getEmailComponents($dataRec, self::CONFIRMATION_VAR_NAME);
 
         if ($confirmationMail === true) {
             $to = $this->pickFirstEmailField($dataRec);
@@ -3224,18 +3241,18 @@ EOT;
      */
     private function parseOptions(array $formOptions): array
     {
-        $formOptions = $formOptions + PFY_FORM_OPTIONS;
+        $formOptions = $formOptions + self::DEFAULT_FORM_OPTIONS;
         $this->formOptions                  = $formOptions;
         $formOptions                        = &$this->formOptions;
 
-        $formOptions['dbOptions'] = $formOptions['dbOptions'] + PFY_FORM_OPTIONS['dbOptions'];
+        $formOptions['dbOptions'] = $formOptions['dbOptions'] + self::DEFAULT_FORM_OPTIONS['dbOptions'];
 
         //ToDo: evaluate necessity:
         //$formOptions['confirmationEmail']   = str_replace('-', '_', $formOptions['confirmationEmail']??'');
         //$formOptions['emailFieldName']      = str_replace('-', '_', $formOptions['emailFieldName']??'');
 
         // make sure essential options are instantiated:
-        $formOptions['next']                = $formOptions['next'] ?: PFY_FORM_OPTIONS['next'];
+        $formOptions['next']                = $formOptions['next'] ?: self::DEFAULT_FORM_OPTIONS['next'];
         if ($formOptions['responseLabel']??false) {
             TransVars::setTempVariable('pfy-form-response-label', $formOptions['responseLabel']);
         }
@@ -3285,7 +3302,7 @@ EOT;
     {
         $this->showTable = true;
 
-        $tableOptions += PFY_FORM_OPTIONS['tableOptions'];
+        $tableOptions += self::DEFAULT_FORM_OPTIONS['tableOptions'];
 
         // short hand 'editData: true':
         if ($this->formOptions['editData'] === true && !$tableOptions['tableButtons']) {
@@ -3331,7 +3348,7 @@ EOT;
      */
     private function parseElementOptions(array &$elemOptions): array
     {
-        $elemOptions += PFY_ELEMENT_OPTIONS;
+        $elemOptions += self::DEFAULT_ELEMENT_OPTIONS;
 
         $label = $elemOptions['label'] ;
         $name = $elemOptions['name'];
@@ -3422,7 +3439,7 @@ EOT;
             }
         }
 
-        if (!str_contains(PFY_FORMS_SUPPORTED_TYPES, ",$type,")) {
+        if (!str_contains(self::SUPPORTED_FIELD_TYPES, ",$type,")) {
             throw new \Exception("Forms: requested type not supported: '$type'");
         }
 
@@ -3482,7 +3499,7 @@ EOT;
     {
         $id = "{$this->formIndex}-{$this->elemInx}";
         $info = "<span>$info</span>";
-        $info = "<button type='button' class='pfy-form-info-button pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . INFO_ICON .
+        $info = "<button type='button' class='pfy-form-info-button pfy-popover-anchor' popovertarget='pfy-popover-$id' style='anchor-name: --pfy-popover-$id'>" . self::INFO_ICON .
             "</button><span id='pfy-popover-$id' class='pfy-popover-content pos-below-right' popover style='position-anchor: --pfy-popover-$id'>$info</span>";
         $info = <<<EOT
 <span class="pfy-popover-wrapper pfy-info-body">
@@ -3704,7 +3721,7 @@ EOT;
             $attr .= " data-controlled-by='$controlledBy'";
         }
 
-        if (!preg_match('|<span class=\'pfy-label-wrapper\'>.*?</span>|', $html, $m)) {
+        if (!preg_match('|<span class=[\'"]pfy-label-wrapper[\'"]>.*?</span>|ms', $html, $m)) {
             throw new \Exception("Error: CountedChoices group must contain a select-element.");
         }
         $label = $m[0];

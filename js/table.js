@@ -509,14 +509,14 @@ const tableHelper = {
     if (!tableWrapperEl || !el.closest('tbody')) {
       return;
     }
-    const rowCallback = tableWrapperEl.dataset.rowCallback;
-    if (!rowCallback) {
+    const cellClickCallback = tableWrapperEl.dataset.cellClickCallback;
+    if (!cellClickCallback) {
       return;
     }
 
     // invoke row callback function:
-    if (typeof rowCallback === 'string' && rowCallback !== 'true' && isNaN(rowCallback)) {
-      let res = executeCallbackCode(rowCallback, ev);
+    if (typeof cellClickCallback === 'string' && cellClickCallback !== 'true' && isNaN(cellClickCallback)) {
+      let res = executeCallbackCode(cellClickCallback, ev);
       if (!res) {
         return;
       }

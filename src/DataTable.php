@@ -22,81 +22,65 @@ use function \PgFactory\PageFactory\reloadAgent;
 use function \PgFactory\PageFactory\parseArgumentStr;
 
 
-const TABLE_SUM_SYMBOL = '%sum%';
-const TABLE_COUNT_SYMBOL = '%count%';
-const DEFAULT_PAGEING_LENGTH = 25;
-
-if (!function_exists('array_is_list')) {
-    function array_is_list($array) {
-        $keys = array_keys($array);
-        return $keys !== array_keys($keys);
-    }
-}
-
-const PFY_TABLE_DEFAULT_OPTIONS = [
-    'masterFileRecKeyType' => 'index',
-    'tableName' => '',
-    'tableId' => '',
-    'tableClass' => '',
-    'tableWrapperClass' => '',
-    'tdClass' => '',
-    'colClasses' => [],
-    'rowIds' => [],
-    'rowClasses' => [],
-    'dataReference' => false,
-    'caption' => false,
-    'captionPosition' => 'below',
-    'markLocked' => false,
-    'obfuscateRecKeys' => false,
-    'mailFrom' => '',
-    'mailFieldName' => '',
-    'permission' => false, //'localhost,loggedin',
-    'tableTitle' => false,
-    'tableButtons' => false,
-    'serviceColumns' => false,
-    'showRowNumbers' => false,
-    'showRowSelectors' => false,
-    'computedCells' => false,
-    'translateHeaders' => false,
-    'editMode' => 'inpage',
-    'showData' => false,
-    'placeholderForUndefined' => '',
-    'cellMinHeight' => false,
-    'cellMaxHeight' => false,
-    'minRows' => false,
-    'rowCallback' => '',
-    'obfuscateCols' => false,
-    'paging' => true,
-    'order' => false,
-    'filter' => false,
-    'reversed' => false,
-    'dontPrint' => false,
-    'export' => false,
-    'headers' => false,
-    'footers' => false,
-    'interactive' => false,
-    'scrollable' => false,
-    'scrollHints' => null,
-    'includeSystemElements' => false,
-    'includeSystemFields' => false,
-    'includeTimestamp' => false,
-    'announceEmptyTable' => true,
-    'showAllFields' => false,
-    'shieldCellContent' => false,
-];
-
-
 class DataTable
 {
+    protected const TABLE_SUM_SYMBOL = '%sum%';
+    protected const TABLE_COUNT_SYMBOL = '%count%';
+    protected const DEFAULT_PAGEING_LENGTH = 25;
+    protected const DEFAULT_TABLE_OPTIONS = [
+        'masterFileRecKeyType' => 'index',
+        'tableName' => '',
+        'tableId' => '',
+        'tableClass' => '',
+        'tableWrapperClass' => '',
+        'tdClass' => '',
+        'rowClasses' => [],
+        'dataReference' => null,
+        'caption' => false,
+        'captionPosition' => 'below',
+        'markLocked' => false,
+        'obfuscateRecKeys' => false,
+        'mailFrom' => '',
+        'mailFieldName' => '',
+        'permission' => false, //'localhost,loggedin',
+        'tableTitle' => false,
+        'tableButtons' => false,
+        'serviceColumns' => false,
+        'computedCells' => false,
+        'editMode' => 'inpage',
+        'showData' => false,
+        'placeholderForUndefined' => '',
+        'cellMinHeight' => false,
+        'cellMaxHeight' => false,
+        'minRows' => false,
+        'cellClickCallback' => '',
+        'obfuscateCols' => false,
+        'paging' => true,
+        'order' => false,
+        'filter' => false,
+        'reversed' => false,
+        'dontPrint' => false,
+        'headers' => false,
+        'fieldNamesForHeaders' => false,
+        'footers' => false,
+        'interactive' => false,
+        'scrollable' => false,
+        'scrollHints' => null,
+        'includeSystemElements' => false,
+        'includeTimestamp' => false,
+        'announceEmptyTable' => true,
+        'shieldCellContent' => false,
+    ];
+
     private array $options;
     private $file = false;
     private array|null $tableData = null;
+    private array $columnDefs = [];
     private $tableHeaders;
-    private bool $translateHeaders;
     private $tableClass;
     private $tdClass;
     private $tableWrapperClass;
-    private $dataReference;
+    private bool|null $dataReference;
     private array $tableButtons;
     public int $inx;
     private string $tableId;
@@ -105,16 +89,13 @@ class DataTable
     private string $captionAbove;
     private string|bool $interactive;
     private string|bool $scrollable;
-    private string $showRowNumbers;
-    private mixed $showRowSelectors;
     private string $serviceColumns;
     private mixed $editMode;
     private string $order;
     private mixed $paging = false;
     private array|bool $filter;
-    private bool $reversed;
     private $minRows;
-    private string|false $rowCallback;
+    private string|false $cellClickCallback;
     private string $export;
     private bool|string $includeSystemElements;
     private bool|null $includeTimestamp;
@@ -125,13 +106,8 @@ class DataTable
     public bool $announceEmptyTable;
     private $archiveDb;
     private $data2Dset;
-    private array $columns = [];
-    private $nRows;
-    private $nCols;
     private $officeFormatAvailable = false;
-    private array $colClasses;
-    private array $rowClasses;
-    private array $rowIds;
+    private array $rowClasses; // used by Enlist
     private string $placeholderForUndefined;
     private mixed $shieldCellContent;
     private static int $tableInx = 0;
@@ -166,6 +142,7 @@ class DataTable
      */
     public function render(): string
     {
+        $this->prepareHeaderRow();
         $this->prepareColumnDefs();
 
         if (isset($_GET['sendto']) && isLoggedIn()) {
@@ -189,11 +166,11 @@ EOT;
             $this->activateInteractiveTable();
         }
 
-        $rowCallback = $this->rowCallback ? " data-row-callback='$this->rowCallback'" : '';
+        $cellClickCallback = $this->cellClickCallback ? " data-cell-click-callback='$this->cellClickCallback'" : '';
 
 
         // === Assemble Table ================================================================
-        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass' data-tableinx='$this->inx'$rowCallback>\n";
+        $out = "\n<div id='pfy-table-wrapper-$this->inx' class='$this->tableWrapperClass' data-tableinx='$this->inx'$cellClickCallback>\n";
         $out .= $this->renderTableButtons();
 
 
@@ -239,8 +216,8 @@ EOT;
         }
 
         $out .= "  <thead>\n    <tr class='pfy-table-header pfy-row-0'>\n";
-        foreach ($this->columns as $rec) {
-            $out .= "      <th {$rec['hdrAttrib']}>{$rec['hdrContent']}</th>\n";
+        foreach ($this->columnDefs as $rec) {
+            $out .= "      <th {$rec['hdrAttrib']}><div>{$rec['hdrContent']}</div></th>\n";
         }
 
         $out .= "    </tr>\n  </thead>\n";
@@ -255,6 +232,9 @@ EOT;
     private function renderTableBody(): string
     {
         $data = $this->tableData;
+        if ( $this->options['reversed'] ?? false) {
+            $data = array_reverse($data);
+        }
 
         $out = "  <tbody>\n";
         $rowClass = '';
@@ -266,7 +246,7 @@ EOT;
         if ($this->minRows && $r < $this->minRows) {
             for (; $r <= $this->minRows; $r++) {
                 $out .= "    <tr class='pfy-row-$r $rowClass pfy-empty-row'>\n";
-                foreach ($this->columns as $def) {
+                foreach ($this->columnDefs as $def) {
                     $cell = $def['cellContent'];
                     if ($cell === '%num') {
                         $cell = $r;
@@ -292,10 +272,12 @@ EOT;
         $rowClass = $this->rowClasses[$r - 1] ?? '';
         $locked = $this->data2Dset->isLocked($recKey);
         $rowClass .= $locked ? ' pfy-rec-locked' : '';
-        $out = "    <tr class='pfy-row-$r $rowClass' data-reckey='$recKey'>\n";
+        $dataRecKey = $this->dataReference ? " data-reckey='$recKey'" : '';
+        $out = "    <tr class='pfy-row-$r $rowClass'$dataRecKey>\n";
 
-        foreach ($this->columns as $c => $def) {
-            $out .= $this->renderTableCell($r, $recKey, $c, $def);
+        $c = 0;
+        foreach ($this->columnDefs as $def) {
+            $out .= $this->renderTableCell($r, $recKey, $c++, $def);
         }
 
         $out .= "    </tr>\n";
@@ -313,11 +295,15 @@ EOT;
     private function renderTableCell(int $r, int|string $recKey, int $c, array $def): string
     {
         $cell = $def['cellContent'];
-        if (($cell[0] ?? '') === '=') {
+        if (!$cell) {
+            $elemKey = $def['key'];
+            $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
+
+        } elseif (str_starts_with($cell, '=')) {
             $cell = $this->renderComputedCells($recKey, $r, $c, substr($cell, 1));
             $this->tableData[$recKey][$def['key']] = $cell;
 
-        } elseif (($cell[0] ?? '') === '$') {
+        } elseif (str_starts_with($cell, '$')) {
             $elemKey = substr($cell, 1);
             if ($cell === '$_timestamp') {
                 $cell = date('d-m-Y, H:i', strtotime($this->tableData[$recKey][$elemKey]));
@@ -353,10 +339,50 @@ EOT;
     {
         $cell0 = $cell;
         $rec = $this->tableData[$recKey];
-        while (preg_match_all('/\$([\w\d.]+)/', $cell, $m)) {
+        $keys = array_keys($this->columnDefs);
+        $recKeys = array_keys($this->tableData);
+
+        // replace references to current cell written as '$$':
+        while (preg_match_all('/\$\$/', $cell, $m)) {
+            foreach ($m[0] as $ii => $vv) {
+                $k = $keys[$c];
+                $newVal = $rec[$k] ?? '';
+                if (!is_numeric($newVal)) {
+                    $newVal = "'$newVal'";
+                }
+                $cell = str_replace($m[0][$ii], $newVal, $cell);
+            }
+        }
+
+        // replace references to relative position '$-1' resp. '$2,-1':
+        while (preg_match_all('/\$([\d,-]+)/', $cell, $m)) {
+            foreach ($m[1] as $ii => $offset) {
+                $offset = explodeTrim(',', $offset);
+                $offsetX = intval($offset[0] ?? 0);
+                $offsetY = intval($offset[1] ?? 0);
+                $k = $keys[$c + $offsetX] ?? -1;
+                if (!$offsetY) {
+                    $newVal = $rec[$k] ?? '';
+                } else {
+                    $y = $recKeys[$r - 1 + $offsetY] ?? -1;
+                    $rec1 = $this->tableData[$y] ?? '';
+                    $newVal = $rec1[$k] ?? '';
+                }
+                if (!is_numeric($newVal)) {
+                    $newVal = "'$newVal'";
+                }
+                $cell = str_replace($m[0][$ii], $newVal, $cell);
+            }
+        }
+
+        // replace references to other cell written as '$<name>':
+        while (preg_match_all('/\$([\w\d.-]+)/', $cell, $m)) {
             foreach ($m[1] as $ii => $vv) {
-                $x = $rec[$vv] ?? '';
-                $cell = str_replace($m[0][$ii], $x, $cell);
+                $newVal = $rec[$vv] ?? '';
+                if (!is_numeric($newVal)) {
+                    $newVal = "'$newVal'";
+                }
+                $cell = str_replace($m[0][$ii], $newVal, $cell);
             }
         }
         try {
@@ -377,61 +403,54 @@ EOT;
     {
         $data = &$this->tableData;
         $out = '';
-        if ($this->footers) {
-            $dataKeys = [];
-            foreach ($this->columns as $rec) {
-                $dataKeys[] = $rec['key'] ?? '';
-            }
-            $footer = $this->footers;
-            $nCols = sizeof($dataKeys);
-            $counts = $sums = array_combine($dataKeys, array_fill(0, $nCols, 0));
-            foreach ($data as $rec) {
-                $i = 0;
-                foreach ($rec as $key => $value) {
-                    if ($key === '_locked') {
-                        continue;
-                    }
-                    if (isset($footer[$key])) {
-                        if (str_contains($footer[$key], TABLE_SUM_SYMBOL) && is_numeric($value)) {
-                            $sums[$key] += $value;
-                        } elseif (str_contains($footer[$key], TABLE_COUNT_SYMBOL) && $value) {
-                            $counts[$key]++;
-                        }
-                    }
-                    $i++;
-                }
-            }
-            $out .= "  <tfoot>\n";
-            $out .= "    <tr class='pfy-table-footer-row'>\n";
-            $c = 0;
-            foreach ($dataKeys as $key) {
-
+        if (!$this->footers) {
+            return '';
+        }
+        $dataKeys = array_keys($this->columnDefs);
+        $definedFooters = $this->footers;
+        $nCols = sizeof($dataKeys);
+        $counts = $sums = array_combine($dataKeys, array_fill(0, $nCols, 0));
+        foreach ($data as $rec) {
+            foreach ($rec as $key => $value) {
                 if ($key === '_locked') {
                     continue;
                 }
-                if (isset($footer[$key])) {
-                    $val = $footer[$key];
-                    if (str_contains($val, TABLE_SUM_SYMBOL) || str_contains($val, TABLE_COUNT_SYMBOL)) {
-                        $val = str_replace([TABLE_SUM_SYMBOL, TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $val);
+                if (($footerCell = $definedFooters[$key] ?? false)) {
+                    if (str_contains($footerCell, self::TABLE_SUM_SYMBOL) && is_numeric($value)) {
+                        $sums[$key] += $value;
+                    } elseif (str_contains($footerCell, self::TABLE_COUNT_SYMBOL) && $value) {
+                        $counts[$key]++;
                     }
-                    if ($val[0] === '=') {
-                        try {
-                            $val = substr($val, 1);
-                            $val = eval("return $val;");
-                        } catch (\Exception $e) {
-                            exit($e);
-                        }
-                    }
-                } else {
-                    $val = '&nbsp;';
                 }
-                $colClass = $this->colClasses[$c] ?? '';
-                $out .= "      <td class='$colClass'><div>$val</div></td>\n";
-                $c++;
             }
-            $out .= "    </tr>\n";
-            $out .= "  </tfoot>\n";
         }
+
+        // assemble html output:
+        $out .= "  <tfoot>\n";
+        $out .= "    <tr class='pfy-table-footer-row'>\n";
+        foreach ($dataKeys as $key) {
+            if (isset($definedFooters[$key])) {
+                $val = $definedFooters[$key];
+                if (str_contains($val, self::TABLE_SUM_SYMBOL) || str_contains($val, self::TABLE_COUNT_SYMBOL)) {
+                    $val = str_replace([self::TABLE_SUM_SYMBOL, self::TABLE_COUNT_SYMBOL], [$sums[$key], $counts[$key]], $val);
+                }
+                if (str_starts_with($val, '=')) {
+                    try {
+                        $val = substr($val, 1);
+                        $val = eval("return $val;");
+                    } catch (\Exception $e) {
+                        exit($e);
+                    }
+                }
+            } else {
+                $val = '&nbsp;';
+            }
+            $colAttrib = ($this->columnDefs[$key] ?? false) ? $this->columnDefs[$key]['footerAttrib'] : '';
+            $out .= "      <td$colAttrib><div>$val</div></td>\n";
+        }
+        $out .= "    </tr>\n";
+        $out .= "  </tfoot>\n";
+
         return $out;
     } // renderTableFooter
 
@@ -445,7 +464,9 @@ EOT;
     private function prepareTableData(): void
     {
         if ($this->file) {
-            $this->data2Dset = new Data2DSet($this->file, $this->options);
+            $options = $this->options;
+            $options['masterFileRecKeyType'] = 'reckey';
+            $this->data2Dset = new Data2DSet($this->file, $options);
             $this->tableData = $this->data2Dset->data();
 
         } elseif ($this->tableData !== null) {
@@ -461,61 +482,72 @@ EOT;
     /**
      * @return void
      */
+    private function prepareHeaderRow()
+    {
+        if ($this->tableHeaders === true) {
+            $this->tableHeaders = $this->data2Dset->getColHeaders();
+        } else {
+            if (is_string($this->tableHeaders)) {
+                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
+            }
+        }
+
+        $keys = array_keys($this->tableHeaders);
+        if (isset($keys[0]) && is_numeric($keys[0])) {
+            $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
+        }
+    } // prepareHeaderRow
+
+
+    /**
+     * @return void
+     */
     private function prepareColumnDefs(): void
     {
         // inject service rows: select(delete), row-numbers, edit-buttons
-        $c = $this->prepareServiceColumns();
+        $columnDefs = $this->prepareServiceColumns();
 
         $tdClass = $this->tdClass ? " $this->tdClass" : '';
-        if (!$this->tableHeaders || $this->tableHeaders === true) {
-            $colHeaders = $this->data2Dset->getColHeaders();
-        } else {
-            $colHeaders = $this->tableHeaders;
-        }
+        $colHeaders = $this->tableHeaders;
 
-        // skip system columns if requested:
-        if (!$this->options['includeSystemElements'] ?? false) {
-            if (isset($colHeaders[DATAREC_RECKEY])) {
-                unset($colHeaders[DATAREC_RECKEY]);
-            }
-            if (isset($colHeaders[DATAREC_TIMESTAMP]) && !$this->includeTimestamp) {
-                unset($colHeaders[DATAREC_TIMESTAMP]);
-            }
-        }
+        // remove any other system elements starting with '_':
+        $colHeaders = array_filter($colHeaders, function ($el) {
+            return (!str_starts_with($el,'_') || $el === PFY_RECKEY || $el === PFY_TIMESTAMP);
+        });
 
-        $i = sizeof($this->columns) + 1;
+        $i = sizeof($columnDefs) + 1;
+        $footers = [];
         foreach ($colHeaders as $key => $value) {
-            if ($this->translateHeaders) {
-                if ($v = TransVars::getVariable($value)) {
-                    $value = $v;
-                }
-            }
             $dataElemName = "data-elemname='$key'";
             $class = 'pfy-col-' . translateToClassName($value);
             if ($value !== $key) {
                 $class = 'pfy-col-' . translateToClassName(ltrim($key, '_'));
             }
-            if ($this->colClasses[$c] ?? '') {
-                $class .= ' ' . $this->colClasses[$c];
-            }
-            $class = "pfy-col-$i $class$tdClass";
+            $class = "pfy-col-$i $class";
 
-            $cell = "\$$key";
+            $cell = '';
             if ($this->computedCells[$key] ?? false) {
                 $cell = '=' . $this->computedCells[$key];
             }
-
-            $this->columns[] = [
-                'hdrContent' => $value, // -> attributes for header elements
-                'hdrAttrib' => "class='$class$tdClass' $dataElemName",
+            $footerContent = ($this->footers[$key]??false) ?: (($this->footers[$value]??false) ?: '');
+            if ($footerContent) {
+                $footers[$key] = $footerContent;
+            }
+            $colDef = [
+                'hdrContent' => $value,
+                'hdrAttrib' => "class='$class' $dataElemName", // -> attributes for header elements
                 'cellContent' => $cell, // -> means to be replaced by data value
-                'cellAttrib' => "class='$class'",
+                'cellAttrib' => "class='$class$tdClass'",
+                'footerContent' => $footerContent,
+                'footerAttrib' => " class='pfy-table-footer $class'",
                 'key' => $key,
             ];
-            $this->colClasses[$c] = $class;
+
             $i++;
-            $c++;
+            $columnDefs[$key] = $colDef;
         }
+        $this->columnDefs = $columnDefs;
+        $this->footers = $footers;
     } // prepareColumnDefs
 
 
@@ -523,10 +555,10 @@ EOT;
      * Injects rows into data and header for delete,edit,row-numbers.
      * @return void
      */
-    private function prepareServiceColumns(): int
+    private function prepareServiceColumns(): array
     {
         if (!$this->serviceColumns) {
-            return 0;
+            return [];
         }
         $tdClass = $this->tdClass ? " $this->tdClass" : '';
         $servCols = explodeTrim(',', $this->serviceColumns, true);
@@ -621,13 +653,14 @@ EOT;
                 'hdrAttrib' => "class='pfy-col-$i pfy-service-col $class'",
                 'cellContent' => $cell, // -> means to be replaced by data value
                 'cellAttrib' => "class='$cellClass'",
+                'footerContent' => '',
+                'footerAttrib' => " class='pfy-table-footer $cellClass'",
+                'key' => '',
             ];
-            $this->colClasses[] = $cellClass;
             $i++;
         }
 
-        $this->columns = $serviceColumns;
-        return sizeof($this->colClasses);
+        return $serviceColumns;
     } // prepareServiceColumns
 
 
@@ -759,7 +792,7 @@ EOT;
 
         // paging:
         $paging = $entriesPerPageLabel = '';
-        $pagingLength = DEFAULT_PAGEING_LENGTH;
+        $pagingLength = self::DEFAULT_PAGEING_LENGTH;
         if ($this->paging) {
             $layout = [
                 'topStart' => 'info',
@@ -799,9 +832,10 @@ EOT;
             }
             $dir = $dir ?: 'asc';
             if (!is_numeric($elem)) {
-                foreach ($this->columns as $i => $column) {
+                $i = 0;
+                foreach ($this->columnDefs as $column) {
                     if ($column['hdrContent'] === $elem) {
-                        $elem = $i;
+                        $elem = $i++;
                         break;
                     }
                 }
@@ -1177,11 +1211,7 @@ EOT;
      */
     private function parseOptions( array|string $dataSrc, array $options): void
     {
-        foreach (PFY_TABLE_DEFAULT_OPTIONS as $key => $value) {
-            if (!isset($options[$key])) {
-                $options[$key] = $value;
-            }
-        }
+        $options += self::DEFAULT_TABLE_OPTIONS;
         if ($options['tableHeaders'] ?? false) {
             throw new \Exception("Error: DataTable: arg 'tableHeaders' is deprecated");
         }
@@ -1196,9 +1226,7 @@ EOT;
 
         $this->tableId = $options['tableId'] ?: "pfy-table-$this->inx";
         $this->tableClass = $options['tableClass'] ?: "pfy-table pfy-table-$this->inx";
-        $this->colClasses = $options['colClasses'];
         $this->rowClasses = $options['rowClasses'];
-        $this->rowIds = $options['rowIds'];
         $this->tdClass = $options['tdClass'];
         $this->tableWrapperClass = 'pfy-table-wrapper ' . $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: '');
         $this->dataReference = $options['dataReference']; // whether to include data-elemkey and data-reckey
@@ -1213,15 +1241,11 @@ EOT;
             $scrollHints = $options['scrollHints'];
         }
         $tableButtons = $options['tableButtons'];
-        if (is_string($tableButtons)) {
-            $tableButtons = parseArgumentStr($tableButtons);
-        } else {
-            $tableButtons = (array) $tableButtons;
+        if (is_array($tableButtons)) {
+            $tableButtons = implode(',', $tableButtons);
         }
 
         $serviceColumns = $options['serviceColumns']; // num,select,edit,...
-        $this->showRowNumbers = $options['showRowNumbers']; //??? obsolete?
-        $this->showRowSelectors = $options['showRowSelectors'];
         if ($computedCells = $options['computedCells']) {
             if (!is_array($computedCells)) {
                 $computedCells = explodeTrim(',', $computedCells);
@@ -1234,7 +1258,6 @@ EOT;
             }
         }
 
-        $this->translateHeaders = $options['translateHeaders'];
         $this->announceEmptyTable = $options['announceEmptyTable'];
         $this->editMode = $options['editMode'];
         if ($this->editMode === 'popup') {
@@ -1244,18 +1267,16 @@ EOT;
         $this->order = $options['order'];
         $this->paging = $options['paging'];
         $this->filter = $options['filter'];
-        $this->reversed = $options['reversed'];
         $this->minRows = $options['minRows'];
-        $this->rowCallback = $options['rowCallback'];
-        if ($this->rowCallback === true) {
-            $this->rowCallback = 'true';
+        $this->cellClickCallback = $options['cellClickCallback'];
+        if ($this->cellClickCallback === true) {
+            $this->cellClickCallback = 'true';
         }
         $this->dontPrint = $options['dontPrint'];
-        $this->export = $options['export'];
         $this->includeSystemElements = $options['includeSystemElements'];
         $this->includeTimestamp = $options['includeTimestamp'];
         $this->markLocked = $options['markLocked'];
-        $this->placeholderForUndefined = $options['placeholderForUndefined'];
+        $this->placeholderForUndefined = $options['placeholderForUndefined'] ?? '';
 
         $this->shieldCellContent = $options['shieldCellContent'];
 
@@ -1268,18 +1289,17 @@ EOT;
         }
         $this->isTableAdmin = Permission::evaluate($permission);
         if (!$this->isTableAdmin) {
-            if (in_array('download', $tableButtons)) {
-                $tableButtons = ['download' => 'download'];
-            }
+            $tableButtons = str_replace(['delete', 'archive', 'new', 'add'], '', $tableButtons);
             $serviceColumns = str_replace(['edit', 'select'], '', $serviceColumns);
         } else {
-            $this->dataReference = true;
+            $this->dataReference = ($this->dataReference === null) ? true : $this->dataReference;
         }
 
         if (self::$tableInx === 1) {
             Assets::addAssets('TABLES');
         }
 
+        $tableButtons = explodeTrim(',', $tableButtons, true);
         if (in_array('delete', $tableButtons) || in_array('archive', $tableButtons)) {
             if (!str_contains($serviceColumns, 'select')) {
                 $serviceColumns = "select,$serviceColumns";
@@ -1297,24 +1317,6 @@ EOT;
             Page::addAssets('MAP_SEARCH');
         }
 
-        // table headers:
-        if ($this->tableHeaders && ($this->tableHeaders !== true)) {
-            if (!is_array($this->tableHeaders)) {
-                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
-            }
-            if (is_numeric(array_keys($this->tableHeaders)[0])) {
-                $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
-            }
-
-            if ($this->includeSystemElements) {
-                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
-                $this->tableHeaders['_reckey'] = TransVars::getVariable('pfy-table-reckey-header');
-            }
-            if ($this->includeTimestamp && !isset($this->tableHeaders['_timestamp'])) {
-                $this->tableHeaders['_timestamp'] = TransVars::getVariable('pfy-table-timestamp-header');
-            }
-            $options['headers'] = $this->tableHeaders;
-        }
         // table footers:
         if ($this->footers && !is_array($this->footers)) {
             $this->parseArrayArg('footers');
@@ -1330,7 +1332,7 @@ EOT;
         // misc options:
         if ($options['cellMinHeight']) {
             $css = <<<EOT
-.pfy-table-$this->inx td > div {
+.pfy-table-$this->inx tbody td > div {
     min-height: {$options['cellMinHeight']};
 }
 EOT;
@@ -1341,7 +1343,7 @@ EOT;
         }
         if ($options['cellMaxHeight']) {
             $css = <<<EOT
-.pfy-table-$this->inx td > div {
+.pfy-table-$this->inx tbody td > div {
     max-height: {$options['cellMaxHeight']};
     overflow-y: auto;
 }
@@ -1357,6 +1359,5 @@ EOT;
 
         $this->options = $options;
     } // parseOptions
-
 
 } // DataTable
