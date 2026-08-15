@@ -2756,26 +2756,8 @@ EOT;
         if ($this->dataTable && ($this->formIndex === $this->dataTable->inx)) {
             return $this->dataTable;
         }
-
         $tableOptions = $this->tableOptions;
-
-        if (isset($tableOptions['tableHeaders'])) {
-            $tableOptions['headers'] = $tableOptions['tableHeaders'];
-            unset($tableOptions['tableHeaders']);
-        }
-
-        $tableHeaders = $tableOptions['headers']??false;
-        if (!$tableHeaders || ($tableHeaders === true)) {
-            $tableOptions['headers'] = $this->prepareTableHeaders();
-        }
-        if (is_array($tableOptions['headers'])) {
-            $th = &$tableOptions['headers'];
-            if (is_numeric(reset($th))) {
-                $th = array_combine($th, $th);
-            }
-            Data2DSet::fixSystemElements($th, $tableOptions['includeSystemElements']??false, $tableOptions['includeTimestamp']??false);
-        }
-        // $tableOptions['headers'] = $tableOptions['headers'] ?: $fieldNames; //??? compatibility?
+        $tableOptions['headers'] = $this->prepareTableHeaders();
 
         $file = $this->file;
         if ($tableOptions['file']??false) {
@@ -2787,19 +2769,66 @@ EOT;
     } // openDataTable
 
 
+    /**
+     * @return array
+     * @throws InvalidArgumentException
+     */
     private function prepareTableHeaders(): array
     {
-        $fieldNamesForHeaders = $this->tableOptions['fieldNamesForHeaders']??false;
+        $useLabel = !($this->tableOptions['fieldKeysForHeaders'] ?? false);
 
-        $fieldNames = $this->fieldNames;
-        foreach ([PFY_TIMESTAMP, PFY_RECKEY, '_dataSrcInx', '_csrf'] as $k) {
-//        foreach (['_timestamp', '_reckey', '_dataSrcInx', '_csrf'] as $k) {
-            if (isset($fieldNames[$k])) {
-                unset($fieldNames[$k]);
+        $tableOptions = $this->tableOptions;
+
+        $tableHeaders = $tableOptions['headers'] ?? false;
+        if (!$tableHeaders || ($tableHeaders === true)) {
+            $tableHeaders = $this->getTableHeadersFromFormFields();
+        } elseif (is_string($tableHeaders)) {
+            $tableHeaders = parseArgumentStr($tableHeaders, anonIndex: '');
+        }
+
+        if (!is_array($tableHeaders)) {
+            throw new \Exception("Form -> Error in table options => headers");
+        }
+
+        $hdrs = [];
+        $availableFieldNameKeys = array_keys($this->fieldNames);
+        $availableFieldNameLabels = array_values($this->fieldNames);
+
+        // header definition may be a mix of keys and labels, so sort that out:
+        foreach ($tableHeaders as $key => $label) {
+            if (in_array($key, $availableFieldNameKeys)) {
+                $hdrs[$key] = $useLabel ? $this->fieldNames[$key] : $label;
+
+            } elseif (($k = array_search($label, $availableFieldNameKeys)) !== false) {
+                $key = $availableFieldNameKeys[$k];
+                $hdrs[$key] = $useLabel ? $key : $label;
+
+            } elseif (($k = array_search($label, $availableFieldNameLabels)) !== false) {
+                $key = $availableFieldNameKeys[$k];
+                $hdrs[$key] = $useLabel ? $key : $label;
+
+            } elseif (($k = array_search($key, $availableFieldNameLabels)) !== false) {
+                $key = $availableFieldNameKeys[$k];
+                $hdrs[$key] = $useLabel ? $key : $label;
+
+            } else {
+                throw new \Exception("Form -> Error in table options => unkown header requested");
             }
         }
+        return $hdrs;
+    } // prepareTableHeaders
+
+
+    /**
+     * @return array
+     */
+    private function getTableHeadersFromFormFields(): array
+    {
+        $fieldKeysForHeaders = $this->tableOptions['fieldKeysForHeaders'] ?? false;
+        $fieldNames = $this->fieldNames;
         foreach ($fieldNames as $key => $fieldLabel) {
-            if (!$fieldLabel || !is_string($fieldLabel)) {
+            if (!$fieldLabel || !is_string($fieldLabel) || str_starts_with($key, '_')) {
+                unset($fieldNames[$key]);
                 continue;
             }
 
@@ -2812,15 +2841,15 @@ EOT;
                 $fieldLabel = TransVars::getVariable(trim($fieldLabel, '{ }'), varNameIfNotFound:true);
             }
             $fieldLabel = rtrim($fieldLabel, ':');
-            $elem = $this->formElements[$fieldLabel]??[];
-            if ($fieldNamesForHeaders && $elem['name']??false) {
+            $elem = $this->formElements[$key]??[];
+            if ($fieldKeysForHeaders && ($elem['name']??false)) {
                 $fieldNames[$key] =  $elem['name'];
             } else {
                 $fieldNames[$key] =  $fieldLabel;
             }
         }
         return $fieldNames;
-    } // prepareTableHeaders
+    } // getTableHeadersFromFormFields
 
 
     /**
