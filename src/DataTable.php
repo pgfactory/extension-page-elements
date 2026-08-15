@@ -69,7 +69,7 @@ class DataTable
         'includeSystemElements' => false,
         'includeTimestamp' => false,
         'announceEmptyTable' => true,
-        'shieldCellContent' => false,
+        'shieldCellContent' => true,
     ];
 
     private array $options;
@@ -295,8 +295,8 @@ EOT;
     private function renderTableCell(int $r, int|string $recKey, int $c, array $def): string
     {
         $cell = $def['cellContent'];
+        $elemKey = $def['key'];
         if (!$cell) {
-            $elemKey = $def['key'];
             $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
 
         } elseif (str_starts_with($cell, '=')) {
@@ -310,9 +310,6 @@ EOT;
             } else {
                 $cell = $this->tableData[$recKey][$elemKey] ?? $this->placeholderForUndefined;
             }
-            if ($this->shieldCellContent) {
-                $cell = htmlspecialchars($cell, ENT_QUOTES);
-            }
 
         } elseif ($cell === '%num') {
             $cell = $r;
@@ -320,6 +317,9 @@ EOT;
 
         if (str_contains($cell, '%reckey')) {
             $cell = str_replace('%reckey', $recKey, $cell);
+        }
+        if ($this->shieldCellContent && $elemKey) {
+            $cell = htmlspecialchars($cell, ENT_QUOTES);
         }
         $cell = "<div>$cell</div>";
         $out = "      <td {$def['cellAttrib']}>$cell</td>\n";
