@@ -61,7 +61,7 @@ class DataTable
         'reversed' => false,
         'dontPrint' => false,
         'headers' => false,
-        'fieldNamesForHeaders' => false,
+        'fieldKeysForHeaders' => false,
         'footers' => false,
         'interactive' => false,
         'scrollable' => false,
@@ -484,18 +484,7 @@ EOT;
      */
     private function prepareHeaderRow()
     {
-        if ($this->tableHeaders === true) {
-            $this->tableHeaders = $this->data2Dset->getColHeaders();
-        } else {
-            if (is_string($this->tableHeaders)) {
-                $this->tableHeaders = $this->parseArrayArg('tableHeaders');
-            }
-        }
-
-        $keys = array_keys($this->tableHeaders);
-        if (isset($keys[0]) && is_numeric($keys[0])) {
-            $this->tableHeaders = array_combine($this->tableHeaders, $this->tableHeaders);
-        }
+        $this->tableHeaders = $this->data2Dset->getColHeaders();
     } // prepareHeaderRow
 
 
@@ -578,48 +567,32 @@ EOT;
             } elseif (str_starts_with($elem, 'edit')) {
                 $icon = MdPlusHelper::renderIcon('edit');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-edit-button' type='button' title='{{ pfy-table-edit-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-edit-header', varNameIfNotFound: true);
-                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
-                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-edit-rec-title }}');
-                }
-                $hdr = $hdrCell;
+                $hdr = TransVars::getVariable('pfy-row-edit-header') ?: $icon;
                 $class = 'pfy-row-edit';
 
             } elseif (str_starts_with($elem, 'view')) {
                 $icon = MdPlusHelper::renderIcon('eye');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-view-button' type='button' title='{{ pfy-table-view-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-view-header', varNameIfNotFound: true);
-                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
-                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-view-rec-title }}');
-                }
-                $hdr = $hdrCell;
+                $hdr = TransVars::getVariable('pfy-row-view-header') ?: $icon;
                 $class = 'pfy-row-view';
                 $this->renderViewTemplate();
 
             } elseif (str_starts_with($elem, 'map')) {
                 $icon = MdPlusHelper::renderIcon('map');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-map-button' type='button' title='{{ pfy-table-map-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-map-header', varNameIfNotFound: true);
-                if (preg_match('/:\w{3,20}:/', $hdrCell)) {
-                    $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-map-rec-title }}');
-                }
-                $hdr = $hdrCell;
+                $hdr = TransVars::getVariable('pfy-row-map-header') ?: $icon;
                 $class = 'pfy-row-map';
 
             } elseif (str_starts_with($elem, 'send')) {
                 $icon = MdPlusHelper::renderIcon('mail_send');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-send-button' type='button' title='{{ pfy-table-send-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-send-header');
-                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-send-rec-title }}');
-                $hdr = $hdrCell;
+                $hdr = TransVars::getVariable('pfy-row-send-header') ?: $icon;
                 $class = 'pfy-row-send';
 
             } elseif (str_starts_with($elem, 'duplicate')) {
                 $icon = MdPlusHelper::renderIcon('duplicate');
                 $cell = "<button class='pfy-button pfy-row-button pfy-row-duplicate-button' type='button' title='{{ pfy-table-duplicate-rec-title }}'>$icon</button>";
-                $hdrCell = TransVars::getVariable('pfy-row-duplicate-header');
-                $hdrCell = MdPlusHelper::renderIcon($hdrCell, '{{ pfy-table-duplicate-rec-title }}');
-                $hdr = $hdrCell;
+                $hdr = TransVars::getVariable('pfy-row-duplicate-header') ?: $icon;
                 $class = 'pfy-row-duplicate';
 
             } else {

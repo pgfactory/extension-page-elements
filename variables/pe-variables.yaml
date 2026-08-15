@@ -109,15 +109,15 @@ pfy-table-data-output-header:
   de: 'Empfangene Daten:'
   _:  'Received Data:'
 
-pfy-row-send-header: ':mail_send:'
+pfy-row-send-header: ''
 
-pfy-row-duplicate-header: ':duplicate:'
+pfy-row-duplicate-header: ''
 
-pfy-row-edit-header: ':edit:'
+pfy-row-edit-header: ''
 
-pfy-row-view-header: ':eye:'
+pfy-row-view-header: ''
 
-pfy-row-map-header: ':map:'
+pfy-row-map-header: ''
 
 pfy-table-edit-rec-popup-header:
   de: 'Datensatz bearbeiten'
