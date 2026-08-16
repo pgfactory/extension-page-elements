@@ -245,3 +245,102 @@ function beep(duration, frequency, volume){
     }
   });
 } // beep
+
+
+/*
+ * WindowFreezeOverley
+ *
+ * Usage:
+    setupWindowFreeze(1); // in seconds
+ * or
+    setupWindowFreeze(2, () => {  // callback
+        pfyAlert('callback has been called'); // -> asset POPUPS must be loaded
+        .then(() => {
+            closeWindowFreezeOverlay();
+        });
+        return true;
+    });
+ * Styling:
+ *     body { --pfy-freeze-overlay-bg: #f00b; }
+ */
+
+let pfyFreezeOverlay = null;
+function setupWindowFreeze(delay, callback) {
+  if (typeof delay === 'number') {
+    delay *= 1000;
+  } else if (typeof delay === 'string') {
+    const m = delay.match(/([\d.]+)\s*(\w+)/);
+    if (m) {
+      const unit = m[2];
+      switch (unit.charAt(0).toLowerCase()) {
+        case 's':
+          delay = m[1] * 1000;
+          break;
+        case 'm':
+          delay = m[1] * 60000;
+          break;
+        case 'h':
+          delay = m[1] * 3600000;
+          break;
+        case 'd':
+          delay = m[1] * 86400000;
+          break;
+      }
+    }
+  }
+
+  console.debug(`starting timeout of ${delay/1000}s`);
+  setTimeout(() => {
+    pfyFreezeOverlay = showWindowFreezeOverlay(callback);
+  }, delay)
+  return this;
+} // setupWindowFreeze
+
+
+function showWindowFreezeOverlay(callback) {
+  const imageSrc = hostAssetUrl + 'media/plugins/pgfactory/pagefactory-pageelements/icons/sleeping.webp';;
+  // Prevent duplicate overlays
+  const existing = document.getElementById('pfy-freeze-overlay');
+  if (existing) existing.remove();
+
+  // Overlay container
+  const overlay = document.createElement('div');
+  overlay.id = 'pfy-freeze-overlay';
+  const img = document.createElement('img');
+  img.src = imageSrc;
+
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  console.debug('Window freeze overlay opened');
+  // Fade in
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+  });
+
+  function close() {
+    const res = executeCallbackCode(callback);
+    if (!res) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener('keydown', onKeydown);
+    }
+  }
+
+  function onKeydown(e) {
+    if (e.key === 'Escape') close();
+  }
+
+  overlay.addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown);
+
+  return overlay;
+} // showWindowFreezeOverlay
+
+
+function closeWindowFreezeOverlay() {
+  domForAll('#pfy-freeze-overlay', (overlayEl) =>{
+    overlayEl.style.opacity = '0';
+    setTimeout(() => overlayEl.remove(), 200);
+  })
+} // closeWindowFreezeOverlay
+
