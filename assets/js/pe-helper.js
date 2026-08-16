@@ -289,7 +289,7 @@ function setupWindowFreeze(delay, callback) {
     }
   }
 
-  console.debug(`starting timeout of ${delay/1000}s`);
+  console.debug(`starting window freeze timeout of ${delay/1000}s`);
   setTimeout(() => {
     pfyFreezeOverlay = showWindowFreezeOverlay(callback);
   }, delay)
@@ -344,3 +344,137 @@ function closeWindowFreezeOverlay() {
   })
 } // closeWindowFreezeOverlay
 
+
+function activateTimeoutBar(duration, options = {}) {
+  if (typeof duration !== 'number' || duration <= 0) {
+    throw new Error('createTimeoutBar: "duration" (ms) is required and must be > 0.');
+  }
+
+  duration = (duration < 2000) ? duration * 1000 : duration;
+
+  const {
+    onTimeout = () => {},
+    onTick = () => {},
+    height = 6,
+    color = '#2ecc71',
+    warnColor = '#f1c40f',
+    dangerColor = '#e74c3c',
+    warnThreshold = 0.5,
+    dangerThreshold = 0.2,
+    zIndex = 999999,
+    autoStart = true,
+  } = options;
+
+  // Container (fixed to the bottom of the viewport)
+  const track = document.createElement('div');
+  track.setAttribute('role', 'progressbar');
+  track.setAttribute('aria-label', 'Time until timeout');
+  track.style.cssText = `
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: ${height}px;
+    background: rgba(0,0,0,0.1);
+    z-index: ${zIndex};
+    pointer-events: none;
+  `;
+
+  // The actual animated bar
+  const fill = document.createElement('div');
+  fill.style.cssText = `
+    height: 100%;
+    width: 100%;
+    background: ${color};
+    transform-origin: right center;
+    transition: background-color 0.3s linear;
+    will-change: transform;
+  `;
+  track.appendChild(fill);
+
+  let total = duration;
+  let remaining = duration;
+  let lastTimestamp = null;
+  let rafId = null;
+  let running = false;
+  let timedOut = false;
+
+  function setFraction(fraction) {
+    fraction = Math.max(0, Math.min(1, fraction));
+    fill.style.transform = `scaleX(${fraction})`;
+    if (fraction <= dangerThreshold) {
+      fill.style.background = dangerColor;
+    } else if (fraction <= warnThreshold) {
+      fill.style.background = warnColor;
+    } else {
+      fill.style.background = color;
+    }
+  }
+
+  function frame(timestamp) {
+    if (!running) return;
+    if (lastTimestamp === null) lastTimestamp = timestamp;
+    const delta = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+
+    remaining -= delta;
+    if (remaining <= 0) {
+      remaining = 0;
+      setFraction(0);
+      onTick(0, 0);
+      running = false;
+      if (!timedOut) {
+        timedOut = true;
+        onTimeout();
+      }
+      return;
+    }
+
+    const fraction = remaining / total;
+    setFraction(fraction);
+    onTick(remaining, fraction);
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    if (!track.isConnected) document.body.appendChild(track);
+    timedOut = false;
+    lastTimestamp = null;
+    running = true;
+    setFraction(remaining / total);
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function pause() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    lastTimestamp = null;
+  }
+
+  function resume() {
+    if (running || timedOut || remaining <= 0) return;
+    running = true;
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function reset(newDuration) {
+    pause();
+    total = typeof newDuration === 'number' ? newDuration : duration;
+    remaining = total;
+    timedOut = false;
+    setFraction(1);
+  }
+
+  function stop() {
+    pause();
+    if (track.isConnected) track.remove();
+  }
+
+  function destroy() {
+    stop();
+  }
+
+  if (autoStart) start();
+
+  return { start, stop, pause, resume, reset, destroy, element: track };
+} // activateTimeoutBar
