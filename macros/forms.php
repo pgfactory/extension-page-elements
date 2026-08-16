@@ -23,6 +23,8 @@ if (!isset($GLOBALS['pfy.form'])) {
  */
 return function ($args = '')
 {
+    $recLockingDefaultTime = PfyForm::DEFAULT_MAX_REC_LOCKING_TIME . 's';
+
     $funcName = basename(__FILE__, '.php');
     // Definition of arguments and help-text:
     $config =  [

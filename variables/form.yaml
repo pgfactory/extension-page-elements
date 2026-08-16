@@ -236,15 +236,19 @@ pfy-form-timeout-alert:
   de: |
     <h2>Zeitüberschreitung</h2>
     <p>Dieses Formular war zu lange offen.<br>Sie riskieren Datenverlust, wenn Sie es jetzt absenden.</p>
-    <p>Bitte laden Sie die Seite neu, bevor Sie das Formular verwenden.</p>
+    <p>Seite jetzt neu laden?</p>
   de2: |
     <h2>Zeitüberschreitung</h2>
     <p>Dieses Formular war zu lange offen.<br>Du riskierst Datenverlust, wenn du es jetzt absendest.</p>
-    <p>Bitte lade die Seite neu, bevor du das Formular verwendest.</p>
+    <p>Seite jetzt neu laden?</p>
   _:  |
     <h2>Timeout</h2>
     <p>This form has been open for too long.<br>You risk loosing data if you submit it now.</p>
-    <p>Please, reload the page now</p>
+    <p>Reload the page now?</p>
+
+pfy-reclock-timeout-alert:
+  de: Der Datensatz wurde nach Überschreiten der maximalen Sperrzeit automatisch freigegeben.
+  _:  The data record has been automatically unlocked after the max locking time has expired.
 
 pfy-form-reload-btn:
   de: Seite neu laden

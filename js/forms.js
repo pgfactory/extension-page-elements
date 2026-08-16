@@ -7,14 +7,14 @@ console.debug('forms.js');
 
 const pfyFormsHelper = {
 
-  windowTimeout: false,
+  recLockingTimeout: false,
   formInitialized: false,
-  formRecLocking: (typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking,
+  formMaxRecLockingTime: (typeof pfyMaxRecLockingTime !== 'undefined') ? pfyMaxRecLockingTime : 0,
   recLocked: false,
   menuSelectWrapperEl: false,
   formCache: false,
 
-  init(forms, setFocus, windowFreezeTime) {
+  init(forms, setFocus) {
     if (forms instanceof Element) {
       this.initForm(forms, setFocus);
 
@@ -36,14 +36,6 @@ const pfyFormsHelper = {
           this.initForm(form, setFocus);
         });
       }
-    }
-
-    // initialize freeze timer:
-    if (typeof windowFreezeTime === 'undefined') {
-      windowFreezeTime = (typeof formFreezeTime !== 'undefined') ? formFreezeTime : 0;
-    }
-    if (windowFreezeTime) {
-      this.freezeWindowAfter(windowFreezeTime);
     }
 
     this.initSpinner();
@@ -85,7 +77,6 @@ const pfyFormsHelper = {
       this.newrecButtonHandler(ev);
       this.buttonCallbacksHandler(ev);
       this.showPwHandler(ev);
-      this.handleFrozenWindow(ev);
       this.handleSideBySideButtons(ev);
     });
 
@@ -106,7 +97,6 @@ const pfyFormsHelper = {
 
     document.addEventListener('keydown', (ev) => {
       this.modifyMonitorHandler(ev);
-      this.checkFormTimeout(ev);
     });
 
     document.body.addEventListener('input', (ev) => {
@@ -292,18 +282,6 @@ const pfyFormsHelper = {
   }, // modifyMonitorHandler
 
 
-  checkFormTimeout(ev) {
-    if ((typeof pageLoaded !== 'undefined') && (pageLoaded < (Math.floor(Date.now()/1000) - 3600))) {
-      pfyConfirm({
-        text: `{{ pfy-form-timed-out }}`
-      })
-      .then(() => {
-        pfyFormsHelper.reloadAgent();
-      });
-    }
-  }, // checkFormTimeout
-
-
   categoryChangeMonitorHandler(ev) {
     const select = ev.target.closest('select[name="category"]');
     if (!select) {
@@ -431,7 +409,9 @@ const pfyFormsHelper = {
         }
       }
     }
-
+    if (pfyFormsHelper.recLockingTimeout) {
+      clearTimeout(pfyFormsHelper.recLockingTimeout);
+    }
     pfyFormsHelper.disableForm();
     pfyFormsHelper.doSubmitForm(form);
   }, // submitHandler
@@ -492,7 +472,7 @@ const pfyFormsHelper = {
     let form = formWrapper.querySelector('.pfy-form');
     const dataSrcinx = formWrapper.querySelector('[name=_dataSrcInx]').value;
     let args = 'getRec='+recKey+'&datasrcinx='+dataSrcinx;
-    if (pfyFormsHelper.formRecLocking) {
+    if (pfyFormsHelper.formMaxRecLockingTime) {
       args += '&lock';
       pfyFormsHelper.recLocked = true;
     }
@@ -506,6 +486,7 @@ const pfyFormsHelper = {
       args += '&retainData='+dataSrcinx;
     }
     console.debug('fetching data record '+recKey);
+
     form.dataset.loading = true;
     execAjaxPromise(args, {})
       .then((data) => {
@@ -515,6 +496,7 @@ const pfyFormsHelper = {
           const row = table.querySelector('[data-reckey="'+recKey+'"]');
           row.classList.add('pfy-rec-locked');
           if (formWrapper.closest('.pfy-popup-wrapper')) {
+            clearTimeout(this.recLockingTimeout);
             pfyPopupClose();
             pfyAlert(`{{ pfy-form-rec-locked }}`);
           }
@@ -523,6 +505,9 @@ const pfyFormsHelper = {
 
         // popup is open, now prepare the form, inject obtained data:
         console.debug(data);
+        if (pfyFormsHelper.recLocked && pfyFormsHelper.formMaxRecLockingTime)    {
+          this.resetFormAfter(pfyFormsHelper.formMaxRecLockingTime, formWrapper);
+        }
         if (createNewRec) {
           recKey = ''; // omitting the recKey will create a new record
         }
@@ -533,6 +518,14 @@ const pfyFormsHelper = {
         form.removeAttribute('data-loading');
       });
   }, // fetchDataAndFillForm
+
+
+  clearForm(formEl) {
+    if (!formEl.closest('form')) {
+      formEl = formEl.querySelector('form');
+    }
+    this.presetForm(formEl, {});
+  }, // clearForm
 
 
   presetForm(form, data, recId) {
@@ -1200,7 +1193,7 @@ const pfyFormsHelper = {
 
 
   unlockRecs(tableInx) {
-    if (!pfyFormsHelper.formRecLocking) {
+    if (!pfyFormsHelper.formMaxRecLockingTime) {
       return;
     }
 
@@ -1258,12 +1251,18 @@ const pfyFormsHelper = {
   }, // initAutoGrow
 
 
-  freezeWindowAfter(delay) {
+  resetFormAfter(delay = null, formEl = null) {
+    if (delay === null) {
+      delay = pfyFormsHelper.formMaxRecLockingTime;
+    }
     let t = 0;
+    if (!delay) {
+      return;
+    }
     if (typeof delay === 'number') {
       t = delay;
     } else if (typeof delay === 'string') {
-      const m = delay.match(/(\d+)\s*(\w+)/);
+      const m = delay.match(/([\d.]+)\s*(\w+)/);
       if (m) {
         const unit = m[2];
         switch (unit.charAt(0).toLowerCase()) {
@@ -1282,40 +1281,22 @@ const pfyFormsHelper = {
         }
       }
     }
-    const img = hostAssetUrl + 'media/plugins/pgfactory/pagefactory-pageelements/icons/sleeping.png';
-    const overlay = '<div class="pfy-overlay-background pfy-v-h-centered"><div><img src="' + img + '" alt="Sleeping..." class="pfy-timeout-img" /></div></div>';
 
-    if (this.windowTimeout) {
-      clearTimeout(this.windowTimeout);
-    }
-
-    this.windowTimeout = setTimeout(function () {
-      const body = document.body;
-      body.insertAdjacentHTML('beforeend', overlay);
-      body.classList.add('pfy-overlay-background-frozen');
-      }, t);
-  }, // freezeWindowAfter
-
-
-  handleFrozenWindow(ev) {
-    const overlayElement = ev.target.closest('.pfy-overlay-background');
-    if (!overlayElement) {
-      return;
-    }
-    document.body.classList.remove('pfy-overlay-background-frozen');
-    pfyConfirm({
-      text: `{{ pfy-form-timeout-alert }}`,
-      buttons: `Cancel,{{ pfy-form-reload-btn }}`,
-    })
-    .then(
-      function () {
-        pfyFormsHelper.reloadAgent();
-      },
-      function () {
-        overlayElement.remove();
-        pfyFormsHelper.freezeWindowAfter('1 minute');
-      });
-  }, // handleFrozenWindow
+    console.debug(`starting timeout of ${t/1000}s`);
+    pfyFormsHelper.activateTimeoutBar(t);
+    this.recLockingTimeout = setTimeout(function () {
+      pfyFormsHelper.unlockRecs();
+      console.debug(`rec automatically unlocked`);
+      pfyAlert({
+        text: `{{ pfy-reclock-timeout-alert }}`,
+      })
+      .then(
+        function () {
+          pfyFormsHelper.clearForm(formEl);
+          pfyPopupClose();
+        });
+    }, t);
+  }, // resetFormAfter
 
 
   initSpinner() {
@@ -1569,7 +1550,7 @@ const pfyFormsHelper = {
 
 
   reloadAgent(arg) {
-    if ((typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking) {
+    if (pfyFormsHelper.recLocked) {
       pfyFormsHelper.unlockRecs();
     }
     reloadAgent(arg);
@@ -1662,10 +1643,144 @@ const pfyFormsHelper = {
   }, // isValidDate
 
 
+  activateTimeoutBar(duration, options = {}) {
+    if (typeof duration !== 'number' || duration <= 0) {
+      throw new Error('createTimeoutBar: "duration" (ms) is required and must be > 0.');
+    }
+
+    duration = (duration < 2000) ? duration * 1000 : duration;
+
+    const {
+      onTimeout = () => {},
+      onTick = () => {},
+      height = 6,
+      color = '#2ecc71',
+      warnColor = '#f1c40f',
+      dangerColor = '#e74c3c',
+      warnThreshold = 0.5,
+      dangerThreshold = 0.2,
+      zIndex = 999999,
+      autoStart = true,
+    } = options;
+
+    // Container (fixed to the bottom of the viewport)
+    const track = document.createElement('div');
+    track.setAttribute('role', 'progressbar');
+    track.setAttribute('aria-label', 'Time until timeout');
+    track.style.cssText = `
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: ${height}px;
+    background: rgba(0,0,0,0.1);
+    z-index: ${zIndex};
+    pointer-events: none;
+  `;
+
+    // The actual animated bar
+    const fill = document.createElement('div');
+    fill.style.cssText = `
+    height: 100%;
+    width: 100%;
+    background: ${color};
+    transform-origin: right center;
+    transition: background-color 0.3s linear;
+    will-change: transform;
+  `;
+    track.appendChild(fill);
+
+    let total = duration;
+    let remaining = duration;
+    let lastTimestamp = null;
+    let rafId = null;
+    let running = false;
+    let timedOut = false;
+
+    function setFraction(fraction) {
+      fraction = Math.max(0, Math.min(1, fraction));
+      fill.style.transform = `scaleX(${fraction})`;
+      if (fraction <= dangerThreshold) {
+        fill.style.background = dangerColor;
+      } else if (fraction <= warnThreshold) {
+        fill.style.background = warnColor;
+      } else {
+        fill.style.background = color;
+      }
+    }
+
+    function frame(timestamp) {
+      if (!running) return;
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const delta = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      remaining -= delta;
+      if (remaining <= 0) {
+        remaining = 0;
+        setFraction(0);
+        onTick(0, 0);
+        running = false;
+        if (!timedOut) {
+          timedOut = true;
+          onTimeout();
+        }
+        return;
+      }
+
+      const fraction = remaining / total;
+      setFraction(fraction);
+      onTick(remaining, fraction);
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (!track.isConnected) document.body.appendChild(track);
+      timedOut = false;
+      lastTimestamp = null;
+      running = true;
+      setFraction(remaining / total);
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function pause() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      lastTimestamp = null;
+    }
+
+    function resume() {
+      if (running || timedOut || remaining <= 0) return;
+      running = true;
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function reset(newDuration) {
+      pause();
+      total = typeof newDuration === 'number' ? newDuration : duration;
+      remaining = total;
+      timedOut = false;
+      setFraction(1);
+    }
+
+    function stop() {
+      pause();
+      if (track.isConnected) track.remove();
+    }
+
+    function destroy() {
+      stop();
+    }
+
+    if (autoStart) start();
+
+    return { start, stop, pause, resume, reset, destroy, element: track };
+  }, // activateTimeoutBar
+
 }; // pfyFormsHelper
 
 
-if ((typeof pfyFormRecLocking !== 'undefined') && pfyFormRecLocking) {
+if ((typeof pfyMaxRecLockingTime !== 'undefined') && pfyMaxRecLockingTime) {
   console.debug('setting up beforeunload handler');
   window.addEventListener("beforeunload", (ev) => {
     pfyFormsHelper.unlockRecs();

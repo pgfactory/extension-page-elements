@@ -64,9 +64,6 @@ return  [
 
         'next' =>	['[URL] If set, defines the link target (href) of the "Continue..." response.', false],
 
-        'formFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
-            'e.g. "+1 hour" or number of seconds.', '+1 hour'],
-
         'confirmationText' =>	['The text rendered upon successful completion of a form entry. '.
             'Which is followed by a "Continue..." link.'.
             '(Default: ``\{\{ pfy-form-submit-success }}``).', null],
@@ -110,7 +107,11 @@ return  [
 
         'edit' =>	['Synonym for "editData".', null],
 
-        'recLocking' =>	['[bool] Defines, whether record-locking shall be activated while editing a record.', false],
+        'recLocking' =>	['[bool|seconds] Defines, whether record-locking shall be activated while editing a record.<br>'.
+            "If true, the default ($recLockingDefaultTime) time is used.", false],
+
+        'formFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
+            'e.g. "+1 hour" or number of seconds.', null],
 
         'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', []],
 

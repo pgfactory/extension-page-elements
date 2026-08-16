@@ -41,6 +41,8 @@ class PfyForm extends Form
     private const INFO_ICON = 'ⓘ';
     private const MEGABYTE = 1048576;
     private const LOW_SEATS_WARNING_THRESHOLD = 10;
+    public const DEFAULT_MAX_REC_LOCKING_TIME = 60; // sec
+    public const FORM_REPEATED_FREEZE_TIME = 20; // sec
 
     private const DEFAULT_FORM_OPTIONS = [
         'file' => false,
@@ -107,6 +109,7 @@ class PfyForm extends Form
         'editData' => null,
         'warnBeforeLeavingPage' => false,
         'keepSubmittedDataInForm' => false,
+        'formMaxRecLockingTime' => false,
     ];
 
     private const DEFAULT_ELEMENT_OPTIONS = [
@@ -169,7 +172,6 @@ class PfyForm extends Form
     private static bool $initialized = false;
     private static array $scheduleRecs = [];
     private bool $readonly = false;
-    private bool $recLocking = false;
     private bool|null $sideBySide = false;
     protected bool|null $keepSubmittedDataInForm = false;
     private string $lastCreatedRecKey = '';
@@ -193,9 +195,6 @@ class PfyForm extends Form
 
         $formOptions = $this->parseOptions($formOptions);
 
-        if ($this->recLocking) {
-            Page::addJs('const pfyFormRecLocking = true;');
-        }
         if ($this->showTable) {
             $this->addFormTableWrapper = true;
             $permissionQuery = $this->tableOptions['permission'];
@@ -231,8 +230,7 @@ class PfyForm extends Form
                 $setFocus = ($formOptions['tableOptions']['mode']??false) ? 'null, false' : '';
                 Page::addJsReady("pfyFormsHelper.init($setFocus);");
             }
-            $this->activateWindowFreeze();
-            $this->activateWarnBeforeUnload();
+            $this->setupWarnBeforeUnload();
         }
         if ($this->keepSubmittedDataInForm && (($_GET['clearform']??false) == $this->formIndex)) {
             Utils::pullSessionVar("form-$this->formIndex", overrideKey:$this->formDataId);
@@ -2517,6 +2515,7 @@ EOT;
 
             // handle 'saveAs' attrib to manipulate data before storing:
             if ($saveAs = ($this->formElements[$name]['saveAs'] ?? false)) {
+                $saveAs = str_replace('$$', "'{$dataRec[$name]}'", $saveAs);
                 while (preg_match('/\$([\w-]+)/', $saveAs, $m)) {
                     $varName = $m[1];
                     $v = $dataRec[$varName] ?? '';
@@ -3293,7 +3292,22 @@ EOT;
             $this->showFeedbackInpage = $formOptions['showDirectFeedback'];
             unset($formOptions['showDirectFeedback']);
         }
-        $this->recLocking                   = $formOptions['recLocking'];
+
+        if ($time = $formOptions['recLocking']) {
+            if ($time === true) {
+                $time = self::DEFAULT_MAX_REC_LOCKING_TIME * 1000;
+            } elseif (is_numeric($time)) {
+                $time *= 1000;
+            } else {
+                $time = (strtotime($time) - time()) * 1000;
+            }
+            Page::addJs("const pfyMaxRecLockingTime = $time;");
+        }
+
+        if ($time = $formOptions['formFreezeTime']) {
+            $this->setupFormFreeze($time);
+        }
+
         $this->formWrapperClass             = $formOptions['wrapperClass']? ' '.$formOptions['wrapperClass'] :'';
         $this->readonly                     = $formOptions['readonly'];
         $this->keepSubmittedDataInForm      = $formOptions['retainData'];
@@ -4143,23 +4157,7 @@ EOT;
     /**
      * @return void
      */
-    protected function activateWindowFreeze(): void
-    {
-        if ($time = ($this->formOptions['formFreezeTime']??false)) {
-            if (is_numeric($time)) {
-                $time *= 1000;
-                $js = "const formFreezeTime = $time;";
-            } else {
-                $js = "const formFreezeTime = '$time';";
-            }
-            Page::addJs($js);
-        }
-    } // activateWindowFreeze
-
-    /**
-     * @return void
-     */
-    private function activateWarnBeforeUnload(): void
+    private function setupWarnBeforeUnload(): void
     {
         if (!$this->formOptions['warnBeforeLeavingPage']) {
             return;
@@ -4175,7 +4173,44 @@ window.addEventListener("beforeunload", (ev) => {
 
 EOT;
         Page::addJs($js);
-    } // activateWarnBeforeUnload
+    } // setupWarnBeforeUnload
+
+
+    /**
+     * @param mixed $time
+     * @return void
+     * @throws \Exception
+     */
+    private function setupFormFreeze(mixed $time): void
+    {
+        Page::addAssets('POPUPS');
+        $msg = TransVars::getVariable('pfy-form-timeout-alert');
+        $msg = str_replace("\n", '<br>', $msg);
+        $repTime = self::FORM_REPEATED_FREEZE_TIME;
+        $js = <<<EOT
+const msg = "$msg";
+_setupWindowFreeze("$time");
+function _setupWindowFreeze(time) {
+    setupWindowFreeze(time, () => {  // callback
+        pfyConfirm(msg)
+        .then(
+            () => {
+                closeWindowFreezeOverlay();
+                reloadAgent();
+            },
+            () => {
+                closeWindowFreezeOverlay();
+                pfyFormsHelper.activateTimeoutBar($repTime);
+                _setupWindowFreeze($repTime);
+            }
+        );
+        return true;
+    });
+}
+
+EOT;
+        Page::addJsReady($js);
+    } // setupFormFreeze
 
 
     /**
