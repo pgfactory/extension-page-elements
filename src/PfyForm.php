@@ -4200,7 +4200,7 @@ function _setupWindowFreeze(time) {
             },
             () => {
                 closeWindowFreezeOverlay();
-                pfyFormsHelper.activateTimeoutBar($repTime);
+                activateTimeoutBar($repTime);
                 _setupWindowFreeze($repTime);
             }
         );
