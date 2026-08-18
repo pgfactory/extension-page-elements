@@ -478,3 +478,8 @@ function activateTimeoutBar(duration, options = {}) {
 
   return { start, stop, pause, resume, reset, destroy, element: track };
 } // activateTimeoutBar
+
+
+function deactivateTimeoutBar(options = {}) {
+  activateTimeoutBar(0, options);
+} //
