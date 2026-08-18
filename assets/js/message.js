@@ -17,7 +17,7 @@ function setupMessageHandler(delay) {
     setTimeout(() => {
         msgbox.classList.add('pfy-msg-show');
         pfyMsgHideTimer = setTimeout(() => {
-            msgbox.classList.remove('pfy-msg-show');
+          hideMessage();
         }, 5000);
     }, delay);
 
@@ -28,6 +28,13 @@ function setupMessageHandler(delay) {
     msgbox.addEventListener('dblclick', function () {
         this.style.display = 'none';
     });
+
+    pfyHandleEvent('body', ev => {
+      if (ev.target.closest('.pfy-msg-show')) return;
+      if (document.querySelector('.pfy-msg-show')) {
+        hideMessage();
+      }
+    })
 }
 
 function showMessage(txt) {
@@ -44,6 +51,12 @@ function showMessage(txt) {
 
     document.body.insertBefore(msgbox, document.body.firstChild);
     setupMessageHandler(500);
+}
+
+function hideMessage() {
+  domForOne('.pfy-msg-show', msgbox => {
+    msgbox.classList.remove('pfy-msg-show');
+  })
 }
 
 domReady(() => {
