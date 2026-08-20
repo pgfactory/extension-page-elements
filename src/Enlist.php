@@ -221,6 +221,7 @@ EOT;
             'headers' => $this->tableHeaders,
             'minRows' => $this->nTotalSlots,
             'announceEmptyTable' => false,
+            'shieldCellContent' => false,
             'dataReference' => true,
             'colClasses' => $this->colClasses,
             'rowClasses' => $this->rowClasses,
