@@ -728,6 +728,7 @@ function pfyAlert(options) {
 
 
 function pfyPopupClose() {
+  console.debug('pfyPopupClose');
   domForEach('.pfy-popup-bg', (popup) => {
     popup.remove();
   });

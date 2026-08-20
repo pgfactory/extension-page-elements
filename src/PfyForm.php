@@ -41,7 +41,7 @@ class PfyForm extends Form
     private const INFO_ICON = 'ⓘ';
     private const MEGABYTE = 1048576;
     private const LOW_SEATS_WARNING_THRESHOLD = 10;
-    public const DEFAULT_MAX_REC_LOCKING_TIME = 60; // sec
+    public const DEFAULT_MAX_REC_LOCKING_TIME = 180; // sec
     public const FORM_REPEATED_FREEZE_TIME = 20; // sec
 
     private const DEFAULT_FORM_OPTIONS = [
@@ -110,6 +110,7 @@ class PfyForm extends Form
         'warnBeforeLeavingPage' => false,
         'keepSubmittedDataInForm' => false,
         'formMaxRecLockingTime' => false,
+        'formFreezeTime' => false,
     ];
 
     private const DEFAULT_ELEMENT_OPTIONS = [
@@ -2230,7 +2231,7 @@ EOT;
             return;
         }
 
-        $dataRec = $origDataRec = $this->getValues('array');
+        $dataRec0 = $origDataRec = $this->getValues('array');
 
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
@@ -2262,33 +2263,20 @@ EOT;
             reloadAgent(null, '{{ pfy-form-session-expired }}');
         }
 
-        $this->restoreBypassedFields($dataRec);
+        $this->restoreBypassedFields($dataRec0);
 
-        $this->securityChecks($dataRec);
+        $this->securityChecks($dataRec0);
 
-        // handle 'dataReceivedCallback' on data received:
-        if ($this->formOptions['dataReceivedCallback']) {
-            if ($this->keepSubmittedDataInForm) {
-                $this->retainSubmittedData($origDataRec, $formInxReceived);
-            }
-
-            list($html, $continueEval) = $this->handleCallback($dataRec);
-            if (!$continueEval) {
-                $this->formResponse =  $html;
-                return;
-            }
-        }
-
-        $recKey = $dataRec['_reckey']??false;
+        $recKey = $dataRec0['_reckey']??false;
 
         // handle delete request:
-        if ($this->handleDeleteRequest($dataRec, $recKey)) {
+        if ($this->handleDeleteRequest($dataRec0, $recKey)) {
             $this->formResponse =  '<p>{{ pfy-form-rec-deleted-confirmation }}</p>';
             $this->formResponse .= $this->getContinueLink();
             return;
         }
 
-        $dataRec = $this->normalizeData($dataRec);
+        $dataRec = $this->normalizeData($dataRec0);
         if (is_string($dataRec)) {
             // string means spam detected:
             $this->showForm = false;
@@ -2296,6 +2284,21 @@ EOT;
             $this->formResponse .= $this->getContinueLink();
             return;
         }
+
+        // handle 'dataReceivedCallback' on data received:
+        if ($this->formOptions['dataReceivedCallback']) {
+            if ($this->keepSubmittedDataInForm) {
+                $this->retainSubmittedData($origDataRec, $formInxReceived);
+            }
+
+            list($html, $continueEval) = $this->handleCallback($dataRec, $dataRec0);
+            if (!$continueEval) {
+                $this->formResponse =  $html;
+                return;
+            }
+        }
+
+
 
         $this->formDataRec = $dataRec;
 
@@ -2779,6 +2782,9 @@ EOT;
         $tableOptions = $this->tableOptions;
 
         $tableHeaders = $tableOptions['headers'] ?? false;
+        if ($tableHeaders) {
+            $useLabel = false; // explicit table headers override option 'fieldKeysForHeaders'
+        }
         if (!$tableHeaders || ($tableHeaders === true)) {
             $tableHeaders = $this->getTableHeadersFromFormFields();
         } elseif (is_string($tableHeaders)) {
@@ -3941,10 +3947,10 @@ EOT;
      * @param array $dataRec
      * @return array
      */
-    private function handleCallback(array &$dataRec): array
+    private function handleCallback(array &$dataRec, array $origDataRec): array
     {
         if ($this->formOptions['dataReceivedCallback'] instanceof \Closure) {
-            $res = $this->formOptions['dataReceivedCallback']($dataRec);
+            $res = $this->formOptions['dataReceivedCallback']($dataRec, $origDataRec);
             if (is_array($res)) {
                 $html = ($res['html'] ?? ($res[0] ?? ''));
                 $continueEval = $res['continueEval'] ?? ($res[1] ?? true);
@@ -3965,14 +3971,14 @@ EOT;
 
         foreach ($callbacks as $callback) {
             if (str_starts_with($callback, '~')) {
-                $res = $this->handlePhpCallback($callback, $dataRec);
+                $res = $this->handlePhpCallback($callback, $dataRec, $origDataRec);
             } else {
                 $callback = rtrim($callback, '();');
                 if (method_exists($this, $callback)) {
-                    $res = $this->$callback($dataRec);
+                    $res = $this->$callback($dataRec, $origDataRec);
 
                 } elseif (function_exists($callback)) {
-                    $res = $callback($dataRec);
+                    $res = $callback($dataRec, $origDataRec);
                 } else {
                     throw new \Exception("Error: function '$callback' not available.");
                 }

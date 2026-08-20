@@ -8,6 +8,7 @@ console.debug('forms.js');
 const pfyFormsHelper = {
 
   recLockingTimeout: false,
+  timeoutBar: null,
   formInitialized: false,
   formMaxRecLockingTime: (typeof pfyMaxRecLockingTime !== 'undefined') ? pfyMaxRecLockingTime : 0,
   recLocked: false,
@@ -1283,7 +1284,7 @@ const pfyFormsHelper = {
     }
 
     console.debug(`starting form freeze timeout of ${t/1000}s`);
-    activateTimeoutBar(t);
+    this.timeoutBar = activateTimeoutBar(t);
     this.recLockingTimeout = setTimeout(function () {
       pfyFormsHelper.unlockRecs();
       console.debug(`rec automatically unlocked`);
@@ -1292,10 +1293,14 @@ const pfyFormsHelper = {
       })
       .then(
         () => {
+          clearTimeout(pfyFormsHelper.recLockingTimeout);
           pfyFormsHelper.clearForm(formEl);
+          pfyFormsHelper.timeoutBar.destroy();
           pfyPopupClose();
         },
         () => {
+          clearTimeout(pfyFormsHelper.recLockingTimeout);
+          pfyFormsHelper.timeoutBar.destroy();
           pfyPopupClose();
         });
     }, t);
@@ -1644,7 +1649,7 @@ const pfyFormsHelper = {
   isValidDate(d) {
     return d instanceof Date && !isNaN(d);
   }, // isValidDate
-  
+
 }; // pfyFormsHelper
 
 
