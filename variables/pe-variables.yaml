@@ -313,11 +313,6 @@ pfy-login-failed:
   de: 'Anmeldung gescheitert.'
   _:  'Login failed.'
 
-pfy-logged-in-as:
-  de: 'Sie sind angemeldet als '
-  de2: 'Du bist angemeldet als '
-  _:  'You are logged in as '
-
 pfy-login-otc-info:
   de: 'Sie können dieses Feld leer lassen. Dann senden wir Ihnen per E-Mail einen Login Code.'
   de2: 'Du kannst dieses Feld leer lassen. Dann senden wir dir per E-Mail einen Login Code.'
