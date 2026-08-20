@@ -614,8 +614,15 @@ const tableHelper = {
         header: headerStr,
         contentFrom: formWrapper,
         closeOnBgClick: false,
+//        onCancel: function () {
+//          pfyFormsHelper.unlockRecs(dataSrcInx);
+//          clearTimeout(pfyFormsHelper.recLockingTimeout);
+//          pfyFormsHelper.timeoutBar.destroy();
+//        },
         onClose: function () {
           pfyFormsHelper.unlockRecs(dataSrcInx);
+          clearTimeout(pfyFormsHelper.recLockingTimeout);
+          pfyFormsHelper.timeoutBar.destroy();
         },
         onOpen: function () {
           domForOne('.pfy-popup-wrapper .pfy-form', formEl => {
@@ -629,6 +636,8 @@ const tableHelper = {
             domForAll(formEl, 'input.pfy-cancel', input => {
               input.addEventListener('click', () => {
                 pfyFormsHelper.unlockRecs(dataSrcInx);
+                clearTimeout(pfyFormsHelper.recLockingTimeout);
+                pfyFormsHelper.timeoutBar.destroy();
               });
             });
           });

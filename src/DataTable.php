@@ -61,7 +61,6 @@ class DataTable
         'reversed' => false,
         'dontPrint' => false,
         'headers' => false,
-        'fieldKeysForHeaders' => false,
         'footers' => false,
         'interactive' => false,
         'scrollable' => false,
