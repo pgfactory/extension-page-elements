@@ -33,7 +33,7 @@
       border: 1px solid #ddd;
       padding: 5px;
     }
-    .pfy-enlist-row-num {
+    .pfy-col-num {
       width: 1em;
       transform: scale(0.75);
       color: #aaa;
@@ -42,8 +42,8 @@
       padding-left: 0;
       padding-right: 1px;
     }
-    .pfy-enlist-icon-1,
-    .pfy-enlist-icon-2 {
+    .pfy-col-icon-1,
+    .pfy-col-icon-2 {
       width: 2em;
       text-align: center;
     }
@@ -75,20 +75,21 @@
     );
   }
 
-  .pfy-enlist-name > div {
+//  .pfy-enlist-name > div {
+  .pfy-col-name > div {
     min-height: 1em;
   }
 
-  .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-enlist-icon-1,
-  .pfy-enlist-custom-fields .pfy-enlist-icon-2 {
+  .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-col-icon-1,
+  .pfy-enlist-custom-fields .pfy-col-icon-2 {
     display: none;
   }
   .pfy-enlist-obfuscated .pfy-enlist-custom-fields {
     display: none;
   }
 
-  .pfy-enlist-icon-1,
-  .pfy-enlist-icon-2 {
+  .pfy-col-icon-1,
+  .pfy-col-icon-2 {
     button {
       @include _pfy-enlist-button;
     }
@@ -151,7 +152,8 @@
       border-color: #4d4;
     }
 
-    .pfy-enlist-name {
+//    .pfy-enlist-name {
+    .pfy-col-name {
       color: gray;
       font-style: italic;
     }
