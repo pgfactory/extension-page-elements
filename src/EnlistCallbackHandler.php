@@ -22,13 +22,13 @@ class EnlistCallbackHandler
      * @param array $newDataRec
      * @return string
      */
-    public function callback(object $enlist, array $newDataRec): string
+    public function callback(object $enlist, array $newDataRec, array $origDataRec): string
     {
         $this->db = $enlist->db;
         $this->options = $enlist->getOptions();
         $this->isEnlistAdmin = $this->options['isEnlistAdmin'] ?? false;
         $widgetKey = $newDataRec['widgetKey'];
-        $slotInx = $newDataRec['_reckey'];
+        $slotInx = $origDataRec['_reckey'];
         $this->pagePath = page()->id();
         $context = "[$widgetKey: ".PFY_HOST_URL.$this->pagePath.']';
         if ($this->isEnlistAdmin) {
@@ -41,10 +41,6 @@ class EnlistCallbackHandler
 
         unset(
             $newDataRec['mode'],
-            $newDataRec['_dataSrcInx'],
-            $newDataRec['_cancel'],
-            $newDataRec['_reckey'],
-            $newDataRec['_csrf'],
             $newDataRec['enlistElemInx'],
             $newDataRec['setname']
         );

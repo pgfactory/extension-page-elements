@@ -28,7 +28,7 @@ const Enlist = {
   addEventListeners: function() {
     document.addEventListener('click', ev => {
       const el = ev.target;
-      if (!el.closest('.pfy-enlist-icon, .pfy-enlist-sendmail-button, .pfy-enlist-delete-checkbox, .pfy-enlist-ical-button, .pfy-enlist-collapse-button')) {
+      if (!el.closest('.pfy-enlist-icon, .pfy-enlist-title')) {
         return;
       }
       ev.stopPropagation();
@@ -109,6 +109,9 @@ const Enlist = {
     }
 
     const rowEl = elem.classList.contains('pfy-enlist-field') ? elem : elem.closest('tr');
+    if (!rowEl) {
+      return;
+    }
     const enlistElemInx = rowEl.dataset.reckey;
     const widgetEl = elem.closest('.pfy-enlist-wrapper');
     const widgetKey = widgetEl.dataset.widgetKey;

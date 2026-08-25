@@ -481,8 +481,8 @@ EOT;
             'confirmationText' => '',
             'wrapperClass' => $wrapperClass,
             'formBottom' => $popupHelp,
-            'dataReceivedCallback' => function($data) {
-                return (new EnlistCallbackHandler)->callback($this, $data);
+            'dataReceivedCallback' => function($data, $origDataRec) {
+                return (new EnlistCallbackHandler)->callback($this, $data, $origDataRec);
             },
         ];
         // minimum required fields:
