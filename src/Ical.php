@@ -192,7 +192,7 @@ class Ical
         $linkText = $mdp->compileParagraph($linkText);
         if ($asButton) {
             $link = "<button class='pfy-enlist-ical-button pfy-button pfy-button-lean' title='$tooltip' type='button'>$linkText</button>";
-            $link .= "<a href='$url' download='$this->filename' class='pfy-dispno'>$linkText</a>";
+            $link .= "<a href='$url' download='$this->filename' class='pfy-dispno' inert>$linkText</a>";
         } else {
             $link = "<a href='$url' download='$this->filename' title='$tooltip'>$linkText</a>";
         }
