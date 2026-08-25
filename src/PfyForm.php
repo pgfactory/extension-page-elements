@@ -128,6 +128,7 @@ class PfyForm extends Form
         'false' => '',
         'autoGrow' => true,
         'origName' => '',
+        'data' => null, // data attributes
     ];
 
     private const ARRAY_SUMMARY_NAME = '_';
@@ -544,6 +545,13 @@ class PfyForm extends Form
         // handle 'enableSubmit' option:
         if (($elemOptions['enableSubmit']??false) !== false) {
             $elem->setHtmlAttribute('data-enablesubmit', true);
+        }
+
+        // handle 'data' attributes:
+        if ($data = ($elemOptions['data']??false)) {
+            foreach ($data as $k => $v) {
+                $elem->setHtmlAttribute("data-$k", $v);
+            }
         }
 
         // handle 'readonly' option:
