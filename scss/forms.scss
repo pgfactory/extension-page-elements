@@ -36,7 +36,7 @@
 @import '~/site/plugins/pagefactory/scss/_scss-variables.scss';
 
 $inputHeight:           var(--pfy-form-input-height, 2.2em);
-$shortWidth:            var(--pfy-form-input-medium-width, 4em);
+$shortWidth:            var(--pfy-form-input-short-width, 5em);
 $mediumWidth:           var(--pfy-form-input-medium-width, 10em);
 $choiceOptionWidth:     var(--pfy-form-choice-option-width, 5.8em);
 $labelWidth:            var(--pfy-form-label-width, 6em);
