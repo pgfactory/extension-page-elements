@@ -118,12 +118,13 @@ EOT;
         $js = <<<EOT
 const calElem = document.querySelector('#pfy-calendar-$this->inx');
 if (calElem) {
-    let pfyCalendar = new PfyCalendar();
+    pfyCalendar = new PfyCalendar();
     pfyCalendar.init(calElem, {
 $calOptions
     });
 }
 EOT;
+        Page::addJs( "var pfyCalendar = null;" );
         Page::addJsReady( $js );
 
         $catSelectors = $this->renderCatSelectors();
@@ -259,6 +260,9 @@ EOT;
                 $formFields = ['category' => ['type' => 'select', 'label' => '{{ pfy-cal-category-label }}']]+ $formFields;
             }
             $formFields['category']['options'] = $this->categories;
+        }
+        if ($categoryChangeCallback = ($this->options['categoryChangeCallback']??false)) {
+            $formFields['category']['data']['change-callback'] = $categoryChangeCallback;
         }
 
         // add generic fields, if not defined yet:
@@ -529,8 +533,8 @@ EOT;
         $this->sessCalRec['edit'] = $edPerm;
 
         // initial date:
-        $this->initialDate = $this->sessCalRec['date'] ?? date('Y-m-d');
-        $this->sessCalRec['date'] = $this->initialDate;
+        $this->initialDate = $this->sessCalRec['initialDate'] ?? date('Y-m-d');
+        $this->sessCalRec['initialDate'] = $this->initialDate;
         $this->sessCalRec['thisPage'] = PFY_KIRBY_BASE_PATH;
     } // parseOptions
 

@@ -16,6 +16,8 @@ day view:
 
 */
 
+console.debug('calendar.js');
+
 const pfyCalContextMenu =
   `<button class="pfy-cal-edit" role="button">{{ pfy-cal-context-edit-label }}</button><br>`+
   `<button class="pfy-cal-duplicate" role="button">{{ pfy-cal-context-duplicate-label }}</button><br>`+
@@ -36,8 +38,8 @@ function PfyCalendar() {
   this.useDblClick = false;
   this.overrideDblClick = false;
 
-  // Control array: list-view <tr> rows with any of these classes will be removed
-  this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
+ //  // Control array: list-view <tr> rows with any of these classes will be removed
+ //  this.listRowRemoveClasses = ['pfy-event-abwesenheit'];
 } // PfyCalendar
 
 
@@ -46,7 +48,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
   let   dataRef = '';
   this.calendarEl = calendarEl;
 
-  this.initCatSelectrHandler();
+  this.initCatSelectorHandler();
   this.setupContextMenu();
 
   domForOne(this.formWrapperEl, '[name=_dataSrcInx]', (dataRefElem) => {
@@ -403,6 +405,7 @@ PfyCalendar.prototype.setAlldayMode = function(form, allday) {
   }
   domForOne(form, '[name=allday]', (el) => {
     el.closest('.pfy-elem-wrapper').dataset.value = allday;
+    el.checked = allday;
   })
 } // setAlldayMode
 
@@ -431,9 +434,20 @@ PfyCalendar.prototype.setupCategoryHandler = function(form) {
     }
     categoryElem.addEventListener('change', function (event) {
       parent.updateCategoryClass(event.currentTarget);
+      parent.handleChangeCallback(event.currentTarget);
     });
   })
 }; // setupCategoryHandler
+
+
+PfyCalendar.prototype.handleChangeCallback = function(catElem) {
+  const changeCallback = catElem.dataset.changeCallback;
+  if (changeCallback) {
+    const currentCat = catElem.options[catElem.selectedIndex].value;
+    console.debug(`category change callback: ${changeCallback}, currentCat: ${currentCat}`);
+    executeCallbackCode(changeCallback, currentCat);
+  }
+}; // handleChangeCallback
 
 
 PfyCalendar.prototype.updateCategoryClass = function(catElem) {
@@ -756,7 +770,7 @@ PfyCalendar.prototype.invokeHandler = function(fun, argObj1, argObj2 = null) {
 } // invokeHandler
 
 
-PfyCalendar.prototype.initCatSelectrHandler = function() {
+PfyCalendar.prototype.initCatSelectorHandler = function() {
   const parent = this;
   domForEach('.pfy-cal-cat-selector input', (el) => {
     el.addEventListener('change', function () {
@@ -764,7 +778,7 @@ PfyCalendar.prototype.initCatSelectrHandler = function() {
       parent.storeCatFilter();
     });
   })
-} // initCatSelectrHandler
+} // initCatSelectorHandler
 
 
 PfyCalendar.prototype.getCatFilterStates = function() {

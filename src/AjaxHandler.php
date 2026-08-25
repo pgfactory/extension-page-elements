@@ -384,7 +384,9 @@ class AjaxHandler
     {
         $from = str_replace(' ','T', get('start'));
         $till = str_replace(' ','T', get('end'));
-        self::saveInitialDate($from);
+        $middle = date('Y-m-d', (strtotime($from) + strtotime($till)) / 2);
+        self::saveInitialDate($middle);
+        //mylog("Cal: $from – $till, middleDate: $middle", 'calendar-log.txt');
 
         if ($categories = self::$sessRec['categories']) {
             $categories = str_replace(' ', '', $categories);
@@ -438,15 +440,7 @@ class AjaxHandler
      */
     private static function saveInitialDate(string $from): void
     {
-        if (self::$sessRec['mode'] === 'dayGridMonth') {
-            $fromT = strtotime($from);
-            if (intval(date('j', $fromT)) < 15) {
-                $from = date('Y-m-01', $fromT);
-            } else {
-                $from = date('Y-m-01', strtotime('+1 month', $fromT));
-            }
-        }
-        self::$sessRec['date'] = substr($from,0, 10);
+        self::$sessRec['initialDate'] = substr($from,0, 10);
         kirby()->session()->set(self::$sessCalRecKey, self::$sessRec);
     } // saveInitialDate
 
