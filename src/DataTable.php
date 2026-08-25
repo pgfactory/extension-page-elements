@@ -34,6 +34,7 @@ class DataTable
         'tableClass' => '',
         'tableWrapperClass' => '',
         'tdClass' => '',
+        'colClasses' => [],
         'rowClasses' => [],
         'dataReference' => null,
         'caption' => false,
@@ -106,6 +107,7 @@ class DataTable
     private $archiveDb;
     private $data2Dset;
     private $officeFormatAvailable = false;
+    private array $colClasses; // used by Enlist
     private array $rowClasses; // used by Enlist
     private string $placeholderForUndefined;
     private mixed $shieldCellContent;
@@ -512,6 +514,7 @@ EOT;
                 $class = 'pfy-col-' . translateToClassName(ltrim($key, '_'));
             }
             $class = "pfy-col-$i $class";
+            $class .= ($this->colClasses[$i-1]??false) ? " {$this->colClasses[$i-1]}" : '';
 
             $cell = '';
             if ($this->computedCells[$key] ?? false) {
@@ -629,6 +632,9 @@ EOT;
                 'footerAttrib' => " class='pfy-table-footer $cellClass'",
                 'key' => '',
             ];
+            if ($this->colClasses) {
+                array_unshift($this->colClasses, []);
+            }
             $i++;
         }
 
@@ -1198,6 +1204,7 @@ EOT;
 
         $this->tableId = $options['tableId'] ?: "pfy-table-$this->inx";
         $this->tableClass = $options['tableClass'] ?: "pfy-table pfy-table-$this->inx";
+        $this->colClasses = $options['colClasses'];
         $this->rowClasses = $options['rowClasses'];
         $this->tdClass = $options['tdClass'];
         $this->tableWrapperClass = 'pfy-table-wrapper ' . $options['tableWrapperClass'] ?: (($options['wrapperClass'] ?? false) ?: '');
