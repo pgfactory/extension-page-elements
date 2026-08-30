@@ -59,6 +59,9 @@ return  [
 
         'maxCountOn' =>	['If maxCount is set, identifies the field to use for counting sign-ups.', false],
 
+        'maxCountNotice' =>	['If maxCount is reached, this text will be shown.<br>'.
+            '(default: value of variable ``\{{ pfy-form-maxcount-reached }}``', null],
+
         'lowSeatsWarning' => ['(integer) If lowSeatsWarning is set, variable "pfy-form-available-seats-banner" '.
             'is shown, if number of available seats is less that given value.', false],
 

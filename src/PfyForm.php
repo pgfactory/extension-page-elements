@@ -206,8 +206,9 @@ class PfyForm extends Form
         }
 
         $this->handleScheduleOption();
-        $this->checkDeadline(); // -> sets $this->deadlinePassed and $this->formInpageResponse
-        $this->checkMaxCount();
+        if (!$this->checkDeadline()) { // -> sets $this->deadlinePassed and $this->formInpageResponse
+            $this->checkMaxCount(); // -> sets $this->maxCountExceeded and $this->formInpageResponse
+        }
 
         // open database:
         if ($formOptions['file']) {
@@ -294,7 +295,8 @@ class PfyForm extends Form
         $this->__processReceivedData();
 
         $formResponse = $this->deadlinePassed . $this->maxCountExceeded . $this->formResponse;
-        if (!$this->showFeedbackInpage && $formResponse) {
+        if (!$this->showFeedbackInpage && $this->formResponse && !$this->deadlinePassed && !$this->maxCountExceeded) {
+            // 
             reloadAgent(message: strip_tags($formResponse));
         }
 
@@ -2925,7 +2927,7 @@ EOT;
     /**
      * @return string|false
      */
-    private function checkDeadline(): void
+    private function checkDeadline(): bool
     {
         if ($deadlineStr = trim($this->formOptions['deadline']??'')) {
             $stretchDeadline = false;
@@ -2967,6 +2969,7 @@ EOT;
                 }
             }
         }
+        return $this->deadlinePassed;
     } // checkDeadline
 
 
