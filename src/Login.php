@@ -267,7 +267,7 @@ EOT;
             }
 
         } elseif ($email = self::getUsersEmail($data)) {
-            if ($password = ($data['pfyLoginPassword'] ?? false)) {
+            if ($password = ($_POST['pfyLoginPassword'] ?? false)) { // note: $data['pfyLoginPassword'] is already hashed
                 // 'pfyLoginPassword' received -> validate:
                 try {
                     // verify credentials:
