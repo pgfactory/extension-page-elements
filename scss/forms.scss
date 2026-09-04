@@ -981,9 +981,12 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
   .pfy-form-rrule-yearly .yearly {
     display:inline;
   }
+  .pfy-elem-wrapper.pfy-rrule-elem-freq,
   .pfy-form-rrule-wrapper {
-    --pfy-form-label-width: 10em;
+    --pfy-form-label-width: 10.8em;
 
+  }
+  .pfy-form-rrule-wrapper {
     .pfy-rrule-elem-freq {
       --pfy-form-label-width: 11em;
       select {

@@ -1351,26 +1351,31 @@ const pfyFormsHelper = {
 
   repetitionChangeHandler(ev) {
     const selectEl = ev.target;
-    const wrapper = selectEl.closest('.pfy-form-rrule-wrapper');
-    if (!wrapper) {
+    if (!selectEl.classList.contains('pfy-rrule-elem-freq')) {
       return;
     }
 
-    const details = selectEl.closest('details');
-    const rruleBody = details.querySelector('.pfy-form-rrule-body-wrapper');
-    const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
-    this.applyRepetitionFreq(details, rruleBody, selectedFreq);
+    domForOne(selectEl, '^.pfy-elems-wrapper .pfy-form-rrule-wrapper', detailsEl => {
+      const rruleBody = detailsEl.querySelector('.pfy-form-rrule-body-wrapper');
+      const selectedFreq = selectEl.options[selectEl.selectedIndex].value;
+      this.applyRepetitionFreq(detailsEl, rruleBody, selectedFreq);
+    })
   }, // repetitionChangeHandler
 
 
   applyRepetitionFreq(details, rruleBody, selectedFreq) {
+    let val = false;
     if (selectedFreq === 'NONE') {
       details.open = false;
       rruleBody.classList.value = 'pfy-form-rrule-body-wrapper';
     } else {
       details.open = true;
       rruleBody.classList.value = 'pfy-form-rrule-body-wrapper pfy-form-rrule-' + selectedFreq.toLowerCase();
+      val = true;
     }
+    domForOne(details, '^form [name=_rrule]', el => {
+      el.value = val;
+    })
   }, // applyRepetitionFreq
 
 

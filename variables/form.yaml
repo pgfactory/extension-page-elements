@@ -422,6 +422,17 @@ pfy-form-rrule-bymonth-info:
   _: For which months?
 
 
+pfy-form-rrule-formula-label:
+  de: 'Als Formel:'
+  _: 'Formula:'
+
+pfy-form-rrule-formula-info:
+  de: |
+    Alternativ können Sie hier die Wiederholungen als Formel eingeben, z.B. "FREQ=DAILY;INTERVAL=1".
+  _: |
+    Alternatively you can supply a recurrence as a formula, e.g. "FREQ=DAILY;INTERVAL=1".
+
+
 # === CountedChoices ===========================================================
 pfy-form-countedchoices-max-error:
   de: 'Maximale Anzahl überschritten'

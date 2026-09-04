@@ -17,7 +17,7 @@ use PgFactory\PageFactoryElements\HtmlMail;
 use PgFactory\PageFactoryElements\PageElements;
 use PgFactory\PageFactoryElements\TemplateCompiler;
 use PgFactory\PageFactoryElements\TwigLight;
-use RRule\RRule;
+use PgFactory\PageFactoryElements\PfyRRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
 use function PgFactory\PageFactory\var_r as var_r;
 use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
@@ -181,6 +181,7 @@ class PfyForm extends Form
     protected array $formDataRec = [];
     protected string|false $formDataId = false;
     protected string|false $tableId = false;
+    private array $origDataRec;
 
     /**
      * @param $formOptions
@@ -880,9 +881,10 @@ class PfyForm extends Form
 
     /**
      * @param string $name
+     * @param array $origFormElemDef
      * @return void
      */
-    private function composeEventElement(string $name, array $rec): void
+    private function composeEventElement(string $name, array $origFormElemDef): void
     {
         if (!$this->eventFieldFound) {
             $this->eventFieldFound = true;
@@ -960,8 +962,8 @@ class PfyForm extends Form
             $this->db->setOption('masterFileRecKeySortOnElement', 'start');
         }
 
-        if ($rec['repeatable']??false) {
-            $this->composeRruleElement($name, $rec);
+        if ($origFormElemDef['repeatable']??false) {
+            $this->composeRruleElement($name, $origFormElemDef);
         }
     } // composeEventElement
 
@@ -969,29 +971,29 @@ class PfyForm extends Form
     /**
      * @param int $inx
      * @param string $name
-     * @param array $rec
+     * @param array $origFormElemDef
      * @return void
      * @throws InvalidArgumentException
      */
-    private function composeCountedChoicesElement(int $inx, string $name, array $rec): void
+    private function composeCountedChoicesElement(int $inx, string $name, array $origFormElemDef): void
     {
-        $controlledBy = ($rec['controller']??'');
+        $controlledBy = ($origFormElemDef['controller']??'');
         if (!$controlledBy) {
             throw new \Error("Source Error: 'controller' missing in 'countedchoices' element '$name'.");
         }
 
         $countedChoicesElements = [];
-        $required = ($rec['required']??false);
-        $label = $rec['label']??$name;
-        $grouplabel = $rec['grouplabel']??'';
-        if ($info = $rec['info'] ?? '') {
-            $rec['info'] = '';
+        $required = ($origFormElemDef['required']??false);
+        $label = $origFormElemDef['label']??$name;
+        $grouplabel = $origFormElemDef['grouplabel']??'';
+        if ($info = $origFormElemDef['info'] ?? '') {
+            $origFormElemDef['info'] = '';
             $grouplabel .= $this->renderTooltip($info);
         }
 
-        $id = ($rec['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
-        $preset = ($rec['preset']??'');
-        $max = ($rec['max']??'');
+        $id = ($origFormElemDef['id']??'') ?? "pfy-form-counted-choices-$this->formIndex-$inx";
+        $preset = ($origFormElemDef['preset']??'');
+        $max = ($origFormElemDef['max']??'');
         if ($max && preg_match('/^=\$([\w-]+)/', $max, $m)) {
             $ref = $m[1];
             if (isset($this->formElements[$ref]['id'])) {
@@ -1003,17 +1005,17 @@ class PfyForm extends Form
             $max = "[name=$controlledBy]";
         }
 
-        $attrib = ($rec['attrib']??'');
-        $wrapperClass = ($rec['class'] ?? ($rec['wrapperClass']??''));
+        $attrib = ($origFormElemDef['attrib']??'');
+        $wrapperClass = ($origFormElemDef['class'] ?? ($origFormElemDef['wrapperClass']??''));
 
-        if ($infos = ($rec['infos']??($rec['info']??''))) {
+        if ($infos = ($origFormElemDef['infos']??($origFormElemDef['info']??''))) {
             $infos = parseArgumentStr($infos);
         }
-        if ($descriptions = ($rec['descriptions']??($rec['description']??''))) {
+        if ($descriptions = ($origFormElemDef['descriptions']??($origFormElemDef['description']??''))) {
             $descriptions = parseArgumentStr($descriptions);
         }
 
-        if ($menuElems = ($rec['options']??false)) {
+        if ($menuElems = ($origFormElemDef['options']??false)) {
             $menuElems = parseArgumentStr($menuElems, anonIndex: '');
             $wrapperClass .= ' pfy-radio';
         } else {
@@ -1076,13 +1078,13 @@ class PfyForm extends Form
 
     /**
      * @param int|string $name
-     * @param array $rec
+     * @param array $origFormElemDef
      * @return void
      * @throws InvalidArgumentException
      */
-    private function composeAddressElement(string $name, array $rec): void
+    private function composeAddressElement(string $name, array $origFormElemDef): void
     {
-        $required = ($rec['required']??false);
+        $required = ($origFormElemDef['required']??false);
 
         if ($labels = ($this->formElements[$name]['label']??'')) {
             $labels = parseArgumentStr($labels);
@@ -1216,22 +1218,15 @@ class PfyForm extends Form
 
     /**
      * @param int|string $name
-     * @param array $rec
+     * @param array $origFormElemDef
      * @return void
      */
-    private function composeRruleElement(int|string $name, array $rec): void
+    private function composeRruleElement(int|string $name, array $origFormElemDef): void
     {
-        $wkst = $rec['wkst']?? 'MO';
         $eventElements = [];
 
-        $eventElements['rrule'] = [
-            'type'  => 'hidden',
-            'saveAs'  => '"RRULE:FREQ=$_freq;COUNT=$_count;INTERVAL=$_interval;WKST='.$wkst.';BYDAY=$_byweekday;BYMONTH=$_bymonth;"',
-        ];
-
-        $eventElements['_repeatEvent'] = [
-            'type' => 'literal',
-            'html' => "<!-- pfy-rrule-wrapper -->\n<details class='pfy-form-rrule-wrapper'>\n<summary>\n",
+        $eventElements['_rrule'] = [
+            'type' => 'hidden',
         ];
 
         $eventElements['_freq'] = [
@@ -1247,9 +1242,11 @@ class PfyForm extends Form
                 'YEARLY:"{{ pfy-form-rrule-yearly-option }}"',
         ];
 
+        // start of details
         $eventElements['_repeatEventBody'] = [
             'type'      => 'literal',
-            'html'      => "</summary>\n<div class='pfy-form-rrule-body-wrapper'>",
+            'html' => "<!-- pfy-rrule-wrapper -->\n<details class='pfy-form-rrule-wrapper'>\n<summary>\n".
+                "</summary>\n<div class='pfy-form-rrule-body-wrapper'>",
         ];
 
         $eventElements['_until'] = [
@@ -1263,9 +1260,8 @@ class PfyForm extends Form
             'type'      => 'integer',
             'label'     => '{{ pfy-form-rrule-count-label }}',
             'class'     => 'pfy-rrule-elem pfy-rrule-elem-count short',
-            'preset'    => 1,
-            'min'       => 1,
-            'max'       => 100,
+            'min'       => 0,
+            'max'       => 366,
             'info'      => '{{ pfy-form-rrule-count-info }}',
         ];
 
@@ -1304,6 +1300,16 @@ class PfyForm extends Form
             'info'      => '{{ pfy-form-rrule-bymonth-info }}',
         ];
 
+        if ($origFormElemDef['allowRruleFormula']??false) {
+            $eventElements['_rruleFormula'] = [
+                'type' => 'text',
+                'label' => '{{ pfy-form-rrule-formula-label }}',
+                'class' => 'pfy-rrule-elem pfy-rrule-elem-formula',
+                'info' => '{{ pfy-form-rrule-formula-info }}',
+            ];
+        }
+
+        // end of details:
         $eventElements['_repeatEventEnd'] = [
             'type'      => 'literal',
             'html'      => "</div><!-- /pfy-form-rrule-body-wrapper -->\n</details>\n<!-- /pfy-rrule-wrapper -->\n",
@@ -2241,7 +2247,8 @@ EOT;
             return;
         }
 
-        $dataRec0 = $origDataRec = $this->getValues('array');
+        $dataRec0 = $this->getValues('array');
+        $this->origDataRec = $dataRec0;
 
         // handle 'cancel' button:
         if (isset($_POST['cancel'])) {
@@ -2298,17 +2305,18 @@ EOT;
         // handle 'dataReceivedCallback' on data received:
         if ($this->formOptions['dataReceivedCallback']) {
             if ($this->keepSubmittedDataInForm) {
-                $this->retainSubmittedData($origDataRec, $formInxReceived);
+                $this->retainSubmittedData($formInxReceived);
             }
 
-            list($html, $continueEval) = $this->handleCallback($dataRec, $dataRec0);
+            list($html, $continueEval, $requestedRecKey) = $this->handleCallback($dataRec, $dataRec0);
             if (!$continueEval) {
                 $this->formResponse =  $html;
                 return;
             }
+            if ($requestedRecKey) {
+                $recKey = $requestedRecKey;
+            }
         }
-
-
 
         $this->formDataRec = $dataRec;
 
@@ -2343,7 +2351,7 @@ EOT;
             }
             if ($this->keepSubmittedDataInForm) {
                 $this->showForm = true;
-                $this->retainSubmittedData($origDataRec, $formInxReceived);
+                $this->retainSubmittedData($formInxReceived);
             }
         }
 
@@ -2511,10 +2519,9 @@ EOT;
         $this->origReceivedData = $dataRec;
 
         foreach ($dataRec as $name => $value) {
-            // handle special case "rrule":
-            if ($name === 'rrule') {
-                $this->saveRepeatedEvents($name, $dataRec);
-                continue;
+            // skip "rrule" (will be handled in storeSubmittedData():
+            if ($name === '_rrule') {
+                continue; // handled later in storeSubmittedData()
             }
 
             // handle anti-spam field:
@@ -2592,92 +2599,6 @@ EOT;
 
 
     /**
-     * @param string $name
-     * @param array $dataRec
-     * @return void
-     * @throws \Exception
-     */
-    private function saveRepeatedEvents(string $name, array &$dataRec): void
-    {
-        $recKey = $dataRec['_reckey']??false;
-        $allowedEventFieldNames = ',DTSTART,DTEND,FREQ,UNTIL,COUNT,INTERVAL,WKST,BYWEEKDAY,BYDAY,BYMONTH,';
-        if ($dataRec['_freq'] !== 'NONE') {
-            $rrule = 'DTSTART:'. Events::convertDatetime($dataRec['start']??'')."\n";
-            $rrule .= ($this->formElements[$name]['saveAs'] ?? '');
-            $rruleElems = [];
-            while (preg_match('/\$([\w-]+)/', $rrule, $m)) {
-                $varName = $m[1];
-                $v = $dataRec[$varName] ?? '';
-                if (is_array($v)) {
-                    $v = implode(',', $v);
-                }
-                $rrule = str_replace($m[0], (string)$v, $rrule);
-                $vName = strtoupper(ltrim($varName, '_'));
-                if ($v && str_contains($allowedEventFieldNames, ",$vName,") && ($vName !== 'INTERVAL' || $v !== '1')) {
-                    $vName = ($vName === 'BYWEEKDAY') ? 'BYDAY' : $vName;
-                    $rruleElems[$vName] = $v;
-                }
-            }
-            // "RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=1;WKST=2024-06-17T20:42;BYDAY=WE,FR;BYMONTH=;"
-            $rrule = preg_replace('/(INTERVAL=1;|\w+=;)/', '', $rrule);
-            $dataRec[$name] = $rrule;
-            $this->executeRRule($rruleElems, $dataRec, $recKey);
-        }
-    } // saveRepeatedEvents
-
-
-    /**
-     * @param array $rRules
-     * @param array $dataRec
-     * @param string $recKey
-     * @return void
-     * @throws \Exception
-     */
-    private function executeRRule(array $rRules, array $dataRec, string $recKey): void
-    {
-        $from = $dataRec['start'];
-        $startTime = 'T'.substr($from, 11, 5);
-        $till = $dataRec['end'];
-        $endTime = 'T'.substr($till, 11, 5);
-
-        if ($from) {
-            $rRules['DTSTART'] = Events::convertDatetime($from);
-        }
-        if ($until = $dataRec['_until']??false) {
-            $rRules['UNTIL'] = Events::convertDatetime($until);
-        } elseif ($count = ($dataRec['_count']??false)) {
-            $rRules['COUNT'] = $count;
-        }
-
-        $dataRec = array_filter($dataRec, function ($k) {
-            return $k[0] !== '_';
-        }, ARRAY_FILTER_USE_KEY);
-        $dataRec['parentEvent'] = $dataRec['start'];
-        $newEvents = [];
-
-        // compile rrule:
-        try {
-            $rrule = new RRule(array_change_key_case($rRules));
-
-            $event = [];
-            foreach ($rrule as $occurrence) {
-                $event['start'] = $occurrence->format('Y-m-d') . $startTime;
-                $event['end'] = $occurrence->format('Y-m-d') . $endTime;
-                $newEvents[] = $event + $dataRec;
-            }
-        } catch (\Exception $e) {
-            throw new \Exception("Error: improper date/time format in Events (".$e->getMessage().")");
-        }
-
-        // save newly created events (exclude first as that will be saved later the normal way):
-        array_shift($newEvents);
-        foreach ($newEvents as $newRec) {
-            $this->saveRec($newRec, $recKey);
-        }
-    } // executeRRule
-
-
-    /**
      * @param string $file
      * @return object|false
      * @throws \Exception
@@ -2728,8 +2649,28 @@ EOT;
         if (!$newRec) {
             return false;
         }
-        return  $this->saveRec($newRec, $recId); // false or err-msg
+        if ($this->origDataRec['_rrule']??false) {
+            return $this->saveRruleEvents($dataRec, $recId);
+        } else {
+            return  $this->saveRec($newRec, $recId); // false or err-msg
+        }
     } // storeSubmittedData
+
+
+    /**
+     * @param array $dataRec
+     * @return string|false
+     * @throws \Exception
+     */
+    private function saveRruleEvents(array $dataRec, string $recKey = ''): string|false // error if err-msg
+    {
+        $events = PfyRRule::compile($this->origReceivedData, $dataRec, $recKey);
+        foreach ($events as $recKey => $newRec) {
+            $this->saveRec($newRec, $recKey, flush: false);
+        }
+        $this->db->flush();
+        return false;
+    } // saveRruleEvents
 
 
     /**
@@ -2738,7 +2679,7 @@ EOT;
      * @return false|string
      * @throws \Exception
      */
-    private function saveRec(array $newRec, string $recId): string|false // error if err-msg
+    private function saveRec(array $newRec, string $recId, bool $flush = true): string|false // error if err-msg
     {
         $this->openDB();
 
@@ -2750,7 +2691,7 @@ EOT;
             $recId = createHash();
         }
 
-        $this->db->addRec($newRec, recKeyToUse: $recId);
+        $this->db->addRec($newRec, recKeyToUse: $recId, flush: $flush);
         $recId = $this->db->recId();
         if (is_string($recId)) {
             $this->lastCreatedRecKey = $recId;
@@ -3961,6 +3902,7 @@ EOT;
     private function handleCallback(array &$dataRec, array $origDataRec): array
     {
         if ($this->formOptions['dataReceivedCallback'] instanceof \Closure) {
+            $recKey = '';
             $res = $this->formOptions['dataReceivedCallback']($dataRec, $origDataRec);
             if (is_array($res)) {
                 $html = ($res['html'] ?? ($res[0] ?? ''));
@@ -3970,12 +3912,13 @@ EOT;
                 if (isset($res[4]) || isset($res['dataRec'])) {
                     $dataRec = $res['dataRec'] ?? $res[4];
                 }
+                $recKey = ($res['recKey'] ?? '');
 
             } else {
                 $html = '';
                 $continueEval = (bool)$res;
             }
-            return [$html, $continueEval];
+            return [$html, $continueEval, $recKey];
         }
 
         $callbacks = explodeTrim(',', $this->formOptions['dataReceivedCallback']);
@@ -4124,12 +4067,12 @@ EOT;
 
 
     /**
-     * @param array $origDataRec
      * @param mixed $formInxReceived
      * @return void
      */
-    private function retainSubmittedData(array $origDataRec, mixed $formInxReceived): void
+    private function retainSubmittedData(mixed $formInxReceived): void
     {
+        $origDataRec = $this->origDataRec;
         $origDataRec['_reckey'] = $this->lastCreatedRecKey;
         foreach ($origDataRec as $key => $value) {
             if (is_array($value)) {
