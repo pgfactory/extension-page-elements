@@ -1273,6 +1273,9 @@ EOT;
         } else {
             $this->dataReference = ($this->dataReference === null) ? true : $this->dataReference;
         }
+        $accessPermission = $this->isTableAdmin ? 'write' : 'read';
+        $pageId = page()->id();
+        kirby()->session()->set("pfy.$pageId.accessPermission", $accessPermission);
 
         if (self::$tableInx === 1) {
             Assets::addAssets('TABLES');

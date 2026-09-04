@@ -15,7 +15,6 @@ use PgFactory\PageFactory\DataStore;
 use function PgFactory\PageFactory\preparePath;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\mylog;
-use function PgFactory\PageFactory\writeFile;
 
 
 require_once __DIR__ . "/../../pagefactory/src/helper.php";
@@ -28,7 +27,7 @@ class AjaxHandler
     private static string $sessDbFileKey;
     private static string $sessCalRecKey;
     private static array $sessRec;
-    private static $templates = null;
+    private static bool $writePermission;
     private static array $categories;
     private static object|null $db = null;
 
@@ -54,6 +53,11 @@ class AjaxHandler
         $session = kirby()->session();
         PageFactory::$dataPath = $session->get('pfy.dataPath');
         PageFactory::$customConfigPath = $session->get('pfy.configPath');
+        $accessPermission = (string)$session->get("pfy.$pageId.accessPermission", '');
+        if (!$accessPermission) {
+            exit('"access denied"');
+        }
+        self::$writePermission = str_contains($accessPermission, 'write');
 
 
         // handle lockRec:
@@ -162,6 +166,9 @@ class AjaxHandler
      */
     private static function lockRec(string $recKey): void
     {
+        if (!self::$writePermission) {
+            exit('"request denied"');
+        }
         $db = self::openDb();
         $res = $db->lockRec($recKey);
         if (!$res) {
@@ -176,6 +183,9 @@ class AjaxHandler
      */
     private static function unlockRec(string|bool $recKey): void
     {
+        if (!self::$writePermission) {
+            exit('"request denied"');
+        }
         $db = self::openDb();
         $res = $db->unlockRec($recKey);
         if (!$res) {
@@ -190,6 +200,9 @@ class AjaxHandler
      */
     private static function unlockAllRecs(): void
     {
+        if (!self::$writePermission) {
+            exit('"request denied"');
+        }
         (self::openDb())->unlockAllRecs();
         exit('"ok"');
     } // unlockAllRecs
@@ -286,16 +299,16 @@ class AjaxHandler
             exit(json_encode(self::getCalRec()));
         }
         if (get('mode') !== null) {
-            exit(self::saveMode());
+            exit(self::saveCalMode());
         }
         if (get('modifyRec') !== null) {
             exit(self::modifyCalRec());
         }
         if (get('delete') !== null) {
-            exit(self::deleteRec());
+            exit(self::deleteCalRec());
         }
         if (get('duplicate') !== null) {
-            exit(self::duplicateRec());
+            exit(self::duplicateCalRec());
         }
     } // handleCalendarRequests
 
@@ -304,30 +317,98 @@ class AjaxHandler
      * @return string
      * @throws \Exception
      */
-    private static function deleteRec(): string
+    private static function deleteCalRec(): string
     {
+        if (!self::$writePermission) {
+            exit("request denied");
+        }
         $recKey = get('delete');
+        if ($groupId = get('group')) {
+            return self::deleteCalGroup($recKey, $groupId);
+        }
+
         $db = self::openDb();
+        if (self::$sessRec['freezePast']) {
+            $rec = $db->getRec($recKey);
+            $start = $rec['start']??'';
+            if ($start < date('Y-m-d\TH:i')) {
+                mylog("Rec $recKey not deleted because in the past");
+                return '"Event in the past not deleted"';
+            }
+        }
         $db->deleteRec($recKey, flush:true);
         mylog("Rec $recKey deleted");
         return '"ok"';
-    } // deleteRec
+    } // deleteCalRec
+
+
+    /**
+     * If a calendar event was created by an RRule, it carries a _ev_group element.
+     * Deleting the entire group means finding all events with that _ev_group
+     * Event group members prior to the currently selected one are not deleted.
+     * @param string $thisRecKey
+     * @param string $groupId
+     * @return string
+     * @throws \Exception
+     */
+    private static function deleteCalGroup(string $thisRecKey, string $groupId): string
+    {
+        $result = '"ok"';
+        $db = self::openDb();
+        $data = $db->data(includeMetaFields: true);
+        usort($data, function($a, $b) {
+            return strcmp($a['start'], $b['start']);
+        });
+        $now = '99999999999';
+        $frozen = self::$sessRec['freezePast'];
+        foreach ($data as $rec) {
+            $recKey = $rec['_reckey'];
+            if (($parentId = ($rec['_ev_group']??false)) && ($parentId === $groupId)) {
+                if (($now === '99999999999') && $thisRecKey === $recKey) {
+                    if ($frozen) {
+                        $now = date('Y-m-d\TH:i');
+                    } else {
+                        $now = $rec['start'];
+                    }
+                }
+                if ($rec['end'] >= $now) {
+                    $db->deleteRec($recKey);
+                    mylog("Rec $recKey deleted");
+                } elseif ($frozen) {
+                    $result = '"Some event in the past not deleted"';
+                }
+            }
+        }
+        $db->flush();
+        mylog("Group $groupId deleted");
+        return $result;
+    } // deleteCalGroup
 
 
     /**
      * @return string
      * @throws \Exception
      */
-    private static function duplicateRec(): string
+    private static function duplicateCalRec(): string
     {
+        if (!self::$writePermission) {
+            exit("request denied");
+        }
         $recKey = get('duplicate');
         $rec = self::getDataRec($recKey);
+        if (self::$sessRec['freezePast']) {
+            $start = $rec['start']??'';
+            if ($start < date('Y-m-d\TH:i')) {
+                mylog("Rec $recKey not duplicated because in the past");
+                return '"Event in the past not duplicated"';
+            }
+        }
         $recKey = createHash();
         $db = self::openDb();
         $db->addRec($rec, true, $recKey);
-        mylog("Rec $recKey duplicated");
+        mylog("Event $recKey duplicated");
         return '"ok"';
-    } // duplicateRec
+    } // duplicateCalRec
 
 
     /**
@@ -359,6 +440,7 @@ class AjaxHandler
         $data['start'] = $rec['start'];
         $data['end']   = $rec['end'];
         $data['_creator'] = $rec['creator']??'';
+        $data['_ev_group'] = $rec['_ev_group']??''; // in case of recurring events
         if ($rec['allday']??false) {
             // fix allday event -> add 1 day to end to conform with user logic:
             $data['end'] = date('Y-m-d', strtotime('+1 day', strtotime($data['end'])));
@@ -448,7 +530,7 @@ class AjaxHandler
     /**
      * @return string
      */
-    private static function saveMode(): string
+    private static function saveCalMode(): string
     {
         if (get('catfilter') !== null) {
             self::$sessRec['catfilter'] = get('mode');
@@ -457,7 +539,7 @@ class AjaxHandler
         }
         kirby()->session()->set(self::$sessCalRecKey, self::$sessRec);
         return '"ok"';
-    } // saveMode
+    } // saveCalMode
 
 
     /**
@@ -466,6 +548,9 @@ class AjaxHandler
      */
     private static function modifyCalRec(): string
     {
+        if (!self::$writePermission) {
+            exit("request denied");
+        }
         $edPerm = self::$sessRec['edit'];
         if (!$edPerm) {
             return '"no permission"';
@@ -567,6 +652,9 @@ class AjaxHandler
             $templateOptions['templates'][$category] = self::getDefaultEventTemplate($eventRec);
         }
         $str = TemplateCompiler::compile($eventRec, $templateOptions);
+        if ($eventRec['_rrule']??false) {
+            $wrapperClass .= ' pfy-cal-repeating';
+        }
 
         if ($elemToUse === 'element') {
             $str = <<<EOT
