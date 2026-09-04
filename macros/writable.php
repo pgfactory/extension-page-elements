@@ -46,16 +46,20 @@ EOT,
         $str = $sourceCode;
     }
 
+    $pageId = page()->id();
     $permission = Permission::evaluate($options['permission']);
+    if ($permission) {
+        $accessPermission = 'write';
+        kirby()->session()->set("pfy.$pageId.accessPermission", $accessPermission);
+    }
     $writableGroupName = "writable-group-$inx";
     $groupLabel = $options['label'] ?: '';
     $writableGroupName = preg_replace('/\W/', '_', $writableGroupName);
-    $pageId = page()->id();
     $file = $options['file'] ?: "~data/writable/$pageId.json";
     $sessDbFileKey = "db:$pageId:$writableGroupName:file";
     kirby()->session()->set($sessDbFileKey, Utils::resolvePath($file));
     $db = new DataStore($file, [
-        'masterFileRecKeyType' => 'index',
+        'masterFileRecKeyType' => 'key',
         'obfuscateRecKeys' => false,
     ]);
 

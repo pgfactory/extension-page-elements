@@ -84,11 +84,12 @@ class WritableWidget {
   // Initialize auto-growing text areas
   initWritableAutoGrow() {
     document.querySelectorAll('.pfy-auto-grow').forEach((grower) => {
-      const textarea = grower.querySelector('textarea');
-      grower.dataset.replicatedValue = textarea.value;
-      textarea.addEventListener('input', () => {
-        grower.dataset.replicatedValue = textarea.value;
-      });
+      domForOne(grower,'textarea', textareaEl => {
+        grower.dataset.replicatedValue = textareaEl.value;
+        textareaEl.addEventListener('input', () => {
+          grower.dataset.replicatedValue = textareaEl.value;
+        });
+      })
     });
   } // initWritableAutoGrow
 
