@@ -121,8 +121,8 @@ EOT;
             'action'             => self::$selfLink,
             'showFeedbackInpage' => false,
             'class'              => 'pfy-form-colored',
-            'dataReceivedCallback'           => function($data) {
-                return self::loginCallback($data);
+            'dataReceivedCallback'           => function($data, $unfilteredData) {
+                return self::loginCallback($data, $unfilteredData);
             },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => "<span class='pfy-login-otc-unpw'>$message</span>",
@@ -209,8 +209,8 @@ EOT;
         $formOptions = [
             'action'             => self::$selfLink,
             'showFeedbackInpage' => false,
-            'dataReceivedCallback'=> function($data) {
-                return self::loginCallback($data);
+            'dataReceivedCallback'=> function($data, $unfilteredData) {
+                return self::loginCallback($data, $unfilteredData);
             },
             'wrapperClass'       => 'pfy-login-box',
             'formTop'            => $message,
@@ -243,7 +243,7 @@ EOT;
      * @return string|false
      * @throws \Exception
      */
-    private static function loginCallback(array $data): string|bool
+    private static function loginCallback(array $data, array $unfilteredData): string|bool
     {
         $code = $data['otp'] ?? false;
         if ($code) {
@@ -267,7 +267,7 @@ EOT;
             }
 
         } elseif ($email = self::getUsersEmail($data)) {
-            if ($password = ($data['pfyLoginPassword'] ?? false)) {
+            if ($password = ($unfilteredData['pfyLoginPassword'] ?? false)) { // note: $data['pfyLoginPassword'] is already hashed
                 // 'pfyLoginPassword' received -> validate:
                 try {
                     // verify credentials:
