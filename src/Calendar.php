@@ -15,6 +15,7 @@ use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
 use PgFactory\PageFactory\PfyForm;
+use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\isAdmin;
 use function PgFactory\PageFactory\explodeTrim;
@@ -52,7 +53,7 @@ class Calendar
     private bool $userCategories;
     private string $headerLeftButtons;
     private string $headerRightButtons;
-    private bool $freezePast;
+    private bool|string $freezePast;
     private string $businessHours;
     private string $visibleHours;
 
@@ -129,7 +130,7 @@ EOT;
 
         $catSelectors = $this->renderCatSelectors();
 
-        $html = "<div id='$this->id' class='pfy-calendar pfy-calendar-$this->inx $this->class' data-calInx='$this->inx' data-datasrc='DATA-REF'>CAL PLACEHOLDER</div>\n";
+        $html = "<div id='$this->id' class='pfy-calendar pfy-calendar-$this->inx $this->class' data-calInx='$this->inx'>CAL PLACEHOLDER</div>\n";
 
         $html = <<<EOT
 <div class="pfy-calendar-wrapper">
@@ -201,8 +202,8 @@ EOT;
             'tableOptions' => false,
             'permission' => true,
             'feedback' => 'popup',
-            'callback' => function ($dataRec) {
-                return $this->formCallback($dataRec);
+            'dataReceivedCallback' => function ($dataRec, $origDataRec) {
+                return $this->formCallback($dataRec, $origDataRec);
             },
         ];
 
@@ -279,8 +280,9 @@ EOT;
         if (!isset($formFields['submit'])) {
             $formFields['submit'] = [];
         }
-        $formFields['creator'] = ['type' => 'hidden', 'value' => PageFactory::$userName];
-        $formFields['_creator'] = ['type' => 'bypassed', 'value' => PageFactory::$userName];
+        $userName = PageFactory::$userName ?: 'anon';
+        $formFields['_creator'] = ['type' => 'hidden', 'value' => $userName];
+        $formFields['creator'] = ['type' => 'bypassed', 'value' => $userName];
 
         $form = new PfyForm($formOptions);
         $html = $form->renderForm($formFields);
@@ -300,7 +302,7 @@ EOT;
      * @param $dataRec
      * @return mixed
      */
-    private function formCallback(&$dataRec): mixed
+    private function formCallback(&$dataRec, $origDataRec): mixed
     {
         $res = true;
         if ($this->adminPermStr !== 'false') {
@@ -354,14 +356,20 @@ EOT;
             ];
         }
 
+        $recKey = '';
+        if ($origDataRec['_rrule']) {
+            $recKey = ($origDataRec['_reckey']??false) ?: createHash();
+            $dataRec['_ev_group'] = $recKey;
+        }
+
         // prevent creator tampering:
-        if (($res === true || $res['continueEval']) && !($dataRec['_reckey']??null)) {
-            $dataRec['creator'] = $dataRec['_creator'];
+        if (($res === true || $res['continueEval']) && !($origDataRec['_reckey']??null)) {
             $res = [
                 'html' => '',
                 'continueEval' => true,
                 'showFeedbackInpage' => false,
                 'dataRec' => $dataRec,
+                'recKey' => $recKey,
             ];
         }
         return $res;
@@ -473,6 +481,11 @@ EOT;
         $this->headerLeftButtons =      $args['headerLeftButtons']??'prev,today,next';
         $this->headerRightButtons =     $args['headerRightButtons']??'timeGridWeek,dayGridMonth,listYear';
         $this->freezePast =             $args['freezePast']??true;
+        if ($this->freezePast && is_string($this->freezePast)) {
+            $this->freezePast = Permission::evaluate($this->freezePast);
+        }
+        $this->sessCalRec['freezePast'] = $this->freezePast;
+
         $this->businessHours =          $args['businessHours']??'08:00-17:00';
         $this->visibleHours =           $args['visibleHours']??'07:00-21:00';
         $this->userCategories =         $args['userCategories']??false;
@@ -524,6 +537,7 @@ EOT;
             $this->adminPermStr = 'true';
             $this->sessCalRec['admin'] = true;
             $edPerm = true;
+            $this->class .= ' pfy-cal-admin';
         } else {
             $this->adminPermStr = 'false';
             $this->sessCalRec['admin'] = false;
@@ -531,6 +545,12 @@ EOT;
         }
         $this->edPermStr = $edPerm? 'true': 'false';
         $this->sessCalRec['edit'] = $edPerm;
+        $accessPermission = $edPerm ? 'write' : 'read';
+        kirby()->session()->set("pfy.$pageId.accessPermission", $accessPermission);
+
+        if ($edPerm) {
+            $this->class .= ' pfy-cal-editable';
+        }
 
         // initial date:
         $this->initialDate = $this->sessCalRec['initialDate'] ?? date('Y-m-d');

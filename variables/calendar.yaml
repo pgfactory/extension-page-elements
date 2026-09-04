@@ -186,6 +186,10 @@ pfy-cal-context-delete-label:
     de: Löschen
     _:  Delete
 
+pfy-cal-context-group-delete-label:
+    de: Alle löschen
+    _:  Delete all
+
 pfy-cal-no-permission-others-category:
     _: "You don't have permission to change entries belonging to other users."
 

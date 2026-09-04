@@ -32,6 +32,7 @@ $eventBorderColorCat6: hsl(calc(6 * #{$deg})  #{$sat}  #{$light});
 
 $eventTextColor: var(--pfy-event-txt-color, #333);
 $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
+$calendarEditable:    var(--pfy-cal-editable, 1px solid green);
 
 .pfy-default-styling {
 
@@ -42,12 +43,28 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     a, a:hover {
       border-bottom: none;
     }
+
+    &.pfy-cal-editable .fc-view-harness {
+      outline: $calendarEditable;
+    }
   }
   .fc-event {
     min-height: 1em;
     overflow-wrap: anywhere;
     text-wrap: wrap;
     overflow-y: auto;
+
+    &.pfy-recurring-event::after {
+      content: "⟳";
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding-left: 0.2em;
+      width: 1em;
+      height: 1.2em;
+      background: inherit;
+      z-index: 2;
+    }
   }
   .fc-v-event .fc-event-main,
   .fc-daygrid-day-events {
@@ -56,6 +73,7 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
     }
   }
 
+  .fc-daygrid-body .time,
   .pfy-cal-description {
     display: none;
   }
@@ -173,6 +191,8 @@ $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
       border: none;
       background: transparent;
       color: $eventPopupTextColor;
+      text-align: left;
+      white-space: nowrap;
     }
   }
   // popup content on click:

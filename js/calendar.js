@@ -58,7 +58,7 @@ PfyCalendar.prototype.init = function (calendarEl, options) {
     alert('Error: dataSrcInx missing');
   }
 
-  this.ajaxUrl = pageUrl + '?ajax&calendar&datasrcinx=' + dataRef;
+  this.ajaxUrl = pageUrl0 + '?ajax&calendar&datasrcinx=' + dataRef;
 
   this.options = options;
   this.editPermission = this.options.edit || this.options.admin;
@@ -194,7 +194,11 @@ PfyCalendar.prototype.renderEvent = function( calArgs ) {
   if (event._def.extendedProps.description) {
     html += event._def.extendedProps.description;
   }
-  html = html.replace(/^<span/, `<span data-event-id='${id}'`);
+  let evGroupRef = '';
+  if (typeof event._def.extendedProps._ev_group !== 'undefined' && event._def.extendedProps._ev_group) {
+    evGroupRef = ` data-event-group-id='${event._def.extendedProps._ev_group}'`;
+  }
+  html = html.replace(/^<div/, `<div data-event-id='${id}'${evGroupRef}`);
   return { html: html };
 }; // renderEvent
 
@@ -249,6 +253,12 @@ PfyCalendar.prototype.onCalendarReady = function() {
       })
     })
   });
+
+  // mark recurring events:
+  domForEach('.pfy-calendar [data-event-group-id]', el => {
+    const eventWrapperEl = el.closest('.fc-event');
+    eventWrapperEl.classList.add('pfy-recurring-event');
+  })
 }; // onCalendarReady
 
 
@@ -538,17 +548,6 @@ PfyCalendar.prototype.openPopup = function(header) {
     closeOnBgClick: false,
     initialOpacity: 0.1,
   });
-
-  // modify all ids within popup:
-  domForEach('.pfy-popup-wrapper [id]', (id) => {
-    const idAttr = 'pfy-inpopup-' + id.getAttribute('id');
-    id.setAttribute('id', idAttr);
-  })
-  // modify all for within popup:
-  domForEach('.pfy-popup-wrapper [for]', (forAttr) => {
-    const idAttr = 'pfy-inpopup-' + forAttr.getAttribute('for');
-    forAttr.setAttribute('for', idAttr);
-  })
 }; // openPopup
 
 
@@ -640,12 +639,24 @@ PfyCalendar.prototype.setupContextMenu = function() {
 
 
 PfyCalendar.prototype.openContextMenu = function(ev) {
+  if (!this.editPermission) {
+    return;
+  }
   const parent = this;
   ev.preventDefault();
   const calEventEl = ev.target.closest('.fc-event');
+  if (parent.freezePast && calEventEl.classList.contains('fc-event-past')) {
+    pfyAlert({content: `{{ pfy-cal-event-in-the-past }}`});
+    return;
+  }
+
+  let contextMenu = pfyCalContextMenu;
+  if (calEventEl.querySelector('[data-event-group-id]')) {
+    contextMenu +=   `<br><button class="pfy-cal-group-delete" role="button">{{ pfy-cal-context-group-delete-label }}</button>`;
+  }
 
   let tippyInstance = parent.tippyInstance = tippy(calEventEl, {
-    content: pfyCalContextMenu,
+    content: contextMenu,
     placement: 'right-end',
     trigger: 'manual',
     interactive: true,
@@ -666,6 +677,9 @@ PfyCalendar.prototype.handleContextMenu = function(ev) {
   if (el.closest('button.pfy-cal-delete')) {
     parent.handleContextMenuDelete(ev);
 
+  } else if (el.closest('button.pfy-cal-group-delete')) {
+    parent.handleContextMenuGroupDelete(ev);
+
   } else if (el.closest('button.pfy-cal-duplicate')) {
     parent.handleContextMenuDuplicate(ev);
 
@@ -682,8 +696,33 @@ PfyCalendar.prototype.handleContextMenuDelete = function(ev) {
   ev.preventDefault();
   domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
     const recKey = el.dataset.reckey;
-    execAjaxPromise('&delete=' + recKey, null, parent.ajaxUrl)
-      .then(function () {
+    execAjaxPromise(`&delete=${recKey}`, null, parent.ajaxUrl)
+      .then(function (result) {
+        if (result !== 'ok') {
+          console.log(result);
+        }
+        parent.fullCal.refetchEvents();
+      });
+  });
+} // handleContextMenuDelete
+
+
+PfyCalendar.prototype.handleContextMenuGroupDelete = function(ev) {
+  const parent = this;
+  ev.stopPropagation();
+  ev.stopImmediatePropagation();
+  ev.preventDefault();
+  domForOne(this.tippyInstance.reference.parentElement, '[data-reckey]', (el) => {
+    const recKey = el.dataset.reckey;
+    let group = '';
+    if (typeof el.dataset.eventGroupId !== 'undefined') {
+      group = `&group=${el.dataset.eventGroupId}`;
+    }
+    execAjaxPromise(`&delete=${recKey}${group}`, null, parent.ajaxUrl)
+      .then(function (result) {
+        if (result !== 'ok') {
+          console.log(result);
+        }
         parent.fullCal.refetchEvents();
       });
   });

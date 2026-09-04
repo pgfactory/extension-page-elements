@@ -63,33 +63,32 @@ Renders a calendar which gets events from a DB designated by 'file'.
         file: ~config/events.json
         edit: 'localhost|loggedin'
         categories: ',Keynote,Presentation,Panel,internal'
-        // freezePast: false
+        \// freezePast: false
         defaultView: month
     
         form: {
             allday:	        {type: 'checkbox', label: '\{{ pfy-cal-allday-event-label }}:', class: 'reversed pfy-cal-allday'},
-            //category -> automatically inserted from above
-            Topic:	        {type: text,     class: 'pfy-cal-title'},
+            \//category -\> automatically inserted from above
+            Title:	        {type: text,  class: 'pfy-cal-title'},
             Event:	        {type: event, defaultEventDuration: 120, repeatable: true},
             Location:       {type: text}
-            // maxCount:       {type: integer, label:'\{{ vailable-seats-label }}', min:1}
-            Description:    {type: textarea},
-            cancelled:      {type: checkbox, label:'\{{ event-cancelled-label }}:'}
+            // maxCount:       {type: integer, label:'\{{ available-seats-label }}', min:1}
+            Description:    {type: textarea}
+            Cancelled:      {type: checkbox}
     
             cancel:         {}
-            submit:         {type: submit, label: \{{ event-submit-label }} }
+            submit:         {}
         }
         template: {
             file:		\~page/cal-template.yaml
             markdown:	true
         }
         useDblClick: true
-    
     ) }}
     
 ### Sample Template \~page/cal-template.yaml
 
-    _:   \// => default for all categories which have no dedicated entry
+    _:   \// =\> default for all categories which have no dedicated template
       element: |
         <div class='time'>{{ start|date("H.i") }}
         {% if category %}<span class='category'> %category%</span>{% endif %}
@@ -99,8 +98,7 @@ Renders a calendar which gets events from a DB designated by 'file'.
       description: |
         %time%<br>
         «%Topic%»
-    
-        {% if Comment %}<div class='comment'>%Comment%</div>{% endif %}
+        {% if Comment %}<div class='comment'><br>%Comment%</div>{% endif %}
 
 EOT,
     ];
