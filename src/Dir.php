@@ -17,36 +17,34 @@ use function PgFactory\PageFactory\getDirDeep;
 use function PgFactory\PageFactory\fileExt;
 use function PgFactory\PageFactory\shieldStr;
 
-const DEFAULT_LINK_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
-const DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE = "- (link: %download% text:%filename% type:%ext% target:_blank download:true) %description%\n";
-
-const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%label%</strong>';
-const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
-
-const PFY_DIR_OPTIONS = [
-    'inx'=> 0,
-    'template'=> [
-        'element'=> DEFAULT_LINK_ELEMENT_TEMPLATE,
-        'folderElement'=> DEFAULT_FOLDER_ELEMENT_TEMPLATE,
-        'markdown'=> true,
-    ],
-    'path'=> '',
-    'id'=> '',
-    'class'=> '',
-    'include'=> '',
-    'exclude'=> '',
-    'markdown'=> false,
-    'maxAge'=> false,
-    'replaceOnElem'=> '',
-    'modifiers'=> '',
-    'permission'=> '',
-    'asLinks'=> false,
-    'enableFolderDownload'=> false,
-];
-
 
 class Dir
 {
+    private const DEFAULT_LINK_ELEMENT_TEMPLATE = "- (link: %url% text:%filename% type:%ext% target:_blank) %description%\n";
+    private const DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE = "- (link: %download% text:%filename% type:%ext% target:_blank download:true) %description%\n";
+    private const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
+    private const DEFAULT_FOLDER_DOWNLOAD_ICON = '<span title="{{ pfy-dir-download-icon-tooltip }}" data-url="%url%">:cloud_download_alt:</span>';
+    private const PFY_DIR_OPTIONS = [
+        'inx'=> 0,
+        'template'=> [
+            'element'=> self::DEFAULT_LINK_ELEMENT_TEMPLATE,
+            'folderElement'=> self::DEFAULT_FOLDER_ELEMENT_TEMPLATE,
+            'markdown'=> true,
+        ],
+        'path'=> '',
+        'id'=> '',
+        'class'=> '',
+        'include'=> '',
+        'exclude'=> '',
+        'markdown'=> false,
+        'maxAge'=> false,
+        'replaceOnElem'=> '',
+        'modifiers'=> '',
+        'permission'=> '',
+        'asLinks'=> false,
+        'enableFolderDownload'=> false,
+    ];
+
     public static $inx = 1;
     private $path;
     private static string $rootPath;
@@ -442,7 +440,7 @@ EOT;
      */
     private function parseOptions($args, int $inx): array
     {
-        $options = $args + PFY_DIR_OPTIONS;
+        $options = $args + self::PFY_DIR_OPTIONS;
         $this->modifiers = strtoupper($options['modifiers']??'');
 
         if (is_string($options['template'])) {
@@ -452,14 +450,14 @@ EOT;
         $this->enableFolderDownload = $args['enableFolderDownload'];
 
         if (str_contains($this->modifiers, 'DOWNLOAD')) {
-            $options['template']['element'] ??= DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE;
+            $options['template']['element'] ??= self::DEFAULT_DOWNLOAD_ELEMENT_TEMPLATE;
         } else {
-            $options['template']['element'] ??= DEFAULT_LINK_ELEMENT_TEMPLATE;
+            $options['template']['element'] ??= self::DEFAULT_LINK_ELEMENT_TEMPLATE;
         }
 
-        $options['template']['folderElement'] ??= DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
+        $options['template']['folderElement'] ??= self::DEFAULT_FOLDER_ELEMENT_TEMPLATE; // wrap in accordion
         if ($this->enableFolderDownload) {
-            $options['template']['folderElement'] .= DEFAULT_FOLDER_DOWNLOAD_ICON;
+            $options['template']['folderElement'] .= self::DEFAULT_FOLDER_DOWNLOAD_ICON;
         }
         $options['template']['markdown'] ??= true;
 

@@ -11,11 +11,11 @@ use function PgFactory\PageFactory\base_name;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\getDir;
 
-const DEFAULT_ELEMENT_TEMPLATE = '- (link: %url% text:%filename% type:%ext% target:_blank) %description%';
-const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
-
 class ListRenderer
 {
+    private const DEFAULT_ELEMENT_TEMPLATE = '- (link: %url% text:%filename% type:%ext% target:_blank) %description%';
+    private const DEFAULT_FOLDER_ELEMENT_TEMPLATE = '<> <strong>%basename%</strong>';
+
     /**
      * @param $options
      * @return string
@@ -121,13 +121,13 @@ class ListRenderer
         // set default template if none is defined:
         if (!$template) {
             if ($options['asLinks'] ?? false) {
-                $template = DEFAULT_ELEMENT_TEMPLATE;
+                $template = self::DEFAULT_ELEMENT_TEMPLATE;
             } else {
                 $template = '- %filename%';
             }
         }
         if (!($templateOptions['folderElement'] ?? false)) {
-            $templateOptions['folderElement'] = DEFAULT_FOLDER_ELEMENT_TEMPLATE;
+            $templateOptions['folderElement'] = self::DEFAULT_FOLDER_ELEMENT_TEMPLATE;
         }
 
         $reversed = $options['reversed'] ?? false;

@@ -6,30 +6,32 @@ use PgFactory\MarkdownPlus\MarkdownPlus;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\loadFile;
 use function PgFactory\PageFactory\shieldStr;
+use function PgFactory\PageFactory\unshieldStr;
 use function PgFactory\PageFactory\var_r;
 
-const EVENT_INDEX_PLACEHOLDER = '%%';
-const TEMPL_COMPILER_DEFAULT_OPTIONS = [
-    'prefix' => '',
-    'element' => '',
-    'file' => '',
-    'templates' => null,
-    'suffix' => '',
-    'separator' => '',
-    'selector' => '',
-    'asLinks' => false,
-    'noDataAvailableText' => 'pfy-no-data-available',
-    'removeUndefinedPlaceholders' => false,
-    'markdown' => true,
-    'wrapperPrefix' => '',
-    'wrapperSuffix' => '',
-    'newlineReplace' => '<br>',
-];
 
-define('CUSTOM_PHP_PATH', PFY_KIRBY_BASE_PATH . 'site/templates/custom/');
+//define('CUSTOM_PHP_PATH', PFY_KIRBY_BASE_PATH . 'site/templates/custom/');
 
 class TemplateCompiler
 {
+    private const EVENT_INDEX_PLACEHOLDER = '%%';
+    private const TEMPL_COMPILER_DEFAULT_OPTIONS = [
+        'prefix' => '',
+        'element' => '',
+        'file' => '',
+        'templates' => null,
+        'suffix' => '',
+        'separator' => '',
+        'selector' => '',
+        'asLinks' => false,
+        'noDataAvailableText' => 'pfy-no-data-available',
+        'removeUndefinedPlaceholders' => false,
+        'markdown' => true,
+        'wrapperPrefix' => '',
+        'wrapperSuffix' => '',
+        'newlineReplace' => '<br>',
+    ];
+
     private static array $templateOptions;
 
     /**
@@ -102,8 +104,8 @@ class TemplateCompiler
             if ($s && $compileMarkdown) {
                 $s = $s[strlen($s) - 1] !== "\n" ? $s . "\n" : $s;
             }
-            if (str_contains($s, EVENT_INDEX_PLACEHOLDER)) {
-                $s = str_replace(EVENT_INDEX_PLACEHOLDER, $inx, $s);
+            if (str_contains($s, self::EVENT_INDEX_PLACEHOLDER)) {
+                $s = str_replace(self::EVENT_INDEX_PLACEHOLDER, $inx, $s);
             }
             $out .= $s . $sepPlaceholder;
         }
@@ -172,7 +174,7 @@ class TemplateCompiler
      */
     public static function sanitizeTemplateOption(array|string $options): array
     {
-        $templateOptions = TEMPL_COMPILER_DEFAULT_OPTIONS;
+        $templateOptions = self::TEMPL_COMPILER_DEFAULT_OPTIONS;
         if (is_string($options)) {
             $templateOptions['element'] = $options;
             // shortcut: "template: ~page/file.txt":
@@ -181,7 +183,7 @@ class TemplateCompiler
                 $templateOptions['element'] = '';
             }
         } else {
-            $templateOptions = $options + TEMPL_COMPILER_DEFAULT_OPTIONS;
+            $templateOptions = $options + self::TEMPL_COMPILER_DEFAULT_OPTIONS;
         }
 
         // special case: for convenience, element may contain file:
@@ -192,6 +194,11 @@ class TemplateCompiler
             } else {
                 $templateOptions['element'] = $options['element'];
             }
+        }
+
+        $element = &$templateOptions['element'];
+        if (str_contains($element, '<span shielded>')) {
+            $element = unshieldStr($element);
         }
 
         if ($templateOptions['file']) {
@@ -267,7 +274,7 @@ class TemplateCompiler
      */
     public static function getTemplateDefaultOptionNames(): array
     {
-        return array_keys(TEMPL_COMPILER_DEFAULT_OPTIONS);
+        return array_keys(self::TEMPL_COMPILER_DEFAULT_OPTIONS);
     } // getTemplateDefaultOptionNames
 
 
@@ -320,7 +327,7 @@ class TemplateCompiler
             $out .= "&#37;$k&#37;  \n";
         }
         $out .= "\n## Template-Options:\n\n";
-        $out .= shieldStr("<pre>" . var_r(TEMPL_COMPILER_DEFAULT_OPTIONS) . "</pre>\n");
+        $out .= shieldStr("<pre>" . var_r(self::TEMPL_COMPILER_DEFAULT_OPTIONS) . "</pre>\n");
         $out = \PgFactory\PageFactory\markdown($out);
         return $out;
     } // handleHelpRequest
