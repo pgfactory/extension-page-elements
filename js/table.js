@@ -255,7 +255,7 @@ const tableHelper = {
         wrapperClass: 'pfy-data-archive-records',
         callbackArg: form,
         onConfirm: function (that, form) {
-          form.setAttribute('action', pageUrl + '?archive');
+          form.setAttribute('action', appendToUrl(pageUrl, 'archive'));
           form.submit();
         }
       };
@@ -485,7 +485,7 @@ const tableHelper = {
     const input = document.getElementById('pfy-table-send-rec-input');
     if (input) {
       const email = encodeURI(input.value);
-      window.location.href = window.location.href + '?sendto=' + email + '&recid=' + recKey;
+      window.location.href = appendToUrl(window.location.href, 'sendto='  + email) + '&recid=' + recKey;
     }
   }, // doSendRec
 
