@@ -517,3 +517,90 @@ pfy-download-popup-text:
   _:  'Do you want to download the entire folder as a zip file?'
 
 
+# === upload =======================================
+pfy-upload-link-continue-label:
+  de: '→ Zurück zur vorherigen Seite'
+  _:  '→ Back to previous page'
+
+pfy-upload-no-permission:
+  de: 'Sie müssen angemeldet sein, um Datei(en) hochladen zu können.'
+  _:  'You need to be logged in when uploading files.'
+
+pfy-upload-path-selection-label:
+  de: 'Zielordner:'
+  _:  'Target folder:'
+
+pfy-upload-file-successful:
+  de: 'Die Datei ist hochgeladen.'
+  _:  'The file has been successfully uploaded.'
+
+pfy-upload-files-successful:
+  de: 'Die Dateien sind hochgeladen.'
+  _:  'The files have been successfully uploaded.'
+
+pfy-upload-file-relay-explanation:
+  de: |
+    <p>Die Datei(en) sind hochgeladen.</p>
+    <p>Mit diesem Link kann eine Drittperson die Datei(n) herunter laden:</p>
+  _:  |
+    <p>File(s) have been uploaded.</p>
+    <p>Using this link, somebody else can now download the file(s):</p>
+
+pfy-upload-file-relay-explanation2:
+  de: |
+    <p>Bitte diesen Link jetzt sichern, er kann später nicht erneut angezeigt werden.</p>
+  _:  |
+    <p>Please save this link now, it cannot be recalled later.</p>
+
+pfy-upload-file-relay-expiration-text:
+  de: |
+    <p>Der Link ist während %days% Tagen benutzbar.</p>
+  _:  |
+    <p>The link will be available for %days% days.</p>
+
+pfy-upload-file-notification-mail-subject:
+  de: Neuer Upload auf %host%
+  _:  New upload to %host%
+
+pfy-upload-file-notification-mail:
+  de: |
+    Es ist eine neue Datei auf den Server geladen worden:
+    
+    %files%
+    
+    Speicherort: %targetPath%
+    %sender%
+  _:  |
+    A new file has been uploaded to the server:
+    
+    %files%
+    
+    Location: %targetPath%
+    %sender%
+
+
+pfy-file-relays-notification-mail:
+  de: |
+    Es ist eine neue Datei auf den File-Relays Server geladen worden:
+    
+    %files%
+    
+    Speicherort: %targetPath%
+    %sender%
+  _:  |
+    A new file has been uploaded to the File-Relays server:
+    
+    %files%
+    
+    Location: %targetPath%
+    %sender%
+
+pfy-upload-file-sender:
+  de: 'Absender: %user%'
+  _:  'Sender: %user%'
+
+pfy-unknown:
+  de: unbekannt
+  _:  unknown
+
+
