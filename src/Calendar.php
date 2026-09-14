@@ -7,6 +7,7 @@
 
 
 namespace PgFactory\PageFactoryElements;
+
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\TransVars;
@@ -14,7 +15,6 @@ use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\DataStore;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
-use PgFactory\PageFactory\PfyForm;
 use function PgFactory\PageFactory\createHash;
 use function PgFactory\PageFactory\fileTime;
 use function PgFactory\PageFactory\isAdmin;

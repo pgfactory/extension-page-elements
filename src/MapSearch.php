@@ -1,12 +1,18 @@
 <?php
 
-namespace PgFactory\PageFactory;
+namespace PgFactory\PageFactoryElements;
 
-const MAP_SEARCH_ICON_PATH = 'https://search.ch/map/images/icons/21/';
-const LOCAL_ICON_PATH = '~/assets/icons/';
+use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\DataStore;
+use PgFactory\PageFactory\Page;
+use PgFactory\PageFactory\Utils;
+use function PgFactory\PageFactory\fileExt;
 
 class MapSearch
 {
+    private const MAP_SEARCH_ICON_PATH = 'https://search.ch/map/images/icons/21/';
+    private const LOCAL_ICON_PATH = '~/assets/icons/';
+
     private $inx;
     private $customPOIIcon;
     private string $localIconsPath;
@@ -14,8 +20,8 @@ class MapSearch
 
     public function __construct()
     {
-        $this->localIconsPath = Utils::resolvePath(LOCAL_ICON_PATH);
-        $this->localIconsUrl = Utils::resolveUrls(LOCAL_ICON_PATH);
+        $this->localIconsPath = Utils::resolvePath(self::LOCAL_ICON_PATH);
+        $this->localIconsUrl = Utils::resolveUrls(self::LOCAL_ICON_PATH);
     }
 
 
@@ -244,7 +250,7 @@ EOT;
                                     if (file_exists($this->localIconsPath . $poiIcon)) {
                                         $poiIcon = $this->localIconsUrl . $poiIcon;
                                     } else {
-                                        $poiIcon = MAP_SEARCH_ICON_PATH . $poiIcon;
+                                        $poiIcon = self::MAP_SEARCH_ICON_PATH . $poiIcon;
                                     }
                                 }
                                 $poiIcon = "icon:'$poiIcon'";
@@ -445,7 +451,7 @@ EOT;
         $out = '';
         foreach ($poiIcons as $icon) {
             $iconName = basename($icon, '.png');
-            $out .= "<li>$iconName: <img src='".MAP_SEARCH_ICON_PATH."$icon' width='21' height='21' alt='$icon' /></li>\n";
+            $out .= "<li>$iconName: <img src='".self::MAP_SEARCH_ICON_PATH."$icon' width='21' height='21' alt='$icon' /></li>\n";
         }
         $out = "<h2>MapSearch Icons</h2>\n<ul class='pfy-mapsearch-icons'>\n$out</ul>\n";
         $css = <<<EOT

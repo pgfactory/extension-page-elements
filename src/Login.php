@@ -6,7 +6,6 @@ use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
-use PgFactory\PageFactory\PfyForm;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\isLocalhost;
 use function PgFactory\PageFactory\reloadAgent;

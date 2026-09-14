@@ -6,7 +6,6 @@ use Kirby\Exception\Exception;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
-use PgFactory\PageFactory\PfyForm;
 use PgFactory\MarkdownPlus\Permission;
 use PgFactory\PageFactory\TransVars;
 use PgFactory\PageFactory\Utils;
