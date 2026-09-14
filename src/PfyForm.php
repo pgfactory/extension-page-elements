@@ -5,20 +5,34 @@
  * https://doc.nette.org/en/forms/controls
  */
 
-namespace PgFactory\PageFactory;
+namespace PgFactory\PageFactoryElements;
 
 use Kirby\Exception\InvalidArgumentException;
 use Nette\Forms\Form;
 use Nette\Utils\Html;
 use PgFactory\MarkdownPlus\MdPlusHelper;
 use PgFactory\MarkdownPlus\Permission;
+use PgFactory\PageFactory\Assets;
+use PgFactory\PageFactory\DataStore;
+use PgFactory\PageFactory\Page;
+use PgFactory\PageFactory\PageFactory;
+use PgFactory\PageFactory\TransVars;
+use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactoryElements\Events as Events;
-use PgFactory\PageFactoryElements\HtmlMail;
-use PgFactory\PageFactoryElements\PageElements;
-use PgFactory\PageFactoryElements\TemplateCompiler;
-use PgFactory\PageFactoryElements\TwigLight;
-use PgFactory\PageFactoryElements\PfyRRule;
 use PgFactory\PageFactoryElements\DataTable as DataTable;
+use function PgFactory\PageFactory\compileMarkdown;
+use function PgFactory\PageFactory\createHash;
+use function PgFactory\PageFactory\explodeTrim;
+use function PgFactory\PageFactory\explodeTrimAssoc;
+use function PgFactory\PageFactory\fileExt;
+use function PgFactory\PageFactory\fixPath;
+use function PgFactory\PageFactory\loadFile;
+use function PgFactory\PageFactory\mylog;
+use function PgFactory\PageFactory\parseArgumentStr;
+use function PgFactory\PageFactory\preparePath;
+use function PgFactory\PageFactory\reloadAgent;
+use function PgFactory\PageFactory\translateToClassName;
+use function PgFactory\PageFactory\translateToIdentifier;
 use function PgFactory\PageFactory\var_r as var_r;
 use function PgFactory\PageFactoryElements\array_splice_associative as array_splice_associative;
 use function PgFactory\PageFactoryElements\intlDateFormat as intlDateFormat;
@@ -130,7 +144,67 @@ class PfyForm extends Form
         'origName' => '',
         'data' => null, // data attributes
     ];
+    private const FILE_TYPE_CLASSES = [
+        'docs'          => [
+            // Legacy binary formats (.doc, .xls, .ppt)
+            'application/msword',                    // .doc
+            'application/vnd.ms-excel',               // .xls
+            'application/vnd.ms-powerpoint',          // .ppt
 
+            // Modern Office Open XML formats (.docx, .xlsx, .pptx)
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',   // .docx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',         // .xlsx
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+
+            // OOXML templates (optional — include if you accept templates)
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.template',       // .dotx
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.template',          // .xltx
+            'application/vnd.openxmlformats-officedocument.presentationml.template',         // .potx
+
+            // Macro-enabled variants (optional — include if you accept macro files)
+            //'application/vnd.ms-word.document.macroEnabled.12',        // .docm
+            //'application/vnd.ms-excel.sheet.macroEnabled.12',          // .xlsm
+            //'application/vnd.ms-powerpoint.presentation.macroEnabled.12', // .pptm
+
+            // Open office
+            'application/vnd.oasis.opendocument.text',
+            'application/vnd.oasis.opendocument.spreadsheet',
+            'application/vnd.oasis.opendocument.presentation',
+            'application/vnd.oasis.opendocument.graphics',
+
+            'application/rtf',
+            'application/pdf',
+        ],
+        'text'          => 'text/*',
+        'pdf'           => 'application/pdf',
+        'pdfs'          => 'application/pdf',
+        'font'          => 'font/*',
+        'fonts'         => 'font/*',
+        'image'         => 'image/*',
+        'images'        => 'image/*',
+        'sound'         => 'audio/*',
+        'sounds'        => 'audio/*',
+        'video'         => 'video/*',
+        'videos'        => 'video/*',
+        'compressed'    =>  [
+            'application/zip',
+            'application/x-zip-compressed',
+            'application/x-tar',
+            'application/x-7z-compressed',
+            'application/vnd.rar',
+            'application/gzip',
+            'application/x-gzip',
+        ],
+        'zip'           => 'application/zip',
+    ];
+/*
+ [
+	'application/vnd.openxmlformats-officedocument.*', // modern: docx, xlsx, pptx, etc.
+	'application/msword',                                // legacy: usually catches .doc, sometimes .xls/.ppt too
+	'application/vnd.ms-excel',
+	'application/vnd.ms-powerpoint',
+]
+ */
     private const ARRAY_SUMMARY_NAME = '_';
 
 
@@ -823,19 +897,15 @@ class PfyForm extends Form
         } else {
             $elem = $this->addUpload($name, $label);
         }
-        $filter = $this->formElements[$name]['filter']??false;
-        if ('images' === $filter) {
-            $elem->addRule(self::Image, 'File must be JPEG, PNG, GIF or WebP');
-        } elseif ($filter) {
-            if (str_contains($filter, ',')) {
-                $pattern = str_replace([',', ' '], ['|', ''], $filter);
-                $pattern = "($pattern)$";
-            } else {
-                $pattern = "$filter$";
+        $mimetypes = $this->formElements[$name]['mimetypes'] ?? false;
+        if ($mimetypes) {
+            if (is_string($mimetypes)  && str_contains($mimetypes, ',')) {
+                $mimetypes = explodeTrim(',', $mimetypes);
             }
-            $pattern = '.*\\.'.$pattern;
-            $elem->addRule(self::PatternInsensitive, "File must have extension '$filter'", $pattern);
+            $mimetypesStr = $this->formElements[$name]['filetypes'] ?? (is_array($mimetypes) ? implode(',', $mimetypes) : $mimetypes);
+            $elem->addRule(self::MimeType, "File must be mimetype '$mimetypesStr'", $mimetypes);
         }
+
         if ($mb = ($this->formElements[$name]['maxMegaByte']??false)) {
             $elem->addRule(self::MaxFileSize, "Maximum size is $mb MB", self::MEGABYTE * $mb);
         }
@@ -3487,9 +3557,39 @@ EOT;
                 throw new \Exception("Error: Form argument 'options' must be of type string or array.");
             }
         }
+        $this->parseUploadOptions($elemOptions);
 
         return [$label, $name, $type];
     } // parseElementOptions
+
+
+    /**
+     * @param array $options
+     * @return void
+     */
+    private function parseUploadOptions(array &$options): void
+    {
+        if ($mimetypes = ($options['mimetypes']??false) ?:  $options['mimetype']??false) {
+            if (is_string($mimetypes)) {
+                $options['mimetypes'] = [$mimetypes];
+            }
+        } else {
+            $options['mimetypes'] = [];
+        }
+
+        if ($filetypes = ($options['filetypes']??false) ?:  $options['filetype']??false) {
+            $filetypes = explodeTrim(',', $filetypes);
+            $mimetypes = &$options['mimetypes'];
+            foreach ($filetypes as $filetype) {
+                if ($def = (self::FILE_TYPE_CLASSES[$filetype]??false)) {
+                    if (!is_array($def)) {
+                        $def = [$def];
+                    }
+                    $mimetypes = array_merge($mimetypes, $def);
+                }
+            }
+        }
+    } // parseUploadOptions
 
 
     /**

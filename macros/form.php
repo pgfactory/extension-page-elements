@@ -2,6 +2,8 @@
 namespace PgFactory\PageFactory;
 
 use Kirby\Exception\InvalidArgumentException;
+use PgFactory\PageFactoryElements\PfyForm;
+use PgFactory\PageFactoryElements\PfyFormSplitSyntax;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/PfyForm.php';

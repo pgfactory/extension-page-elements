@@ -5,7 +5,6 @@ namespace PgFactory\PageFactoryElements;
 use PgFactory\PageFactory\Assets;
 use PgFactory\PageFactory\Page;
 use PgFactory\PageFactory\PageFactory;
-use PgFactory\PageFactory\PfyFormSplitSyntax;
 use PgFactory\PageFactory\Utils;
 use PgFactory\PageFactory\TransVars;
 use function PgFactory\PageFactory\explodeTrim;

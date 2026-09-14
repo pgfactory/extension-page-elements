@@ -1,6 +1,6 @@
 <?php
 
-namespace PgFactory\PageFactory;
+namespace PgFactory\PageFactoryElements;
 
 
  // === class PfyFormSplitSyntax ======================================

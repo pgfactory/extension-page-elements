@@ -72,6 +72,9 @@ $formRevealContainerBg:     var(--pfy-form-reveal-container-bg, var(--pfy-form-r
 $formRevealContainerBorder: var(--pfy-form-reveal-container-border, var(--pfy-form-reveal-border));
 $formRevealPadding:         var(--pfy-form-reveal-padding);
 
+$uploadResponseBorder:  var(--pfy-upload-wrapper-border, 1px solid orange);
+$uploadResponseBg:      var(--pfy-upload-wrapper-bg, #fff9ee);
+
 .pfy-default-styling {
   .pfy-form-and-table-wrapper,
   .pfy-form-wrapper {
@@ -835,6 +838,31 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
     border-width: 1px;
     padding: 4px 5px;
     font-size: inherit;
+  }
+
+
+  // --- upload -------------
+  .pfy-upload-response-wrapper {
+    border: $uploadResponseBorder;
+    background: $uploadResponseBg;
+    padding: 1em;
+    margin: 1em 0;
+  }
+  .pfy-upload-form {
+    .pfy-elem-wrapper.pfy-form-buttons {
+      text-align: left;
+    }
+  }
+  .pfy-upload-link-wrapper {
+    margin-top: 0.8em;
+    padding: 0.5em 0.8em;
+    background: #dff8f3;
+  }
+  .pfy-upload-link {
+    margin: 1.5em 0 0 0;
+  }
+  .pfy-upload-response2 {
+    margin-top: 1em;
   }
 
   input.pfy-upload,
