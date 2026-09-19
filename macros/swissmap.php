@@ -1,6 +1,8 @@
 <?php
 namespace PgFactory\PageFactory;
 
+use PgFactory\PageFactoryElements\MapSearch;
+
 require_once __DIR__ . "/../src/MapSearch.php";
 
 /*
