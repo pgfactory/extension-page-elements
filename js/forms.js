@@ -618,7 +618,7 @@ const pfyFormsHelper = {
     }
     if (val) {
       isPreset = true;
-      val = this.fixAttribValue(val);
+      val = this.unshieldAttrVal(val);
     }
 //??? where required?
 //    if (['radio','checkbox'].includes(type)) {
@@ -631,14 +631,14 @@ const pfyFormsHelper = {
       if (val) {
         fieldWrapperElemEl.removeAttribute('data-value');
         isPreset = true;
-        val = this.fixAttribValue(val);
+        val = this.unshieldAttrVal(val);
       }
     } else {
       domForOne(fieldWrapperElemEl, '[data-value]', el => {
         val = el.dataset.value;
         el.removeAttribute('data-value');
         isPreset = true;
-        val = this.fixAttribValue(val);
+        val = this.unshieldAttrVal(val);
       });
     }
     // next try given data-rec (if present):
@@ -733,17 +733,42 @@ const pfyFormsHelper = {
   }, // presetField
 
 
-  fixAttribValue(val) {
+  shieldAttrVal(val) {
+    if (val === 'false') {
+      val = false;
+    } else {
+      // unshield shielded characters in attributes:
+      val = val.replace(/❛/g, '&#699;');
+      val = val.replace(/ˮ/g, '&#750;');
+      val = val.replace(/⁓/g, '&#8275;');
+      val = val.replace(/⎨/g, '&#9128;');
+
+      val = val.replace(/'/g, '❛');
+      val = val.replace(/ˮ/g, '"');
+      val = val.replace(/~/g, '⁓');
+      val = val.replace(/{/g, '⎨');
+    }
+    return val;
+  }, // shieldAttrVal
+
+
+  unshieldAttrVal(val) {
     if (val === 'false') {
       val = false;
     } else {
       // unshield shielded characters in attributes:
       val = val.replace(/❛/g, '\'');
-      val = val.replace(/❝/g, '"');
-      val = val.replace(/∽/g, '~');
+      val = val.replace(/ˮ/g, '"');
+      val = val.replace(/⁓/g, '~');
+      val = val.replace(/⎨/g, '{');
+
+      val = val.replace(/&#699;/g, '❛');
+      val = val.replace(/&#750;/g, 'ˮ');
+      val = val.replace(/&#8275;/g, '⁓');
+      val = val.replace(/&#9128;/g, '⎨');
     }
     return val;
-  }, // fixAttribValue
+  }, // unshieldAttrVal
 
 
   setFocus(el) {
@@ -1238,7 +1263,7 @@ const pfyFormsHelper = {
     }
     const textareaEl = ev.target;
     const growWrapper = textareaEl.closest('.pfy-input-wrapper');
-    growWrapper.dataset.replicatedValue = textareaEl.value;
+    growWrapper.dataset.replicatedValue = pfyFormsHelper.shieldAttrVal(textareaEl.value);
   }, // handleTextareaGrowers
 
 
@@ -1247,7 +1272,7 @@ const pfyFormsHelper = {
     // preset replicatedValue:
     domForEach(form, 'textarea.pfy-auto-grow', (textareaEl) => {
       const growWrapper = textareaEl.closest('.pfy-input-wrapper');
-      growWrapper.dataset.replicatedValue = textareaEl.value;
+      growWrapper.dataset.replicatedValue = pfyFormsHelper.shieldAttrVal(textareaEl.value);
     });
   }, // initAutoGrow
 
