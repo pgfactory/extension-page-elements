@@ -313,10 +313,10 @@ EOT;
             '/\*\*(.*?)\*\*/',    // Bold **text**
             '/\*(.*?)\*/',        // Italic *text* or _text_
             '/_(.*?)_/',        // Italic _text_
-            '/#+(.*?)\n/',        // Headers # Header
             '/~~(.*?)~~/',    // Strikethrough ~~text~~
             '/`(.*?)`/',        // Inline code `code`
         ], "$1", $mdStr);
+
         $mdStr = preg_replace([
             '/\[(.*?)]\((.*?)\)/', // Links [text](url)
             '/!\[(.*?)]\((.*?)\)/', // Images ![alt](url)
@@ -329,6 +329,14 @@ EOT;
         $mdStr = strip_tags($mdStr);
         $mdStr = preg_replace("/\n{2,}/ms", "\n\n", $mdStr);
         $mdStr = str_replace(['&nbsp;'], [' '], $mdStr);
+
+        if (preg_match_all('/#+\s(.*?)\n/', $mdStr, $m)) {
+            foreach ($m[0] as $i => $orig) {
+                $s = $m[1][$i];
+                $s .= "\n". str_repeat('-', strlen($s)) . "\n";
+                $mdStr = str_replace($orig, $s, $mdStr);
+            }
+        }
         $mdStr = trim($mdStr);
         return $mdStr;
     } // stripMarkdownPlus
