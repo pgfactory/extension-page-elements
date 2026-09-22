@@ -17,28 +17,36 @@ const HTML_MAIL_TEMPLATE_HISTORY_FOLDER = '~data/.history/';
 const HTML_MAIL_TEMPLATE_HISTORY_FILE = '_htmlmail-template-history.yaml';
 class EMailHelper
 {
-    private static string $file = '';
-    private static string $subject = '';
-    private static string $markdown = '';
-    private static string $css = '';
-    private static string $plaintext = '';
-    private static string $to = '';
-    private static string|null $from = null;
-    private static string $fromName = '';
-    private static array $iCalOptions = [];
-    private static string $icsFile = '';
-    private static string $macroName = '';
-    private static string $output = 'all';
-    private static array $attachments = [];
-    private static array|false $schedule = [];
-    private static array $events = [];
+    private string $file = '';
+    private string $subject = '';
+    private string $markdown = '';
+    private string $css = '';
+    private string $plaintext = '';
+    private string $to = '';
+    private string|null $from = null;
+    private string $fromName = '';
+    private array $iCalOptions = [];
+    private string $icsFile = '';
+    private string $macroName = '';
+    private string $output = 'all';
+    private array $attachments = [];
+    private array|false $schedule = [];
+    private array $events = [];
 
     /**
      * @param array $options
+     */
+    public function __construct(array $options)
+    {
+        $this->parseOptions($options);
+    } // __construct
+
+
+    /**
      * @return string
      * @throws \Kirby\Exception\Exception
      */
-    public static function render(array $options): string
+    public function render(): string
     {
         // handle '?sent':
         if (isset($_GET['sent'])) {
@@ -46,11 +54,9 @@ class EMailHelper
         }
 
         Assets::addAssets('HTML_MAIL');
-        self::parseOptions($options);
+        $this->handleScheduleOption();
 
-        self::handleScheduleOption();
-
-        if (!self::$markdown && ($options['schedule'] ?? false)) {
+        if (!$this->markdown && $this->schedule) {
             $html = <<<EOT
 <h2>Available variables:</h2>
 <pre>{{ _data_ }}
@@ -58,10 +64,10 @@ class EMailHelper
 EOT;
             return $html;
         }
-        list($emailPreview, $sourceCode) = self::renderPreview();
+        list($emailPreview, $sourceCode) = $this->renderPreview();
 
-        list($html, $parts) = self::renderEditForm();
-        $subject = self::$subject;
+        list($html, $parts) = $this->renderEditForm();
+        $subject = $this->subject;
 
         $wrapper = <<<EOT
 $html
@@ -127,31 +133,26 @@ EOT;
      * @return array
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private static function renderEditForm(): array
+    private function renderEditForm(): array
     {
         $formOptions = [
-            'file'                  => self::$file,
+            'file'                  => $this->file,
             'class'                 => 'pfy-form-colored',
             'wrapperClass'          => 'pfy-htmlmail-wrapper',
             'permission'            => true,
             'retainData'            => true,
             'tableOptions'          => false,
-            'dataReceivedCallback'  => function($dataRec) {
-                return self::formCallback($dataRec);
-            },
+            'dataReceivedCallback'  => fn($dataRec, $origDataRec) => $this->formCallback($dataRec, $origDataRec),
         ];
-        $markdown = str_replace('~', '∽', self::$markdown);
-        $markdown = str_replace("{", "&#123;", $markdown);
 
-        $plaintext = HtmlMail::cleanupPlaintext(self::$plaintext);
-        $plaintext = str_replace("{", "&#123;", $plaintext);
+        $plaintext = HtmlMail::cleanupPlaintext($this->plaintext);
         $formFields = [
-            'Subject'   => ['preset' => self::$subject],
-            'Markdown'  => ['type' => 'textarea', 'preset' => $markdown],
-            'Css'       => ['type' => 'textarea', 'preset' => self::$css],
-            'Text'      => ['type' => 'textarea', 'preset' => $plaintext],
+            'Subject'   => ['preset' => $this->subject],
+            'Markdown'  => ['type' => 'textarea', 'preset' => $this->markdown],
+            'Css'       => ['type' => 'textarea', 'preset' => $this->css],
+//            'Text'      => ['type' => 'textarea', 'preset' => $plaintext],
 
-            'To'        => ['type' => 'text', 'label'=> '{{ pfy-htmlmail-to }}','class' => 'halve-width', 'preset' => self::$to],
+            'To'        => ['type' => 'text', 'label'=> '{{ pfy-htmlmail-to }}','class' => 'halve-width', 'preset' => $this->to],
 
             'Send'      => [
                 'type' => 'button',
@@ -172,7 +173,8 @@ EOT;
             $head1 = $frm->renderFormWrapperHead();
             $head2 = $frm->renderFormPieces(uptoWhich: 'head');
             $parts[] = "$head1$head2";
-            $parts[] = $frm->renderFormPieces(uptoWhich: 'Text');
+            $parts[] = $frm->renderFormPieces(uptoWhich: 'Css');
+//            $parts[] = $frm->renderFormPieces(uptoWhich: 'Text');
             $parts[] = $frm->renderFormPieces(uptoWhich: 'Send');
             $parts[] = $frm->renderFormPieces(uptoWhich: 'rest');
             $parts[] = $frm->renderFormPieces(uptoWhich: 'tail');
@@ -196,20 +198,22 @@ EOT;
 
 
     /**
-     * @param $dataRec
+     * @param array $dataRec
+     * @param array $origDataRec
      * @return string
      */
-    public static function formCallback($dataRec): string
+    public function formCallback(array $dataRec, array $origDataRec): string
     {
         // check whether submitted data has been changed, save it if so:
-        $subject = str_replace("\r\n", "\n", self::$subject);
-        $markdown = str_replace("\r\n", "\n", self::$markdown);
-        $css = str_replace("\r\n", "\n", self::$css);
-        $plaintext = str_replace("\r\n", "\n", self::$plaintext);
+        $subject = str_replace("\r\n", "\n", $this->subject);
+        $markdown = str_replace("\r\n", "\n", $this->markdown);
+        $css = str_replace("\r\n", "\n", $this->css);
+//        $plaintext = str_replace("\r\n", "\n", $this->plaintext);
         if ($subject !== ($dataRec['Subject']??'') ||
             $markdown !== ($dataRec['Markdown']??'') ||
-            $css !== ($dataRec['Css']??'') ||
-            $plaintext !== ($dataRec['Text']??'')
+            $css !== ($dataRec['Css']??'')
+//            $css !== ($dataRec['Css']??'') ||
+//            $plaintext !== ($dataRec['Text']??'')
         ) {
             // anything changed, then save it:
             $tmp = $dataRec;
@@ -218,35 +222,35 @@ EOT;
                     unset($tmp[$key]);
                 }
             }
-            self::$subject = $subject;
-            self::$markdown = $markdown;
-            self::$css = $css;
-            self::$plaintext = $plaintext;
+            $this->subject = $subject;
+            $this->markdown = $markdown;
+            $this->css = $css;
+//            $this->plaintext = $plaintext;
 
             $file = HTML_MAIL_TEMPLATE_HISTORY_FOLDER . timestampStr() . HTML_MAIL_TEMPLATE_HISTORY_FILE;
             writeFile($file, $tmp);
         }
 
         // send data if requested:
-        if ($dataRec['_sendmail']??false) {
-            self::sendMail($dataRec);
+        if ($origDataRec['_sendmail']??false) {
+            $this->sendMail($dataRec);
             reloadAgent(PFY_PAGE_URL.'?sent');
         }
         return ''; // don't continue saving submitted data by PfyForms
     } // formCallback
-
+    
 
     /**
      * @return array
      */
-    private static function renderPreview(): array
+    private function renderPreview(): array
     {
-        $html       = self::compileForPreview();
+        $html       = $this->compileForPreview();
 
-        if (self::$output === 'all') {
-            $sourceCode = self::compileForMail();
+        if ($this->output === 'all') {
+            $sourceCode = $this->compileForMail();
         } else {
-            $sourceCode = self::compileForMail(prettyWrapper: false);
+            $sourceCode = $this->compileForMail(prettyWrapper: false);
         }
         $sourceCode = htmlentities($sourceCode);
         $sourceCode = <<<EOT
@@ -255,7 +259,7 @@ EOT;
 </code></pre>
 
 EOT;
-        $html .= self::showAttachments();
+        $html .= $this->showAttachments();
         return [$html, $sourceCode];
     } // renderPreview
 
@@ -265,10 +269,10 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private static function compileForMail(bool $prettyWrapper = true): string
+    private function compileForMail(bool $prettyWrapper = true): string
     {
-        $data = reset(self::$events) ?: [];
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, prettyWrapper: $prettyWrapper);
+        $data = reset($this->events) ?: [];
+        list($html, $plaintext) = HtmlMail::compileForMail($this->markdown, $this->css, data:$data, prettyWrapper: $prettyWrapper);
         return $html;
     } // compileForMail
 
@@ -278,12 +282,12 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private static function compileForPreview(bool $prettyWrapper = true): string
+    private function compileForPreview(bool $prettyWrapper = true): string
     {
-        $data = reset(self::$events) ?: [];
-        list($html, $plaintext) = HtmlMail::compileForMail(self::$markdown, self::$css, data:$data, forPreview: true, prettyWrapper: $prettyWrapper);
-        if (self::$plaintext === '-auto-') {
-            self::$plaintext = $plaintext;
+        $data = reset($this->events) ?: [];
+        list($html, $plaintext) = HtmlMail::compileForMail($this->markdown, $this->css, data:$data, forPreview: true, prettyWrapper: $prettyWrapper);
+        if ($this->plaintext === '-auto-') {
+            $this->plaintext = $plaintext;
         }
         return $html;
     } // compileForPreview
@@ -293,9 +297,9 @@ EOT;
      * @return void
      * @throws \Kirby\Exception\InvalidArgumentException
      */
-    private static function handleScheduleOption(): void
+    private function handleScheduleOption(): void
     {
-        if (!($eventOptions = self::$schedule)) {
+        if (!($eventOptions = $this->schedule)) {
             return;
         }
 
@@ -304,7 +308,7 @@ EOT;
         }
         $count = $eventOptions['ical']['count'] ?? 1;
         $eventOptions['file'] = $src;
-        $eventOptions['macroName'] = self::$macroName;
+        $eventOptions['macroName'] = $this->macroName;
 
         $sched = new Events($eventOptions);
         $nextEvents = $sched->getNextEvents(count: $count);
@@ -324,9 +328,9 @@ EOT;
         }
         $fileTime = fileTime($src);
         foreach ($nextEvents as $dataRec) {
-            self::$attachments[] = self::prepareIcsFile($dataRec, $fileTime);
+            $this->attachments[] = $this->prepareIcsFile($dataRec, $fileTime);
         }
-        self::$events = $nextEvents;
+        $this->events = $nextEvents;
     } // handleScheduleOption
 
 
@@ -336,9 +340,9 @@ EOT;
      * @return string
      * @throws \Exception
      */
-    private static function prepareIcsFile(array $dataRec, int $filetime): string
+    private function prepareIcsFile(array $dataRec, int $filetime): string
     {
-        $icalOptions = self::$iCalOptions;
+        $icalOptions = $this->iCalOptions;
         if (!$icalOptions) {
             return '';
         } elseif (!is_array($icalOptions)) {
@@ -362,11 +366,11 @@ EOT;
     /**
      * @return string
      */
-    private static function showAttachments(): string
+    private function showAttachments(): string
     {
         $html = '';
-        if (self::$attachments && is_array(self::$attachments)) {
-            foreach (self::$attachments as $file) {
+        if ($this->attachments && is_array($this->attachments)) {
+            foreach ($this->attachments as $file) {
                 $file = substr($file, strlen(PFY_KIRBY_BASE_PATH));
                 $html .= "<li><code>$file</code></li>\n";
             }
@@ -391,24 +395,25 @@ EOT;
      * @return void
      * @throws \PHPMailer\PHPMailer\Exception
      */
-    private static function sendMail(array $dataRec): void
+    private function sendMail(array $dataRec): void
     {
-        $eventData = reset(self::$events) ?: [];
+        $eventData = reset($this->events) ?: [];
         $to = $dataRec['To'] ?? PageFactory::$webmasterEmail;
-        $markdown   = self::$markdown;
+        $markdown   = $this->markdown;
 
-        $plaintext  = TransVars::translate(self::$plaintext, $eventData);
+        $plaintext  = TransVars::translate($this->plaintext, $eventData);
 
-        $css        = self::$css;
+        $css        = $this->css;
 
         list($html, $plaintext, $images) = HtmlMail::compileForMail($markdown, $css, data:$eventData, plaintext: $plaintext);
 
         $subject = $dataRec['Subject'] ?? '';
+        $plaintext  = TransVars::translate($plaintext, $eventData);
 
         $props = [
             'to' => $to,
-            'from' => self::$from,
-            'fromName' => self::$fromName,
+            'from' => $this->from,
+            'fromName' => $this->fromName,
             'subject' => $subject,
             'body' => $plaintext,
         ];
@@ -420,19 +425,19 @@ EOT;
         }
 
         $props['attachments'] = [];
-        if (self::$attachments) {
-            $props['attachments'] = self::$attachments;
+        if ($this->attachments) {
+            $props['attachments'] = $this->attachments;
         }
-        if (self::$icsFile) {
-            $props['attachments'][] = self::$icsFile;
+        if ($this->icsFile) {
+            $props['attachments'][] = $this->icsFile;
         }
 
         if ($images) {
             foreach ($images as $cid => $image) {
                 $file = $image['path'];
                 $props['attachments'][] = [
-                  'file' => $file,
-                  'cid' => $cid,
+                    'file' => $file,
+                    'cid' => $cid,
                 ];
             }
         }
@@ -441,21 +446,21 @@ EOT;
 
 
     /**
-     * @param $options
+     * @param array $options
      * @return void
      */
-    private static function parseOptions($options)
+    private function parseOptions(array $options): void
     {
-        self::$subject          = $options['subject']??'';
-        self::$markdown         = $options['markdown']??'';
-        self::$output           = $options['output']??'';
-        self::$css              = $options['css']??'';
-        self::$plaintext        = ($options['plainText']??false) ?: '-auto-'; // -auto- means: derive plaintext from markdown
-        self::$schedule         = $options['schedule']??false;
-        self::$macroName        = $options['macroName']??'';
-        self::$to               = ($options['to']??false) ?: PageFactory::$webmasterEmail;
-        self::$from             = ($options['from']??false) ?: PageFactory::$webmasterEmail;
-        self::$fromName         = ($options['fromName']??false) ?: 'Webmaster';
+        $this->subject          = $options['subject']??'';
+        $this->markdown         = $options['markdown']??'';
+        $this->output           = $options['output']??'';
+        $this->css              = $options['css']??'';
+        $this->plaintext        = ($options['plainText']??false) ?: '-auto-'; // -auto- means: derive plaintext from markdown
+        $this->schedule         = $options['schedule']??false;
+        $this->macroName        = $options['macroName']??'';
+        $this->to               = ($options['to']??false) ?: PageFactory::$webmasterEmail;
+        $this->from             = ($options['from']??false) ?: PageFactory::$webmasterEmail;
+        $this->fromName         = ($options['fromName']??false) ?: 'Webmaster';
         $attachments            = $options['attachments']??false;
         if (is_string($attachments)) {
             $attachments = explodeTrim(',', $attachments);
@@ -467,27 +472,27 @@ EOT;
                 $attachments[$key] = Utils::resolvePath($attachment);
             }
         }
-        self::$attachments = $attachments;
+        $this->attachments = $attachments;
 
-        self::$file = '~data/email.json';
+        $this->file = '~data/email.json';
 
-        if (preg_match('/\n==== [A-Z]+\n/s', self::$markdown)) {
-            list($plaintext1, self::$markdown, $css1) = HtmlMail::parseSections(self::$markdown);
-            self::$plaintext = $plaintext1 ?: self::$plaintext;
-            self::$css = $css1 ?: self::$css;
+        if (preg_match('/\n==== [A-Z]+\n/s', $this->markdown)) {
+            list($plaintext1, $this->markdown, $css1) = HtmlMail::parseSections($this->markdown);
+            $this->plaintext = $plaintext1 ?: $this->plaintext;
+            $this->css = $css1 ?: $this->css;
         }
 
-        if (self::$schedule) {
-            self::$iCalOptions = self::$schedule['ical']??[];
+        if ($this->schedule) {
+            $this->iCalOptions = $this->schedule['ical']??[];
         }
 
         // update values if submitted by form:
         if (isset($_POST['Markdown'])) {
-            self::$subject      = $_POST['Subject']??'';
-            self::$markdown     = $_POST['Markdown']??'';
-            self::$css          = $_POST['Css']??'';
-            self::$plaintext    = $_POST['Text']??'';
-            self::$to           = $_POST['To']??'';
+            $this->subject      = $_POST['Subject']??'';
+            $this->markdown     = $_POST['Markdown']??'';
+            $this->css          = $_POST['Css']??'';
+            $this->plaintext    = $_POST['Text']??'';
+            $this->to           = $_POST['To']??'';
         }
     } // parseOptions
 

@@ -5,9 +5,7 @@ namespace PgFactory\PageFactory;
  * PageFactory Macro
  */
 
-use PgFactory\MarkdownPlus\MarkdownPlus;
 use PgFactory\PageFactoryElements\EMailHelper;
-use PgFactory\PageFactoryElements\HtmlMail;
 
 return function ($args = '')
 {
@@ -117,7 +115,8 @@ EOT,
     $options['css']         = TransVars::getVariable($options['cssVar']??'');
     $options['plainText']   = TransVars::getVariable($options['plainTextVar']??'');
 
-    $str .= EMailHelper::render($options);
+    $eh = new EMailHelper($options);
+    $str .= $eh->render();
     return $str;
 };
 
