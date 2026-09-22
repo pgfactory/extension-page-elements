@@ -5,7 +5,7 @@ namespace PgFactory\PageFactoryElements;
 use IntlDateFormatter;
 use PgFactory\PageFactory\PageFactory;
 
-// Europe centric (and incomplete) presets:
+ // Europe centric (and incomplete) presets:
 if (PageFactory::$langCode === 'en') {
     define('FULL_DATE_FORMAT', 'EEEE, d MMMM yyyy, h:mm a');
 } elseif (PageFactory::$langCode === 'de') {
@@ -214,6 +214,11 @@ function array_splice_associative(array $input, string $key, int $length, array 
 } // array_splice_associative
 
 
+/**
+ * @param int|string $arg
+ * @param int $precision
+ * @return string
+ */
 function sizetostr(int|string $arg, int $precision = 1): string
 {
     if (is_string($arg)) {
@@ -291,3 +296,56 @@ function resolveTimePlaceholders(string $str, bool $returnUnixTime = true): stri
     }
     return $str;
 } // resolveTimePlaceholders
+
+
+/**
+ * ' => ❛ => &#699;
+ * " => ˮ => &#750;
+ * ~ => ⁓ => &#8275;
+ * { => ⎨ => &#9128;
+ * Note: has to match values in forms.js -> shieldAttrVal(val)!
+ * @param mixed $value
+ * @return mixed
+ */
+function shieldAttrVal(mixed $value): mixed
+{
+    if (!is_string($value)) {
+        return $value;
+    }
+    $value = str_replace(
+        [
+            '❛', 'ˮ', '⁓', '⎨',
+            "'", '"', '~', '{'
+        ],
+        [
+            '&#699;', '&#750;', '&#8275;', '&#9128;',
+            '❛', 'ˮ', '⁓', '⎨'
+        ],
+        $value);
+    return $value;
+} // shieldAttrVal
+
+
+/**
+ * @param mixed $value
+ * @return mixed
+ */
+function unshieldAttrVal(mixed $value): mixed
+{
+    if (!is_string($value)) {
+        return $value;
+    }
+    $value = str_replace(
+        [
+            '&#699;', '&#750;', '&#8275;', '&#9128;',
+            '❛', 'ˮ', '⁓', '⎨'
+        ],
+        [
+            '❛', 'ˮ', '⁓', '⎨',
+            "'", '"', '~', '{'
+        ],
+        $value);
+    return $value;
+} // unshieldAttrVal
+
+
