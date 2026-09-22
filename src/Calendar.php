@@ -357,7 +357,7 @@ EOT;
         }
 
         $recKey = '';
-        if ($origDataRec['_rrule']) {
+        if ($origDataRec['_rrule']??false) {
             $recKey = ($origDataRec['_reckey']??false) ?: createHash();
             $dataRec['_ev_group'] = $recKey;
         }
