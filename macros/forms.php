@@ -1,8 +1,11 @@
 <?php
+
 namespace PgFactory\PageFactory;
 
 use Kirby\Exception\InvalidArgumentException;
 use PgFactory\PageFactoryElements\Events;
+use PgFactory\PageFactoryElements\PfyForm;
+use PgFactory\PageFactoryElements\PfyFormSplitSyntax;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/PfyForm.php';
@@ -79,6 +82,8 @@ Works exactly like `form()` macro, but renders multiple instances of scheduled f
 EOT,
     ];
 
+    $config['options']['count'] = ['', null];
+
     // parse arguments, handle help and showSource:
     if (is_string($res = TransVars::initMacro(__FILE__, $config, $args))) {
         return shieldStr($res);
@@ -123,21 +128,27 @@ EOT,
     $options['dataReceivedCallback'] = $options['dataReceivedCallback'] ?: $options['callback'];
     $output = ($options['output']??false);
 
-    $count = $options['count'] ?: 999;
-    $eventOptions = $options['schedule'];
+    $eventOptions = $options['schedule']??[];
     $offset = ($eventOptions['offset']??false) ?: 0;
-    if (!($src = $eventOptions['src']??false)) {
-        if (!($src = $eventOptions['file']??false)) { // allow 'file' as synonyme for 'src'
-            throw new \Exception("Form: option 'schedule' without option 'src'.");
+    if (!($src = ($eventOptions['src']??false))) {
+        if (!($src = ($eventOptions['file']??false))) { // allow 'file' as synonyme for 'src'
+            if (!($src = ($eventOptions['rrule']??false))) {
+                throw new \Exception("Form: option 'schedule' without option 'src'.");
+            }
         }
     }
 
     $eventOptions['file'] = $src;
-    $eventOptions['count'] = $count;
+
     $eventOptions['macroName'] = $options['macroName'];
     $sched = new Events($eventOptions);
     $nextEvents = $sched->getNextEvents();
     $count = count($nextEvents);
+    if (isset($options['count'])) {
+        $count = min($count, intval($options['count']));
+        $eventOptions['count'] = $count;
+        unset($options['count']);
+    }
 
     $i = 0;
     $htmlOut = '';
