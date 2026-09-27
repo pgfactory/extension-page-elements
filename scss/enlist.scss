@@ -18,321 +18,319 @@
   background: none;
 }
 
-.pfy-default-styling {
 
-  .pfy-enlist-wrapper {
-    .pfy-table-wrapper {
-      padding-top: 0;
-    }
+.pfy-enlist-wrapper {
+  .pfy-table-wrapper {
+    padding-top: 0;
   }
+}
 
-  .pfy-enlist-table {
-    border-collapse: collapse;
-    width: 100%;
-    th, td {
-      border: 1px solid #ddd;
-      padding: 5px;
-    }
-    .pfy-col-num {
-      width: 1em;
-      transform: scale(0.75);
-      color: #aaa;
-      text-align: right;
-      left: 1px;
-      padding-left: 0;
-      padding-right: 1px;
-    }
-    .pfy-col-icon-1,
-    .pfy-col-icon-2 {
-      width: 2em;
-      text-align: center;
-    }
-    &:not(.pfy-enlist-custom-fields) thead {
-      display: none;
-    }
+.pfy-enlist-table {
+  border-collapse: collapse;
+  width: 100%;
+  th, td {
+    border: 1px solid #ddd;
+    padding: 5px;
   }
-
-  .pfy-enlist-empty,
-  .pfy-enlist-add,
-  .pfy-enlist-delete,
-  .pfy-enlist-field {
-    background: var(--pfy-enlist-field-bg, #fffff6);
+  .pfy-col-num {
+    width: 1em;
+    transform: scale(0.75);
+    color: #aaa;
+    text-align: right;
+    left: 1px;
+    padding-left: 0;
+    padding-right: 1px;
   }
-  .pfy-enlist-wrapper tr.pfy-enlist-expired {
-    background: var(--pfy-enlist-expired-field-bg, #fafafab0);
-  }
-  .pfy-enlist-wrapper tr.pfy-enlist-reserve.pfy-enlist-expired {
-    background: var(--pfy-enlist-reserve-field-bg, #f6f6ffb0);
-  }
-  .pfy-enlist-frozen-while-admin,
-  div.pfy-enlist-admin.pfy-enlist-expired  {
-    background: repeating-linear-gradient(
-        -45deg,
-        hsl(60deg 100% 98%),
-        hsl(60deg 100% 98%) 10px,
-        hsl(60deg 100% 93%) 10px,
-        hsl(60deg 100% 93%) 20px
-    );
-  }
-
-//  .pfy-enlist-name > div {
-  .pfy-col-name > div {
-    min-height: 1em;
-  }
-
-  .pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-col-icon-1,
-  .pfy-enlist-custom-fields .pfy-col-icon-2 {
-    display: none;
-  }
-  .pfy-enlist-obfuscated .pfy-enlist-custom-fields {
-    display: none;
-  }
-
   .pfy-col-icon-1,
   .pfy-col-icon-2 {
-    button {
-      @include _pfy-enlist-button;
-    }
-
-    button:empty {
-      display: none;
-    }
+    width: 2em;
+    text-align: center;
   }
-
-  .pfy-enlist-title {
-    position: relative;
-    border: 1px solid #aaa;
-    display: flex;
-    justify-content: space-between;
-    background-color: var(--pfy-enlist-title-bg, inherit);
-
-    > div:first-child {
-      padding: 5px;
-      padding-top: 0.5em;
-      font-weight: bold;
-      flex: 1 1 auto;
-    }
-    > div:last-child {
-      flex: 0 0 auto;
-    }
-
-    button {
-      width: 1.5em;
-      height: 1.5em;
-    }
-  }
-
-  .pfy-enlist-head-buttons-wrapper {
-    padding: 1px;
-    > div,
-    > button,
-    > span {
-      display: inline-block;
-      height: 1.5em;
-      margin-top: 0;
-    }
-    button {
-      font-size: 120%;
-      padding: 0;
-
-    }
-  }
-  button.pfy-enlist-ical-button {
-    transform: translateY(1px);
-  }
-  .pfy-enlist-collapse-button span {
-    color: #888;
-    display: inline-block;
-    font-size: 85%;
-  }
-
-  .pfy-enlist-add {
-    button {
-      color: green;
-      border-color: #4d4;
-    }
-
-//    .pfy-enlist-name {
-    .pfy-col-name {
-      color: gray;
-      font-style: italic;
-    }
-  }
-
-  .pfy-enlist-delete {
-    button {
-      color: red;
-      border-color: red;
-    }
-  }
-
-  .pfy-enlist-modify {
-    button {
-      color: blue;
-      border-color: blue;
-    }
-  }
-
-  .pfy-enlist-reserve {
-    background: var(--pfy-enlist-reserve-field-bg, #f6f6ff);
-  }
-
-  .pfy-enlist-delete-btn-wrapper {
-    padding-top: 1em;
-    display: flex;
-    justify-content: flex-end;
-    .pfy-input-wrapper {
-      width: unset;
-    }
-    label {
-      font-style: italic;
-    }
-    input {
-      float: right;
-      margin-left: 1em;
-    }
-  }
-
-
-  // === Enlist Form ====================================
-  #pfy-enlist-form {
+  &:not(.pfy-enlist-custom-fields) thead {
     display: none;
-    background: yellow; // should never be visible
   }
+}
 
-  .pfy-popup-wrapper {
-    .pfy-add, .pfy-del, .pfy-modify {
-      display: none;
-    }
-    .pfy-enlist-is-reserve div.pfy-enlist-directly {
-      display: none;
-    }
-  }
-  .pfy-popup-wrapper.pfy-enlist-add-mode {
-    .pfy-add {
-      display: block;
-    }
-    .pfy-enlist-delete-checkbox {
-      display: none;
-    }
-    .pfy-form-tooltip .pfy-info-add {
-      display: inline-block;
-    }
-  }
+.pfy-enlist-empty,
+.pfy-enlist-add,
+.pfy-enlist-delete,
+.pfy-enlist-field {
+  background: var(--pfy-enlist-field-bg, #fffff6);
+}
+.pfy-enlist-wrapper tr.pfy-enlist-expired {
+  background: var(--pfy-enlist-expired-field-bg, #fafafab0);
+}
+.pfy-enlist-wrapper tr.pfy-enlist-reserve.pfy-enlist-expired {
+  background: var(--pfy-enlist-reserve-field-bg, #f6f6ffb0);
+}
+.pfy-enlist-frozen-while-admin,
+div.pfy-enlist-admin.pfy-enlist-expired  {
+  background: repeating-linear-gradient(
+      -45deg,
+      hsl(60deg 100% 98%),
+      hsl(60deg 100% 98%) 10px,
+      hsl(60deg 100% 93%) 10px,
+      hsl(60deg 100% 93%) 20px
+  );
+}
 
-  .pfy-popup-wrapper.pfy-enlist-modify-mode {
-    .pfy-modify {
-      display: block;
-    }
-    .pfy-form-tooltip .pfy-info-modify {
-      display: inline-block;
-    }
-  }
+//  .pfy-enlist-name > div {
+.pfy-col-name > div {
+  min-height: 1em;
+}
 
-  .pfy-popup-wrapper.pfy-enlist-del-mode {
-    .pfy-del {
-      display: block;
-    }
-    .pfy-form-tooltip .pfy-info-modify {
-      display: inline-block;
-    }
-  }
+.pfy-enlist-table:not(.pfy-enlist-custom-fields) .pfy-col-icon-1,
+.pfy-enlist-custom-fields .pfy-col-icon-2 {
+  display: none;
+}
+.pfy-enlist-obfuscated .pfy-enlist-custom-fields {
+  display: none;
+}
 
-  .pfy-enlist-expired {
-    .pfy-enlist-table td {
-      cursor: not-allowed;
-      filter: brightness(95%);
-    }
-  }
-  .pfy-enlist-elem-pseudo-frozen {
-    filter: brightness(95%);
-  }
-  .pfy-enlist-elem-frozen {
-    cursor: not-allowed;
-  }
-  .pfy-enlist-admin .pfy-enlist-elem-frozen {
-    filter: brightness(95%);
-  }
-
-  .pfy-enlist-icon {
-    cursor: pointer;
-  }
-
-  .pfy-enlist-admin {
-    .pfy-enlist-email {
-      display: inline-block;
-      margin-left: 0.5em;
-      overflow-wrap: anywhere;
-    }
-    .pfy-enlist-email::before {
-      content: "<";
-    }
-    .pfy-enlist-email::after {
-      content: ">";
-    }
-  }
-
-  .pfy-enlist-admin-view {
-    color: #a35dd1;
-    font-style: italic;
-  }
-
-  button.pfy-enlist-delete,
-  button.pfy-enlist-add {
+.pfy-col-icon-1,
+.pfy-col-icon-2 {
+  button {
     @include _pfy-enlist-button;
   }
-  button.pfy-enlist-delete {
-    color: red;
-    border-color: red
-  }
-    button.pfy-enlist-add {
-      color: green;
-      border-color: #4d4;
-  }
 
-  .pfy-empty-title {
+  button:empty {
     display: none;
   }
+}
 
-  .pfy-hide-direct-reserve,
-  .pfy-enlist-delete-mode {
-    .pfy-enlist-directly {
-      display: none;
-    }
+.pfy-enlist-title {
+  position: relative;
+  border: 1px solid #aaa;
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--pfy-enlist-title-bg, inherit);
+
+  > div:first-child {
+    padding: 5px;
+    padding-top: 0.5em;
+    font-weight: bold;
+    flex: 1 1 auto;
+  }
+  > div:last-child {
+    flex: 0 0 auto;
   }
 
-  .pfy-enlist-ical-wrapper {
-    a {
-      padding: 0.4em 0.3em 0 0;
-      user-select: none;
-      cursor: pointer;
-      height: 1.5em;
-    }
-    button {
-      margin: 1px;
-      padding: 0;
-      user-select: none;
-      cursor: pointer;
-      font-size: 120%;
-      width: 1.5em;
-      height: 1.5em;
-    }
+  button {
+    width: 1.5em;
+    height: 1.5em;
+  }
+}
+
+.pfy-enlist-head-buttons-wrapper {
+  padding: 1px;
+  > div,
+  > button,
+  > span {
+    display: inline-block;
+    height: 1.5em;
+    margin-top: 0;
+  }
+  button {
+    font-size: 120%;
+    padding: 0;
+
+  }
+}
+button.pfy-enlist-ical-button {
+  transform: translateY(1px);
+}
+.pfy-enlist-collapse-button span {
+  color: #888;
+  display: inline-block;
+  font-size: 85%;
+}
+
+.pfy-enlist-add {
+  button {
+    color: green;
+    border-color: #4d4;
   }
 
-  .pfy-enlist-hide-num .pfy-enlist-row-num {
-    display: none;
-  }
-
-  .pfy-placeholder {
-    text-align: right;
-    font-style: italic;
-    font-size: 80%;
+//    .pfy-enlist-name {
+  .pfy-col-name {
     color: gray;
+    font-style: italic;
   }
+}
 
-} // .pfy-default-styling
+.pfy-enlist-delete {
+  button {
+    color: red;
+    border-color: red;
+  }
+}
 
-#pfy.pfy-default-styling .pfy-popup-container .pfy-form {
+.pfy-enlist-modify {
+  button {
+    color: blue;
+    border-color: blue;
+  }
+}
+
+.pfy-enlist-reserve {
+  background: var(--pfy-enlist-reserve-field-bg, #f6f6ff);
+}
+
+.pfy-enlist-delete-btn-wrapper {
+  padding-top: 1em;
+  display: flex;
+  justify-content: flex-end;
+  .pfy-input-wrapper {
+    width: unset;
+  }
+  label {
+    font-style: italic;
+  }
+  input {
+    float: right;
+    margin-left: 1em;
+  }
+}
+
+
+// === Enlist Form ====================================
+#pfy-enlist-form {
+  display: none;
+  background: yellow; // should never be visible
+}
+
+.pfy-popup-wrapper {
+  .pfy-add, .pfy-del, .pfy-modify {
+    display: none;
+  }
+  .pfy-enlist-is-reserve div.pfy-enlist-directly {
+    display: none;
+  }
+}
+.pfy-popup-wrapper.pfy-enlist-add-mode {
+  .pfy-add {
+    display: block;
+  }
+  .pfy-enlist-delete-checkbox {
+    display: none;
+  }
+  .pfy-form-tooltip .pfy-info-add {
+    display: inline-block;
+  }
+}
+
+.pfy-popup-wrapper.pfy-enlist-modify-mode {
+  .pfy-modify {
+    display: block;
+  }
+  .pfy-form-tooltip .pfy-info-modify {
+    display: inline-block;
+  }
+}
+
+.pfy-popup-wrapper.pfy-enlist-del-mode {
+  .pfy-del {
+    display: block;
+  }
+  .pfy-form-tooltip .pfy-info-modify {
+    display: inline-block;
+  }
+}
+
+.pfy-enlist-expired {
+  .pfy-enlist-table td {
+    cursor: not-allowed;
+    filter: brightness(95%);
+  }
+}
+.pfy-enlist-elem-pseudo-frozen {
+  filter: brightness(95%);
+}
+.pfy-enlist-elem-frozen {
+  cursor: not-allowed;
+}
+.pfy-enlist-admin .pfy-enlist-elem-frozen {
+  filter: brightness(95%);
+}
+
+.pfy-enlist-icon {
+  cursor: pointer;
+}
+
+.pfy-enlist-admin {
+  .pfy-enlist-email {
+    display: inline-block;
+    margin-left: 0.5em;
+    overflow-wrap: anywhere;
+  }
+  .pfy-enlist-email::before {
+    content: "<";
+  }
+  .pfy-enlist-email::after {
+    content: ">";
+  }
+}
+
+.pfy-enlist-admin-view {
+  color: #a35dd1;
+  font-style: italic;
+}
+
+button.pfy-enlist-delete,
+button.pfy-enlist-add {
+  @include _pfy-enlist-button;
+}
+button.pfy-enlist-delete {
+  color: red;
+  border-color: red
+}
+  button.pfy-enlist-add {
+    color: green;
+    border-color: #4d4;
+}
+
+.pfy-empty-title {
+  display: none;
+}
+
+.pfy-hide-direct-reserve,
+.pfy-enlist-delete-mode {
+  .pfy-enlist-directly {
+    display: none;
+  }
+}
+
+.pfy-enlist-ical-wrapper {
+  a {
+    padding: 0.4em 0.3em 0 0;
+    user-select: none;
+    cursor: pointer;
+    height: 1.5em;
+  }
+  button {
+    margin: 1px;
+    padding: 0;
+    user-select: none;
+    cursor: pointer;
+    font-size: 120%;
+    width: 1.5em;
+    height: 1.5em;
+  }
+}
+
+.pfy-enlist-hide-num .pfy-enlist-row-num {
+  display: none;
+}
+
+.pfy-placeholder {
+  text-align: right;
+  font-style: italic;
+  font-size: 80%;
+  color: gray;
+}
+
+
+#pfy .pfy-popup-container .pfy-form {
   input.pfy-form-button {
     width: 9em;
     padding-left: 0.5em;

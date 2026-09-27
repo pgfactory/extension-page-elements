@@ -5,244 +5,241 @@ $focus-color: orange;
 $borderColor: var(--pfy-table-border-color, #ddd);
 $defaultHeaderFooterBgColor: #eee;
 
-.pfy-default-styling {
 
-    .pfy-table-wrapper {
-      container-type: inline-size;
+.pfy-table-wrapper {
+  container-type: inline-size;
+}
+
+// === table buttons
+.pfy-table-buttons {
+  .pfy-button {
+    margin-bottom: 3px;
+    display: inline-block;
+    height: 2em;
+    font-size: 0.8em;
+  }
+  select.pfy-table-buttons-select-widget {
+    height: calc(1.15em + 8px);
+    border: 1px solid #aaa;
+    border-radius: 3px;
+  }
+  div.pfy-table-buttons-select-widget {
+    height: 1.6em;
+    margin-top: calc(0.15em - 3px);
+    display: inline-block;
+  }
+}
+
+/* === pfy-table  */
+.pfy-table {
+    border-collapse: collapse;
+    --pfy-scroll-bg-color: var(--pfy-table-bg-color); // propagate bg color to scroll hints
+
+    tr {
+        vertical-align: top;
     }
-
-    // === table buttons
-    .pfy-table-buttons {
-      .pfy-button {
-        margin-bottom: 3px;
-        display: inline-block;
-        height: 2em;
-        font-size: 0.8em;
+    td, th {
+        padding: 0;
+        border: 1px solid $borderColor;
+        font-size: 90%;
+    }
+    tbody td {
+      background-color: var(--pfy-table-bg-color, inherit)
+    }
+    td:not(.pfy-service-col)  {
+      &.pfy-scroll-hints {
+        max-height: 4.5em;
+        overflow-y: auto;
+        > div {
+          @include _scroll-hints;
+        }
       }
-      select.pfy-table-buttons-select-widget {
-        height: calc(1.15em + 8px);
-        border: 1px solid #aaa;
-        border-radius: 3px;
-      }
-      div.pfy-table-buttons-select-widget {
-        height: 1.6em;
-        margin-top: calc(0.15em - 3px);
-        display: inline-block;
-      }
     }
-
-    /* === pfy-table  */
-    .pfy-table {
-        border-collapse: collapse;
-        --pfy-scroll-bg-color: var(--pfy-table-bg-color); // propagate bg color to scroll hints
-
-        tr {
-            vertical-align: top;
-        }
-        td, th {
-            padding: 0;
-            border: 1px solid $borderColor;
-            font-size: 90%;
-        }
-        tbody td {
-          background-color: var(--pfy-table-bg-color, inherit)
-        }
-        td:not(.pfy-service-col)  {
-          &.pfy-scroll-hints {
-            max-height: 4.5em;
-            overflow-y: auto;
-            > div {
-              @include _scroll-hints;
-            }
-          }
-        }
-        th:not(.pfy-service-col) > div,
-        td:not(.pfy-service-col) > div {
-          padding: 0.5em 0.6em 0.2em 0.6em;
-        }
-        thead th {
-            background: var(--pfy-table-header-bg, $defaultHeaderFooterBgColor);
-        }
-        tfoot td,
-        tfoot td * {
-          background: var(--pfy-table-footer-bg, var(--pfy-table-header-bg, $defaultHeaderFooterBgColor));
-        }
+    th:not(.pfy-service-col) > div,
+    td:not(.pfy-service-col) > div {
+      padding: 0.5em 0.6em 0.2em 0.6em;
     }
-  .pfy-row-selector input {
-    font-size: inherit;
-    width: 1.2em;
-    height: 1.2em;
-    transform: translateY(0.14em);
+    thead th {
+        background: var(--pfy-table-header-bg, $defaultHeaderFooterBgColor);
+    }
+    tfoot td,
+    tfoot td * {
+      background: var(--pfy-table-footer-bg, var(--pfy-table-header-bg, $defaultHeaderFooterBgColor));
+    }
+}
+.pfy-row-selector input {
+  font-size: inherit;
+  width: 1.2em;
+  height: 1.2em;
+  transform: translateY(0.14em);
+}
+.pfy-table-new-rec {
+  width: 2em;
+  .mdp-icon {
+    margin-left: -0.15em;
   }
-  .pfy-table-new-rec {
-    width: 2em;
-    .mdp-icon {
-      margin-left: -0.15em;
+}
+.pfy-rec-locked {
+  background: repeating-linear-gradient(
+      -45deg,
+      #FFF4F4,
+      #FFF4F4 10px,
+      #FDE0E0 10px,
+      #FDE0E0 20px
+  );
+  cursor: not-allowed;
+}
+button[disabled] {
+  opacity: 0.5;
+}
+
+.pfy-row-button {
+  padding: 0.3em 0.5em;
+}
+.pfy-row-edit-button,
+.pfy-row-duplicate-button,
+.pfy-row-view-button,
+.pfy-row-send-button {
+  width: 1.6em;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+  padding: 0;
+}
+.pfy-row-view-button svg {
+  transform: scale(1.3);
+}
+
+.pfy-table-header {
+  .pfy-service-col .dt-column-order {
+    display: none;
+  }
+}
+
+th.pfy-service-col  > div {
+    min-width: 1em;
+}
+
+
+.pfy-interactive {
+  // DataTabes messes up position of table buttons, so we try to fix it:
+  position: relative;
+  padding-top: calc((1em - 10pt) * 0.5);
+  .pfy-table-buttons {
+    z-index: 2;
+    top: 0;
+    .pfy-button {
+      margin-bottom: 0;
+      line-height: 1.35em;
+      vertical-align: top;
     }
   }
-  .pfy-rec-locked {
-    background: repeating-linear-gradient(
-        -45deg,
-        #FFF4F4,
-        #FFF4F4 10px,
-        #FDE0E0 10px,
-        #FDE0E0 20px
-    );
-    cursor: not-allowed;
-  }
-  button[disabled] {
-    opacity: 0.5;
-  }
-
-  .pfy-row-button {
-    padding: 0.3em 0.5em;
-  }
-  .pfy-row-edit-button,
-  .pfy-row-duplicate-button,
-  .pfy-row-view-button,
-  .pfy-row-send-button {
-    width: 1.6em;
-    margin-left: 0.1em;
-    margin-right: 0.1em;
-    padding: 0;
-  }
-  .pfy-row-view-button svg {
-    transform: scale(1.3);
-  }
-
-  .pfy-table-header {
-    .pfy-service-col .dt-column-order {
+  .pfy-service-col {
+    text-align: center;
+    padding: 3px 0 0 0;
+    &::before,
+    &::before,
+    &::after,
+    &::after {
       display: none;
     }
-  }
-
-  th.pfy-service-col  > div {
-      min-width: 1em;
-  }
-
-
-  .pfy-interactive {
-    // DataTabes messes up position of table buttons, so we try to fix it:
-    position: relative;
-    padding-top: calc((1em - 10pt) * 0.5);
-    .pfy-table-buttons {
-      z-index: 2;
-      top: 0;
-      .pfy-button {
-        margin-bottom: 0;
-        line-height: 1.35em;
-        vertical-align: top;
-      }
+    &.pfy-row-selector,
+    &.pfy-row-number {
+      padding: 0.25em 0.2em 0 0.2em;
+      max-width: 2em;
     }
-    .pfy-service-col {
-      text-align: center;
-      padding: 3px 0 0 0;
-      &::before,
-      &::before,
-      &::after,
-      &::after {
-        display: none;
-      }
-      &.pfy-row-selector,
-      &.pfy-row-number {
-        padding: 0.25em 0.2em 0 0.2em;
-        max-width: 2em;
-      }
-      &.pfy-row-edit {
-        max-width: 4em;
-      }
-    }
-    th.pfy-service-col {
-      vertical-align: middle;
-      text-align: center;
-      &:not(.pfy-row-selector, .pfy-row-number) {
-        pointer-events: none;
-      }
-
-    }
-    td.pfy-row-number {
-      text-align: right;
-    }
-    div.pfy-table-buttons {
-      top: 6px; // only dt!
-    }
-  } // interactive (= using data-tables
-
-  #pfy-table-send-rec-input {
-    line-height: 2em;
-    color: black;
-    background-color: #fffff6;
-    border: 1px solid #666;
-    border-radius: 4px;
-    margin: 0.5em 0;
-    padding-left: 0.5em;
-  }
-
-  // interactive -> dataTables:
-  .pfy-table-wrapper {
-    position: relative;
-    padding-top: 2.3em;
-    overflow: auto;
-    border: 1px solid $borderColor;
-
-    .pfy-table-buttons,
-    .dt-search {
-      position: absolute;
-    }
-    .pfy-table-buttons {
-      top: 0; // not dt
-    }
-    div.dt-container div.dt-layout-row {
-      margin: 0;
-    }
-    div.dt-container {
-      position: unset;
-    }
-    .dt-search {
-      top: calc(0.125em + 4px);
-      right: 0;
-      margin: 0;
-      input {
-        padding: 3px 5px;
-      }
+    &.pfy-row-edit {
+      max-width: 4em;
     }
   }
-  .dt-layout-full {
-    overflow-x: auto;
-  }
+  th.pfy-service-col {
+    vertical-align: middle;
+    text-align: center;
+    &:not(.pfy-row-selector, .pfy-row-number) {
+      pointer-events: none;
+    }
 
-  .pfy-table-fill-first-row {
-    margin-top: 1em;
   }
+  td.pfy-row-number {
+    text-align: right;
+  }
+  div.pfy-table-buttons {
+    top: 6px; // only dt!
+  }
+} // interactive (= using data-tables
 
-  .pfy-popup-container.pfy-table-map-popup {
-    width: min(60vw, 40em);
-    max-width: 98vw;
-    min-width: 350px;
-    height: min(60vw, 40em);
-    max-height: 90vw;
-    min-height: 350px;
-    > div,
-    > div > div {
-      width: 100%;
-      height: 100%;
+#pfy-table-send-rec-input {
+  line-height: 2em;
+  color: black;
+  background-color: #fffff6;
+  border: 1px solid #666;
+  border-radius: 4px;
+  margin: 0.5em 0;
+  padding-left: 0.5em;
+}
+
+// interactive -> dataTables:
+.pfy-table-wrapper {
+  position: relative;
+  padding-top: 2.3em;
+  overflow: auto;
+  border: 1px solid $borderColor;
+
+  .pfy-table-buttons,
+  .dt-search {
+    position: absolute;
+  }
+  .pfy-table-buttons {
+    top: 0; // not dt
+  }
+  div.dt-container div.dt-layout-row {
+    margin: 0;
+  }
+  div.dt-container {
+    position: unset;
+  }
+  .dt-search {
+    top: calc(0.125em + 4px);
+    right: 0;
+    margin: 0;
+    input {
+      padding: 3px 5px;
     }
   }
+}
+.dt-layout-full {
+  overflow-x: auto;
+}
 
-} // pfy-default-styling
+.pfy-table-fill-first-row {
+  margin-top: 1em;
+}
 
-.pfy-default-styling.pfy-small-screen .pfy-popup-container.pfy-table-map-popup {
+.pfy-popup-container.pfy-table-map-popup {
+  width: min(60vw, 40em);
+  max-width: 98vw;
+  min-width: 350px;
+  height: min(60vw, 40em);
+  max-height: 90vw;
+  min-height: 350px;
+  > div,
+  > div > div {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+
+.pfy-small-screen .pfy-popup-container.pfy-table-map-popup {
   padding: 0;
   margin-bottom: 0;
 }
 
  // === DataTables Filter widget ==============================
-.pfy-default-styling {
-  .dt-search input::placeholder {
-      opacity: 0;
-  }
+.dt-search input::placeholder {
+    opacity: 0;
 }
-#pfy.pfy-default-styling {
+
+#pfy {
   .dt-search {
     margin: 0;
     input::placeholder {

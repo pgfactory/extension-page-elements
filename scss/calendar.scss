@@ -34,223 +34,221 @@ $eventTextColor: var(--pfy-event-txt-color, #333);
 $eventPopupTextColor: var(--pfy-event-popup-txt-color, #333);
 $calendarEditable:    var(--pfy-cal-editable, 1px solid green);
 
-.pfy-default-styling {
 
-  .pfy-calendar {
-     //--fc-border-color: red;
-     //--fc-daygrid-event-dot-width: 5px;
+.pfy-calendar {
+   //--fc-border-color: red;
+   //--fc-daygrid-event-dot-width: 5px;
 
-    a, a:hover {
-      border-bottom: none;
-    }
-
-    &.pfy-cal-editable .fc-view-harness {
-      outline: $calendarEditable;
-    }
-  }
-  .fc-event {
-    min-height: 1em;
-    overflow-wrap: anywhere;
-    text-wrap: wrap;
-    overflow-y: auto;
-
-    &.pfy-recurring-event::after {
-      content: "⟳";
-      position: absolute;
-      top: 0;
-      right: 0;
-      padding-left: 0.2em;
-      width: 1em;
-      height: 1.2em;
-      background: inherit;
-      z-index: 2;
-    }
-  }
-  .fc-v-event .fc-event-main,
-  .fc-daygrid-day-events {
-    &, a {
-      --fc-event-text-color: $eventTextColor;
-    }
+  a, a:hover {
+    border-bottom: none;
   }
 
-  .fc-daygrid-body .time,
-  .pfy-cal-description {
+  &.pfy-cal-editable .fc-view-harness {
+    outline: $calendarEditable;
+  }
+}
+.fc-event {
+  min-height: 1em;
+  overflow-wrap: anywhere;
+  text-wrap: wrap;
+  overflow-y: auto;
+
+  &.pfy-recurring-event::after {
+    content: "⟳";
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding-left: 0.2em;
+    width: 1em;
+    height: 1.2em;
+    background: inherit;
+    z-index: 2;
+  }
+}
+.fc-v-event .fc-event-main,
+.fc-daygrid-day-events {
+  &, a {
+    --fc-event-text-color: $eventTextColor;
+  }
+}
+
+.fc-daygrid-body .time,
+.pfy-cal-description {
+  display: none;
+}
+.fc-timeGridWeek-view {
+  .pfy-cal-location {
     display: none;
   }
-  .fc-timeGridWeek-view {
-    .pfy-cal-location {
-      display: none;
-    }
-  }
-  .fc-timeGridWeek-view,
-  .fc-dayGridMonth-view {
-    .fc-event {
-      border: 1px solid #aaa;
-    }
-
-    //.fc-event-main {
-    //  color: #444;
-    //}
-
-    .fc-event:has(.pfy-category-1) {
-      background: $eventColorCat1;
-      border-color: $eventBorderColorCat1;
-    }
-
-    .fc-event:has(.pfy-category-2) {
-      background: $eventColorCat2;
-      border-color: $eventBorderColorCat2;
-    }
-
-    .fc-event:has(.pfy-category-3) {
-      background: $eventColorCat3;
-      border-color: $eventBorderColorCat3;
-    }
-
-    .fc-event:has(.pfy-category-4) {
-      background: $eventColorCat4;
-      border-color: $eventBorderColorCat4;
-    }
-
-    .fc-event:has(.pfy-category-5) {
-      background: $eventColorCat5;
-      border-color: $eventBorderColorCat5;
-    }
-
-    .fc-event:has(.pfy-category-6) {
-      background: $eventColorCat6;
-      border-color: $eventBorderColorCat6;
-    }
-  }
-  .fc-listYear-view {
-    .pfy-category-1 .fc-list-event-dot {
-      border-color: $eventBorderColorCat1;
-    }
-    .pfy-category-2 .fc-list-event-dot {
-      border-color: $eventBorderColorCat2;
-    }
-    .pfy-category-3 .fc-list-event-dot {
-      border-color: $eventBorderColorCat3;
-    }
-    .pfy-category-4 .fc-list-event-dot {
-      border-color: $eventBorderColorCat4;
-    }
-    .pfy-category-5 .fc-list-event-dot {
-      border-color: $eventBorderColorCat5;
-    }
-    .pfy-category-6 .fc-list-event-dot {
-      border-color: $eventBorderColorCat6;
-    }
+}
+.fc-timeGridWeek-view,
+.fc-dayGridMonth-view {
+  .fc-event {
+    border: 1px solid #aaa;
   }
 
+  //.fc-event-main {
+  //  color: #444;
+  //}
+
+  .fc-event:has(.pfy-category-1) {
+    background: $eventColorCat1;
+    border-color: $eventBorderColorCat1;
+  }
+
+  .fc-event:has(.pfy-category-2) {
+    background: $eventColorCat2;
+    border-color: $eventBorderColorCat2;
+  }
+
+  .fc-event:has(.pfy-category-3) {
+    background: $eventColorCat3;
+    border-color: $eventBorderColorCat3;
+  }
+
+  .fc-event:has(.pfy-category-4) {
+    background: $eventColorCat4;
+    border-color: $eventBorderColorCat4;
+  }
+
+  .fc-event:has(.pfy-category-5) {
+    background: $eventColorCat5;
+    border-color: $eventBorderColorCat5;
+  }
+
+  .fc-event:has(.pfy-category-6) {
+    background: $eventColorCat6;
+    border-color: $eventBorderColorCat6;
+  }
+}
+.fc-listYear-view {
+  .pfy-category-1 .fc-list-event-dot {
+    border-color: $eventBorderColorCat1;
+  }
+  .pfy-category-2 .fc-list-event-dot {
+    border-color: $eventBorderColorCat2;
+  }
+  .pfy-category-3 .fc-list-event-dot {
+    border-color: $eventBorderColorCat3;
+  }
+  .pfy-category-4 .fc-list-event-dot {
+    border-color: $eventBorderColorCat4;
+  }
+  .pfy-category-5 .fc-list-event-dot {
+    border-color: $eventBorderColorCat5;
+  }
+  .pfy-category-6 .fc-list-event-dot {
+    border-color: $eventBorderColorCat6;
+  }
+}
 
 
-  .pfy-calendar-narrow {
-    .fc-header-toolbar {
-      position: relative;
-    }
-    .fc-toolbar-chunk {
-      display: inline-block;
-      margin-top: 2em;
-    }
-    .fc-toolbar-chunk:nth-child(2) {
-      display: block;
-      position: absolute;
-      top: 0;
-      margin: 0;
-      h2 {
-        font-size: 150%;
-        white-space: nowrap;
-      }
-    }
+
+.pfy-calendar-narrow {
+  .fc-header-toolbar {
+    position: relative;
   }
   .fc-toolbar-chunk {
+    display: inline-block;
+    margin-top: 2em;
+  }
+  .fc-toolbar-chunk:nth-child(2) {
+    display: block;
+    position: absolute;
+    top: 0;
+    margin: 0;
     h2 {
+      font-size: 150%;
       white-space: nowrap;
     }
   }
-
-  .pfy-popup-wrapper .pfy-popup-container {
-    padding-top: 0.5em;
-    font-size: 11pt;
+}
+.fc-toolbar-chunk {
+  h2 {
+    white-space: nowrap;
   }
+}
 
-  .fc-daygrid-event-harness {
-    a {
-      > span {
-        text-wrap: balance;
-        hyphens: auto;
-        //overflow-x: auto;
-      }
+.pfy-popup-wrapper .pfy-popup-container {
+  padding-top: 0.5em;
+  font-size: 11pt;
+}
+
+.fc-daygrid-event-harness {
+  a {
+    > span {
+      text-wrap: balance;
+      hyphens: auto;
+      //overflow-x: auto;
     }
   }
+}
 
-  .tippy-content {
-    button {
-      border: none;
-      background: transparent;
-      color: $eventPopupTextColor;
-      text-align: left;
-      white-space: nowrap;
-    }
+.tippy-content {
+  button {
+    border: none;
+    background: transparent;
+    color: $eventPopupTextColor;
+    text-align: left;
+    white-space: nowrap;
   }
-  // popup content on click:
+}
+// popup content on click:
+.tippy-box,
+.tippy-arrow.tippy-arrow:before  {
+  background-color: #fcffc6;
+  border-color: #fcffc6;
+  color: #333;
+}
+.tippy-content {
+  outline: 1px solid #ffa500;
+  outline-offset: -1px;
+  border-radius: 6px;
+}
+// context menu:
+.pfy-calendar {
   .tippy-box,
   .tippy-arrow.tippy-arrow:before  {
-    background-color: #fcffc6;
-    border-color: #fcffc6;
+    background-color: white;
+    border-color: #222;
+    border-radius: 6px;
+    box-shadow: 0 0 10px #6668;
     color: #333;
   }
-  .tippy-content {
-    outline: 1px solid #ffa500;
-    outline-offset: -1px;
-    border-radius: 6px;
-  }
-  // context menu:
-  .pfy-calendar {
-    .tippy-box,
-    .tippy-arrow.tippy-arrow:before  {
-      background-color: white;
-      border-color: #222;
-      border-radius: 6px;
-      box-shadow: 0 0 10px #6668;
-      color: #333;
-    }
 
-    // prevent context menu from being covered by other events:
-    .fc-timegrid-col-events:has([data-tippy-root]) {
-      transform: rotate(0);
-      z-index: 4;
-    }
+  // prevent context menu from being covered by other events:
+  .fc-timegrid-col-events:has([data-tippy-root]) {
+    transform: rotate(0);
+    z-index: 4;
   }
+}
 
-  .pfy-cal-cat-selectors {
-    margin: 1em 0;
-    .pfy-cal-cat-selectors-label {
-      margin: 0.5em 0;
-    }
-    .pfy-cal-cat-selector {
-      display: inline-block;
-      margin-right: 1em;
-    }
-    input {
-      margin-right: 0.3em;
-    }
+.pfy-cal-cat-selectors {
+  margin: 1em 0;
+  .pfy-cal-cat-selectors-label {
+    margin: 0.5em 0;
   }
+  .pfy-cal-cat-selector {
+    display: inline-block;
+    margin-right: 1em;
+  }
+  input {
+    margin-right: 0.3em;
+  }
+}
 
-  .fc-list-event-time {
-    width: 7.5em;
-  }
+.fc-list-event-time {
+  width: 7.5em;
+}
 
-  .fc-event-selected::after, .fc-event:focus::after {
-    // hack to suppress scrollbars and lasting dimming when opening context menu:
-    display: none;
-  }
-} // pfy-default-styling
+.fc-event-selected::after, .fc-event:focus::after {
+  // hack to suppress scrollbars and lasting dimming when opening context menu:
+  display: none;
+}
 
 
 // === small screen ===========================
-.pfy-default-styling.pfy-small-screen {
+.pfy-small-screen {
   .pfy-popup-wrapper .pfy-popup-container {
     width: 98vw;
   }

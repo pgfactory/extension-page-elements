@@ -13,7 +13,7 @@
   <?= $page->headInjections() ?>
 </head>
 
-<body id='pfy' class='pfy-default-styling pfy-auto-tabulator <?= $page->bodyTagClasses() ?>' <?= $page->bodyTagAttributes() ?>>
+<body id='pfy' class='<?= $page->bodyTagClasses() ?>' <?= $page->bodyTagAttributes() ?>>
 
 <div class='pfy-page'>
 

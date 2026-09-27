@@ -5,58 +5,56 @@
  // --mdp-accordion-summary-indent: -0.3em;
 */
 
-.pfy-default-styling {
-  .pfy-dir {
-    ul {
-      list-style-type: none;
-      padding-left: var(--mdp-accordion-left-indent, 0rem);
+.pfy-dir {
+  ul {
+    list-style-type: none;
+    padding-left: var(--mdp-accordion-left-indent, 0rem);
+  }
+
+  details.mdp-accordion {
+    margin-bottom: 0.8em;
+  }
+  .mdp-accordion {
+    .mdp-accordion-body {
+      padding-top: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
+      padding-left: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
     }
 
-    details.mdp-accordion {
-      margin-bottom: 0.8em;
-    }
-    .mdp-accordion {
-      .mdp-accordion-body {
-        padding-top: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
-        padding-left: calc(0.4em + var(--mdp-accordion-summary-indent, 0rem));
-      }
-
-      summary {
-        padding-top: var(--mdp-accordion-summary-padding, 0rem);
-        padding-bottom: var(--mdp-accordion-summary-padding, 0rem);
-        padding-left: 0;
-      }
-
-      summary:before {
-        content: '+';
-        transform-origin: 0.3em 50%;
-        transition: 0.2s transform ease;
-        line-height: inherit;
-        font-size: 1.5em;
-        margin: 0;
-        transform: translateY(-0.25em);
-      }
-
-      &[open] > summary:before {
-        content: '−';
-        transform: rotate(180deg) translateY(0.05em);
-        transition: 0.2s transform ease;
-      }
+    summary {
+      padding-top: var(--mdp-accordion-summary-padding, 0rem);
+      padding-bottom: var(--mdp-accordion-summary-padding, 0rem);
+      padding-left: 0;
     }
 
-    .pfy-dir-sub-header {
-      font-weight: bold;
-      font-size: 1.2em;
-      padding-bottom: 0.5em;
+    summary:before {
+      content: '+';
+      transform-origin: 0.3em 50%;
+      transition: 0.2s transform ease;
+      line-height: inherit;
+      font-size: 1.5em;
+      margin: 0;
+      transform: translateY(-0.25em);
     }
 
-    .pfy-dir-go-back {
-      margin-bottom: -0.8em;
+    &[open] > summary:before {
+      content: '−';
+      transform: rotate(180deg) translateY(0.05em);
+      transition: 0.2s transform ease;
     }
+  }
 
-    .mdp-icon {
-      margin-left: 0.8em;
-    }
-  } // .pfy-dir
-} // .pfy-default-styling {
+  .pfy-dir-sub-header {
+    font-weight: bold;
+    font-size: 1.2em;
+    padding-bottom: 0.5em;
+  }
+
+  .pfy-dir-go-back {
+    margin-bottom: -0.8em;
+  }
+
+  .mdp-icon {
+    margin-left: 0.8em;
+  }
+} // .pfy-dir
 

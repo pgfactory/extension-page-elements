@@ -1,155 +1,153 @@
 /*  Pfy-Popup  */
 
-.pfy-default-styling {
-  &.pfy-modal .pfy-popup-bg {
-    background: rgba(0, 0, 0, .4);
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-  }
-  &:not(.pfy-modal) .pfy-popup-bg {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    .pfy-popup-wrapper {
-      outline: 1px solid #bbb;
-      background: white;
-    }
-  }
-
-  .pfy-popup-bg > dialog,
-  .pfy-popup-bg > div {
-    position: relative;
-  }
-
-  .pfy-popup-src {
-    display: none;
-  }
-
-  .pfy-popup-wrapper { // dialog
-    position: relative;
-    max-width: 98%;
-    min-width: 10em;
-    vertical-align: middle;
-    border: none;
-    outline: 1px solid #444;
-    border-radius: 8px;
-    padding: 0;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    background-color: #fff;
-    box-shadow: 10px 10px 60px #0008;
-    overflow: hidden;
-    font-size: 11pt;
-  }
-
-  .pfy-popup-header {
-    position: relative;
-    overflow: hidden;
-    background: #666;
-    user-select: none;
-    //min-height: 2.4em;
-    margin-top: -1px;
-    font-family: Helvetica, sans-serif;
-    > div {
-      min-height: 2.4em;
-      padding: 0.5em 4em 0.5em 1em;
-      color: #eee;
-      font-size: 125%;
-      cursor: grab;
-    }
-    .pfy-popup-close-button {
-      color: #ddd;
-    }
-  }
-
-  .pfy-popup-close-button {
-    position: absolute;
-    top: 0.3em;
-    right: 0.2em;
-    background: transparent;
-    color: #666;
-    border: none;
-    font-size: 130%;
-  }
-
+.pfy-modal .pfy-popup-bg {
+  background: rgba(0, 0, 0, .4);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+:not(.pfy-modal) .pfy-popup-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   .pfy-popup-wrapper {
-    max-width: calc(100dvw - 10px);
-    max-height: calc(100dvh - 10px);
-  }
-  .pfy-popup-container {
-    overflow: auto;
-    max-height: calc(100dvh - 4em);
-    padding: 1.6em 1.6em 0 1.6em;
-    margin-bottom: 1.4em;
-    font-family: Verdana, sans-serif;
-    > div {
-      width: fit-content;
-      height: fit-content;
-    }
-  }
-
-  .pfy-popup-with-header .pfy-popup-close-button.pfy-popup-close-button {
-    border: none;
-    background: transparent;
-  }
-
-  .pfy-popup-buttons {
-    display: flex;
-    justify-content: end;
-    margin: 0 0.8em 0.8em 0.8em;
-    button {
-      margin-left: 5px;
-      font-size: inherit;
-    }
-    button:first-child {
-      margin-left: 0;
-    }
-  }
-
-  &.pfy-no-scroll {
-    overflow: hidden;
-  }
-
-  // --- Overlay --------------
-  .pfy-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: calc(100vw - 30px);
-    height: calc(100dvh - 20px);
-    margin: 10px;
-    padding: 20px;
-    color: black;
+    outline: 1px solid #bbb;
     background: white;
-    border: 1px solid orange;
-    box-shadow: 0 0 15px 5px #444;
-    box-sizing: border-box;
-    overflow: auto;
-    z-index: 100;
   }
+}
 
-  .pfy-close-overlay {
-    float: right;
-    margin: -15px -15px 10px 10px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16pt;
-    width: 2em;
-    height: 2em;
+.pfy-popup-bg > dialog,
+.pfy-popup-bg > div {
+  position: relative;
+}
+
+.pfy-popup-src {
+  display: none;
+}
+
+.pfy-popup-wrapper { // dialog
+  position: relative;
+  max-width: 98%;
+  min-width: 10em;
+  vertical-align: middle;
+  border: none;
+  outline: 1px solid #444;
+  border-radius: 8px;
+  padding: 0;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  background-color: #fff;
+  box-shadow: 10px 10px 60px #0008;
+  overflow: hidden;
+  font-size: 11pt;
+}
+
+.pfy-popup-header {
+  position: relative;
+  overflow: hidden;
+  background: #666;
+  user-select: none;
+  //min-height: 2.4em;
+  margin-top: -1px;
+  font-family: Helvetica, sans-serif;
+  > div {
+    min-height: 2.4em;
+    padding: 0.5em 4em 0.5em 1em;
+    color: #eee;
+    font-size: 125%;
+    cursor: grab;
   }
+  .pfy-popup-close-button {
+    color: #ddd;
+  }
+}
 
-} // .pfy-default-styling
+.pfy-popup-close-button {
+  position: absolute;
+  top: 0.3em;
+  right: 0.2em;
+  background: transparent;
+  color: #666;
+  border: none;
+  font-size: 130%;
+}
 
-#pfy.pfy-default-styling .pfy-popup-container.pfy-macro-help {
+.pfy-popup-wrapper {
+  max-width: calc(100dvw - 10px);
+  max-height: calc(100dvh - 10px);
+}
+.pfy-popup-container {
+  overflow: auto;
+  max-height: calc(100dvh - 4em);
+  padding: 1.6em 1.6em 0 1.6em;
+  margin-bottom: 1.4em;
+  font-family: Verdana, sans-serif;
+  > div {
+    width: fit-content;
+    height: fit-content;
+  }
+}
+
+.pfy-popup-with-header .pfy-popup-close-button.pfy-popup-close-button {
+  border: none;
+  background: transparent;
+}
+
+.pfy-popup-buttons {
+  display: flex;
+  justify-content: end;
+  margin: 0 0.8em 0.8em 0.8em;
+  button {
+    margin-left: 5px;
+    font-size: inherit;
+  }
+  button:first-child {
+    margin-left: 0;
+  }
+}
+
+.pfy-no-scroll {
+  overflow: hidden;
+}
+
+// --- Overlay --------------
+.pfy-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: calc(100vw - 30px);
+  height: calc(100dvh - 20px);
+  margin: 10px;
+  padding: 20px;
+  color: black;
+  background: white;
+  border: 1px solid orange;
+  box-shadow: 0 0 15px 5px #444;
+  box-sizing: border-box;
+  overflow: auto;
+  z-index: 100;
+}
+
+.pfy-close-overlay {
+  float: right;
+  margin: -15px -15px 10px 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16pt;
+  width: 2em;
+  height: 2em;
+}
+
+
+#pfy .pfy-popup-container.pfy-macro-help {
   margin: 2em 1em;
 }

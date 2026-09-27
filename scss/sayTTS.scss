@@ -2,8 +2,7 @@
  * sayTTS.scss
  */
 
-#pfy.pfy-default-styling .pfy-tts-widget,
-.pfy-default-styling .pfy-tts-widget {
+.pfy-tts-widget {
   position: relative;
   width: 9em;
 
@@ -70,11 +69,10 @@
 } // .pfy-tts-widget
 
 
-.pfy-default-styling {
-  .pfy-no-webspeech {
-    .pfy-tts-widget {
-      display: none;
-    }
+.pfy-no-webspeech {
+  .pfy-tts-widget {
+    display: none;
   }
 }
+
 

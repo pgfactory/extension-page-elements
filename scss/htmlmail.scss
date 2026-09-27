@@ -1,76 +1,75 @@
 
 
-.pfy-default-styling {
 
-  .pfy-htmlmail-wrapper {
-    --pfy-form-width: 100%;
-  }
+.pfy-htmlmail-wrapper {
+  --pfy-form-width: 100%;
+}
 
-  .mdp-accordion-body,
-  .pfy-to,
-  .pfy-htmlmail-send-button {
-    font-size: 12pt;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  }
-  .mdp-accordion-body {
-    font-size: 11pt;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  }
+.mdp-accordion-body,
+.pfy-to,
+.pfy-htmlmail-send-button {
+  font-size: 12pt;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.mdp-accordion-body {
+  font-size: 11pt;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
 
-  textarea {
-    padding: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2) 0.5em;
-    font: inherit;
-    grid-row-start: 1;
-    grid-column-start: 1;
-    grid-row-end: 2;
-    grid-column-end: 2;
-  }
-  div.halve-width {
-    display: inline-block;
-    width: calc(100% - 7em);
-  }
+textarea {
+  padding: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2) 0.5em;
+  font: inherit;
+  grid-row-start: 1;
+  grid-column-start: 1;
+  grid-row-end: 2;
+  grid-column-end: 2;
+}
+div.halve-width {
+  display: inline-block;
+  width: calc(100% - 7em);
+}
 
-  .pfy-htmlmail-subject {
-    display: inline-block;
-    background-color: #f4f4f4;
-    border: 1px solid #ddd;
-    padding: 0.5em 1em;
-    margin-left: 1em;
-  }
+.pfy-htmlmail-subject {
+  display: inline-block;
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 0.5em 1em;
+  margin-left: 1em;
+}
 
-  .pfy-htmlmail-attachments {
-    margin-top: 1em;
-    padding: 0.5em 1em;
-    background-color: #f3fcff;
-    border: 1px solid #ddd;
-  }
+.pfy-htmlmail-attachments {
+  margin-top: 1em;
+  padding: 0.5em 1em;
+  background-color: #f3fcff;
+  border: 1px solid #ddd;
+}
 
-  .pfy-htmlmail-preview {
-    .pfy-htmlmail-outer-wrapper {
-      border: 1px solid #ddd;
-    }
-    margin-top: 1em;
-  }
+.pfy-htmlmail-preview {
   .pfy-htmlmail-outer-wrapper {
-    padding: 0.5em;
+    border: 1px solid #ddd;
   }
+  margin-top: 1em;
+}
+.pfy-htmlmail-outer-wrapper {
+  padding: 0.5em;
+}
 
-  .pfy-htmlmail-source-code {
-    pre {
-      font-size: 10pt;
-      margin: 0 0 2em 0;
-    }
-  }
-  .pfy-button-wrapper {
-    display: inline-block;
+.pfy-htmlmail-source-code {
+  pre {
     font-size: 10pt;
-  }
-  .send-mail {
-    border: 1px solid orange;
-    padding-left: 0.5em;
-    > div {
-      vertical-align: middle;
-    }
+    margin: 0 0 2em 0;
   }
 }
+.pfy-button-wrapper {
+  display: inline-block;
+  font-size: 10pt;
+}
+.send-mail {
+  border: 1px solid orange;
+  padding-left: 0.5em;
+  > div {
+    vertical-align: middle;
+  }
+}
+

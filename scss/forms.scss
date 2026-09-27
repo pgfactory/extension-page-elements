@@ -75,958 +75,956 @@ $formRevealPadding:         var(--pfy-form-reveal-padding);
 $uploadResponseBorder:  var(--pfy-upload-wrapper-border, 1px solid orange);
 $uploadResponseBg:      var(--pfy-upload-wrapper-bg, #fff9ee);
 
-.pfy-default-styling {
-  .pfy-form-and-table-wrapper,
-  .pfy-form-wrapper {
-    .pfy-form-button {
-      opacity: 0.6;
-    }
-    &.pfy-form-is-preset {
-      .pfy-cancel,
-      .pfy-form-button:not(.pfy-submit) {
-        opacity: 1;
-      }
-    }
-    &.pfy-form-is-modified {
-      .pfy-form-button {
-        opacity: 1;
-      }
-    }
-  } // pfy-form-wrapper
-
-
-  .pfy-form-colored {
-    --pfy-form-input-color-default:             inherit;
-    --pfy-form-error-color-base:                20deg, 100%; // red
-    --pfy-form-field-background-color-default:  #fffff6;
-    --pfy-form-field-border-default:            1px solid #b4b3b3;
-    --pfy-form-required-marker-color-default:   orange;
-    --pfy-form-tooltip-bg-default:              #fef5e0;
-    --pfy-form-tooltip-color-default:           #222;
-    --pfy-form-readonly-field-bg-default:       #f8f8f8;
-
-    --pfy-form-reveal-border: 1px solid #eee;
+.pfy-form-and-table-wrapper,
+.pfy-form-wrapper {
+  .pfy-form-button {
+    opacity: 0.6;
   }
-
-  input[type=cancel],
-  input[type=submit],
-  input[type=button],
-  button {
-    cursor: pointer;
-  }
-  input:user-invalid {
-    outline: 1px solid red;
-  }
-  input:user-valid {
-    outline: 1px solid green;
-  }
-
-  .pfy-label-wrapper, .pfy-input-wrapper {
-    display: inline-block;
-    vertical-align: top;
-  }
-
-  .pfy-label-wrapper {
-    width: $labelWidth;
-
-    label {
-      display: inline-block;
-    }
-  }
-  .pfy-elem-wrapper {
-    line-height: 1em;
-    &.pfy-hidden {
-      display: none;
-    }
-  }
-  .pfy-elem-wrapper:not(.pfy-choice) {
-    .pfy-label-wrapper label {
-      margin-top: calc((#{$inputHeight} - 1em) / 2);
-      margin-bottom: 0.25em;
-    }
-  }
-  .pfy-choice {
-    .pfy-label-wrapper {
-      margin-top: calc((#{$inputHeight} - 1em) / 2);
-    }
-    &:not(.pfy-horizontal) .pfy-choice-wrapper {
-      width: 100%;
-    }
-  }
-  .pfy-select {
-    .pfy-input-wrapper {
-      height: 2.8em;
-    }
-  }
-
-  .pfy-password .pfy-input-wrapper {
-    position: relative;
-    input {
-      padding-right: 2em;
-    }
-  }
-  .pfy-form-show-pw {
-    position: absolute;
-    top: 0;
-    right: 0;
-    border: none;
-    background: none;
-    width: 2em;
-    height: #{$inputHeight};
-    opacity: 0.5;
-    &:hover,
-    &:focus-visible {
+  &.pfy-form-is-preset {
+    .pfy-cancel,
+    .pfy-form-button:not(.pfy-submit) {
       opacity: 1;
     }
-
-    svg {
-      position: absolute;
-      top: calc((#{$inputHeight} - 1em) / 2 - 0.1em);
-      right: 0.3em;
-      width: 1.4em;
-      height: 1.4em;
+  }
+  &.pfy-form-is-modified {
+    .pfy-form-button {
+      opacity: 1;
     }
+  }
+} // pfy-form-wrapper
+
+
+.pfy-form-colored {
+  --pfy-form-input-color-default:             inherit;
+  --pfy-form-error-color-base:                20deg, 100%; // red
+  --pfy-form-field-background-color-default:  #fffff6;
+  --pfy-form-field-border-default:            1px solid #b4b3b3;
+  --pfy-form-required-marker-color-default:   orange;
+  --pfy-form-tooltip-bg-default:              #fef5e0;
+  --pfy-form-tooltip-color-default:           #222;
+  --pfy-form-readonly-field-bg-default:       #f8f8f8;
+
+  --pfy-form-reveal-border: 1px solid #eee;
+}
+
+input[type=cancel],
+input[type=submit],
+input[type=button],
+button {
+  cursor: pointer;
+}
+input:user-invalid {
+  outline: 1px solid red;
+}
+input:user-valid {
+  outline: 1px solid green;
+}
+
+.pfy-label-wrapper, .pfy-input-wrapper {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.pfy-label-wrapper {
+  width: $labelWidth;
+
+  label {
+    display: inline-block;
+  }
+}
+.pfy-elem-wrapper {
+  line-height: 1em;
+  &.pfy-hidden {
+    display: none;
+  }
+}
+.pfy-elem-wrapper:not(.pfy-choice) {
+  .pfy-label-wrapper label {
+    margin-top: calc((#{$inputHeight} - 1em) / 2);
+    margin-bottom: 0.25em;
+  }
+}
+.pfy-choice {
+  .pfy-label-wrapper {
+    margin-top: calc((#{$inputHeight} - 1em) / 2);
+  }
+  &:not(.pfy-horizontal) .pfy-choice-wrapper {
+    width: 100%;
+  }
+}
+.pfy-select {
+  .pfy-input-wrapper {
+    height: 2.8em;
+  }
+}
+
+.pfy-password .pfy-input-wrapper {
+  position: relative;
+  input {
+    padding-right: 2em;
+  }
+}
+.pfy-form-show-pw {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: none;
+  background: none;
+  width: 2em;
+  height: #{$inputHeight};
+  opacity: 0.5;
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  svg {
+    position: absolute;
+    top: calc((#{$inputHeight} - 1em) / 2 - 0.1em);
+    right: 0.3em;
+    width: 1.4em;
+    height: 1.4em;
+  }
+  .pfy-icon-hide {
+    display: none;
+  }
+  &.show {
     .pfy-icon-hide {
+      display: block;
+    }
+    .pfy-icon-show {
       display: none;
     }
-    &.show {
-      .pfy-icon-hide {
-        display: block;
-      }
-      .pfy-icon-show {
-        display: none;
-      }
-    }
   }
-  .pfy-input-wrapper {
-    position: relative;
-    width: calc(100% - #{$labelWidth} - 0.4em);
-    max-width: $formWidth;
+}
+.pfy-input-wrapper {
+  position: relative;
+  width: calc(100% - #{$labelWidth} - 0.4em);
+  max-width: $formWidth;
 
-    input, textarea {
-      width: 100%;
-      padding: calc((#{$inputHeight} - 1em) / 2) 0.5em;
-    }
-    input, select {
-      height: $inputHeight;
-    }
-    input.pfy-choice {
-      height: 1em;
-      width: 1em;
-      margin-right: 0.4em;
-      transform: translateY(0.2em);
-      font-size: 1em;
-    }
-    input, textarea, select {
-      line-height: 1em;
-      color:            $inputColor;
-      font-size: inherit;
-      background-color: $inputBg;
-      border: $inputBorder;
-      border-radius: 0.2em;
-    }
+  input, textarea {
+    width: 100%;
+    padding: calc((#{$inputHeight} - 1em) / 2) 0.5em;
   }
-  .pfy-choice .pfy-input-wrapper {
+  input, select {
+    height: $inputHeight;
+  }
+  input.pfy-choice {
+    height: 1em;
+    width: 1em;
+    margin-right: 0.4em;
+    transform: translateY(0.2em);
+    font-size: 1em;
+  }
+  input, textarea, select {
+    line-height: 1em;
+    color:            $inputColor;
+    font-size: inherit;
+    background-color: $inputBg;
+    border: $inputBorder;
+    border-radius: 0.2em;
+  }
+}
+.pfy-choice .pfy-input-wrapper {
+  max-width: unset;
+  label {
+    padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
+    padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
+    width: calc(100% - 2em);
+    vertical-align: middle;
+  }
+}
+.pfy-choice-wrapper {
+  display: inline-block;
+}
+.pfy-single-checkbox {
+  .pfy-input-wrapper {
+    width: 100%;
     max-width: unset;
-    label {
-      padding-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
-      padding-bottom: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2);
-      width: calc(100% - 2em);
-      vertical-align: middle;
-    }
   }
   .pfy-choice-wrapper {
-    display: inline-block;
+    width: 100%;
   }
-  .pfy-single-checkbox {
-    .pfy-input-wrapper {
-      width: 100%;
-      max-width: unset;
+  label {
+    width: calc(100% - 1.6em);
+  }
+
+  &.reversed {
+    .pfy-label-wrapper {
+      display: none;
     }
     .pfy-choice-wrapper {
-      width: 100%;
-    }
-    label {
-      width: calc(100% - 1.6em);
-    }
-
-    &.reversed {
-      .pfy-label-wrapper {
-        display: none;
-      }
-      .pfy-choice-wrapper {
-        display: flex;
-        flex-direction: row-reverse;
-        justify-content: flex-end;
-        label {
-          width: var(--pfy-form-label-width, 6em);
-          margin-right: 0.25em;
-        }
-        input {
-          margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
-        }
-      }
-    }
-  }
-
-  .pfy-elem-wrapper.reversed:not(.pfy-single-checkbox) .pfy-choice-wrapper {
-    display: inline-flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    margin-right: 1em;
-    label {
-      width: $reversedLabelWidth;
-      margin-right: 0.25em;
-      padding-right: 0.5em;
-      text-align: right;
-      min-width: unset;
-    }
-    label:after {
-      content: ':';
-    }
-    input {
-      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
-    }
-  }
-
-  .pfy-multiselect select  {
-    height: unset;
-    padding: 2px;
-  }
-
-  .pfy-elem-wrapper {
-    margin-top: calc(#{$rowGapHeight} / 2);
-    margin-bottom: calc(#{$rowGapHeight} / 2);
-  }
-
-  .pfy-elem-wrapper.pfy-required .pfy-label-wrapper label::after,
-  label.pfy-required::after {
-    content: '*';
-    color: $requiredMarkerColor;
-    padding-left: 0.1em;
-  }
-  .pfy-elem-wrapper.pfy-required-group .pfy-label-wrapper label::after,
-  label.pfy-required-group::after {
-    content: attr(data-required-group);
-    color: $requiredMarkerColor;
-    padding-left: 0.1em;
-    position: absolute;
-  }
-  .pfy-elem-wrapper.pfy-required-group .pfy-label-wrapper label::after,
-  .pfy-form-required-group-marker {
-    font-size: 60%;
-    transform: translateY(-0.5em);
-  }
-
-  .pfy-form-required-group-marker,
-  .pfy-form-required-marker {
-    color: $requiredMarkerColor;
-    display: inline-block;
-    min-width: 1rem;
-  }
-
-
-  // === CountedChoices =========================================
-  .pfy-form-countedchoices-group {
-    .pfy-input-wrapper {
-      width: 1.3em;
-    }
-    .pfy-label-wrapper {
-      width: calc(100% - 1.7em);
-    }
-
-    .pfy-input-wrapper .pfy-choice {
-      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.5em) / 2);
-    }
-    input.pfy-integer {
-      width: 3em;
-      margin-top: 0.3em;
-      height: 1.5em;
-      display: none;
-    }
-
-    &.pfy-multiple-enabled {
-      .pfy-label-wrapper {
-        width: calc(100% - 3.4em);
-      }
-      .pfy-input-wrapper {
-        width: 3em;
-      }
-
-      input.pfy-integer {
-        display: inline-block;
-      }
-      input.pfy-choice {
-        display: none;
-      }
-    }
-
-    // pfy-form-field-description
-    .pfy-form-field-description:empty {
-      display: none;
-    }
-
-    // Error state:
-    .pfy-form-cc-messages {
-      grid-column: 1/-1;
-      > div {
-        display: none;
-        color: red;
-        font-style: italic;
-      }
-    }
-  } // pfy-form-countedchoices-group
-
-  // small screen:
-  &.pfy-small-screen .pfy-form-countedchoices-group {
-    .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
-      width: 1.3em;
-    }
-    .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
-      width: calc(100% - 1.7em);
-    }
-    &.pfy-multiple-enabled {
-      .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
-        width: calc(100% - 3.4em);
-      }
-      .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
-        width: 3em;
-      }
-    }
-  }
-
-
-
-  // === side-by-side ============================================
-  .pfy-side-by-side-buttons {
-    display: flex;
-    justify-content: flex-end;
-    margin: -2.5em 0 0.5em;
-  }
-
-  .pfy-side-by-side {
-    &.pfy-form-and-table-wrapper {
       display: flex;
       flex-direction: row-reverse;
-      align-items: flex-start;
-      gap: 1em;
-
-      .pfy-table-data-output-wrapper {
-        flex: 1 0 auto;
-        overflow-x: auto;
-        width: calc(100% - var(--pfy-side-by-side-form-width, 26em));
-      }
-    }
-
-    .pfy-form-wrapper {
-      flex: 0 0 var(--pfy-side-by-side-form-width, 26em);
-      outline: 1px dotted gray;
-      outline-offset: 3px;
-    }
-
-    .pfy-table-data-output-wrapper {
-      outline: 1px dotted gray;
-      outline-offset: 3px;
-      margin-top: 0;
-      td > div {
-        height: 2em;
-        overflow-y: auto;
-      }
-    }
-
-    .pfy-form-readonly {
-      input, textarea, select {
-        pointer-events: none;
-        background: white;
-        border: 1px solid #0001;
-      }
-      .pfy-cancel, .pfy-submit {
-        opacity: 0;
-      }
-    }
-
-    td:not(.pfy-service-col) {
-      cursor: pointer;
-    }
-  } // .pfy-side-by-side
-
-
-  // === table ===================================================
-  .pfy-table-data-output-wrapper {
-    margin-top: 3em !important;
-    max-width: 100vw;
-    width: 100%;
-    &.pfy-full-width {
-      width: 98vw;
-      margin-left: calc(50% - 49vw);
-    }
-    position: relative;
-    font-size: 12pt;
-    outline: 1px solid magenta;
-    outline-offset: 0.5em;
-  }
-  .pfy-table-edit-popup .pfy-table-data-output-wrapper {
-    margin-top: 0;
-  }
-
-  .pfy-row-selected {
-    &, td {
-      background: #f8f8f8;
-    }
-  }
-
-  .pfy-label-wrapper {
-    position: relative;
-  }
-
-  .pfy-form-hint {
-    margin-top: 1em;
-  }
-
-  .pfy-form-tooltip-anchor {
-    anchor-name: --pfy-info;
-    border: none;
-    background: none;
-    padding: 0;
-    margin-left: 0.5em;
-    color: $tooltipAnchorColor;
-    font-size: 80%;
-    font-family: "Times New Roman", serif;
-    opacity: 0.5;
-  }
-
-  .pfy-form-tooltip-anchor:hover,
-  .pfy-form-tooltip-anchor:focus {
-    opacity: 1;
-    + .pfy-form-tooltip {
-      display: block;
-    }
-  }
-
-  .pfy-form-tooltip {
-    display: none;
-    position: absolute;
-    position-anchor: --pfy-info;
-    top: anchor(bottom);
-    left: anchor(right);
-    max-width: min(33em, 80vw);
-    width: calc(var(--pfy-form-width, 28em) * 0.6);
-    background: $tooltipBg;
-    color: $tooltipColor;
-    z-index: 1;
-    border-radius: 0.16em;
-    padding: 0.5em;
-    box-shadow: 0 0 5px #888;
-  }
-  @at-root .pfy-small-screen {
-    .pfy-form-tooltip {
-      left: unset;
-    }
-  }
-
-  .pfy-form {
-    max-width: $formWidth;
-    textarea::placeholder,
-    input::placeholder {
-      text-align: right;
-      font-style: italic;
-      font-size: 80%;
-    }
-    select {
-      min-width: $mediumWidth;
-      max-width: 100%;
-    }
-    .pfy-single-checkbox {
-      .pfy-label-wrapper {
-        display: none;
+      justify-content: flex-end;
+      label {
+        width: var(--pfy-form-label-width, 6em);
+        margin-right: 0.25em;
       }
       input {
-        vertical-align: top;
-        margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.7em) / 2);
+        margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
       }
     }
-    .error,
-    .pfy-input-wrapper input + span {
-      padding: 0.4em;
-      display: block;
-      color: $fieldDescriptorColor;
-      &:empty {
-        display: none;
-      }
-    }
-    .pfy-input-wrapper .error {
-      color: $errorColor;
-    }
   }
-  .pfy-form .pfy-input-wrapper .pfy-form-field-postfix {
-    display: inline-block;
-  }
-  .pfy-form-field-description {
-    padding: 0.4em 0 0.2em 0.5em;
-    display: inline-block;
-  }
+}
 
-  .pfy-form-elem-alert {
-    padding: 0.5em;
-    margin: 0 0 1em 0;
-
-    border: 1px solid red;
-    background: #fee;
-  }
-
-  .pfy-elem-wrapper.pfy-form-buttons {
+.pfy-elem-wrapper.reversed:not(.pfy-single-checkbox) .pfy-choice-wrapper {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  margin-right: 1em;
+  label {
+    width: $reversedLabelWidth;
+    margin-right: 0.25em;
+    padding-right: 0.5em;
     text-align: right;
+    min-width: unset;
+  }
+  label:after {
+    content: ':';
+  }
+  input {
+    margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1em) / 2 - 3px);
+  }
+}
+
+.pfy-multiselect select  {
+  height: unset;
+  padding: 2px;
+}
+
+.pfy-elem-wrapper {
+  margin-top: calc(#{$rowGapHeight} / 2);
+  margin-bottom: calc(#{$rowGapHeight} / 2);
+}
+
+.pfy-elem-wrapper.pfy-required .pfy-label-wrapper label::after,
+label.pfy-required::after {
+  content: '*';
+  color: $requiredMarkerColor;
+  padding-left: 0.1em;
+}
+.pfy-elem-wrapper.pfy-required-group .pfy-label-wrapper label::after,
+label.pfy-required-group::after {
+  content: attr(data-required-group);
+  color: $requiredMarkerColor;
+  padding-left: 0.1em;
+  position: absolute;
+}
+.pfy-elem-wrapper.pfy-required-group .pfy-label-wrapper label::after,
+.pfy-form-required-group-marker {
+  font-size: 60%;
+  transform: translateY(-0.5em);
+}
+
+.pfy-form-required-group-marker,
+.pfy-form-required-marker {
+  color: $requiredMarkerColor;
+  display: inline-block;
+  min-width: 1rem;
+}
+
+
+// === CountedChoices =========================================
+.pfy-form-countedchoices-group {
+  .pfy-input-wrapper {
+    width: 1.3em;
+  }
+  .pfy-label-wrapper {
+    width: calc(100% - 1.7em);
+  }
+
+  .pfy-input-wrapper .pfy-choice {
+    margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.5em) / 2);
+  }
+  input.pfy-integer {
+    width: 3em;
+    margin-top: 0.3em;
+    height: 1.5em;
+    display: none;
+  }
+
+  &.pfy-multiple-enabled {
+    .pfy-label-wrapper {
+      width: calc(100% - 3.4em);
+    }
+    .pfy-input-wrapper {
+      width: 3em;
+    }
+
+    input.pfy-integer {
+      display: inline-block;
+    }
+    input.pfy-choice {
+      display: none;
+    }
+  }
+
+  // pfy-form-field-description
+  .pfy-form-field-description:empty {
+    display: none;
+  }
+
+  // Error state:
+  .pfy-form-cc-messages {
+    grid-column: 1/-1;
+    > div {
+      display: none;
+      color: red;
+      font-style: italic;
+    }
+  }
+} // pfy-form-countedchoices-group
+
+// small screen:
+.pfy-small-screen .pfy-form-countedchoices-group {
+  .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
+    width: 1.3em;
+  }
+  .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
+    width: calc(100% - 1.7em);
+  }
+  &.pfy-multiple-enabled {
+    .pfy-label-wrapper.pfy-label-wrapper.pfy-label-wrapper {
+      width: calc(100% - 3.4em);
+    }
+    .pfy-input-wrapper.pfy-input-wrapper.pfy-input-wrapper {
+      width: 3em;
+    }
+  }
+}
+
+
+
+// === side-by-side ============================================
+.pfy-side-by-side-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin: -2.5em 0 0.5em;
+}
+
+.pfy-side-by-side {
+  &.pfy-form-and-table-wrapper {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 1em;
+
+    .pfy-table-data-output-wrapper {
+      flex: 1 0 auto;
+      overflow-x: auto;
+      width: calc(100% - var(--pfy-side-by-side-form-width, 26em));
+    }
+  }
+
+  .pfy-form-wrapper {
+    flex: 0 0 var(--pfy-side-by-side-form-width, 26em);
+    outline: 1px dotted gray;
+    outline-offset: 3px;
+  }
+
+  .pfy-table-data-output-wrapper {
+    outline: 1px dotted gray;
+    outline-offset: 3px;
+    margin-top: 0;
+    td > div {
+      height: 2em;
+      overflow-y: auto;
+    }
+  }
+
+  .pfy-form-readonly {
+    input, textarea, select {
+      pointer-events: none;
+      background: white;
+      border: 1px solid #0001;
+    }
+    .pfy-cancel, .pfy-submit {
+      opacity: 0;
+    }
+  }
+
+  td:not(.pfy-service-col) {
+    cursor: pointer;
+  }
+} // .pfy-side-by-side
+
+
+// === table ===================================================
+.pfy-table-data-output-wrapper {
+  margin-top: 3em !important;
+  max-width: 100vw;
+  width: 100%;
+  &.pfy-full-width {
+    width: 98vw;
+    margin-left: calc(50% - 49vw);
+  }
+  position: relative;
+  font-size: 12pt;
+  outline: 1px solid magenta;
+  outline-offset: 0.5em;
+}
+.pfy-table-edit-popup .pfy-table-data-output-wrapper {
+  margin-top: 0;
+}
+
+.pfy-row-selected {
+  &, td {
+    background: #f8f8f8;
+  }
+}
+
+.pfy-label-wrapper {
+  position: relative;
+}
+
+.pfy-form-hint {
+  margin-top: 1em;
+}
+
+.pfy-form-tooltip-anchor {
+  anchor-name: --pfy-info;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-left: 0.5em;
+  color: $tooltipAnchorColor;
+  font-size: 80%;
+  font-family: "Times New Roman", serif;
+  opacity: 0.5;
+}
+
+.pfy-form-tooltip-anchor:hover,
+.pfy-form-tooltip-anchor:focus {
+  opacity: 1;
+  + .pfy-form-tooltip {
+    display: block;
+  }
+}
+
+.pfy-form-tooltip {
+  display: none;
+  position: absolute;
+  position-anchor: --pfy-info;
+  top: anchor(bottom);
+  left: anchor(right);
+  max-width: min(33em, 80vw);
+  width: calc(var(--pfy-form-width, 28em) * 0.6);
+  background: $tooltipBg;
+  color: $tooltipColor;
+  z-index: 1;
+  border-radius: 0.16em;
+  padding: 0.5em;
+  box-shadow: 0 0 5px #888;
+}
+@at-root .pfy-small-screen {
+  .pfy-form-tooltip {
+    left: unset;
+  }
+}
+
+.pfy-form {
+  max-width: $formWidth;
+  textarea::placeholder,
+  input::placeholder {
+    text-align: right;
+    font-style: italic;
+    font-size: 80%;
+  }
+  select {
+    min-width: $mediumWidth;
+    max-width: 100%;
+  }
+  .pfy-single-checkbox {
     .pfy-label-wrapper {
       display: none;
     }
     input {
-      @include _pfy-button;
-      width: fit-content;
-      margin-right: 0.3em;
-      font-size: inherit;
-      &.pfy-submit {
-        border: 1px solid black;
-      }
+      vertical-align: top;
+      margin-top: calc((var(--pfy-form-input-height, 2.2em) - 1.7em) / 2);
     }
-    input:last-child {
-      margin-right: 0;
+  }
+  .error,
+  .pfy-input-wrapper input + span {
+    padding: 0.4em;
+    display: block;
+    color: $fieldDescriptorColor;
+    &:empty {
+      display: none;
     }
+  }
+  .pfy-input-wrapper .error {
+    color: $errorColor;
+  }
+}
+.pfy-form .pfy-input-wrapper .pfy-form-field-postfix {
+  display: inline-block;
+}
+.pfy-form-field-description {
+  padding: 0.4em 0 0.2em 0.5em;
+  display: inline-block;
+}
+
+.pfy-form-elem-alert {
+  padding: 0.5em;
+  margin: 0 0 1em 0;
+
+  border: 1px solid red;
+  background: #fee;
+}
+
+.pfy-elem-wrapper.pfy-form-buttons {
+  text-align: right;
+  .pfy-label-wrapper {
+    display: none;
+  }
+  input {
+    @include _pfy-button;
+    width: fit-content;
+    margin-right: 0.3em;
+    font-size: inherit;
+    &.pfy-submit {
+      border: 1px solid black;
+    }
+  }
+  input:last-child {
+    margin-right: 0;
+  }
+}
+
+// standard width modifiers:
+input.short {
+  width: $shortWidth;
+}
+input.medium,
+select.medium,
+textarea.medium {
+  width: $mediumWidth;
+}
+.pfy-elem-wrapper.half-width,
+.pfy-elem-wrapper.pfy-half-width {
+  display: inline-block;
+  width: calc(50% - 0.2rem);
+}
+.pfy-elem-wrapper.half-width.left,
+.pfy-elem-wrapper.pfy-half-width.left {
+  padding-right: 1em;
+}
+
+.pfy-short-options  {
+  --pfy-form-choice-option-width: 3em;
+}
+
+// === large screen ========================================
+.pfy-large-screen {
+  .pfy-elem-wrapper.button {
+    margin-right: 3px;
   }
 
-  // standard width modifiers:
-  input.short {
-    width: $shortWidth;
-  }
-  input.medium,
-  select.medium,
-  textarea.medium {
-    width: $mediumWidth;
-  }
-  .pfy-elem-wrapper.half-width,
-  .pfy-elem-wrapper.pfy-half-width {
+  // composed address fields:
+  div.pfy-address-zip {
+    position: relative;
+    --pfy-form-input-width: var(--pfy-zip-input-width, 4.5em); //scss compiler bug? $addressZipWidth
+    width: calc(#{$addressZipWidth} + #{$labelWidth} + 0.4em);
     display: inline-block;
-    width: calc(50% - 0.2rem);
-  }
-  .pfy-elem-wrapper.half-width.left,
-  .pfy-elem-wrapper.pfy-half-width.left {
-    padding-right: 1em;
-  }
-
-  .pfy-short-options  {
-    --pfy-form-choice-option-width: 3em;
-  }
-
-  // === large screen ========================================
-  &.pfy-large-screen {
-    .pfy-elem-wrapper.button {
-      margin-right: 3px;
+    margin-top: 0;
+    .pfy-input-wrapper {
+      position: unset;
     }
-
-    // composed address fields:
-    div.pfy-address-zip {
-      position: relative;
-      --pfy-form-input-width: var(--pfy-zip-input-width, 4.5em); //scss compiler bug? $addressZipWidth
-      width: calc(#{$addressZipWidth} + #{$labelWidth} + 0.4em);
-      display: inline-block;
-      margin-top: 0;
-      .pfy-input-wrapper {
-        position: unset;
-      }
-      .pfy-label-wrapper {
-        opacity: 0;
-      }
-      .pfy-form-field-description {
-        position: absolute;
-        top: 0;
-        left: 0;
-        margin-top: 0.2em;
-        padding-left: 0;
-      }
+    .pfy-label-wrapper {
+      opacity: 0;
     }
-    div.pfy-address-city {
-      width: calc(100% - #{$addressZipWidth} - #{$labelWidth} - 1em);
-      margin-left: 0.2em;
-      display: inline-block;
-      margin-top: 0;
-      .pfy-label-wrapper {
-        display: none;
-      }
-      .pfy-input-wrapper {
+    .pfy-form-field-description {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-top: 0.2em;
+      padding-left: 0;
+    }
+  }
+  div.pfy-address-city {
+    width: calc(100% - #{$addressZipWidth} - #{$labelWidth} - 1em);
+    margin-left: 0.2em;
+    display: inline-block;
+    margin-top: 0;
+    .pfy-label-wrapper {
+      display: none;
+    }
+    .pfy-input-wrapper {
+      width: 100%;
+    }
+  }
+
+} // large screen
+
+
+// === small screen ========================================
+.pfy-small-screen {
+  .pfy-form {
+    .pfy-elem-wrapper:not(.short) {
+      --pfy-form-input-width: 100%;
+
+      .pfy-label-wrapper,
+      .pfy-label-wrapper label,
+      .pfy-input-wrapper,
+      .pfy-input-wrapper input {
         width: 100%;
       }
     }
-
-  } // large screen
-
-
-  // === small screen ========================================
-  &.pfy-small-screen {
-    .pfy-form {
-      .pfy-elem-wrapper:not(.short) {
-        --pfy-form-input-width: 100%;
-
-        .pfy-label-wrapper,
-        .pfy-label-wrapper label,
-        .pfy-input-wrapper,
-        .pfy-input-wrapper input {
-          width: 100%;
-        }
+    .pfy-elem-wrapper.pfy-choice .pfy-choice-wrapper {
+      input {
+        width: 1em;
       }
-      .pfy-elem-wrapper.pfy-choice .pfy-choice-wrapper {
-        input {
-          width: 1em;
-        }
-        label {
-          width: calc(100% - 2em);
-        }
-
+      label {
+        width: calc(100% - 2em);
       }
 
-      .pfy-submit .pfy-input-wrapper {
-        input.button {
-          max-width: 49%;
-        }
-      }
+    }
 
-      .pfy-form-buttons {
-        .pfy-input-wrapper {
-          display: flex;
-          flex-direction: column-reverse;
-        }
-        input {
-          margin: 0.5em 0;
-        }
+    .pfy-submit .pfy-input-wrapper {
+      input.button {
+        max-width: 49%;
       }
+    }
 
-      .pfy-address-elem .pfy-form-field-description {
+    .pfy-form-buttons {
+      .pfy-input-wrapper {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+      input {
+        margin: 0.5em 0;
+      }
+    }
+
+    .pfy-address-elem .pfy-form-field-description {
+      display: none;
+    }
+  }
+} // pfy-small-screen
+
+
+
+.pfy-input-wrapper {
+  label {
+    min-width: $choiceOptionWidth;
+    display: inline-block;
+  }
+}
+.pfy-input-wrapper label input {
+  width: fit-content!important;
+  margin-right: 0.5em;
+}
+
+.pfy-textarea {
+  .pfy-label-wrapper,
+  .pfy-input-wrapper,
+  .pfy-input-wrapper textarea {
+    width: 100%;
+    max-width: unset;
+  }
+
+  // textarea auto-grow feature:
+  // source: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+  &.pfy-auto-grow .pfy-input-wrapper {
+    display: grid;
+    &::after {
+      content: attr(data-replicated-value) " ";
+      white-space: pre-wrap;
+      visibility: hidden;
+    }
+    &> textarea {
+      resize: none;
+      overflow: hidden;
+    }
+    &::after,
+    &> textarea {
+      padding: calc((#{$inputHeight} - 1em) / 2) 0.5em;
+      font: inherit;
+      grid-row-start: 1;
+      grid-column-start: 1;
+      grid-row-end: 2;
+      grid-column-end: 2;
+    }
+  }
+}
+
+.pfy-elem-wrapper.pfy-reveal-controller {
+  background: $formRevealControllerBg;
+  border: $formRevealControllerBorder;
+  border-bottom: none;
+  position: relative;
+  width: 100%;
+  padding-left: $formRevealPadding;
+  padding-right: $formRevealPadding;
+  margin-top: $rowGapHeight;
+  .pfy-label-wrapper {
+    display: none;
+  }
+  .pfy-input-wrapper  {
+    width: calc(100% - 2em);
+  }
+  .pfy-reveal-controller-label label {
+    margin-left: 1em;
+    display: inline-block;
+    width: calc(100% - 1em);
+    cursor: pointer;
+    padding-top: calc(#{$rowGapHeight} / 2);
+    padding-bottom: calc(#{$rowGapHeight} / 2);
+  }
+}
+.pfy-reveal-controller {
+  padding: 0;
+}
+
+.pfy-form .pfy-reveal-container {
+  background: $formRevealContainerBg;
+  border: $formRevealContainerBorder;
+  border-top: none;
+  padding-left: $formRevealPadding;
+  padding-right: $formRevealPadding;
+  margin-bottom: $rowGapHeight;
+  .pfy-reveal-container-inner.pfy-reveal-container-inner {
+    padding-top: 0.5em;
+
+    .pfy-elem-wrapper.pfy-textarea {
+      padding-top: 0;
+
+      .pfy-label-wrapper {
         display: none;
       }
     }
-  } // pfy-small-screen
+  }
+}
+.pfy-elem-wrapper input.pfy-reveal-controller::before {
+  left: calc(-0.2em + #{$formRevealPadding}) !important;
+  top: 0.4em;
+}
 
-
-
+.pfy-elem-wrapper.pfy-form-buttons {
   .pfy-input-wrapper {
-    label {
-      min-width: $choiceOptionWidth;
-      display: inline-block;
-    }
-  }
-  .pfy-input-wrapper label input {
-    width: fit-content!important;
-    margin-right: 0.5em;
-  }
-
-  .pfy-textarea {
-    .pfy-label-wrapper,
-    .pfy-input-wrapper,
-    .pfy-input-wrapper textarea {
-      width: 100%;
-      max-width: unset;
-    }
-
-    // textarea auto-grow feature:
-    // source: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
-    &.pfy-auto-grow .pfy-input-wrapper {
-      display: grid;
-      &::after {
-        content: attr(data-replicated-value) " ";
-        white-space: pre-wrap;
-        visibility: hidden;
-      }
-      &> textarea {
-        resize: none;
-        overflow: hidden;
-      }
-      &::after,
-      &> textarea {
-        padding: calc((#{$inputHeight} - 1em) / 2) 0.5em;
-        font: inherit;
-        grid-row-start: 1;
-        grid-column-start: 1;
-        grid-row-end: 2;
-        grid-column-end: 2;
-      }
-    }
-  }
-
-  .pfy-elem-wrapper.pfy-reveal-controller {
-    background: $formRevealControllerBg;
-    border: $formRevealControllerBorder;
-    border-bottom: none;
-    position: relative;
     width: 100%;
-    padding-left: $formRevealPadding;
-    padding-right: $formRevealPadding;
-    margin-top: $rowGapHeight;
-    .pfy-label-wrapper {
-      display: none;
-    }
-    .pfy-input-wrapper  {
-      width: calc(100% - 2em);
-    }
-    .pfy-reveal-controller-label label {
-      margin-left: 1em;
-      display: inline-block;
-      width: calc(100% - 1em);
-      cursor: pointer;
-      padding-top: calc(#{$rowGapHeight} / 2);
-      padding-bottom: calc(#{$rowGapHeight} / 2);
-    }
+    max-width: 100%;
   }
-  .pfy-reveal-controller {
-    padding: 0;
-  }
+}
 
-  .pfy-form .pfy-reveal-container {
-    background: $formRevealContainerBg;
-    border: $formRevealContainerBorder;
-    border-top: none;
-    padding-left: $formRevealPadding;
-    padding-right: $formRevealPadding;
-    margin-bottom: $rowGapHeight;
-    .pfy-reveal-container-inner.pfy-reveal-container-inner {
-      padding-top: 0.5em;
-
-      .pfy-elem-wrapper.pfy-textarea {
-        padding-top: 0;
-
-        .pfy-label-wrapper {
-          display: none;
-        }
-      }
-    }
-  }
-  .pfy-elem-wrapper input.pfy-reveal-controller::before {
-    left: calc(-0.2em + #{$formRevealPadding}) !important;
-    top: 0.4em;
-  }
-
-  .pfy-elem-wrapper.pfy-form-buttons {
-    .pfy-input-wrapper {
-      width: 100%;
-      max-width: 100%;
-    }
-  }
-
-  .pfy-form-wrapper {
-    noscript {
-      position: absolute;
-      padding: 2em;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fee;
-      border: 1px solid red;
-    }
-    position: relative;
-  }
-
-  .pfy-obfuscate {
+.pfy-form-wrapper {
+  noscript {
     position: absolute;
-    left: -100000px;
-  }
-  &.debug .pfy-obfuscate {
+    padding: 2em;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: #fee;
-    position: unset;
-    left: unset;
+    border: 1px solid red;
   }
+  position: relative;
+}
 
-  #pfy-check-input {
-    width: 2em;
-    margin-bottom: 3px;
-    border-width: 1px;
-    padding: 4px 5px;
-    font-size: inherit;
+.pfy-obfuscate {
+  position: absolute;
+  left: -100000px;
+}
+.debug .pfy-obfuscate {
+  background: #fee;
+  position: unset;
+  left: unset;
+}
+
+#pfy-check-input {
+  width: 2em;
+  margin-bottom: 3px;
+  border-width: 1px;
+  padding: 4px 5px;
+  font-size: inherit;
+}
+
+
+// --- upload -------------
+.pfy-upload-response-wrapper {
+  border: $uploadResponseBorder;
+  background: $uploadResponseBg;
+  padding: 1em;
+  margin: 1em 0;
+}
+.pfy-upload-form {
+  .pfy-elem-wrapper.pfy-form-buttons {
+    text-align: left;
   }
+}
+.pfy-upload-link-wrapper {
+  margin-top: 0.8em;
+  padding: 0.5em 0.8em;
+  background: #dff8f3;
+}
+.pfy-upload-link {
+  margin: 1.5em 0 0 0;
+}
+.pfy-upload-response2 {
+  margin-top: 1em;
+}
 
-
-  // --- upload -------------
-  .pfy-upload-response-wrapper {
-    border: $uploadResponseBorder;
-    background: $uploadResponseBg;
-    padding: 1em;
-    margin: 1em 0;
+input.pfy-upload,
+input.pfy-multiupload {
+  &::file-selector-button {
+    @include _pfy-button;
+    height: calc(var(--pfy-form-row-gap-height, 1em) * 2);
+    margin-right: 0.5em;
+    width: var(--pfy-file-selector-button, 12.4em);
   }
-  .pfy-upload-form {
-    .pfy-elem-wrapper.pfy-form-buttons {
-      text-align: left;
+  height: calc(var(--pfy-form-row-gap-height, 1em) * 2 + 1em);
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+input[readonly],
+textarea[readonly] {
+  background: $readonlyBg;
+  border: $inputBorder;
+  cursor: initial;
+}
+
+input[disabled] {
+  background: $readonlyBg;
+  opacity: 0.6;
+}
+
+.pfy-overlay-background {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(50,50,50,0.8);
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 10000;
+  .pfy-timeout-img {
+    max-width: 40vw;
+  }
+}
+
+.pfy-overlay-background-frozen {
+  overflow: hidden;
+}
+
+
+.pfy-problem-with-form-hint {
+  background: $problemWithFormBg;
+  border: 1px solid $problemWithFormBorder;
+  padding: 1em;
+  margin-top: 3em;
+}
+
+.pfy-form-confirmation-email-sent {
+  margin-bottom: 1em;
+}
+
+
+// === Errors ==========================
+.pfy-form-errors {
+  border: 1px solid $errorBorder;
+  background: $errorBg;
+  margin-left: -0.5em;
+  padding: 0.5em;
+}
+.pfy-form-error-msg {
+  color: $errorColor;
+  padding: 0.5em 0;
+  font-style: italic;
+}
+
+.pfy-form-elem-has-error {
+  border: 1px solid $errorBorder;
+  background: $errorBg;
+  margin-left: -0.5em;
+  padding: 0.5em 0.5em 0 0.5em;
+}
+.pfy-form-elem-error-msg {
+  color: $errorColor;
+  padding: 0.5em 0;
+  font-style: italic;
+  text-align: right;
+}
+
+.pfy-form-response  {
+  margin: 1em 0 2em;
+}
+
+.pfy-form-admin {
+  @include _striped(251, 50%);
+}
+
+.debug.pfy-form-data-received .pfy-show-unless-form-data-received {
+  @include _striped(40, 50%);
+  display: block !important;
+}
+
+
+.pfy-form-and-table-wrapper {
+  margin: 1.5em 0;
+  .pfy-empty-row td:not(.pfy-row-number).pfy-service-col * {
+    display: none;
+  }
+  .pfy-table .pfy-row-button {
+    padding: 0.1em 0.3em;
+  }
+}
+
+
+// === RRule ===========================
+.pfy-form-rrule-wrapper {
+  summary {
+    display: block;
+  }
+}
+.pfy-form-rrule-body-wrapper {
+  border: $formRevealControllerBorder;
+  background: $formRevealControllerBg;
+  padding: 0 1em 1em 1em;
+}
+.pfy-form-rrule-yearly {
+  .pfy-choice-wrapper {
+    display: inline-flex;
+    flex-direction: column-reverse;
+    label {
+      padding-bottom: 2px;
     }
   }
-  .pfy-upload-link-wrapper {
-    margin-top: 0.8em;
-    padding: 0.5em 0.8em;
-    background: #dff8f3;
+}
+.pfy-form-rrule-monthly,
+.pfy-form-rrule-weekly,
+.pfy-form-rrule-daily{
+  .pfy-rrule-elem-bymonth {
+    display: none;
   }
-  .pfy-upload-link {
-    margin: 1.5em 0 0 0;
-  }
-  .pfy-upload-response2 {
-    margin-top: 1em;
-  }
-
-  input.pfy-upload,
-  input.pfy-multiupload {
-    &::file-selector-button {
-      @include _pfy-button;
-      height: calc(var(--pfy-form-row-gap-height, 1em) * 2);
-      margin-right: 0.5em;
-      width: var(--pfy-file-selector-button, 12.4em);
-    }
-    height: calc(var(--pfy-form-row-gap-height, 1em) * 2 + 1em);
-    padding: 0;
-    border: none;
-    background: transparent;
-  }
-
-  input[readonly],
-  textarea[readonly] {
-    background: $readonlyBg;
-    border: $inputBorder;
-    cursor: initial;
-  }
-
-  input[disabled] {
-    background: $readonlyBg;
-    opacity: 0.6;
-  }
-
-  .pfy-overlay-background {
-    position: fixed;
-    top: 0; right: 0; bottom: 0; left: 0;
-    background: rgba(50,50,50,0.8);
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    z-index: 10000;
-    .pfy-timeout-img {
-      max-width: 40vw;
-    }
-  }
-
-  .pfy-overlay-background-frozen {
-    overflow: hidden;
-  }
-
-
-  .pfy-problem-with-form-hint {
-    background: $problemWithFormBg;
-    border: 1px solid $problemWithFormBorder;
-    padding: 1em;
-    margin-top: 3em;
-  }
-
-  .pfy-form-confirmation-email-sent {
-    margin-bottom: 1em;
-  }
-
-
-  // === Errors ==========================
-  .pfy-form-errors {
-    border: 1px solid $errorBorder;
-    background: $errorBg;
-    margin-left: -0.5em;
-    padding: 0.5em;
-  }
-  .pfy-form-error-msg {
-    color: $errorColor;
-    padding: 0.5em 0;
-    font-style: italic;
-  }
-
-  .pfy-form-elem-has-error {
-    border: 1px solid $errorBorder;
-    background: $errorBg;
-    margin-left: -0.5em;
-    padding: 0.5em 0.5em 0 0.5em;
-  }
-  .pfy-form-elem-error-msg {
-    color: $errorColor;
-    padding: 0.5em 0;
-    font-style: italic;
-    text-align: right;
-  }
-
-  .pfy-form-response  {
-    margin: 1em 0 2em;
-  }
-
-  .pfy-form-admin {
-    @include _striped(251, 50%);
-  }
-
-  &.debug.pfy-form-data-received .pfy-show-unless-form-data-received {
-    @include _striped(40, 50%);
-    display: block !important;
-  }
-
-
-  .pfy-form-and-table-wrapper {
-    margin: 1.5em 0;
-    .pfy-empty-row td:not(.pfy-row-number).pfy-service-col * {
-      display: none;
-    }
-    .pfy-table .pfy-row-button {
-      padding: 0.1em 0.3em;
-    }
-  }
-
-
-  // === RRule ===========================
-  .pfy-form-rrule-wrapper {
-    summary {
-      display: block;
-    }
-  }
-  .pfy-form-rrule-body-wrapper {
-    border: $formRevealControllerBorder;
-    background: $formRevealControllerBg;
-    padding: 0 1em 1em 1em;
-  }
-  .pfy-form-rrule-yearly {
-    .pfy-choice-wrapper {
-      display: inline-flex;
-      flex-direction: column-reverse;
-      label {
-        padding-bottom: 2px;
-      }
-    }
-  }
-  .pfy-form-rrule-monthly,
-  .pfy-form-rrule-weekly,
-  .pfy-form-rrule-daily{
-    .pfy-rrule-elem-bymonth {
-      display: none;
-    }
-  }
+}
 //???
 //  .pfy-form-tooltip span {
 //      display: none;
 //  }
-  .pfy-form-rrule-daily .daily,
-  .pfy-form-rrule-weekly .weekly,
-  .pfy-form-rrule-monthly .monthly,
-  .pfy-form-rrule-yearly .yearly {
-    display:inline;
-  }
-  .pfy-elem-wrapper.pfy-rrule-elem-freq,
-  .pfy-form-rrule-wrapper {
-    --pfy-form-label-width: 10.8em;
+.pfy-form-rrule-daily .daily,
+.pfy-form-rrule-weekly .weekly,
+.pfy-form-rrule-monthly .monthly,
+.pfy-form-rrule-yearly .yearly {
+  display:inline;
+}
+.pfy-elem-wrapper.pfy-rrule-elem-freq,
+.pfy-form-rrule-wrapper {
+  --pfy-form-label-width: 10.8em;
 
-  }
-  .pfy-form-rrule-wrapper {
-    .pfy-rrule-elem-freq {
-      --pfy-form-label-width: 11em;
-      select {
-        width: 100%;
-      }
+}
+.pfy-form-rrule-wrapper {
+  .pfy-rrule-elem-freq {
+    --pfy-form-label-width: 11em;
+    select {
+      width: 100%;
     }
   }
-} // .pfy-default-styling
+}
 
 
  // fix for safari quirk:
-#pfy.pfy-default-styling.pfy-small-screen {
+#pfy.pfy-small-screen {
 	[type="date"],
 	[type="time"],
 	[type="datetime-local"],
@@ -1040,7 +1038,6 @@ $uploadResponseBg:      var(--pfy-upload-wrapper-bg, #fff9ee);
 
 
 @supports selector(::details-content) {
-  .pfy-default-styling {
     details.pfy-form-rrule-wrapper::details-content {
       padding: 0 var(--mdp-accordion-details-padding, 0);
     }
@@ -1057,12 +1054,11 @@ $uploadResponseBg:      var(--pfy-upload-wrapper-bg, #fff9ee);
       overflow: clip;
       background: var(--mdp-accordion-details-bg);
     }
-  }
 } /* @supports */
 
 
 @media print {
-  #pfy.pfy-default-styling {
+  #pfy {
     .dt-search,
     .dataTables_filter,
     .dt-layout-row:has(.dt-length,.dt-paging),

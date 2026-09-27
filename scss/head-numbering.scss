@@ -3,7 +3,7 @@
 // To activate: add class 'pfy-auto-heading-numbers' to body
 
 // Variables
-//     --heading-h1-start: 1 
+//     --heading-h1-start: 1
 //     --heading-number-separator: "-";
 //     --heading-number-last-separator: ") ";
 
@@ -12,7 +12,7 @@ $headBefore: var(--heading-number-before, "");
 $headSep: var(--heading-number-separator, ".");
 $headLastSep: var(--heading-number-last-separator, "\0000a0\0000a0");
 
-.pfy-default-styling.pfy-auto-heading-numbers {
+.pfy-auto-heading-numbers {
     counter-reset: h1-cnt 0 h2-cnt 0 h3-cnt 0 h4-cnt 0 h5-cnt 0 h6-cnt 0;
 //    --heading-number-before: "[1.";
 //    --heading-number-last-separator: "]\0000a0\0000a0"
