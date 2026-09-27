@@ -61,7 +61,7 @@ class Upload
             return "{{ pfy-upload-no-permission }}";
         }
 
-        if (!($uploadLabel =  TransVars::getVariable('pfy-upload-label'))) {
+        if (!($uploadLabel =  (string)TransVars::getVariable('pfy-upload-label'))) {
             Page::addCss('.pfy-upload-form .pfy-upload .pfy-label-wrapper {display: none;}');
         }
         $html = $this->renderForm($uploadLabel);
