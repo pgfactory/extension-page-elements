@@ -13,7 +13,7 @@
   justify-content: center;
   opacity: 1;
 }
-:not(.pfy-modal) .pfy-popup-bg {
+body:not(.pfy-modal) .pfy-popup-bg {
   position: fixed;
   top: 50%;
   left: 50%;

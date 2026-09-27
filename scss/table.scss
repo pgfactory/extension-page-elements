@@ -38,8 +38,12 @@ $defaultHeaderFooterBgColor: #eee;
     tr {
         vertical-align: top;
     }
-    td, th {
+    &.pfy-table {
+      tr > td, th {
         padding: 0;
+      }
+    }
+    td, th {
         border: 1px solid $borderColor;
         font-size: 90%;
     }
@@ -133,7 +137,7 @@ th.pfy-service-col  > div {
       vertical-align: top;
     }
   }
-  .pfy-service-col {
+  .pfy-service-col.pfy-service-col {
     text-align: center;
     padding: 3px 0 0 0;
     &::before,

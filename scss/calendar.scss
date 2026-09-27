@@ -81,8 +81,8 @@ $calendarEditable:    var(--pfy-cal-editable, 1px solid green);
     display: none;
   }
 }
-.fc-timeGridWeek-view,
-.fc-dayGridMonth-view {
+.pfy-calendar .fc-timeGridWeek-view,
+.pfy-calendar .fc-dayGridMonth-view {
   .fc-event {
     border: 1px solid #aaa;
   }
