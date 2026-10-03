@@ -27,64 +27,64 @@
     .pfy-login-unpw,
     .pfy-login-code,
     .pfy-password {
-    display: none;
-  }
-}
-
-.pfy-login-code {
-    .pfy-login-otc,
-    .pfy-login-unpw,
-    .pfy-login-otc-unpw,
-    .pfy-login-both,
-    .pfy-elem-wrapper.pfy-email,
-    .pfy-elem-wrapper.pfy-password {
       display: none;
     }
-}
-
---pfy-form-label-width: 8em;
-.pfy-login-mode-links {
-  font-size: 86%;
-  span {
-    display: inline-block;
-    padding: 0.8em 1em 0.8em 0;
   }
-  span:last-child {
-    padding-right: 0;
+
+  &.pfy-login-code {
+      .pfy-login-otc,
+      .pfy-login-unpw,
+      .pfy-login-otc-unpw,
+      .pfy-login-both,
+      .pfy-elem-wrapper.pfy-email,
+      .pfy-elem-wrapper.pfy-password {
+        display: none;
+      }
   }
-}
 
-.pfy-already-logged-in {
-  text-align: center;
-}
+  --pfy-form-label-width: 8em;
+  .pfy-login-mode-links {
+    font-size: 86%;
+    span {
+      display: inline-block;
+      padding: 0.8em 1em 0.8em 0;
+    }
+    span:last-child {
+      padding-right: 0;
+    }
+  }
 
-.pfy-login-reset-pw {
-  margin-bottom: 2em;
-}
-.pfy-login-button-row {
-  height: fit-content;
-}
+  .pfy-already-logged-in {
+    text-align: center;
+  }
+
+  .pfy-login-reset-pw {
+    margin-bottom: 2em;
+  }
+  .pfy-login-button-row {
+    height: fit-content;
+  }
 } // .pfy-login-wrapper
 
 .pfy-elem-wrapper.pfy-cancel.pfy-submit {
-margin-right: 0;
-input {
   margin-right: 0;
-}
-.pfy-cancel {
-  margin-right: 0.3em;
-}
+  input {
+    margin-right: 0;
+  }
+  .pfy-cancel {
+    margin-right: 0.3em;
+  }
 }
 
 .pfy-large-screen {
-.pfy-form {
-  width: 23em;
-}
-.pfy-login-wrapper {
-  > div {
-    padding: 1em 3em;
-    border: 1px solid #ddd;
+  .pfy-form {
+    width: 23em;
   }
-}
+  .pfy-login-wrapper {
+    > div {
+      padding: 1em 3em;
+      border: 1px solid #ddd;
+    }
+  }
 }
 
