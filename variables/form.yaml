@@ -190,15 +190,15 @@ pfy-form-deadline-elapsed:
 
 pfy-form-deadline-elapsed-warning:
   de: |
-    <div>
-      <strong>Achtung</strong>: Die Anmeldefrist ist vorbei. Normale Besucher erhalten folgende Mitteilung:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-elapsed}}</div>
+    <div class="pfy-form-deadline-elapsed-warning">
+      <strong>Achtung</strong>: Die Anmeldefrist ist vorbei. Normale Besucher sehen folgende Mitteilung:
+      <div class="pfy-form-orig-msg">{{ pfy-form-deadline-elapsed }}</div>
     </div>
 
   _:  |
-    <div>
+    <div class="pfy-form-deadline-elapsed-warning">
       <strong>Notice</strong>: Deadline expired. Response to regular visitors:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-deadline-elapsed}}</div>
+      <div class="pfy-form-orig-msg">{{ pfy-form-deadline-elapsed }}</div>
     </div>
 
 # MaxCount:
@@ -206,17 +206,25 @@ pfy-form-maxcount-reached:
   de: 'Die Veranstaltung ist ausgebucht.'
   _:  'The event is fully booked.'
 
+pfy-form-maxcount-reached-notification-subject:
+  de: 'Veranstaltung ausgebucht.'
+  _:  'Event fully booked.'
+
+pfy-form-maxcount-reached-notification-message:
+  de: 'Die Veranstaltung ist jetzt ausgebucht.'
+  _:  'The event is fully booked now.'
+
 pfy-form-maxcount-reached-warning:
   de: |
-    <div>
-      <strong>Achtung</strong>: Die maximale Zahl von Anmeldungen ist erreicht. Normale Besucher erhalten folgende Mitteilung:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+    <div class="pfy-form-maxcount-reached-warning">
+      <strong>Achtung</strong>: Die maximale Zahl von Anmeldungen ist erreicht. Normale Besucher sehen folgende Mitteilung:
+      <div class="pfy-form-orig-msg">{{ pfy-form-maxcount-reached }}</div>
     </div>
 
   _:  |
-    <div>
+    <div class="pfy-form-maxcount-reached-warning">
       <strong>Notice</strong>: The max number of sign-ups has been reached. Response to regular visitors:
-      <div style='border: 1px solid blue; box-shadow: 0 0 5px #aaf; padding:1em; margin: 1em 0;'>{{pfy-form-maxcount-reached}}</div>
+      <div class="pfy-form-orig-msg">{{ pfy-form-maxcount-reached }}</div>
     </div>
 
 pfy-form-available-seats-banner:
@@ -260,7 +268,7 @@ pfy-form-enablesubmit-elem-not-checked:
   de: Bitte zustimmen, bevor Sie das Formular absenden
   _:  Please confirm before sumbitting this form
 
- // ex. pfy-form-problem-banner:
+ # ex. pfy-form-problem-banner:
 pfy-problem-with-form-banner:
   de: |
     %%% .pfy-problem-with-form-hint.pfy-screen-only

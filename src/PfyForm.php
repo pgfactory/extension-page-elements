@@ -51,6 +51,7 @@ class PfyForm extends Form
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
     private const NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
+    private const EVENT_FULL_NOTIFICATION_VAR_NAME = 'pfy-form-maxcount-reached-notification';
     private const CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
     private const INFO_ICON = 'ⓘ';
     private const MEGABYTE = 1048576;
@@ -282,7 +283,7 @@ class PfyForm extends Form
 
         $this->handleScheduleOption();
         if (!$this->checkDeadline()) { // -> sets $this->deadlinePassed and $this->formInpageResponse
-            $this->checkMaxCount(); // -> sets $this->maxCountExceeded and $this->formInpageResponse
+            $this->maxCountExceeded = $this->checkMaxCount(); // -> sets $this->maxCountExceeded
         }
 
         // open database:
@@ -2999,11 +3000,15 @@ EOT;
 
     /**
      * @param array $dataRec
+     * @param bool $isFormAdmin
      * @return string|false
      * @throws \Exception
      */
-    private function checkMaxCount(array $dataRec = []): bool
+    private function checkMaxCount(array $dataRec = [], bool $isFormAdmin = null): bool|string
     {
+        $maxCountExceeded = false;
+        $isFormAdmin = ($isFormAdmin === null) ? $this->isFormAdmin : $isFormAdmin;
+
         if ($dataRec) {
             if ($maxCountOn = $this->formOptions['maxCountOn']) {
                 $pending = $dataRec[$maxCountOn]??1;
@@ -3019,17 +3024,17 @@ EOT;
                 $currCount += $pending;
                 // check if maxCount exceeded while new data was submitted -> would be a hacking attempt at this point:
                 if ($currCount > $maxCount) {
-                    if (!$this->isFormAdmin) {
+                    if (!$isFormAdmin) {
                         if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
-                            $this->maxCountExceeded = $maxCountNotice;
+                            $maxCountExceeded = $maxCountNotice;
                         } else {
-                            $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+                            $maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
                         }
                     }
                 }
 
                 // check if maxCount reached -> send warning email:
-                if ($currCount >= $maxCount && !$this->isFormAdmin) {
+                if ($currCount >= $maxCount && !$isFormAdmin) {
                     // send notification to owner:
                     if ($to = $this->formOptions['ownerNotificationTo']) {
                         // dev mode -> override $to:
@@ -3051,19 +3056,19 @@ EOT;
             } else {
                 // simple check while no new data is submitted:
                 if ($currCount >= $maxCount) {
-                    if (!$this->isFormAdmin) {
+                    if (!$isFormAdmin) {
                         if ($maxCountNotice = ($this->formOptions['maxCountNotice'] ?? false)) {
-                            $this->maxCountExceeded = $maxCountNotice;
+                            $maxCountExceeded = $maxCountNotice;
                         } else {
-                            $this->maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
+                            $maxCountExceeded = '<div class="pfy-form-issue pfy-form-maxcount-reached">{{ pfy-form-maxcount-reached }}</div>';
                         }
                     } else {
-                        $this->maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
+                        $maxCountExceeded = TransVars::getVariable('pfy-form-maxcount-reached-warning');
                     }
                 }
             }
         }
-        return (bool)$this->maxCountExceeded;
+        return $maxCountExceeded;
     } // checkMaxCount
 
 
@@ -3078,12 +3083,14 @@ EOT;
      */
     private function sendOwnerNotification(array $dataRec, array $dataRecInclEvent): void
     {
-        if (!$this->formOptions['ownerNotificationTo']) {
+        if (!($this->formOptions['ownerNotificationTo']??false)) {
             return;
         }
 
         // handle option ownerNotificationIf -> omit notif mail if mentioned field is empty:
-        if (($this->formOptions['ownerNotificationIf']??false) && !($dataRec["Bemerkung"]??false)) {
+        $sendOwnerNotification = ($this->formOptions['ownerNotificationIf']??false) ? ($dataRec[$this->formOptions['ownerNotificationIf']]??false) : true;
+        $maxCountExeeded = (bool)$this->checkMaxCount($dataRec, isFormAdmin: false);
+        if (!$sendOwnerNotification && !$maxCountExeeded) {
             return;
         }
 
@@ -3126,8 +3133,6 @@ EOT;
         $dataRecInclEvent['_md_data_'] = $mdStr;
         $dataRecInclEvent['_data_'] = $out;
 
-        list($subject, $message) = $this->getEmailComponents($dataRecInclEvent, self::NOTIFICATION_VAR_NAME);
-
         if ($this->formOptions['ownerNotificationTo'] === true) {
             if (!PageFactory::$webmasterEmail) {
                 throw new \Exception('Error: config option "webmaster_email" is not set.');
@@ -3148,13 +3153,24 @@ EOT;
             $to = explodeTrim(',', $to);
         }
 
-        if ($to) {
-            $this->sendMail([
-                'to'            => $to,
-                'subject'       => $subject,
-                'body'          => $message,
-                'logComment'    => 'Notification Mail to Owner',
-            ]);
+        if (!$to) {
+            return;
+        }
+        $props = [
+            'to'            => $to,
+            'logComment'    => 'Notification Mail to Owner',
+        ];
+
+        // === Owner Notification:
+         if ($sendOwnerNotification) {
+            list($props['subject'], $props['body']) = $this->getEmailComponents($dataRecInclEvent, self::NOTIFICATION_VAR_NAME);
+            $this->sendMail($props);
+        }
+
+        // === MaxCount Notification:
+        if ($maxCountExeeded) {
+            list($props['subject'], $props['body']) = $this->getEmailComponents($dataRecInclEvent, self::EVENT_FULL_NOTIFICATION_VAR_NAME);
+            $this->sendMail($props);
         }
     } // sendOwnerNotification
 

@@ -920,7 +920,26 @@ input[disabled] {
 }
 
 
+// === Admin ===========================
+.pfy-form-deadline-elapsed-warning,
+.pfy-form-maxcount-reached-warning {
+  border: 1px solid orange;
+  padding: 1em;
+  background: #fff6e5;
+}
+.pfy-form-orig-msg {
+  border: 1px solid blue;
+  box-shadow: 0 0 5px #aaf;
+  padding: 0.5em;
+  margin: 0.5em;
+  background: white;
+}
+
+
 // === Errors ==========================
+.pfy-form-issue {
+  margin: 1.5em 0;
+}
 .pfy-form-errors {
   border: 1px solid $errorBorder;
   background: $errorBg;
