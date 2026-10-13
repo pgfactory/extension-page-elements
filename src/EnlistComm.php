@@ -125,7 +125,12 @@ class EnlistComm
 
         if ($mode === 'add') {
             $subject = TransVars::resolveVariables('{{ pfy-enlist-add-visitor-confirmation-subject }}');
-            $body = TransVars::resolveVariables('{{ pfy-enlist-add-visitor-confirmation-message }}');
+            if ($newDataRec['directlyToReserve'] ?? false) {
+                $body = TransVars::resolveVariables('{{ pfy-enlist-add-reserve-visitor-confirmation-message }}');
+
+            } else {
+                $body = TransVars::resolveVariables('{{ pfy-enlist-add-visitor-confirmation-message }}');
+            }
         } elseif ($mode === 'del') {
             $subject = TransVars::resolveVariables('{{ pfy-enlist-del-visitor-confirmation-subject }}');
             $body = TransVars::resolveVariables('{{ pfy-enlist-del-visitor-confirmation-message }}');

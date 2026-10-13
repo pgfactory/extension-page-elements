@@ -256,6 +256,29 @@ pfy-enlist-add-visitor-confirmation-message:
     Greetings from the website
 
 
+pfy-enlist-add-reserve-visitor-confirmation-message:
+  de: |
+    Hallo %name%
+    
+    Sie sind jetzt eingetragen als Reserve in die Liste "%title%" auf Seite %page%.
+    
+    Gruss von der Website
+
+  de2: |
+    Hallo %name%
+    
+    Du bist jetzt eingetragen als Reserve in die Liste "%title%" auf Seite %page%.
+    
+    Gruss von der Website
+
+  _: |
+    Hello %name%
+    
+    You are now added as reserve to the list "%title%" on page %page%.
+
+    Greetings from the website
+
+
 
 pfy-enlist-del-visitor-confirmation-subject:
   de: 'Einschreibeliste "%title%" (%host%)'
