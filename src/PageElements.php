@@ -64,7 +64,7 @@ const PE_PATH_DEFINITIONS = [
         PE_ASSETS_PATH.'js/-events.js',
     ],
     'DATATABLES' => [
-        PE_ASSETS_PATH.'css/datatables.min.css',
+        PE_ASSETS_PATH.'(layer:base)css/datatables.min.css',
         PE_ASSETS_PATH.'js/datatables.min.js',
     ],
     'REVEAL' => [
@@ -110,7 +110,7 @@ const PE_PATH_DEFINITIONS = [
         PE_ASSETS_PATH.'js/iframe-resizer.parent.js',
     ],
     'MAP_SEARCH' => [
-        PE_ASSETS_PATH.'css/map.search/fonts.css',
+        PE_ASSETS_PATH.'(layer:base)css/map.search/fonts.css',
         PE_ASSETS_PATH.'js/map.search.js',
     ],
 ];
