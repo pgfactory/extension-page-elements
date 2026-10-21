@@ -2127,7 +2127,7 @@ EOT;
         $fullWidth = ($this->tableOptions['fullWidth'] ?? true) ? ' pfy-full-width': '';
         if ($html) {
             $html = <<<EOT
-<div class=\"pfy-table-data-output-wrapper$fullWidth\">
+<div class="pfy-table-data-output-wrapper$fullWidth">
 $header
 $html
 </div><!-- /pfy-table-data-output-wrapper -->
@@ -3825,8 +3825,8 @@ EOT;
             $html = <<<EOT
     </div><!-- /pfy-form-field-group-wrapper -->
     <div class="pfy-form-cc-messages">
-      <div class=\"pfy-form-countedchoices-group-error-msg\">{{ pfy-form-countedchoices-required-error }}</div>
-      <div class=\"pfy-form-countedchoices-max-error\">{{ pfy-form-countedchoices-max-error }}</div>
+      <div class="pfy-form-countedchoices-group-error-msg">{{ pfy-form-countedchoices-required-error }}</div>
+      <div class="pfy-form-countedchoices-max-error">{{ pfy-form-countedchoices-max-error }}</div>
     </div><!-- /pfy-form-cc-messages -->
 </div> <!-- ====== /pfy-form-field-group pfy-form-group-$cls -->
 
