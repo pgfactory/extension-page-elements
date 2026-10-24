@@ -40,7 +40,7 @@ return function ($argStr = '')
             'downloadFilename' => ['Defines the name of the download-file (if option "tableButtons" is active).', false],
             'cellMinHeight' => ['(css length) If set, adds styling instructions for cell\'s min height.', false],
             'cellMaxHeight' => ['(css length) If set, adds styling instructions for cell\'s max height.', false],
-            'scrollHints' => ['(bool) If true, scroll hint shadows become visible in cells heigher than their viewport.', true],
+            'scrollHints' => ['(bool) If true, scroll hint shadows become visible in cells heigher than their viewport.', false],
             'includeTimestamp' => ['(bool) If true, timestamp of data record is included.', false],
             'includeSystemElements' => ['[bool] If true, system fields "_timestamp" and "_reckey" are included '.
                 'in output table.', false],
