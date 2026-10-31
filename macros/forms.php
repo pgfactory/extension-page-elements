@@ -96,13 +96,7 @@ EOT,
 
     if ($options['edit']??false) {
         $options['editData'] = $options['edit'];
-    }
-    if ($options['editData'] && is_array($options['editData'])) { // depricated
-        $options['tableOptions'] += $options['editData'];
-    }
-    if ($options['showData'] && is_array($options['showData'])) { // depricated
-        $options['showData'] += $options['showData'];
-        $options['showData'] = true;
+        unset($options['edit']);
     }
 
     // ownerNotificationTo synonyme for mailTo:

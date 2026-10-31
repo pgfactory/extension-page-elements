@@ -3404,13 +3404,38 @@ EOT;
 
         $tableOptions += self::DEFAULT_FORM_OPTIONS['tableOptions'];
 
-        // short hand 'editData: true':
-        if ($this->formOptions['editData'] === true && !$tableOptions['tableButtons']) {
-            $tableOptions['tableButtons'] = 'delete,download';
+
+        // first evaluate 'editData' option:
+        $permission = false;
+        if ($this->formOptions['editData']) {
+            $tOptions = $this->formOptions['editData'];
+            if ($tOptions === true) {
+                $tOptions = [];
+                $tOptions['permission'] = 'loggedin|localhost';
+            }
+
+            $permission = Permission::evaluate($tOptions['permission'] ?? 'nobody');
+            if ($permission) {
+                $tableOptions = $tOptions + $tableOptions;
+            }
         }
-        if (!isset($tableOptions['permission'])) {
-            $tableOptions['permission'] = 'loggedin|localhost';
+
+        // then, if 'editData' was not present or didn't get permission, check 'showData' option:
+        if (!$permission && $this->formOptions['showData']) {
+            $tOptions = $this->formOptions['showData'];
+            if ($tOptions === true) {
+                $tOptions = [];
+                $tOptions['permission'] = 'anybody';
+                $tableOptions['tableButtons'] = 'delete,download';
+                //$tOptions['tableButtons'] = '...';
+            }
+
+            $permission = Permission::evaluate($tOptions['permission'] ?? 'anybody');
+            if ($permission) {
+                $tableOptions = $tOptions + $tableOptions;
+            }
         }
+
         if (($tableOptions['mode']??false) === 'popup' || ($tableOptions['editMode']??false) === 'popup') {
             $this->showFeedbackInpage = false;
             $this->popupMode = true;

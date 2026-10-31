@@ -98,25 +98,26 @@ return  [
         'avoidDuplicates' =>	['If true, checks whether identical data-rec already '.
             'exists in DB. If so, skips storing data.', true],
 
-        'showData' =>	['[true] Shows received data. Short-hand for:<br>'.
-            '``{tableButtons: download, serviceColumns: num, permission:\'loggedin,localhost\'}`` '.
-            '(see editData for reference.)', false],
-
-        'editData' =>	['[true|{options}] Shows received data and defines, whether data records can be edited. '.
-            'Available options:<br>``tableButtons:\'delete,archive,new,download\'``,<br>'.
-            '``serviceColumns:\'select,num,edit,send\'``,<br>'.
-            '``permission:\'loggedin,group,localhost\'``,<br>``mode:popup<br>``'.
-            '("editData:true" is shorthand for typical set of options.)', false],
-
+        'editData' =>	['[true|{options}] Shows received data and defines permission to edit data records.<br>'.
+            'Any further sub-options stated here are forwarded to "tableOptions" if editData-permission is granted'.
+            '<br>Note: place table related options in "tableOptions", unless they only apply for editing users.<br>'.
+            '("editData:true" is shorthand for "permission": "loggedin,localhost" '.
+            'and "tableButtons": "delete,download".)', false],
         'edit' =>	['Synonym for "editData".', null],
+
+        'showData' =>	['[true|{options}] If "editData" didn\'t get permission (or was missing), '.
+            '"showData" option is evaluated and applied, provided that showData-permission is granted.<br>'.
+            'Any further sub-options stated here are forwarded to "tableOptions" if showData-permission is granted'.
+            '<br>Note: place table related options in "tableOptions", unless they only apply only to this case.<br>'.
+            '("showData:true" is shorthand for "permission": "anybody".)', false],
+
+        'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', []],
 
         'recLocking' =>	['[bool|seconds] Defines, whether record-locking shall be activated while editing a record.<br>'.
             "If true, the default ($recLockingDefaultTime) time is used.", false],
 
         'formFreezeTime' =>	['[false, time-spec] If not false, window will freeze after specified time, '.
             'e.g. "+1 hour" or number of seconds.', null],
-
-        'tableOptions' =>	['[{options...}] Options that are forwarded to table rendering (see table() macro).', []],
 
         'minRows' =>	['[integer] If defined, the "showData" table is filled with '.
             'empty rows up to given number. BR '.
