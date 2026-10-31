@@ -186,7 +186,7 @@ const pfyFormsHelper = {
     this.setRecId(form, '');
 
     const cleared = form.classList.contains('pfy-form-cleared');
-    if (!changed && cleared) {
+    if (!changed || cleared || !form.dataset.clearBeforeClose) {
       // check whether in popup, close it:
       const popup = form.closest('.pfy-popup-bg');
       if (popup) {
@@ -486,7 +486,11 @@ const pfyFormsHelper = {
     if (form.closest('.pfy-retain-data') && retainData) {
       args += '&retainData='+dataSrcinx;
     }
-    console.debug('fetching data record '+recKey);
+    if (pfyFormsHelper.recLocked) {
+      console.debug('fetching and locking data record ' + recKey);
+    } else {
+      console.debug('fetching data record ' + recKey);
+    }
 
     form.dataset.loading = true;
     execAjaxPromise(args, {})
@@ -1219,10 +1223,10 @@ const pfyFormsHelper = {
 
 
   unlockRecs(tableInx) {
-    if (!pfyFormsHelper.formMaxRecLockingTime) {
-      return;
+      if (!pfyFormsHelper.recLocked) {
+        return;
     }
-
+    console.debug(`unlocking rec(s)`);
     if (typeof tableInx === 'undefined') {
       const tables = document.querySelectorAll('.pfy-table-wrapper');
       tables.forEach((table) => {
@@ -1234,6 +1238,7 @@ const pfyFormsHelper = {
       const args = 'unlockAll&datasrcinx=' + tableInx;
       execAjaxPromise(args, {}).catch(() => {});
     }
+    pfyFormsHelper.recLocked = false;
   }, // unlockRecs
 
 
