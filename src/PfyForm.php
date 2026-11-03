@@ -2233,7 +2233,7 @@ EOT;
                 $currCount = $this->db->count();
             }
             $available = $maxCount - $currCount;
-            if ($available && $this->formOptions['lowSeatsWarning']) {
+            if (($available > 0) && $this->formOptions['lowSeatsWarning']) {
                 if ($this->formOptions['lowSeatsWarning'] === true) {
                     $lowSeatsThreshold = self::LOW_SEATS_WARNING_THRESHOLD;
                 } else {
