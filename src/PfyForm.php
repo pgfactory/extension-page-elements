@@ -2233,7 +2233,7 @@ EOT;
                 $currCount = $this->db->count();
             }
             $available = $maxCount - $currCount;
-            if (($available > 0) && $this->formOptions['lowSeatsWarning']) {
+            if (($available > 0 && !$this->deadlinePassed) && $this->formOptions['lowSeatsWarning']) {
                 if ($this->formOptions['lowSeatsWarning'] === true) {
                     $lowSeatsThreshold = self::LOW_SEATS_WARNING_THRESHOLD;
                 } else {
@@ -2954,44 +2954,60 @@ EOT;
      */
     private function checkDeadline(): bool
     {
-        if ($deadlineStr = trim($this->formOptions['deadline']??'')) {
-            $stretchDeadline = false;
-
-            // check for deadline modifier '|' -> stretch deadline to beginning or end of day:
-            if (str_contains($deadlineStr, '|')) {
-                if ($deadlineStr[0] === '|') {
-                    $stretchDeadline = 'dayStart';
-                } elseif ($deadlineStr[strlen($deadlineStr)-1] === '|') {
-                    $stretchDeadline = 'dayEnd';
-                }
-                $deadlineStr = str_replace('|', '', $deadlineStr);
-            }
-            if (isset(self::$scheduleRecs[self::$formCounter]['start'])) {
-                $t = strtotime(self::$scheduleRecs[self::$formCounter]['start']);
-            } else {
-                $t = time();
-            }
-            $deadline = strtotime($deadlineStr, $t);
-
-            if ($stretchDeadline === 'dayStart') {
-                $deadline = strtotime('midnight', $deadline);
-            } elseif ($stretchDeadline === 'dayEnd') {
-                $deadline = strtotime('tomorrow midnight', $deadline);
-            }
-            // $deadlineStr = date('Y-m-d H:i', $deadline);
-
-            // now check deadline:
-            if ($deadline < time()) { // deadline elapsed:
-                // deadline is overridden if visitor is logged in:
-                if (!$this->isFormAdmin) {
-                    if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
-                        $this->deadlinePassed .= $deadlineNotice;
+        if (!($deadlineStr = trim($this->formOptions['deadline']??''))) {
+            if ($scheduleStart = self::$scheduleRecs[self::$formCounter]['start'] ?? false) {
+                $now = date('Y-m-d\TH:i');
+                if ($scheduleStart < $now) {
+                    if (!$this->isFormAdmin) {
+                        if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
+                            $this->deadlinePassed .= $deadlineNotice;
+                        } else {
+                            $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-elapsed">{{ pfy-form-deadline-elapsed }}</div>';
+                        }
                     } else {
-                        $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-elapsed">{{ pfy-form-deadline-elapsed }}</div>';
+                        $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-elapsed-warning');
                     }
-                } else {
-                    $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-elapsed-warning');
                 }
+            }
+            return $this->deadlinePassed;
+        }
+
+        $stretchDeadline = false;
+
+        // check for deadline modifier '|' -> stretch deadline to beginning or end of day:
+        if (str_contains($deadlineStr, '|')) {
+            if ($deadlineStr[0] === '|') {
+                $stretchDeadline = 'dayStart';
+            } elseif ($deadlineStr[strlen($deadlineStr)-1] === '|') {
+                $stretchDeadline = 'dayEnd';
+            }
+            $deadlineStr = str_replace('|', '', $deadlineStr);
+        }
+        if (isset(self::$scheduleRecs[self::$formCounter]['start'])) {
+            $t = strtotime(self::$scheduleRecs[self::$formCounter]['start']);
+        } else {
+            $t = time();
+        }
+        $deadline = strtotime($deadlineStr, $t);
+
+        if ($stretchDeadline === 'dayStart') {
+            $deadline = strtotime('midnight', $deadline);
+        } elseif ($stretchDeadline === 'dayEnd') {
+            $deadline = strtotime('tomorrow midnight', $deadline);
+        }
+        // $deadlineStr = date('Y-m-d H:i', $deadline);
+
+        // now check deadline:
+        if ($deadline < time()) { // deadline elapsed:
+            // deadline is overridden if visitor is logged in:
+            if (!$this->isFormAdmin) {
+                if ($deadlineNotice = ($this->formOptions['deadlineNotice']??false)) {
+                    $this->deadlinePassed .= $deadlineNotice;
+                } else {
+                    $this->deadlinePassed .= '<div class="pfy-form-issue pfy-form-deadline-elapsed">{{ pfy-form-deadline-elapsed }}</div>';
+                }
+            } else {
+                $this->deadlinePassed .= TransVars::getVariable('pfy-form-deadline-elapsed-warning');
             }
         }
         return $this->deadlinePassed;
