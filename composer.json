@@ -5,5 +5,10 @@
         "rlanvin/php-rrule": "^2.6",
         "spatie/icalendar-generator": "^3.3",
         "phpgt/cssxpath": "^1.4"
+    },
+    "config": {
+        "platform": {
+            "php": "8.3.30"
+        }
     }
 }

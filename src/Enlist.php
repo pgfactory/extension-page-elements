@@ -1017,11 +1017,10 @@ EOT;
             $options['title'] = ($options['title'] ?? false) ?: '';
 
             $this->parseWidgetOptions();
-            $this->widgetKey = ($options['listId'] ?? false) ?: ($this->title ?: "Enlist-$this->widgetInx");
+
             $this->initData();
             $this->directlyReservePossible = $this->directlyToReserve;
         }
-
     } // parseOptions
 
 
@@ -1045,7 +1044,14 @@ EOT;
         }
 
         $this->title = $options['title'] = $title;
-        $this->widgetKey = $title ?: ('Enlist-' . ($this->widgetInx + 1));
+
+        // determine WidgetKey (used to identify data rec):
+        if ($options['listId'] ?? false) {
+            $this->widgetKey = $options['listId'] . "_$this->widgetInx";
+        } else {
+            $this->widgetKey = $this->title ? $this->title . "_$this->widgetInx" : ("Enlist-$this->widgetInx");
+        }
+
         if ($permissionQuery = $this->admin) {
             if ($permissionQuery === true) {
                 $permissionQuery = 'localhost|loggedin';
