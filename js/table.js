@@ -614,15 +614,12 @@ const tableHelper = {
         header: headerStr,
         contentFrom: formWrapper,
         closeOnBgClick: false,
-//        onCancel: function () {
-//          pfyFormsHelper.unlockRecs(dataSrcInx);
-//          clearTimeout(pfyFormsHelper.recLockingTimeout);
-//          pfyFormsHelper.timeoutBar.destroy();
-//        },
         onClose: function () {
           pfyFormsHelper.unlockRecs(dataSrcInx);
           clearTimeout(pfyFormsHelper.recLockingTimeout);
-          pfyFormsHelper.timeoutBar.destroy();
+          if (pfyFormsHelper.timeoutBar) {
+            pfyFormsHelper.timeoutBar.destroy();
+          }
         },
         onOpen: function () {
           domForOne('.pfy-popup-wrapper .pfy-form', formEl => {
@@ -630,6 +627,7 @@ const tableHelper = {
               pfyFormsHelper.fetchDataAndFillForm(formEl, recKey, true, duplicateMode);
             } else {
               pfyFormsHelper.presetForm(formEl);
+              formEl.dataset.clearBeforeClose = true;
             }
             formEl.removeAttribute('id');
 
@@ -637,7 +635,9 @@ const tableHelper = {
               input.addEventListener('click', () => {
                 pfyFormsHelper.unlockRecs(dataSrcInx);
                 clearTimeout(pfyFormsHelper.recLockingTimeout);
-                pfyFormsHelper.timeoutBar.destroy();
+                if (pfyFormsHelper.timeoutBar) {
+                  pfyFormsHelper.timeoutBar.destroy();
+                }
               });
             });
           });
