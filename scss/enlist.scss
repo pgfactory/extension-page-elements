@@ -253,7 +253,9 @@ button.pfy-enlist-ical-button {
   filter: brightness(95%);
 }
 
-.pfy-enlist-icon {
+tr.pfy-enlist-add,
+tr.pfy-enlist-modify,
+tr.pfy-enlist-delete {
   cursor: pointer;
 }
 

@@ -2,6 +2,8 @@
  * enlist.js
  */
 
+console.debug('enlist.js');
+
 const Enlist = {
   isEnlistAdmin: Boolean(document.querySelector('.pfy-enlist-admin')),
   isWindows: /win/i.test(window.navigator.platform),
@@ -28,7 +30,7 @@ const Enlist = {
   addEventListeners: function() {
     document.addEventListener('click', ev => {
       const el = ev.target;
-      if (!el.closest('.pfy-enlist-icon, .pfy-enlist-title')) {
+      if (!el.closest('.pfy-enlist-wrapper')) {
         return;
       }
       ev.stopPropagation();
@@ -89,6 +91,8 @@ const Enlist = {
 
     } else if (elem.closest('.pfy-enlist-modify')) {
       mode = 'modify';
+    } else {
+      return;
     }
 
     if (['del', 'modify'].includes(mode)) {
