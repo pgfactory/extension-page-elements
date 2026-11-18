@@ -1,4 +1,3 @@
-
 # === Enlist =======================================
 
 pfy-enlist-name:
@@ -35,7 +34,7 @@ pfy-enlist-add-text:
   de: 'Hier eintragen'
   _:  'enlist here'
 
-pfy-enlist-empty-text: &nbsp;
+pfy-enlist-empty-text: '&nbsp;'
 
 pfy-enlist-add-popup-header:
   de: 'Eintragen'
@@ -76,7 +75,7 @@ pfy-enlist-error-deadline-was-expired:
 
 pfy-enlist-dealine-past:
   de: ' (Frist abgelaufen)'
-  _:  ' (Deadline expired)
+  _:  ' (Deadline expired)'
 
 
 pfy-enlist-popup-add-nofreeze-help:
