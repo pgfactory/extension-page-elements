@@ -153,7 +153,8 @@ return  [
             '5) ``tail`` form tail.', true],
 
         'problemWithFormBanner' =>	['If true, a banner is added below the form, providing the '.
-            'webmaster-email to contact in case of problems with the form.', true],
+            'webmaster-email to contact in case of problems with the form. '.
+            'Alternative: use `\{\{ pfy-problem-with-form-banner }}`', true],
 
         'readonly' =>	['If true, adds class "pfy-form-readonly" to form wrapper class -> '.
             '-> freezes entire form.', false],

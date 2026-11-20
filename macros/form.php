@@ -53,8 +53,15 @@ return function ($args = '')
 
     \{{ form(
         file:                '\~data/db.json',
-        editData:            true
-        tableOptions:        { interactive:true, paging:true, fullWidth:true }
+        editData:           { permission:'loggedin,localhost' },
+        tableOptions:       {
+            tableButtons:   'delete,new,download'  \// further options: archive,mail
+            serviceColumns: "select,edit"  \// further options: num,map,send
+            mode:           popup
+            interactive:    true
+            paging:         true
+            fullWidth:      true
+        }
         responseLabel:       'Event registration' \// used in notification and confirmation emails
         ownerNotificationTo: true  \// 'true' for webmaster-email or explicit e-mail address 
         confirmationEmailTo: true  \// 'true' selects the first e-mail field below
@@ -269,6 +276,10 @@ Note: colors only active if `.pfy-form-colored` is applied to the form.
 #### Classes
 
 - `.pfy-show-unless-form-data-received`  -> hide content when data received
+
+#### Variables
+
+- `\{\{ pfy-problem-with-form-banner }}`  -> alternative to option `problemWithFormBanner`
     
 <div class="pfy-vgap" style="margin:0.7em 0;">&nbsp;</div>
 
