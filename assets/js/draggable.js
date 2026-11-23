@@ -1,5 +1,5 @@
 // draggable.js
-
+console.debug('draggable.js');
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".pfy-draggable").forEach(el => initDraggable(el));
 });
