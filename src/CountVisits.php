@@ -57,7 +57,7 @@ class CountVisits
                 $dontCount = Permission::evaluate($dontCount);
             }
             $doCount = !$dontCount;
-            $pgId = page()->id();
+            $pgId = pfyPage()->id();
         }
 
         // handle case of page invoked with GET parameters (only first one used):

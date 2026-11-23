@@ -240,7 +240,7 @@ EOT;
      */
     private function fileRelay(array $uploadObjs, string $path): string
     {
-        $pageId = page()->id();
+        $pageId = pfyPage()->id();
         $hash = createHash(type: 'l');
 
         $path .= "$hash/";

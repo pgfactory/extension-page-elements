@@ -29,7 +29,7 @@ class EnlistCallbackHandler
         $this->isEnlistAdmin = $this->options['isEnlistAdmin'] ?? false;
         $widgetKey = $newDataRec['widgetKey'];
         $slotInx = $origDataRec['_reckey'];
-        $this->pagePath = page()->id();
+        $this->pagePath = pfyPage()->id();
         $context = "[$widgetKey: ".PFY_HOST_URL.$this->pagePath.']';
         if ($this->isEnlistAdmin) {
             $context = rtrim($context, ']').' (as admin)]';

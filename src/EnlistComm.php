@@ -256,6 +256,6 @@ class EnlistComm
      */
     private static function pageLink(): string
     {
-        return page()->url();
+        return pfyPage()->url();
     } // pageLink
 } // EnlistComm

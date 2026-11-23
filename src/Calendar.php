@@ -490,7 +490,7 @@ EOT;
         $this->visibleHours =           $args['visibleHours']??'07:00-21:00';
         $this->userCategories =         $args['userCategories']??false;
         $this->fullCalendarOptions =    $args['fullCalendarOptions']??'';
-        $pageId =                       page()->id();
+        $pageId =                       pfyPage()->id();
         $this->sessDbFileKey =              "db:$pageId:$this->inx:file";
 
         $this->headerRightButtons = str_replace(

@@ -34,7 +34,7 @@ EOT,
     // assemble output:
     Assets::addAssets('site/plugins/pagefactory-pageelements/assets/css/-head-numbering.css');
     Page::addBodyTagClass('pfy-auto-heading-numbers');
-    $pg = page();
+    $pg = pfyPage();
     if (!$before) {
         $branchNr = '';
 

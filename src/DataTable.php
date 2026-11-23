@@ -1274,7 +1274,7 @@ EOT;
             $this->dataReference = ($this->dataReference === null) ? true : $this->dataReference;
         }
         $accessPermission = $this->isTableAdmin ? 'write' : 'read';
-        $pageId = page()->id();
+        $pageId = pfyPage()->id();
         kirby()->session()->set("pfy.$pageId.accessPermission", $accessPermission);
 
         if (self::$tableInx === 1) {

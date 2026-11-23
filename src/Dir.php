@@ -359,7 +359,7 @@ EOT;
                 $path = preg_replace('|^\d+_|', '', $path);
                 $path = preg_replace('|/\d+_|', '/', $path);
                 $subPath = rtrim($path, '/');
-                $page = page($subPath);
+                $page = pfyPage($subPath);
                 $url = $page->url();
                 $slug = $page->slug();
                 $pageId = $page->id();

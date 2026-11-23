@@ -569,7 +569,7 @@ EOT;
      */
     private function handleIframeOptions(): void
     {
-        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingChild') ?: page()->iframeAutoSizingChild()->value();
+        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingChild') ?: pfyPage()->iframeAutoSizingChild()->value();
         if ($iFrameId) {
             $iFrameId = ($iFrameId === true) ? 'pfy-iframe' : ltrim($iFrameId, '#');
             Page::addJsReady("console.log('activating iframeAutoSizing as iframe child for id \"$iFrameId\"');");
@@ -578,7 +578,7 @@ EOT;
             Page::addCss("body {min-width: initial!important; min-height: initial!important;}");
         }
 
-        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingParent') ?: page()->iframeAutoSizingParent()->value();
+        $iFrameId = kirby()->option('pgfactory.pagefactory-elements.iframeAutoSizingParent') ?: pfyPage()->iframeAutoSizingParent()->value();
         if ($iFrameId) {
             Assets::addAssets('IFRAME_RESIZER_PARENT');
             $iFrameId = ($iFrameId === true) ? 'pfy-iframe' : ltrim($iFrameId, '#');

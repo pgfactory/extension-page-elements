@@ -14,7 +14,7 @@ use function PgFactory\PageFactory\reloadAgent;
 use function PgFactory\PageFactory\translateToClassName;
 use function PgFactory\PageFactory\explodeTrimAssoc;
 
-define ('PE_DEFAULT_ENLIST_DATA_FILE', str_replace('/', '_', page()->id()) . '.json');
+define ('PE_DEFAULT_ENLIST_DATA_FILE', str_replace('/', '_', pfyPage()->id()) . '.json');
 
 class Enlist
 {

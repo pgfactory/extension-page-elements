@@ -86,14 +86,14 @@ class ListRenderer
 
         $page = $options['page']??'';
         if ($page === '~page/' || $page === '\\~page/') {
-            $pages = page()->children()->listed();
+            $pages = pfyPage()->children()->listed();
         } elseif ($page === '/' || $page === '~/') {
             $pages = site()->children()->listed();
         } else {
             if (str_starts_with($page, '~/')) {
                 $page = substr($page, 2);
             }
-            $pageObj = page($page);
+            $pageObj = pfyPage($page);
             if (!$pageObj) {
                 throw new \Exception("Error: page '$page' not found (by macro list())");
             }

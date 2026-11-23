@@ -46,7 +46,7 @@ EOT,
         $str = $sourceCode;
     }
 
-    $pageId = page()->id();
+    $pageId = pfyPage()->id();
     $permission = Permission::evaluate($options['permission']);
     if ($permission) {
         $accessPermission = 'write';
