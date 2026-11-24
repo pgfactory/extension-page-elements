@@ -21,16 +21,6 @@
 }
 
 
-// for dev on localhost only:
-.dev-footer {
-	margin-bottom: 1em;
-	display: flex;
-	justify-content: space-between;
-	background: #a537ff;
-	background: repeating-linear-gradient(-55deg, #9f29ff, #9f29ff 10px, #9310fe 10px, #9310fe 15px);
-}
-
-
 // === form tables =================================
 .pfy-table tbody td:not(.pfy-service-col) > div {
   max-height: 3.5em;
