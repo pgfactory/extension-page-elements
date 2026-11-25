@@ -110,7 +110,7 @@ EOT,
         list($options, $sourceCode, $inx, $macroName, $auxOptions) = $res;
         $str = $sourceCode;
     }
-    if ($inx > 1) {
+    if (($inx > 1) && !$GLOBALS['pfyOverridePage']) { // make an exception, if we are in render-multiple-pages mode
         throw new \Exception("Only 1 Calendar per page supported.");
     }
 
