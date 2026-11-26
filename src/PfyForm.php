@@ -3291,12 +3291,24 @@ EOT;
      */
     private function getEmailComponents(array $dataRec, string $varNameStub = ''): array
     {
-        $subject = TransVars::getVariable($varNameStub.'-subject');
+        if (str_contains($varNameStub, 'notification')) {
+            if ($templ = TransVars::getVariable('notificationTemplate')) {
+                $subject = $templ['subject'] ?? '';
+                $message = $templ['message'] ?? '';
+            }
+        } elseif (str_contains($varNameStub, 'confirmation')) {
+            if ($templ = TransVars::getVariable('confirmationTemplate')) {
+                $subject = $templ['subject'] ?? '';
+                $message = $templ['message'] ?? '';
+            }
+        } else {
+            $subject = TransVars::getVariable($varNameStub . '-subject');
+            $message = (TransVars::getVariable($varNameStub . '-body') ?: TransVars::getVariable($varNameStub . '-message'));
+        }
         $errMsg = '';
         if (!$subject) {
             $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
         }
-        $message = (TransVars::getVariable($varNameStub.'-body') ?: TransVars::getVariable($varNameStub.'-message'));
         if (!$message) {
             $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
 
