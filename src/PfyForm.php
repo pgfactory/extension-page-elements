@@ -3291,27 +3291,36 @@ EOT;
      */
     private function getEmailComponents(array $dataRec, string $varNameStub = ''): array
     {
-        if (str_contains($varNameStub, 'notification')) {
+        $errMsg = $subject = $message = '';
+        if ($varNameStub === self::NOTIFICATION_VAR_NAME) {
             if ($templ = TransVars::getVariable('notificationTemplate')) {
                 $subject = $templ['subject'] ?? '';
                 $message = $templ['message'] ?? '';
+            } else {
+                $subject = TransVars::getVariable($varNameStub . '-subject');
+                if (!$subject) {
+                    $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
+                }
             }
-        } elseif (str_contains($varNameStub, 'confirmation')) {
+        } elseif ($varNameStub === self::CONFIRMATION_VAR_NAME) {
             if ($templ = TransVars::getVariable('confirmationTemplate')) {
                 $subject = $templ['subject'] ?? '';
                 $message = $templ['message'] ?? '';
+            } else {
+                $message = (TransVars::getVariable($varNameStub . '-body') ?: TransVars::getVariable($varNameStub . '-message'));
+                if (!$message) {
+                    $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
+                }
             }
         } else {
             $subject = TransVars::getVariable($varNameStub . '-subject');
+            if (!$subject) {
+                $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
+            }
             $message = (TransVars::getVariable($varNameStub . '-body') ?: TransVars::getVariable($varNameStub . '-message'));
-        }
-        $errMsg = '';
-        if (!$subject) {
-            $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
-        }
-        if (!$message) {
-            $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
-
+            if (!$message) {
+                $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
+            }
         }
         if ($errMsg) {
             throw new \Exception($errMsg);
