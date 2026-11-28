@@ -51,8 +51,10 @@ class PfyForm extends Form
     // future: toggle,hash,fieldset,fieldset-end,reveal,literal,file,
 
     private const NOTIFICATION_VAR_NAME = 'pfy-form-owner-notification';
+    private const NOTIFICATION_TEMPLATE_NAME = 'notificationTemplate';
     private const EVENT_FULL_NOTIFICATION_VAR_NAME = 'pfy-form-maxcount-reached-notification';
     private const CONFIRMATION_VAR_NAME = 'pfy-confirmation-response';
+    private const CONFIRMATION_TEMPLATE_NAME = 'confirmationTemplate';
     private const INFO_ICON = 'ⓘ';
     private const MEGABYTE = 1048576;
     private const LOW_SEATS_WARNING_THRESHOLD = 10;
@@ -3292,27 +3294,21 @@ EOT;
     private function getEmailComponents(array $dataRec, string $varNameStub = ''): array
     {
         $errMsg = $subject = $message = '';
-        if ($varNameStub === self::NOTIFICATION_VAR_NAME) {
-            if ($templ = TransVars::getVariable('notificationTemplate')) {
-                $subject = $templ['subject'] ?? '';
-                $message = $templ['message'] ?? '';
-            } else {
-                $subject = TransVars::getVariable($varNameStub . '-subject');
-                if (!$subject) {
-                    $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
-                }
-            }
-        } elseif ($varNameStub === self::CONFIRMATION_VAR_NAME) {
-            if ($templ = TransVars::getVariable('confirmationTemplate')) {
-                $subject = $templ['subject'] ?? '';
-                $message = $templ['message'] ?? '';
-            } else {
-                $message = (TransVars::getVariable($varNameStub . '-body') ?: TransVars::getVariable($varNameStub . '-message'));
-                if (!$message) {
-                    $errMsg .= "\nError: Definition for variable '$varNameStub-body' missing.";
-                }
-            }
-        } else {
+        $templ = false;
+
+        // check whether template is defined as array called 'notificationTemplate' or 'confirmationTemplate':
+        if (($varNameStub === self::NOTIFICATION_VAR_NAME) &&
+                ($templ = TransVars::getVariable(self::NOTIFICATION_TEMPLATE_NAME))) {
+            $subject = $templ['subject'] ?? '';
+            $message = $templ['message'] ?? '';
+        } elseif (($varNameStub === self::CONFIRMATION_VAR_NAME) &&
+                ($templ = TransVars::getVariable(self::CONFIRMATION_TEMPLATE_NAME))) {
+            $subject = $templ['subject'] ?? '';
+            $message = $templ['message'] ?? '';
+        }
+
+        if (!$templ) {
+            // no template array provided, so get explicit variables:
             $subject = TransVars::getVariable($varNameStub . '-subject');
             if (!$subject) {
                 $errMsg .= "Error: Definition for variable '$varNameStub-subject' missing.";
