@@ -483,7 +483,8 @@ EOT;
         }
 
         if ($this->schedule) {
-            $this->iCalOptions = $this->schedule['ical']??[];
+            $this->schedule['ical'] = $this->schedule['ical']??[];
+            $this->iCalOptions = $this->schedule['ical'];
         }
 
         // update values if submitted by form:
